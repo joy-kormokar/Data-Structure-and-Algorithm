@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weighted Graph — Adjacency Matrix Learning Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --bg2: #13161e;
+  --bg3: #1a1e28;
+  --bg4: #222736;
+  --surface: #1e2230;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #4f9eff;
+  --accent2: #38e8b0;
+  --accent3: #ff7e5f;
+  --accent4: #c77dff;
+  --text: #e8eaf0;
+  --text2: #9ba3b8;
+  --text3: #5c6480;
+  --yellow: #ffd166;
+  --red: #ff6b6b;
+  --green: #38e8b0;
+  --pink: #ff8fab;
+  --mono: 'JetBrains Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body: 'DM Sans', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 15px; line-height: 1.7; }
+
+/* SIDEBAR */
+#sidebar {
+  position: fixed; left: 0; top: 0; height: 100vh; width: 260px;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 100; padding: 0 0 40px;
+  scrollbar-width: thin; scrollbar-color: var(--bg4) transparent;
+}
+#sidebar-logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+#sidebar-logo h1 { font-family: var(--display); font-size: 14px; font-weight: 800; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
+#sidebar-logo p { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.nav-section { padding: 6px 12px 2px; font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px; }
+.nav-item {
+  display: block; padding: 7px 20px; font-size: 13px; color: var(--text2);
+  text-decoration: none; border-left: 2px solid transparent;
+  transition: all 0.15s; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.nav-item:hover { color: var(--text); background: var(--bg3); border-left-color: var(--border2); }
+.nav-item.active { color: var(--accent); background: rgba(79,158,255,0.07); border-left-color: var(--accent); }
+
+/* MAIN */
+#main { margin-left: 260px; padding: 0; }
+.section {
+  padding: 60px 60px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.section:last-child { border-bottom: none; }
+.section-header {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 8px;
+}
+.section-number {
+  font-family: var(--mono); font-size: 11px; color: var(--accent); opacity: 0.6;
+  background: rgba(79,158,255,0.08); padding: 3px 8px; border-radius: 4px;
+  border: 1px solid rgba(79,158,255,0.2); white-space: nowrap;
+}
+.section h2 {
+  font-family: var(--display); font-size: 26px; font-weight: 800; color: var(--text);
+  line-height: 1.2;
+}
+.section-tag {
+  margin-left: auto; font-size: 11px; padding: 3px 10px;
+  border-radius: 20px; white-space: nowrap; font-weight: 500;
+}
+.tag-beginner { background: rgba(56,232,176,0.12); color: var(--green); border: 1px solid rgba(56,232,176,0.2); }
+.tag-intermediate { background: rgba(255,209,102,0.12); color: var(--yellow); border: 1px solid rgba(255,209,102,0.2); }
+.tag-advanced { background: rgba(199,125,255,0.12); color: var(--accent4); border: 1px solid rgba(199,125,255,0.2); }
+
+.section > p.lead {
+  color: var(--text2); max-width: 680px; margin-bottom: 28px; font-size: 15px;
+}
+
+/* ANALOGY BOX */
+.analogy {
+  background: linear-gradient(135deg, rgba(79,158,255,0.06) 0%, rgba(56,232,176,0.04) 100%);
+  border: 1px solid rgba(79,158,255,0.15); border-radius: var(--radius);
+  padding: 18px 22px; margin-bottom: 28px;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.analogy-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.analogy-body strong { color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+.analogy-body p { color: var(--text2); font-size: 14px; margin: 0; }
+
+/* THEORY GRID */
+.theory-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px;
+}
+.theory-card {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.theory-card h4 { font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.theory-card p { font-size: 14px; color: var(--text2); }
+
+/* CANVAS AREA */
+.viz-area {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 28px; position: relative; overflow: hidden;
+}
+.viz-area h3 {
+  font-family: var(--display); font-size: 14px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px;
+}
+canvas { display: block; max-width: 100%; }
+.viz-controls {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;
+}
+.btn {
+  padding: 8px 16px; border: 1px solid var(--border2); background: var(--bg4);
+  color: var(--text); border-radius: var(--radius-sm); font-family: var(--body);
+  font-size: 13px; cursor: pointer; transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,158,255,0.07); }
+.btn.active, .btn.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+.btn.success { background: var(--green); color: #000; border-color: var(--green); }
+.btn.warn { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.btn.danger { background: var(--red); color: #fff; border-color: var(--red); }
+input[type=number], input[type=text], select {
+  background: var(--bg4); border: 1px solid var(--border2); color: var(--text);
+  padding: 7px 12px; border-radius: var(--radius-sm); font-family: var(--body); font-size: 13px;
+  width: 70px; outline: none;
+}
+input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); }
+select { width: auto; }
+.input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.input-row label { font-size: 13px; color: var(--text2); }
+.output-log {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 12px 16px; font-family: var(--mono); font-size: 12px; color: var(--accent2);
+  min-height: 48px; max-height: 200px; overflow-y: auto; margin-top: 12px;
+  white-space: pre-wrap;
+}
+.matrix-table {
+  border-collapse: collapse; font-family: var(--mono); font-size: 13px; width: 100%;
+}
+.matrix-table th, .matrix-table td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: center; min-width: 44px;
+}
+.matrix-table th { background: var(--bg4); color: var(--text2); font-size: 12px; }
+.matrix-table td { background: var(--bg3); color: var(--text); transition: all 0.3s; }
+.matrix-table td.nonzero { color: var(--accent); font-weight: 600; background: rgba(79,158,255,0.08); }
+.matrix-table td.highlight { background: rgba(255,209,102,0.2); color: var(--yellow); }
+.matrix-table td.path { background: rgba(56,232,176,0.2); color: var(--green); }
+
+/* CODE BLOCK */
+.code-wrap { position: relative; margin-bottom: 28px; }
+.code-label {
+  position: absolute; top: 12px; right: 12px;
+  font-size: 11px; color: var(--text3); font-family: var(--mono); background: var(--bg);
+  padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);
+}
+pre {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 24px 24px; overflow-x: auto; font-family: var(--mono); font-size: 13px;
+  line-height: 1.7; color: #abb2bf;
+}
+.kw { color: #c678dd; }
+.fn { color: #61afef; }
+.cm { color: #5c6370; font-style: italic; }
+.num { color: #d19a66; }
+.str { color: #98c379; }
+.type { color: #e5c07b; }
+.op { color: #56b6c2; }
+.pp { color: #e06c75; }
+
+/* COMPLEXITY */
+.complexity-badge {
+  display: inline-flex; gap: 20px; flex-wrap: wrap;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 12px 20px; margin-bottom: 20px;
+}
+.complexity-badge span { font-size: 13px; color: var(--text2); }
+.complexity-badge strong { color: var(--accent); font-family: var(--mono); }
+
+/* HERO */
+#hero {
+  min-height: 240px; display: flex; flex-direction: column; justify-content: center;
+  padding: 60px 60px 40px;
+  background: radial-gradient(ellipse at 80% 50%, rgba(79,158,255,0.06) 0%, transparent 60%),
+              radial-gradient(ellipse at 20% 80%, rgba(56,232,176,0.04) 0%, transparent 50%);
+  border-bottom: 1px solid var(--border);
+}
+#hero h1 { font-family: var(--display); font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 12px; }
+#hero h1 span { color: var(--accent); }
+#hero p { color: var(--text2); max-width: 560px; font-size: 16px; }
+.hero-tags { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.hero-tag {
+  font-size: 12px; padding: 4px 12px; border-radius: 20px;
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+}
+
+/* TOC PROGRESS */
+#progress-bar {
+  position: fixed; top: 0; left: 260px; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transform-origin: left; transform: scaleX(0);
+  transition: transform 0.1s; z-index: 200;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  #sidebar { width: 0; overflow: hidden; }
+  #main { margin-left: 0; }
+  #progress-bar { left: 0; }
+  .section { padding: 40px 24px 30px; }
+  #hero { padding: 40px 24px 30px; }
+  .theory-grid { grid-template-columns: 1fr; }
+}
+
+/* STEP VIZ */
+.step-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+  border-radius: var(--radius-sm); transition: background 0.2s; margin-bottom: 4px;
+}
+.step-row.active { background: rgba(79,158,255,0.08); }
+.step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--bg4); color: var(--text3); font-size: 11px; font-family: var(--mono); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.step-row.active .step-num { background: var(--accent); color: #000; }
+.step-text { font-size: 13px; color: var(--text2); }
+.step-row.active .step-text { color: var(--text); }
+.step-val { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--accent2); }
+
+/* DIVIDER */
+.subsection { margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--border); }
+.subsection h3 { font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.subsection > p { color: var(--text2); max-width: 640px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav id="sidebar">
+  <div id="sidebar-logo">
+    <h1>⬡ WeightedGraph</h1>
+    <p>Adjacency Matrix · C Language</p>
+  </div>
+  <div class="nav-section">Foundation</div>
+  <a class="nav-item" href="#intro">Introduction</a>
+  <a class="nav-item" href="#representation">Adjacency Matrix</a>
+  <div class="nav-section">Vertex Operations</div>
+  <a class="nav-item" href="#insert-vertex">Insert Vertex</a>
+  <a class="nav-item" href="#delete-vertex">Delete Vertex</a>
+  <a class="nav-item" href="#search-vertex">Search Vertex</a>
+  <a class="nav-item" href="#update-vertex">Update Vertex</a>
+  <div class="nav-section">Edge Operations</div>
+  <a class="nav-item" href="#insert-edge">Insert Weighted Edge</a>
+  <a class="nav-item" href="#delete-edge">Delete Edge</a>
+  <a class="nav-item" href="#search-edge">Search Edge</a>
+  <a class="nav-item" href="#update-edge">Update Edge Weight</a>
+  <a class="nav-item" href="#display-edge">Display Edge Weights</a>
+  <div class="nav-section">Traversal</div>
+  <a class="nav-item" href="#bfs">BFS</a>
+  <a class="nav-item" href="#dfs">DFS</a>
+  <a class="nav-item" href="#weighted-traversal">Weighted Traversal Analysis</a>
+  <div class="nav-section">Path Operations</div>
+  <a class="nav-item" href="#find-path">Find Path</a>
+  <a class="nav-item" href="#shortest-path">Shortest Path</a>
+  <a class="nav-item" href="#longest-path">Longest Path</a>
+  <a class="nav-item" href="#all-paths">All Paths</a>
+  <a class="nav-item" href="#min-cost">Minimum Cost Path</a>
+  <div class="nav-section">Shortest Path Algorithms</div>
+  <a class="nav-item" href="#dijkstra">Dijkstra's Algorithm</a>
+  <a class="nav-item" href="#bellman-ford">Bellman-Ford</a>
+  <a class="nav-item" href="#floyd-warshall">Floyd-Warshall</a>
+  <a class="nav-item" href="#astar">A* Search</a>
+  <div class="nav-section">Connectivity</div>
+  <a class="nav-item" href="#connected">Connected Check</a>
+  <a class="nav-item" href="#components">Components Detection</a>
+  <a class="nav-item" href="#isolation">Isolation Check</a>
+  <div class="nav-section">Cycle Operations</div>
+  <a class="nav-item" href="#detect-cycle">Detect Cycle</a>
+  <a class="nav-item" href="#cycle-cost">Weighted Cycle Cost</a>
+  <div class="nav-section">Degree Operations</div>
+  <a class="nav-item" href="#degree">Degree Analysis</a>
+  <a class="nav-item" href="#weighted-degree">Weighted Degree</a>
+  <a class="nav-item" href="#total-cost">Total Edge Cost</a>
+  <div class="nav-section">MST</div>
+  <a class="nav-item" href="#prim">Prim's Algorithm</a>
+  <a class="nav-item" href="#kruskal">Kruskal's Algorithm</a>
+  <div class="nav-section">Optimization</div>
+  <a class="nav-item" href="#min-cost-network">Min Cost Network</a>
+  <a class="nav-item" href="#route-opt">Route Optimization</a>
+  <a class="nav-item" href="#resource">Resource Allocation</a>
+  <div class="nav-section">Advanced</div>
+  <a class="nav-item" href="#coloring">Graph Coloring</a>
+  <a class="nav-item" href="#bipartite">Bipartite Check</a>
+  <a class="nav-item" href="#network-flow">Network Flow</a>
+  <a class="nav-item" href="#scc">Strongly Connected Components</a>
+  <div class="nav-section">Visualization</div>
+  <a class="nav-item" href="#display-graph">Display Weighted Graph</a>
+  <a class="nav-item" href="#display-paths">Display Paths</a>
+  <a class="nav-item" href="#cost-matrix">Cost Matrix</a>
+  <a class="nav-item" href="#route-summary">Route Summary</a>
+</nav>
+
+<main id="main">
+
+<!-- HERO -->
+<section id="hero">
+  <h1>Weighted Graph<br><span>Adjacency Matrix</span></h1>
+  <p>A complete learning journey from representation to advanced algorithms — with interactive visualizations, real-life analogies, and clean C code examples.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">🎯 Beginner to Advanced</span>
+    <span class="hero-tag">⚡ Interactive Visualizations</span>
+    <span class="hero-tag">🔷 C Language</span>
+    <span class="hero-tag">📐 Adjacency Matrix</span>
+    <span class="hero-tag">30+ Topics</span>
+  </div>
+</section>
+
+<!-- ==================== SECTION 1: INTRO ==================== -->
+<section class="section" id="intro">
+  <div class="section-header">
+    <span class="section-number">01</span>
+    <h2>What is a Weighted Graph?</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">A graph is a collection of nodes (vertices) connected by edges. A <strong>weighted graph</strong> adds a number (weight/cost) to each edge — representing distance, time, cost, or capacity.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🗺️</div>
+    <div class="analogy-body">
+      <strong>Real-life Analogy</strong>
+      <p>Think of a map of cities (vertices) connected by roads (edges). The distance in km between each city is the weight. To find the shortest travel route, we need those weights!</p>
+    </div>
+  </div>
+
+  <div class="theory-grid">
+    <div class="theory-card">
+      <h4>Vertices (Nodes)</h4>
+      <p>Points in the graph. Can represent cities, computers, people, states — anything that connects to something else.</p>
+    </div>
+    <div class="theory-card">
+      <h4>Edges (Links)</h4>
+      <p>Connections between vertices. Can be directed (one-way street) or undirected (two-way street).</p>
+    </div>
+    <div class="theory-card">
+      <h4>Weights</h4>
+      <p>A number on each edge — could be distance (km), cost ($), time (min), bandwidth (Mbps), or any measurable value.</p>
+    </div>
+    <div class="theory-card">
+      <h4>Adjacency Matrix</h4>
+      <p>A 2D array where cell [i][j] stores the weight of the edge from vertex i to vertex j. Zero (or ∞) means no edge.</p>
+    </div>
+  </div>
+
+  <div class="viz-area" id="intro-viz">
+    <h3>Interactive Weighted Graph Explorer</h3>
+    <canvas id="introCanvas" width="760" height="320"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="drawIntroGraph()">Reset Graph</button>
+      <button class="btn" onclick="highlightEdge()">Highlight Random Edge</button>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C</div>
+    <pre><span class="pp">#define</span> MAX <span class="num">10</span>
+<span class="pp">#define</span> INF <span class="num">99999</span>   <span class="cm">/* represents no edge (infinity) */</span>
+
+<span class="cm">/* A weighted graph using Adjacency Matrix */</span>
+<span class="kw">struct</span> <span class="type">Graph</span> {
+    <span class="type">int</span> vertices;                  <span class="cm">/* total number of vertices */</span>
+    <span class="type">int</span> matrix[MAX][MAX];           <span class="cm">/* weight stored at [i][j] */</span>
+    <span class="type">char</span> label[MAX];               <span class="cm">/* optional: vertex names A,B,C... */</span>
+};
+
+<span class="cm">/* Initialize an empty graph */</span>
+<span class="type">void</span> <span class="fn">initGraph</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> v) {
+    <span class="type">int</span> i, j;
+    g-&gt;vertices = v;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; v; i++) {
+        g-&gt;label[i] = <span class="str">'A'</span> + i;       <span class="cm">/* name vertices A, B, C... */</span>
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; v; j++) {
+            g-&gt;matrix[i][j] = <span class="num">0</span>;     <span class="cm">/* 0 means no edge */</span>
+        }
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== SECTION 2: REPRESENTATION ==================== -->
+<section class="section" id="representation">
+  <div class="section-header">
+    <span class="section-number">02</span>
+    <h2>Weighted Adjacency Matrix</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">The adjacency matrix is a 2D grid. Row = source, Column = destination. Each cell holds the edge weight. If no edge exists, the cell is 0 (or INF for path algorithms).</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">📊</div>
+    <div class="analogy-body">
+      <strong>Think of it like a spreadsheet</strong>
+      <p>Imagine a table where rows and columns are cities, and each cell shows the flight cost between them. A cell with 0 (or ∞) means no direct flight.</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Live Adjacency Matrix — Edit Edge Weights</h3>
+    <div style="overflow-x:auto">
+      <table class="matrix-table" id="adjMatrix"></table>
+    </div>
+    <div class="viz-controls" style="margin-top:16px">
+      <div class="input-row">
+        <label>From:</label>
+        <input type="number" id="mFrom" min="0" max="4" value="0" style="width:55px">
+        <label>To:</label>
+        <input type="number" id="mTo" min="0" max="4" value="1" style="width:55px">
+        <label>Weight:</label>
+        <input type="number" id="mWeight" min="0" max="99" value="5" style="width:55px">
+        <button class="btn primary" onclick="setMatrixEdge()">Set Edge</button>
+        <button class="btn" onclick="clearMatrix()">Clear All</button>
+      </div>
+    </div>
+    <div class="output-log" id="matrixLog">Matrix initialized with 5 vertices (A–E). Click "Set Edge" to add weights.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C</div>
+    <pre><span class="cm">/* 
+  Example: 5-vertex graph
+  matrix[i][j] = weight of edge from i to j
+  0 means NO edge between those vertices
+*/</span>
+
+<span class="type">int</span> matrix[<span class="num">5</span>][<span class="num">5</span>] = {
+<span class="cm">/*   A   B   C   D   E  */</span>
+    {<span class="num">0</span>,  <span class="num">4</span>,  <span class="num">0</span>,  <span class="num">0</span>,  <span class="num">8</span>},  <span class="cm">/* from A */</span>
+    {<span class="num">4</span>,  <span class="num">0</span>,  <span class="num">3</span>,  <span class="num">0</span>,  <span class="num">0</span>},  <span class="cm">/* from B */</span>
+    {<span class="num">0</span>,  <span class="num">3</span>,  <span class="num">0</span>,  <span class="num">6</span>,  <span class="num">0</span>},  <span class="cm">/* from C */</span>
+    {<span class="num">0</span>,  <span class="num">0</span>,  <span class="num">6</span>,  <span class="num">0</span>,  <span class="num">2</span>},  <span class="cm">/* from D */</span>
+    {<span class="num">8</span>,  <span class="num">0</span>,  <span class="num">0</span>,  <span class="num">2</span>,  <span class="num">0</span>}   <span class="cm">/* from E */</span>
+};
+
+<span class="cm">/* Reading an edge weight */</span>
+<span class="type">int</span> weight = matrix[<span class="num">0</span>][<span class="num">1</span>];  <span class="cm">/* = 4 (edge A→B) */</span>
+
+<span class="cm">/* Memory: O(V²) — V = number of vertices */</span>
+<span class="cm">/* Access time: O(1) — instant lookup! */</span></pre>
+  </div>
+
+  <div class="complexity-badge">
+    <span>Space: <strong>O(V²)</strong></span>
+    <span>Edge lookup: <strong>O(1)</strong></span>
+    <span>Add edge: <strong>O(1)</strong></span>
+    <span>Best for: <strong>Dense graphs</strong></span>
+  </div>
+</section>
+
+<!-- ==================== VERTEX OPERATIONS ==================== -->
+<section class="section" id="insert-vertex">
+  <div class="section-header">
+    <span class="section-number">03</span>
+    <h2>Vertex Operations</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">Vertices are the nodes of your graph. You can insert, delete, search, and update them. Each operation modifies the adjacency matrix accordingly.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🏙️</div>
+    <div class="analogy-body">
+      <strong>City Network Analogy</strong>
+      <p>Adding a vertex is like building a new city. Initially it has no roads (edges) to other cities. Deleting a vertex is demolishing a city — all roads to/from it disappear too.</p>
+    </div>
+  </div>
+
+  <!-- INSERT VERTEX -->
+  <div class="subsection" id="insert-vertex">
+    <h3>Insert Vertex</h3>
+    <p>Adding a new vertex increases the matrix size by 1 row and 1 column, all initialized to 0 (no edges).</p>
+  </div>
+
+  <div class="viz-area">
+    <h3>Vertex Operations Visualizer</h3>
+    <canvas id="vertexCanvas" width="760" height="280"></canvas>
+    <div class="viz-controls">
+      <button class="btn success" onclick="vertexOp('insert')">Insert Vertex</button>
+      <button class="btn danger" onclick="vertexOp('delete')">Delete Last Vertex</button>
+      <div class="input-row">
+        <label>Search:</label>
+        <input type="number" id="searchV" min="0" max="9" value="2" style="width:55px">
+        <button class="btn" onclick="vertexOp('search')">Search Vertex</button>
+      </div>
+    </div>
+    <div class="output-log" id="vertexLog">Graph has 4 vertices. Try inserting or deleting a vertex.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Insert, Delete, Search, Update Vertex</div>
+    <pre><span class="cm">/* INSERT VERTEX — adds a new vertex, extends matrix */</span>
+<span class="type">void</span> <span class="fn">insertVertex</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> v = g-&gt;vertices;
+    <span class="kw">if</span> (v &gt;= MAX) { <span class="fn">printf</span>(<span class="str">"Graph is full!\n"</span>); <span class="kw">return</span>; }
+    g-&gt;label[v] = <span class="str">'A'</span> + v;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt;= v; i++) {
+        g-&gt;matrix[v][i] = <span class="num">0</span>;   <span class="cm">/* new row: all zeros */</span>
+        g-&gt;matrix[i][v] = <span class="num">0</span>;   <span class="cm">/* new column: all zeros */</span>
+    }
+    g-&gt;vertices++;
+    <span class="fn">printf</span>(<span class="str">"Vertex %c inserted!\n"</span>, g-&gt;label[v]);
+}
+
+<span class="cm">/* DELETE VERTEX — removes vertex and all its edges */</span>
+<span class="type">void</span> <span class="fn">deleteVertex</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u) {
+    <span class="kw">for</span> (<span class="type">int</span> i = u; i &lt; g-&gt;vertices - <span class="num">1</span>; i++) {
+        g-&gt;label[i] = g-&gt;label[i + <span class="num">1</span>];
+        <span class="kw">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j &lt; g-&gt;vertices; j++) {
+            g-&gt;matrix[i][j] = g-&gt;matrix[i + <span class="num">1</span>][j];
+            g-&gt;matrix[j][i] = g-&gt;matrix[j][i + <span class="num">1</span>];
+        }
+    }
+    g-&gt;vertices--;
+}
+
+<span class="cm">/* SEARCH VERTEX — check if vertex index is valid */</span>
+<span class="type">int</span> <span class="fn">searchVertex</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u) {
+    <span class="kw">return</span> (u &gt;= <span class="num">0</span> &amp;&amp; u &lt; g-&gt;vertices);
+}
+
+<span class="cm">/* UPDATE VERTEX — rename the label */</span>
+<span class="type">void</span> <span class="fn">updateVertex</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">char</span> newLabel) {
+    <span class="kw">if</span> (<span class="fn">searchVertex</span>(g, u))
+        g-&gt;label[u] = newLabel;
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== EDGE OPERATIONS ==================== -->
+<section class="section" id="insert-edge">
+  <div class="section-header">
+    <span class="section-number">04</span>
+    <h2>Edge Operations</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">Edges are the connections between vertices. We can insert edges with weights, delete them, search for them, and update their weights.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🛣️</div>
+    <div class="analogy-body">
+      <strong>Road Construction Analogy</strong>
+      <p>Adding an edge is like building a road between two cities with a toll (weight). Deleting an edge closes that road. Updating the weight changes the toll fee.</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Edge Operations on Weighted Graph</h3>
+    <canvas id="edgeCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <div class="input-row">
+        <label>From:</label>
+        <input type="number" id="eFrom" min="0" max="4" value="0" style="width:55px">
+        <label>To:</label>
+        <input type="number" id="eTo" min="0" max="4" value="2" style="width:55px">
+        <label>Weight:</label>
+        <input type="number" id="eWeight" min="1" max="99" value="7" style="width:55px">
+      </div>
+      <button class="btn success" onclick="edgeOp('insert')">Insert Edge</button>
+      <button class="btn danger" onclick="edgeOp('delete')">Delete Edge</button>
+      <button class="btn" onclick="edgeOp('search')">Search Edge</button>
+      <button class="btn warn" onclick="edgeOp('update')">Update Weight</button>
+      <button class="btn" onclick="edgeOp('display')">Display All Edges</button>
+    </div>
+    <div class="output-log" id="edgeLog">Ready. Enter From, To, and Weight, then click an operation.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — All Edge Operations</div>
+    <pre><span class="cm">/* INSERT WEIGHTED EDGE (undirected: both [i][j] and [j][i]) */</span>
+<span class="type">void</span> <span class="fn">insertEdge</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">int</span> v, <span class="type">int</span> w) {
+    g-&gt;matrix[u][v] = w;
+    g-&gt;matrix[v][u] = w;   <span class="cm">/* remove this line for directed graph */</span>
+    <span class="fn">printf</span>(<span class="str">"Edge %c-%c with weight %d added.\n"</span>, g-&gt;label[u], g-&gt;label[v], w);
+}
+
+<span class="cm">/* DELETE EDGE */</span>
+<span class="type">void</span> <span class="fn">deleteEdge</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">int</span> v) {
+    g-&gt;matrix[u][v] = <span class="num">0</span>;
+    g-&gt;matrix[v][u] = <span class="num">0</span>;
+}
+
+<span class="cm">/* SEARCH EDGE — returns weight (0 if not found) */</span>
+<span class="type">int</span> <span class="fn">searchEdge</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="kw">return</span> g-&gt;matrix[u][v];
+}
+
+<span class="cm">/* UPDATE EDGE WEIGHT */</span>
+<span class="type">void</span> <span class="fn">updateEdge</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">int</span> v, <span class="type">int</span> newW) {
+    <span class="kw">if</span> (g-&gt;matrix[u][v] != <span class="num">0</span>)     <span class="cm">/* only update if edge exists */</span>
+        g-&gt;matrix[u][v] = g-&gt;matrix[v][u] = newW;
+}
+
+<span class="cm">/* DISPLAY ALL EDGE WEIGHTS */</span>
+<span class="type">void</span> <span class="fn">displayEdges</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> i, j;
+    <span class="fn">printf</span>(<span class="str">"%-5s %-5s %s\n"</span>, <span class="str">"From"</span>, <span class="str">"To"</span>, <span class="str">"Weight"</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; g-&gt;vertices; i++)
+        <span class="kw">for</span> (j = i + <span class="num">1</span>; j &lt; g-&gt;vertices; j++)
+            <span class="kw">if</span> (g-&gt;matrix[i][j] != <span class="num">0</span>)
+                <span class="fn">printf</span>(<span class="str">"%-5c %-5c %d\n"</span>, g-&gt;label[i], g-&gt;label[j], g-&gt;matrix[i][j]);
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== TRAVERSAL ==================== -->
+<section class="section" id="bfs">
+  <div class="section-header">
+    <span class="section-number">05</span>
+    <h2>Traversal Operations</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">Traversal means visiting every vertex in a systematic order. BFS explores level by level (nearest neighbours first), DFS goes as deep as possible before backtracking.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🌊</div>
+    <div class="analogy-body">
+      <strong>BFS = Ripples in a pond. DFS = Exploring a maze.</strong>
+      <p>BFS spreads outward like ripples from a stone — visiting all friends, then friends-of-friends. DFS is like solving a maze — go as far as you can, hit a dead end, backtrack, try another path.</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>BFS & DFS Traversal Animator</h3>
+    <canvas id="traversalCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <div class="input-row">
+        <label>Start vertex:</label>
+        <input type="number" id="travStart" min="0" max="5" value="0" style="width:55px">
+      </div>
+      <button class="btn primary" onclick="runBFS()">▶ Run BFS</button>
+      <button class="btn warn" onclick="runDFS()">▶ Run DFS</button>
+      <button class="btn" onclick="resetTraversal()">Reset</button>
+    </div>
+    <div class="output-log" id="traversalLog">Choose a start vertex and click BFS or DFS to animate the traversal.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — BFS on Weighted Graph</div>
+    <pre><span class="cm">/* BREADTH-FIRST SEARCH using a simple array as queue */</span>
+<span class="type">void</span> <span class="fn">BFS</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> start) {
+    <span class="type">int</span> visited[MAX] = {<span class="num">0</span>};    <span class="cm">/* track visited vertices */</span>
+    <span class="type">int</span> queue[MAX], front = <span class="num">0</span>, rear = <span class="num">0</span>;
+
+    visited[start] = <span class="num">1</span>;
+    queue[rear++] = start;
+
+    <span class="fn">printf</span>(<span class="str">"BFS: "</span>);
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="type">int</span> u = queue[front++];
+        <span class="fn">printf</span>(<span class="str">"%c "</span>, g-&gt;label[u]);
+
+        <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[u][v] != <span class="num">0</span> &amp;&amp; !visited[v]) {
+                visited[v] = <span class="num">1</span>;
+                queue[rear++] = v;
+            }
+        }
+    }
+}
+
+<span class="cm">/* DEPTH-FIRST SEARCH (recursive) */</span>
+<span class="type">void</span> <span class="fn">DFS</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">int</span> visited[]) {
+    visited[u] = <span class="num">1</span>;
+    <span class="fn">printf</span>(<span class="str">"%c "</span>, g-&gt;label[u]);
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++) {
+        <span class="kw">if</span> (g-&gt;matrix[u][v] != <span class="num">0</span> &amp;&amp; !visited[v])
+            <span class="fn">DFS</span>(g, v, visited);
+    }
+}
+
+<span class="cm">/* Weighted Traversal: also track cumulative cost */</span>
+<span class="type">void</span> <span class="fn">weightedBFS</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> start) {
+    <span class="type">int</span> visited[MAX] = {<span class="num">0</span>}, cost[MAX] = {<span class="num">0</span>};
+    <span class="type">int</span> queue[MAX], front = <span class="num">0</span>, rear = <span class="num">0</span>;
+    visited[start] = <span class="num">1</span>;
+    queue[rear++] = start;
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="type">int</span> u = queue[front++];
+        <span class="fn">printf</span>(<span class="str">"%c(cost:%d) "</span>, g-&gt;label[u], cost[u]);
+        <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !visited[v]) {
+                visited[v] = <span class="num">1</span>;
+                cost[v] = cost[u] + g-&gt;matrix[u][v];
+                queue[rear++] = v;
+            }
+        }
+    }
+}</pre>
+  </div>
+
+  <div id="weighted-traversal"></div>
+</section>
+
+<!-- ==================== PATH OPERATIONS ==================== -->
+<section class="section" id="find-path">
+  <div class="section-header">
+    <span class="section-number">06</span>
+    <h2>Path Operations</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">A path is a sequence of vertices connected by edges. We can find if a path exists, the shortest path, the longest path, all possible paths, and the minimum cost path.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🧭</div>
+    <div class="analogy-body">
+      <strong>GPS Navigation Analogy</strong>
+      <p>Your GPS finds all routes (all paths), picks the fastest (shortest path), warns you about toll roads (weights), and lets you choose the scenic route (longest path)!</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>All Path Finder — Interactive</h3>
+    <canvas id="pathCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <div class="input-row">
+        <label>Source:</label>
+        <input type="number" id="pathSrc" min="0" max="5" value="0" style="width:55px">
+        <label>Dest:</label>
+        <input type="number" id="pathDst" min="0" max="5" value="4" style="width:55px">
+      </div>
+      <button class="btn primary" onclick="findAllPaths()">Find All Paths</button>
+      <button class="btn success" onclick="findShortestPath()">Shortest Path</button>
+      <button class="btn warn" onclick="findLongestPath()">Longest Path</button>
+      <button class="btn" onclick="resetPaths()">Reset</button>
+    </div>
+    <div class="output-log" id="pathLog">Enter source and destination, then click a path operation.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Find Path, All Paths, Shortest & Longest</div>
+    <pre><span class="cm">/* FIND PATH — does a path exist from src to dst? (DFS) */</span>
+<span class="type">int</span> <span class="fn">findPath</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> dst, <span class="type">int</span> visited[]) {
+    <span class="kw">if</span> (src == dst) <span class="kw">return</span> <span class="num">1</span>;   <span class="cm">/* reached destination */</span>
+    visited[src] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++) {
+        <span class="kw">if</span> (g-&gt;matrix[src][v] &amp;&amp; !visited[v])
+            <span class="kw">if</span> (<span class="fn">findPath</span>(g, v, dst, visited)) <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cm">/* ALL PATHS — print every path from src to dst */</span>
+<span class="type">void</span> <span class="fn">allPaths</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> dst,
+              <span class="type">int</span> path[], <span class="type">int</span> pLen, <span class="type">int</span> visited[]) {
+    path[pLen++] = src;
+    visited[src] = <span class="num">1</span>;
+    <span class="kw">if</span> (src == dst) {
+        <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; pLen; i++)
+            <span class="fn">printf</span>(<span class="str">"%c%s"</span>, <span class="str">'A'</span>+path[i], i&lt;pLen-<span class="num">1</span>?<span class="str">"→"</span>:<span class="str">"\n"</span>);
+    } <span class="kw">else</span> {
+        <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+            <span class="kw">if</span> (g-&gt;matrix[src][v] &amp;&amp; !visited[v])
+                <span class="fn">allPaths</span>(g, v, dst, path, pLen, visited);
+    }
+    visited[src] = <span class="num">0</span>;   <span class="cm">/* backtrack */</span>
+}
+
+<span class="cm">/* MINIMUM COST PATH — track cumulative weight */</span>
+<span class="type">int</span> minCost;
+<span class="type">void</span> <span class="fn">minCostPath</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> dst,
+                 <span class="type">int</span> visited[], <span class="type">int</span> curCost) {
+    <span class="kw">if</span> (src == dst) {
+        <span class="kw">if</span> (curCost &lt; minCost) minCost = curCost;
+        <span class="kw">return</span>;
+    }
+    visited[src] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+        <span class="kw">if</span> (g-&gt;matrix[src][v] &amp;&amp; !visited[v])
+            <span class="fn">minCostPath</span>(g, v, dst, visited, curCost + g-&gt;matrix[src][v]);
+    visited[src] = <span class="num">0</span>;
+}</pre>
+  </div>
+
+  <!-- Shortest Path subsection marker -->
+  <div id="shortest-path"></div>
+  <div id="longest-path"></div>
+  <div id="all-paths"></div>
+  <div id="min-cost"></div>
+</section>
+
+<!-- ==================== DIJKSTRA ==================== -->
+<section class="section" id="dijkstra">
+  <div class="section-header">
+    <span class="section-number">07</span>
+    <h2>Dijkstra's Algorithm</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">Dijkstra finds the shortest path from one source vertex to all other vertices. It always picks the unvisited vertex with the smallest known distance — greedy approach. Works only with non-negative weights.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">📍</div>
+    <div class="analogy-body">
+      <strong>Spreading Rumor Analogy</strong>
+      <p>Imagine spreading a rumor starting from you. The rumor spreads to your closest friend first, then their closest friends — always reaching the "cheapest" person next. That's Dijkstra!</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Dijkstra's Algorithm — Step by Step</h3>
+    <canvas id="dijkstraCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <div class="input-row">
+        <label>Source vertex:</label>
+        <input type="number" id="dijkSrc" min="0" max="5" value="0" style="width:55px">
+      </div>
+      <button class="btn primary" onclick="runDijkstra()">▶ Run Dijkstra</button>
+      <button class="btn" onclick="stepDijkstra()">Step →</button>
+      <button class="btn" onclick="resetDijkstra()">Reset</button>
+    </div>
+    <div class="output-log" id="dijkstraLog">Click "Run Dijkstra" to find shortest paths from source vertex.</div>
+  </div>
+
+  <div class="complexity-badge">
+    <span>Time: <strong>O(V²)</strong> with matrix</span>
+    <span>Space: <strong>O(V)</strong></span>
+    <span>Negative weights: <strong>❌ No</strong></span>
+    <span>Use case: <strong>GPS, Maps, Network routing</strong></span>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Dijkstra's Algorithm</div>
+    <pre><span class="type">void</span> <span class="fn">dijkstra</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src) {
+    <span class="type">int</span> dist[MAX], visited[MAX], parent[MAX];
+    <span class="type">int</span> i, v, u, minDist, n = g-&gt;vertices;
+
+    <span class="cm">/* Step 1: Initialize all distances to infinity */</span>
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) {
+        dist[i] = INF;
+        visited[i] = <span class="num">0</span>;
+        parent[i] = -<span class="num">1</span>;
+    }
+    dist[src] = <span class="num">0</span>;   <span class="cm">/* distance to self is 0 */</span>
+
+    <span class="kw">for</span> (<span class="type">int</span> count = <span class="num">0</span>; count &lt; n - <span class="num">1</span>; count++) {
+        <span class="cm">/* Step 2: Pick unvisited vertex with minimum distance */</span>
+        minDist = INF; u = -<span class="num">1</span>;
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (!visited[v] &amp;&amp; dist[v] &lt; minDist) {
+                minDist = dist[v]; u = v;
+            }
+        <span class="kw">if</span> (u == -<span class="num">1</span>) <span class="kw">break</span>;
+        visited[u] = <span class="num">1</span>;
+
+        <span class="cm">/* Step 3: Relax neighbours */</span>
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !visited[v] &amp;&amp;
+                dist[u] + g-&gt;matrix[u][v] &lt; dist[v]) {
+                dist[v] = dist[u] + g-&gt;matrix[u][v];
+                parent[v] = u;
+            }
+        }
+    }
+
+    <span class="cm">/* Print shortest distances */</span>
+    <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+        <span class="fn">printf</span>(<span class="str">"%c to %c: %d\n"</span>, g-&gt;label[src], g-&gt;label[v], dist[v]);
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== BELLMAN-FORD ==================== -->
+<section class="section" id="bellman-ford">
+  <div class="section-header">
+    <span class="section-number">08</span>
+    <h2>Bellman-Ford Algorithm</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">Bellman-Ford handles <strong>negative edge weights</strong> and detects negative cycles. It relaxes all edges V-1 times. Slower than Dijkstra but more general.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">💳</div>
+    <div class="analogy-body">
+      <strong>Currency Exchange Analogy</strong>
+      <p>In finance, some currency conversions can have "negative cost" (you gain money). Bellman-Ford handles this. If converting currencies in a loop profits you, that's a negative cycle!</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Bellman-Ford Step Visualizer</h3>
+    <canvas id="bfCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="runBellmanFord()">▶ Run Bellman-Ford</button>
+      <button class="btn" onclick="stepBF()">Step →</button>
+      <button class="btn" onclick="resetBF()">Reset</button>
+    </div>
+    <div class="output-log" id="bfLog">Bellman-Ford handles negative weights. Click Run to start.</div>
+  </div>
+
+  <div class="complexity-badge">
+    <span>Time: <strong>O(V × E)</strong></span>
+    <span>Negative weights: <strong>✅ Yes</strong></span>
+    <span>Detects negative cycles: <strong>✅ Yes</strong></span>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Bellman-Ford Algorithm</div>
+    <pre><span class="type">void</span> <span class="fn">bellmanFord</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src) {
+    <span class="type">int</span> dist[MAX], i, u, v, n = g-&gt;vertices;
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++) dist[i] = INF;
+    dist[src] = <span class="num">0</span>;
+
+    <span class="cm">/* Relax all edges V-1 times */</span>
+    <span class="kw">for</span> (<span class="type">int</span> iter = <span class="num">0</span>; iter &lt; n - <span class="num">1</span>; iter++) {
+        <span class="kw">for</span> (u = <span class="num">0</span>; u &lt; n; u++) {
+            <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; dist[u] != INF &amp;&amp;
+                    dist[u] + g-&gt;matrix[u][v] &lt; dist[v]) {
+                    dist[v] = dist[u] + g-&gt;matrix[u][v];
+                }
+            }
+        }
+    }
+
+    <span class="cm">/* Check for negative cycle (V-th relaxation still changes) */</span>
+    <span class="kw">for</span> (u = <span class="num">0</span>; u &lt; n; u++)
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; dist[u] != INF &amp;&amp;
+                dist[u] + g-&gt;matrix[u][v] &lt; dist[v])
+                <span class="fn">printf</span>(<span class="str">"Negative cycle detected!\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== FLOYD-WARSHALL ==================== -->
+<section class="section" id="floyd-warshall">
+  <div class="section-header">
+    <span class="section-number">09</span>
+    <h2>Floyd-Warshall Algorithm</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">Floyd-Warshall finds shortest paths between ALL pairs of vertices in one pass. It considers every vertex as a possible intermediate step.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">✈️</div>
+    <div class="analogy-body">
+      <strong>Flight Connections Analogy</strong>
+      <p>Is it cheaper to fly A→C directly, or via a connecting flight through B? Floyd-Warshall checks every possible connecting city and fills in the cheapest cost for every city pair.</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Floyd-Warshall Distance Matrix</h3>
+    <div id="fwMatrixWrap" style="overflow-x:auto">
+      <table class="matrix-table" id="fwMatrix"></table>
+    </div>
+    <div class="viz-controls" style="margin-top:14px">
+      <button class="btn primary" onclick="runFloydWarshall()">▶ Run Floyd-Warshall</button>
+      <button class="btn" onclick="stepFW()">Step (k++) →</button>
+      <button class="btn" onclick="resetFW()">Reset to Original</button>
+    </div>
+    <div class="output-log" id="fwLog">Click Run to compute all-pairs shortest paths.</div>
+  </div>
+
+  <div class="complexity-badge">
+    <span>Time: <strong>O(V³)</strong></span>
+    <span>Space: <strong>O(V²)</strong></span>
+    <span>Negative weights: <strong>✅ Yes</strong></span>
+    <span>All pairs: <strong>✅ Yes</strong></span>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Floyd-Warshall</div>
+    <pre><span class="type">void</span> <span class="fn">floydWarshall</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> dist[MAX][MAX], i, j, k, n = g-&gt;vertices;
+
+    <span class="cm">/* Initialize dist with the adjacency matrix */</span>
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; n; j++) {
+            <span class="kw">if</span> (i == j) dist[i][j] = <span class="num">0</span>;
+            <span class="kw">else if</span> (g-&gt;matrix[i][j]) dist[i][j] = g-&gt;matrix[i][j];
+            <span class="kw">else</span> dist[i][j] = INF;
+        }
+
+    <span class="cm">/* Try every vertex k as an intermediate */</span>
+    <span class="kw">for</span> (k = <span class="num">0</span>; k &lt; n; k++)
+        <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; n; i++)
+            <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; n; j++)
+                <span class="kw">if</span> (dist[i][k] != INF &amp;&amp; dist[k][j] != INF &amp;&amp;
+                    dist[i][k] + dist[k][j] &lt; dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== A* ==================== -->
+<section class="section" id="astar">
+  <div class="section-header">
+    <span class="section-number">10</span>
+    <h2>A* Search Algorithm</h2>
+    <span class="section-tag tag-advanced">Advanced</span>
+  </div>
+  <p class="lead">A* combines Dijkstra with a heuristic (estimated distance to goal) to find the shortest path more efficiently. It avoids exploring paths that are clearly going in the wrong direction.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🎯</div>
+    <div class="analogy-body">
+      <strong>Smart GPS Analogy</strong>
+      <p>A smart GPS doesn't explore roads heading away from your destination. It uses your phone's GPS to estimate how far you are from the goal and prioritizes paths that get you closer. That's the heuristic!</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>A* Search — f(n) = g(n) + h(n)</h3>
+    <canvas id="astarCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="runAStar()">▶ Run A*</button>
+      <button class="btn" onclick="resetAStar()">Reset</button>
+    </div>
+    <div class="output-log" id="astarLog">A* uses f = g (cost so far) + h (estimated remaining cost). Click Run.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — A* Search (simplified)</div>
+    <pre><span class="cm">/* Heuristic: estimate of remaining cost (must be admissible — never overestimates) */</span>
+<span class="type">int</span> <span class="fn">heuristic</span>(<span class="type">int</span> u, <span class="type">int</span> goal) {
+    <span class="cm">/* Simple example: use pre-defined estimates */</span>
+    <span class="type">int</span> h[] = {<span class="num">6</span>, <span class="num">4</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">0</span>};   <span class="cm">/* h[i] = estimate from i to goal */</span>
+    <span class="kw">return</span> h[u];
+}
+
+<span class="type">void</span> <span class="fn">aStar</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> goal) {
+    <span class="type">int</span> gCost[MAX], fCost[MAX], visited[MAX] = {<span class="num">0</span>};
+    <span class="type">int</span> n = g-&gt;vertices, u, v;
+
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        gCost[i] = INF;
+        fCost[i] = INF;
+    }
+    gCost[src] = <span class="num">0</span>;
+    fCost[src] = <span class="fn">heuristic</span>(src, goal);
+
+    <span class="kw">while</span> (<span class="num">1</span>) {
+        <span class="cm">/* Pick unvisited vertex with lowest fCost */</span>
+        <span class="type">int</span> minF = INF; u = -<span class="num">1</span>;
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (!visited[v] &amp;&amp; fCost[v] &lt; minF) { minF = fCost[v]; u = v; }
+        <span class="kw">if</span> (u == -<span class="num">1</span> || u == goal) <span class="kw">break</span>;
+        visited[u] = <span class="num">1</span>;
+
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !visited[v]) {
+                <span class="type">int</span> newG = gCost[u] + g-&gt;matrix[u][v];
+                <span class="kw">if</span> (newG &lt; gCost[v]) {
+                    gCost[v] = newG;
+                    fCost[v] = newG + <span class="fn">heuristic</span>(v, goal);
+                }
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"A* shortest cost: %d\n"</span>, gCost[goal]);
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== CONNECTIVITY ==================== -->
+<section class="section" id="connected">
+  <div class="section-header">
+    <span class="section-number">11</span>
+    <h2>Connectivity Operations</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">Connectivity operations check whether the graph is fully connected, find disconnected components, and detect isolated vertices (vertices with no edges).</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🌐</div>
+    <div class="analogy-body">
+      <strong>Internet Network Analogy</strong>
+      <p>A connected graph is like a fully working internet — every computer can reach every other computer. A disconnected graph means some devices are offline (isolated) or split into separate sub-networks (components).</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Connectivity Checker</h3>
+    <canvas id="connectCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="checkConnected()">Check Connected</button>
+      <button class="btn" onclick="findComponents()">Find Components</button>
+      <button class="btn warn" onclick="findIsolated()">Find Isolated Vertices</button>
+      <button class="btn" onclick="resetConnect()">Reset Graph</button>
+      <button class="btn danger" onclick="breakConnect()">Break Connection</button>
+    </div>
+    <div class="output-log" id="connectLog">Click "Check Connected" to test graph connectivity.</div>
+  </div>
+
+  <div id="components"></div>
+  <div id="isolation"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Connected Check, Components, Isolation</div>
+    <pre><span class="cm">/* CONNECTED CHECK — graph is connected if BFS visits all vertices */</span>
+<span class="type">int</span> <span class="fn">isConnected</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> visited[MAX] = {<span class="num">0</span>}, queue[MAX], f = <span class="num">0</span>, r = <span class="num">0</span>, count = <span class="num">0</span>;
+    visited[<span class="num">0</span>] = <span class="num">1</span>; queue[r++] = <span class="num">0</span>;
+    <span class="kw">while</span> (f &lt; r) {
+        <span class="type">int</span> u = queue[f++]; count++;
+        <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !visited[v]) { visited[v]=<span class="num">1</span>; queue[r++]=v; }
+    }
+    <span class="kw">return</span> count == g-&gt;vertices;
+}
+
+<span class="cm">/* COMPONENTS DETECTION — find all disconnected components */</span>
+<span class="type">int</span> <span class="fn">findComponents</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> visited[MAX] = {<span class="num">0</span>}, components = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; g-&gt;vertices; i++) {
+        <span class="kw">if</span> (!visited[i]) {
+            components++;
+            <span class="cm">/* BFS from this unvisited vertex */</span>
+            <span class="type">int</span> q[MAX], f = <span class="num">0</span>, r = <span class="num">0</span>;
+            visited[i] = <span class="num">1</span>; q[r++] = i;
+            <span class="kw">while</span> (f &lt; r) {
+                <span class="type">int</span> u = q[f++];
+                <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+                    <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !visited[v]) { visited[v]=<span class="num">1</span>; q[r++]=v; }
+            }
+        }
+    }
+    <span class="kw">return</span> components;
+}
+
+<span class="cm">/* ISOLATION CHECK — vertex with no edges */</span>
+<span class="type">int</span> <span class="fn">isIsolated</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u) {
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+        <span class="kw">if</span> (g-&gt;matrix[u][v] != <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== CYCLE OPERATIONS ==================== -->
+<section class="section" id="detect-cycle">
+  <div class="section-header">
+    <span class="section-number">12</span>
+    <h2>Cycle Operations</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">A cycle is a path that starts and ends at the same vertex. Detecting cycles is crucial for avoiding infinite loops in routing and checking if a graph is a tree.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔄</div>
+    <div class="analogy-body">
+      <strong>Traffic Roundabout Analogy</strong>
+      <p>A cycle in a road network is like a roundabout — you can keep going in circles. In a delivery network, a cycle means packages could be routed in circles, wasting fuel (cycle cost analysis).</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Cycle Detection Visualizer</h3>
+    <canvas id="cycleCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="detectCycle()">Detect Cycle</button>
+      <button class="btn warn" onclick="computeCycleCost()">Compute Cycle Cost</button>
+      <button class="btn" onclick="resetCycle()">Reset</button>
+    </div>
+    <div class="output-log" id="cycleLog">Click "Detect Cycle" to check for cycles using DFS back-edge detection.</div>
+  </div>
+
+  <div id="cycle-cost"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Cycle Detection & Weighted Cycle Cost</div>
+    <pre><span class="cm">/* DETECT CYCLE using DFS (undirected graph) */</span>
+<span class="type">int</span> <span class="fn">dfsHasCycle</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u, <span class="type">int</span> parent, <span class="type">int</span> visited[]) {
+    visited[u] = <span class="num">1</span>;
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++) {
+        <span class="kw">if</span> (g-&gt;matrix[u][v] == <span class="num">0</span>) <span class="kw">continue</span>;
+        <span class="kw">if</span> (!visited[v]) {
+            <span class="kw">if</span> (<span class="fn">dfsHasCycle</span>(g, v, u, visited)) <span class="kw">return</span> <span class="num">1</span>;
+        } <span class="kw">else if</span> (v != parent) {
+            <span class="kw">return</span> <span class="num">1</span>;   <span class="cm">/* back edge found — cycle! */</span>
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="type">int</span> <span class="fn">hasCycle</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> visited[MAX] = {<span class="num">0</span>};
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; g-&gt;vertices; i++)
+        <span class="kw">if</span> (!visited[i] &amp;&amp; <span class="fn">dfsHasCycle</span>(g, i, -<span class="num">1</span>, visited))
+            <span class="kw">return</span> <span class="num">1</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cm">/* WEIGHTED CYCLE COST — find cycle and sum its edge weights */</span>
+<span class="type">int</span> <span class="fn">cycleCost</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> start) {
+    <span class="type">int</span> path[MAX], pLen = <span class="num">0</span>, cost = <span class="num">0</span>, visited[MAX] = {<span class="num">0</span>};
+    path[pLen++] = start;
+    visited[start] = <span class="num">1</span>;
+    <span class="type">int</span> u = start;
+    <span class="kw">while</span> (<span class="num">1</span>) {
+        <span class="type">int</span> moved = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !visited[v]) {
+                cost += g-&gt;matrix[u][v];
+                path[pLen++] = v;
+                visited[v] = <span class="num">1</span>;
+                u = v; moved = <span class="num">1</span>; <span class="kw">break</span>;
+            }
+        }
+        <span class="kw">if</span> (!moved) { <span class="cm">/* try to close cycle back to start */</span>
+            <span class="kw">if</span> (g-&gt;matrix[u][start]) cost += g-&gt;matrix[u][start];
+            <span class="kw">break</span>;
+        }
+    }
+    <span class="kw">return</span> cost;
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== DEGREE OPERATIONS ==================== -->
+<section class="section" id="degree">
+  <div class="section-header">
+    <span class="section-number">13</span>
+    <h2>Degree Operations</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">The degree of a vertex is the number of edges connected to it. Weighted degree sums all edge weights. Total edge cost sums all weights in the graph.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">📡</div>
+    <div class="analogy-body">
+      <strong>Social Network Analogy</strong>
+      <p>Degree = how many friends you have. Weighted degree = total "closeness" with all friends combined (e.g., hours spent together). A celebrity has high degree; a close-knit friend group has high weighted degree.</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Degree Analysis Dashboard</h3>
+    <canvas id="degreeCanvas" width="760" height="280"></canvas>
+    <div class="viz-controls">
+      <div class="input-row">
+        <label>Vertex:</label>
+        <input type="number" id="degVertex" min="0" max="5" value="0" style="width:55px">
+      </div>
+      <button class="btn primary" onclick="showDegree()">Show Degree</button>
+      <button class="btn" onclick="showWeightedDegree()">Weighted Degree</button>
+      <button class="btn warn" onclick="showTotalCost()">Total Edge Cost</button>
+      <button class="btn" onclick="showAllDegrees()">All Degrees</button>
+    </div>
+    <div class="output-log" id="degreeLog">Click an operation to analyze vertex degrees.</div>
+  </div>
+
+  <div id="weighted-degree"></div>
+  <div id="total-cost"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Degree Analysis</div>
+    <pre><span class="cm">/* DEGREE — count edges of vertex u */</span>
+<span class="type">int</span> <span class="fn">degree</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u) {
+    <span class="type">int</span> deg = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+        <span class="kw">if</span> (g-&gt;matrix[u][v] != <span class="num">0</span>) deg++;
+    <span class="kw">return</span> deg;
+}
+
+<span class="cm">/* WEIGHTED DEGREE — sum of all edge weights for vertex u */</span>
+<span class="type">int</span> <span class="fn">weightedDegree</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> u) {
+    <span class="type">int</span> wDeg = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+        wDeg += g-&gt;matrix[u][v];
+    <span class="kw">return</span> wDeg;
+}
+
+<span class="cm">/* TOTAL EDGE COST — sum of all weights in the graph */</span>
+<span class="type">int</span> <span class="fn">totalEdgeCost</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> total = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; g-&gt;vertices; i++)
+        <span class="kw">for</span> (<span class="type">int</span> j = i + <span class="num">1</span>; j &lt; g-&gt;vertices; j++)
+            total += g-&gt;matrix[i][j];   <span class="cm">/* count each edge once */</span>
+    <span class="kw">return</span> total;
+}
+
+<span class="cm">/* DEGREE ANALYSIS — print all vertices with their degrees */</span>
+<span class="type">void</span> <span class="fn">degreeAnalysis</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"%-8s %-8s %s\n"</span>, <span class="str">"Vertex"</span>, <span class="str">"Degree"</span>, <span class="str">"Wtd Degree"</span>);
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; g-&gt;vertices; i++)
+        <span class="fn">printf</span>(<span class="str">"%-8c %-8d %d\n"</span>, g-&gt;label[i], <span class="fn">degree</span>(g,i), <span class="fn">weightedDegree</span>(g,i));
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== MST ==================== -->
+<section class="section" id="prim">
+  <div class="section-header">
+    <span class="section-number">14</span>
+    <h2>Minimum Spanning Tree (MST)</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <p class="lead">An MST connects all vertices using the minimum total edge weight, with no cycles. Prim's builds the MST vertex by vertex; Kruskal's adds edges in sorted order.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">💡</div>
+    <div class="analogy-body">
+      <strong>Electrical Grid Analogy</strong>
+      <p>Imagine connecting all houses in a city with electrical cable at minimum cost. You don't need redundant connections (no cycles). MST gives you the cheapest network that reaches every house!</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>MST Visualizer — Prim's & Kruskal's</h3>
+    <canvas id="mstCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="runPrim()">▶ Prim's MST</button>
+      <button class="btn warn" onclick="runKruskal()">▶ Kruskal's MST</button>
+      <button class="btn" onclick="stepMST()">Step →</button>
+      <button class="btn" onclick="resetMST()">Reset</button>
+    </div>
+    <div class="output-log" id="mstLog">Choose Prim's or Kruskal's to find the Minimum Spanning Tree.</div>
+  </div>
+
+  <div id="kruskal"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Prim's Algorithm</div>
+    <pre><span class="type">void</span> <span class="fn">prim</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> inMST[MAX] = {<span class="num">0</span>}, key[MAX], parent[MAX];
+    <span class="type">int</span> n = g-&gt;vertices, u, v, totalCost = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++) { key[i] = INF; parent[i] = -<span class="num">1</span>; }
+    key[<span class="num">0</span>] = <span class="num">0</span>;   <span class="cm">/* start from vertex 0 */</span>
+
+    <span class="kw">for</span> (<span class="type">int</span> count = <span class="num">0</span>; count &lt; n; count++) {
+        <span class="cm">/* Pick minimum key vertex not yet in MST */</span>
+        <span class="type">int</span> minKey = INF; u = -<span class="num">1</span>;
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (!inMST[v] &amp;&amp; key[v] &lt; minKey) { minKey = key[v]; u = v; }
+        <span class="kw">if</span> (u == -<span class="num">1</span>) <span class="kw">break</span>;
+        inMST[u] = <span class="num">1</span>;
+        totalCost += key[u];
+
+        <span class="cm">/* Update keys of adjacent vertices */</span>
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; !inMST[v] &amp;&amp; g-&gt;matrix[u][v] &lt; key[v]) {
+                key[v] = g-&gt;matrix[u][v];
+                parent[v] = u;
+            }
+    }
+    <span class="fn">printf</span>(<span class="str">"MST Total Cost: %d\n"</span>, totalCost);
+}</pre>
+  </div>
+  <div class="code-wrap">
+    <div class="code-label">C — Kruskal's Algorithm (Union-Find)</div>
+    <pre><span class="cm">/* UNION-FIND for cycle detection */</span>
+<span class="type">int</span> parent_uf[MAX];
+<span class="type">int</span> <span class="fn">find</span>(<span class="type">int</span> x) { <span class="kw">return</span> parent_uf[x]==x ? x : (parent_uf[x]=<span class="fn">find</span>(parent_uf[x])); }
+<span class="type">void</span> <span class="fn">unite</span>(<span class="type">int</span> x, <span class="type">int</span> y) { parent_uf[<span class="fn">find</span>(x)] = <span class="fn">find</span>(y); }
+
+<span class="cm">/* Edge list for Kruskal */</span>
+<span class="kw">struct</span> <span class="type">Edge</span> { <span class="type">int</span> u, v, w; };
+
+<span class="type">int</span> <span class="fn">cmpEdge</span>(<span class="kw">const</span> <span class="type">void</span>*a, <span class="kw">const</span> <span class="type">void</span>*b) {
+    <span class="kw">return</span> ((<span class="kw">struct</span> <span class="type">Edge</span>*)a)-&gt;w - ((<span class="kw">struct</span> <span class="type">Edge</span>*)b)-&gt;w;
+}
+
+<span class="type">void</span> <span class="fn">kruskal</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="kw">struct</span> <span class="type">Edge</span> edges[MAX*MAX]; <span class="type">int</span> eCount = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;g-&gt;vertices; i++)
+        <span class="kw">for</span> (<span class="type">int</span> j=i+<span class="num">1</span>; j&lt;g-&gt;vertices; j++)
+            <span class="kw">if</span> (g-&gt;matrix[i][j]) { edges[eCount].u=i; edges[eCount].v=j; edges[eCount++].w=g-&gt;matrix[i][j]; }
+    <span class="fn">qsort</span>(edges, eCount, <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="type">Edge</span>), cmpEdge);
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;g-&gt;vertices; i++) parent_uf[i] = i;
+    <span class="type">int</span> total = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;eCount; i++) {
+        <span class="kw">if</span> (<span class="fn">find</span>(edges[i].u) != <span class="fn">find</span>(edges[i].v)) {
+            <span class="fn">unite</span>(edges[i].u, edges[i].v);
+            total += edges[i].w;
+            <span class="fn">printf</span>(<span class="str">"%c-%c: %d\n"</span>, <span class="str">'A'</span>+edges[i].u, <span class="str">'A'</span>+edges[i].v, edges[i].w);
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Total MST Cost: %d\n"</span>, total);
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== OPTIMIZATION ==================== -->
+<section class="section" id="min-cost-network">
+  <div class="section-header">
+    <span class="section-number">15</span>
+    <h2>Optimization Operations</h2>
+    <span class="section-tag tag-advanced">Advanced</span>
+  </div>
+  <p class="lead">Optimization leverages graph algorithms for practical problem solving: minimum cost networks, route optimization (TSP-like), and resource allocation across a network.</p>
+
+  <div class="analogy">
+    <div class="analogy-icon">🏭</div>
+    <div class="analogy-body">
+      <strong>Supply Chain Analogy</strong>
+      <p>A factory optimizes which warehouses to connect (min cost network), which delivery routes to take (route optimization), and how to distribute goods across routes (resource allocation).</p>
+    </div>
+  </div>
+
+  <div class="viz-area">
+    <h3>Route Optimization Demo</h3>
+    <canvas id="optCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="runMinCostNet()">Min Cost Network</button>
+      <button class="btn warn" onclick="runRouteOpt()">Route Optimization</button>
+      <button class="btn" onclick="runResourceAlloc()">Resource Allocation</button>
+      <button class="btn" onclick="resetOpt()">Reset</button>
+    </div>
+    <div class="output-log" id="optLog">Choose an optimization operation to visualize.</div>
+  </div>
+
+  <div id="route-opt"></div>
+  <div id="resource"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Route Optimization (Greedy Nearest Neighbor)</div>
+    <pre><span class="cm">/* Greedy Nearest Neighbour for TSP-like route optimization */</span>
+<span class="type">void</span> <span class="fn">routeOptimization</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> start) {
+    <span class="type">int</span> visited[MAX] = {<span class="num">0</span>}, route[MAX], rLen = <span class="num">0</span>;
+    <span class="type">int</span> cur = start, totalCost = <span class="num">0</span>, n = g-&gt;vertices;
+
+    route[rLen++] = cur;
+    visited[cur] = <span class="num">1</span>;
+
+    <span class="kw">while</span> (rLen &lt; n) {
+        <span class="cm">/* Pick nearest unvisited neighbour */</span>
+        <span class="type">int</span> minW = INF, next = -<span class="num">1</span>;
+        <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; n; v++) {
+            <span class="kw">if</span> (!visited[v] &amp;&amp; g-&gt;matrix[cur][v] &gt; <span class="num">0</span> &amp;&amp;
+                g-&gt;matrix[cur][v] &lt; minW) {
+                minW = g-&gt;matrix[cur][v]; next = v;
+            }
+        }
+        <span class="kw">if</span> (next == -<span class="num">1</span>) <span class="kw">break</span>;   <span class="cm">/* no reachable vertex */</span>
+        totalCost += minW;
+        route[rLen++] = next;
+        visited[next] = <span class="num">1</span>;
+        cur = next;
+    }
+    <span class="cm">/* Return to start */</span>
+    totalCost += g-&gt;matrix[cur][start];
+    <span class="fn">printf</span>(<span class="str">"Optimized route cost: %d\n"</span>, totalCost);
+}
+
+<span class="cm">/* Resource Allocation: distribute capacity proportional to edge weights */</span>
+<span class="type">void</span> <span class="fn">resourceAllocation</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> totalResource) {
+    <span class="type">int</span> total = <span class="fn">weightedDegree</span>(g, src);
+    <span class="kw">for</span> (<span class="type">int</span> v = <span class="num">0</span>; v &lt; g-&gt;vertices; v++)
+        <span class="kw">if</span> (g-&gt;matrix[src][v])
+            <span class="fn">printf</span>(<span class="str">"%c gets %d units\n"</span>, g-&gt;label[v],
+                   totalResource * g-&gt;matrix[src][v] / total);
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== ADVANCED OPERATIONS ==================== -->
+<section class="section" id="coloring">
+  <div class="section-header">
+    <span class="section-number">16</span>
+    <h2>Advanced Operations</h2>
+    <span class="section-tag tag-advanced">Advanced</span>
+  </div>
+  <p class="lead">Advanced operations include graph coloring, bipartite checks, network flow, and strongly connected components — building on the foundation of earlier algorithms.</p>
+
+  <div class="viz-area">
+    <h3>Graph Coloring (Greedy)</h3>
+    <canvas id="colorCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="runColoring()">▶ Color Graph</button>
+      <button class="btn warn" onclick="checkBipartite()">Check Bipartite</button>
+      <button class="btn" onclick="runNetworkFlow()">Network Flow</button>
+      <button class="btn" onclick="runSCC()">Find SCC (Directed)</button>
+      <button class="btn" onclick="resetAdvanced()">Reset</button>
+    </div>
+    <div class="output-log" id="colorLog">Click "Color Graph" for greedy coloring, or "Check Bipartite" for bipartiteness.</div>
+  </div>
+
+  <div id="bipartite"></div>
+  <div id="network-flow"></div>
+  <div id="scc"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Graph Coloring (Greedy)</div>
+    <pre><span class="cm">/* GRAPH COLORING — assign colors so no two adjacent vertices share a color */</span>
+<span class="type">void</span> <span class="fn">graphColoring</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> color[MAX], n = g-&gt;vertices, u, v;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++) color[i] = -<span class="num">1</span>;
+    color[<span class="num">0</span>] = <span class="num">0</span>;   <span class="cm">/* first vertex gets color 0 */</span>
+
+    <span class="kw">for</span> (u = <span class="num">1</span>; u &lt; n; u++) {
+        <span class="type">int</span> used[MAX] = {<span class="num">0</span>};
+        <span class="kw">for</span> (v = <span class="num">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g-&gt;matrix[u][v] &amp;&amp; color[v] != -<span class="num">1</span>)
+                used[color[v]] = <span class="num">1</span>;   <span class="cm">/* mark neighbour colors as used */</span>
+        <span class="type">int</span> c = <span class="num">0</span>;
+        <span class="kw">while</span> (used[c]) c++;   <span class="cm">/* find smallest unused color */</span>
+        color[u] = c;
+    }
+    <span class="kw">for</span> (u = <span class="num">0</span>; u &lt; n; u++)
+        <span class="fn">printf</span>(<span class="str">"%c → Color %d\n"</span>, g-&gt;label[u], color[u]);
+}
+
+<span class="cm">/* BIPARTITE CHECK — 2-color with BFS */</span>
+<span class="type">int</span> <span class="fn">isBipartite</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> color[MAX], q[MAX], f=<span class="num">0</span>, r=<span class="num">0</span>, n=g-&gt;vertices, u, v;
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;n; i++) color[i]=-<span class="num">1</span>;
+    color[<span class="num">0</span>]=<span class="num">0</span>; q[r++]=<span class="num">0</span>;
+    <span class="kw">while</span> (f&lt;r) {
+        u=q[f++];
+        <span class="kw">for</span> (v=<span class="num">0</span>; v&lt;n; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[u][v]) {
+                <span class="kw">if</span> (color[v]==-<span class="num">1</span>) { color[v]=<span class="num">1</span>-color[u]; q[r++]=v; }
+                <span class="kw">else if</span> (color[v]==color[u]) <span class="kw">return</span> <span class="num">0</span>; <span class="cm">/* same color! */</span>
+            }
+        }
+    }
+    <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — Network Flow (Ford-Fulkerson) & SCC (Kosaraju's)</div>
+    <pre><span class="cm">/* NETWORK FLOW — Ford-Fulkerson: max flow from src to sink */</span>
+<span class="type">int</span> <span class="fn">bfsFlow</span>(<span class="type">int</span> rg[][MAX], <span class="type">int</span> src, <span class="type">int</span> sink, <span class="type">int</span> parent[], <span class="type">int</span> n) {
+    <span class="type">int</span> vis[MAX]={<span class="num">0</span>}, q[MAX], f=<span class="num">0</span>, r=<span class="num">0</span>;
+    vis[src]=<span class="num">1</span>; q[r++]=src; parent[src]=-<span class="num">1</span>;
+    <span class="kw">while</span> (f&lt;r) {
+        <span class="type">int</span> u=q[f++];
+        <span class="kw">for</span> (<span class="type">int</span> v=<span class="num">0</span>; v&lt;n; v++)
+            <span class="kw">if</span> (!vis[v]&amp;&amp;rg[u][v]&gt;<span class="num">0</span>) { parent[v]=u; vis[v]=<span class="num">1</span>; q[r++]=v; }
+    }
+    <span class="kw">return</span> vis[sink];
+}
+<span class="type">int</span> <span class="fn">maxFlow</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> sink) {
+    <span class="type">int</span> rg[MAX][MAX], parent[MAX], flow=<span class="num">0</span>, u, v, n=g-&gt;vertices;
+    <span class="kw">for</span>(u=<span class="num">0</span>;u&lt;n;u++) <span class="kw">for</span>(v=<span class="num">0</span>;v&lt;n;v++) rg[u][v]=g-&gt;matrix[u][v];
+    <span class="kw">while</span>(<span class="fn">bfsFlow</span>(rg,src,sink,parent,n)) {
+        <span class="type">int</span> pathFlow=INF;
+        <span class="kw">for</span>(v=sink;v!=src;v=parent[v]) { u=parent[v]; <span class="kw">if</span>(rg[u][v]&lt;pathFlow)pathFlow=rg[u][v]; }
+        <span class="kw">for</span>(v=sink;v!=src;v=parent[v]) { u=parent[v]; rg[u][v]-=pathFlow; rg[v][u]+=pathFlow; }
+        flow+=pathFlow;
+    }
+    <span class="kw">return</span> flow;
+}
+
+<span class="cm">/* SCC (Kosaraju's) — two-pass DFS on directed graph */</span>
+<span class="type">void</span> <span class="fn">dfsFinish</span>(<span class="type">int</span> g[][MAX], <span class="type">int</span> u, <span class="type">int</span> vis[], <span class="type">int</span> stk[], <span class="type">int</span> *top, <span class="type">int</span> n) {
+    vis[u]=<span class="num">1</span>;
+    <span class="kw">for</span>(<span class="type">int</span> v=<span class="num">0</span>;v&lt;n;v++) <span class="kw">if</span>(g[u][v]&amp;&amp;!vis[v]) <span class="fn">dfsFinish</span>(g,v,vis,stk,top,n);
+    stk[(*top)++]=u;
+}</pre>
+  </div>
+</section>
+
+<!-- ==================== VISUALIZATION & REPORTING ==================== -->
+<section class="section" id="display-graph">
+  <div class="section-header">
+    <span class="section-number">17</span>
+    <h2>Visualization & Reporting</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <p class="lead">Being able to display the graph, paths, cost matrix, and route summaries is essential for debugging and communicating results. These are the "print" operations of a graph program.</p>
+
+  <div class="viz-area">
+    <h3>Complete Graph Report Generator</h3>
+    <canvas id="reportCanvas" width="760" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn primary" onclick="displayGraph()">Display Graph</button>
+      <button class="btn" onclick="displayPaths()">Display Paths</button>
+      <button class="btn warn" onclick="displayCostMatrix()">Cost Matrix</button>
+      <button class="btn" onclick="displayRouteSummary()">Route Summary</button>
+    </div>
+    <div class="output-log" id="reportLog" style="max-height:300px">Click a reporting option to generate output.</div>
+  </div>
+
+  <div id="display-paths"></div>
+  <div id="cost-matrix"></div>
+  <div id="route-summary"></div>
+
+  <div class="code-wrap">
+    <div class="code-label">C — All Display/Reporting Functions</div>
+    <pre><span class="cm">/* DISPLAY WEIGHTED GRAPH — adjacency matrix format */</span>
+<span class="type">void</span> <span class="fn">displayGraph</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="type">int</span> i, j, n = g-&gt;vertices;
+    <span class="fn">printf</span>(<span class="str">"   "</span>);
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;n; i++) <span class="fn">printf</span>(<span class="str">"%4c"</span>, g-&gt;label[i]);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;n; i++) {
+        <span class="fn">printf</span>(<span class="str">"%c  "</span>, g-&gt;label[i]);
+        <span class="kw">for</span> (j=<span class="num">0</span>; j&lt;n; j++)
+            <span class="fn">printf</span>(<span class="str">"%4d"</span>, g-&gt;matrix[i][j]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}
+
+<span class="cm">/* DISPLAY PATHS — all edges with weights */</span>
+<span class="type">void</span> <span class="fn">displayPaths</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"%-8s %-8s %-8s\n"</span>, <span class="str">"From"</span>, <span class="str">"To"</span>, <span class="str">"Weight"</span>);
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;g-&gt;vertices; i++)
+        <span class="kw">for</span> (<span class="type">int</span> j=i+<span class="num">1</span>; j&lt;g-&gt;vertices; j++)
+            <span class="kw">if</span> (g-&gt;matrix[i][j])
+                <span class="fn">printf</span>(<span class="str">"%-8c %-8c %-8d\n"</span>, g-&gt;label[i],g-&gt;label[j],g-&gt;matrix[i][j]);
+}
+
+<span class="cm">/* COST MATRIX — show all-pairs shortest paths */</span>
+<span class="type">void</span> <span class="fn">displayCostMatrix</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"All-pairs shortest path matrix:\n"</span>);
+    <span class="fn">floydWarshall</span>(g);   <span class="cm">/* reuse Floyd-Warshall output */</span>
+}
+
+<span class="cm">/* ROUTE SUMMARY — full report for decision making */</span>
+<span class="type">void</span> <span class="fn">routeSummary</span>(<span class="kw">struct</span> <span class="type">Graph</span> *g, <span class="type">int</span> src, <span class="type">int</span> dst) {
+    <span class="fn">printf</span>(<span class="str">"=== Route Summary: %c to %c ===\n"</span>, g-&gt;label[src], g-&gt;label[dst]);
+    <span class="fn">printf</span>(<span class="str">"Vertices: %d\n"</span>, g-&gt;vertices);
+    <span class="fn">printf</span>(<span class="str">"Total graph cost: %d\n"</span>, <span class="fn">totalEdgeCost</span>(g));
+    <span class="fn">printf</span>(<span class="str">"Connected: %s\n"</span>, <span class="fn">isConnected</span>(g) ? <span class="str">"Yes"</span> : <span class="str">"No"</span>);
+    <span class="fn">printf</span>(<span class="str">"Has cycle: %s\n"</span>, <span class="fn">hasCycle</span>(g) ? <span class="str">"Yes"</span> : <span class="str">"No"</span>);
+    <span class="fn">dijkstra</span>(g, src);   <span class="cm">/* print shortest distances */</span>
+}</pre>
+  </div>
+
+  <!-- FINAL SUMMARY TABLE -->
+  <div style="margin-top:40px">
+    <h3 style="font-family:var(--display);font-size:20px;color:var(--text);margin-bottom:16px">Algorithm Quick Reference</h3>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--bg4)">
+            <th style="border:1px solid var(--border);padding:10px 14px;text-align:left;color:var(--text2)">Algorithm</th>
+            <th style="border:1px solid var(--border);padding:10px 14px;text-align:left;color:var(--text2)">Time</th>
+            <th style="border:1px solid var(--border);padding:10px 14px;text-align:left;color:var(--text2)">Negative Wt?</th>
+            <th style="border:1px solid var(--border);padding:10px 14px;text-align:left;color:var(--text2)">Use Case</th>
+          </tr>
+        </thead>
+        <tbody id="refTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ===== SHARED STATE =====
+const COLORS = {
+  node: '#4f9eff', nodeDark: '#2a6bbf',
+  edge: '#2a3550', edgeHighlight: '#ffd166',
+  visited: '#38e8b0', path: '#ff7e5f',
+  mst: '#c77dff', text: '#e8eaf0', textDim: '#5c6480',
+  bg: '#1a1e28', bg2: '#13161e',
+  colors6: ['#4f9eff','#38e8b0','#ffd166','#ff7e5f','#c77dff','#ff8fab']
+};
+
+// Base graph data
+const BASE_VERTICES = ['A','B','C','D','E','F'];
+const BASE_POS = [
+  [130,150],[270,80],[420,80],[550,150],[420,240],[270,240]
+];
+const BASE_MATRIX = [
+  [0,4,0,0,8,0],
+  [4,0,3,0,0,7],
+  [0,3,0,6,0,2],
+  [0,0,6,0,2,0],
+  [8,0,0,2,0,5],
+  [0,7,2,0,5,0]
+];
+
+function hexToRGB(hex) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+function drawGraph(ctx, vertices, pos, matrix, options={}) {
+  const {nodeColors=null, edgeColors=null, nodeLabels=null, edgeLabelFn=null} = options;
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+  const n = vertices.length;
+  // Draw edges
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) {
+    if(!matrix[i][j]) continue;
+    const col = edgeColors&&edgeColors[`${i},${j}`] ? edgeColors[`${i},${j}`] : COLORS.edge;
+    ctx.beginPath();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = col===COLORS.edge ? 1.5 : 3;
+    ctx.moveTo(pos[i][0],pos[i][1]);
+    ctx.lineTo(pos[j][0],pos[j][1]);
+    ctx.stroke();
+    // Edge weight label
+    const mx=(pos[i][0]+pos[j][0])/2, my=(pos[i][1]+pos[j][1])/2;
+    const dx=pos[j][0]-pos[i][0], dy=pos[j][1]-pos[i][1];
+    const len=Math.sqrt(dx*dx+dy*dy);
+    const ox=-dy/len*14, oy=dx/len*14;
+    const label = edgeLabelFn ? edgeLabelFn(i,j,matrix[i][j]) : matrix[i][j];
+    ctx.fillStyle = col===COLORS.edge ? COLORS.textDim : col;
+    ctx.font = col===COLORS.edge ? '11px JetBrains Mono' : 'bold 12px JetBrains Mono';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label, mx+ox, my+oy);
+  }
+  // Draw nodes
+  for(let i=0;i<n;i++) {
+    const col = nodeColors&&nodeColors[i] ? nodeColors[i] : COLORS.node;
+    ctx.beginPath();
+    ctx.arc(pos[i][0],pos[i][1],22,0,Math.PI*2);
+    ctx.fillStyle = col;
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff22';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 14px DM Sans';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(nodeLabels?nodeLabels[i]:vertices[i], pos[i][0], pos[i][1]);
+    // Node extra label
+    if(options.nodeExtra && options.nodeExtra[i]!==undefined) {
+      ctx.fillStyle = col;
+      ctx.font = '11px JetBrains Mono';
+      ctx.fillText(options.nodeExtra[i], pos[i][0], pos[i][1]+32);
+    }
+  }
+}
+
+// ===== SECTION 1: INTRO CANVAS =====
+(function(){
+  const c=document.getElementById('introCanvas');
+  const ctx=c.getContext('2d');
+  c.height=300;
+  window.drawIntroGraph=function(){
+    drawGraph(ctx,BASE_VERTICES,BASE_POS,BASE_MATRIX);
+  };
+  window.highlightEdge=function(){
+    const edges=[];
+    for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) if(BASE_MATRIX[i][j]) edges.push([i,j]);
+    const [a,b]=edges[Math.floor(Math.random()*edges.length)];
+    const ec={}; ec[`${a},${b}`]=COLORS.edgeHighlight;
+    drawGraph(ctx,BASE_VERTICES,BASE_POS,BASE_MATRIX,{edgeColors:ec});
+  };
+  drawIntroGraph();
+})();
+
+// ===== SECTION 2: ADJACENCY MATRIX =====
+(function(){
+  const N=5, labels=['A','B','C','D','E'];
+  let mat=Array.from({length:N},()=>Array(N).fill(0));
+  mat[0][1]=mat[1][0]=4; mat[1][2]=mat[2][1]=3; mat[2][3]=mat[3][2]=6;
+  mat[3][4]=mat[4][3]=2; mat[0][4]=mat[4][0]=8; mat[1][4]=mat[4][1]=7;
+
+  function renderTable(){
+    const tbl=document.getElementById('adjMatrix');
+    let html='<tr><th></th>';
+    labels.forEach(l=>html+=`<th>${l}</th>`);
+    html+='</tr>';
+    for(let i=0;i<N;i++){
+      html+=`<tr><th>${labels[i]}</th>`;
+      for(let j=0;j<N;j++){
+        const cls=mat[i][j]?'nonzero':'';
+        html+=`<td class="${cls}" id="m${i}${j}">${mat[i][j]||'0'}</td>`;
+      }
+      html+='</tr>';
+    }
+    tbl.innerHTML=html;
+  }
+
+  window.setMatrixEdge=function(){
+    const f=+document.getElementById('mFrom').value;
+    const t=+document.getElementById('mTo').value;
+    const w=+document.getElementById('mWeight').value;
+    if(f<0||f>=N||t<0||t>=N||f===t){
+      document.getElementById('matrixLog').textContent='Invalid input. Use vertex indices 0–4, from≠to.'; return;
+    }
+    mat[f][t]=mat[t][f]=w;
+    renderTable();
+    document.getElementById('matrixLog').textContent=`Set edge ${labels[f]}↔${labels[t]} = ${w}. Matrix updated.`;
+  };
+  window.clearMatrix=function(){
+    mat=Array.from({length:N},()=>Array(N).fill(0));
+    renderTable();
+    document.getElementById('matrixLog').textContent='Matrix cleared. All edges removed.';
+  };
+  renderTable();
+})();
+
+// ===== SECTION 3: VERTEX OPS CANVAS =====
+(function(){
+  const c=document.getElementById('vertexCanvas');
+  const ctx=c.getContext('2d'); c.height=260;
+  let verts=['A','B','C','D'];
+  let pos=[[120,140],[280,80],[440,80],[560,140]];
+  let mat=[[0,4,0,0],[4,0,3,0],[0,3,0,6],[0,0,6,0]];
+
+  function render(highlights=[]){
+    const nc={};
+    highlights.forEach(i=>nc[i]=COLORS.visited);
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc});
+  }
+
+  function recomputePos(){
+    const n=verts.length;
+    pos=[];
+    const cx=380,cy=140,r=120;
+    for(let i=0;i<n;i++){
+      const a=(-Math.PI/2)+(2*Math.PI*i/n);
+      pos.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]);
+    }
+  }
+
+  window.vertexOp=function(op){
+    const log=document.getElementById('vertexLog');
+    if(op==='insert'){
+      if(verts.length>=8){log.textContent='Graph full (max 8).'; return;}
+      verts.push(String.fromCharCode(65+verts.length));
+      mat.forEach(row=>row.push(0));
+      mat.push(Array(verts.length).fill(0));
+      recomputePos(); render();
+      log.textContent=`Vertex ${verts[verts.length-1]} inserted. Total: ${verts.length} vertices.`;
+    } else if(op==='delete'){
+      if(verts.length<=1){log.textContent='Need at least 1 vertex.'; return;}
+      const removed=verts.pop();
+      mat.pop(); mat.forEach(row=>row.pop());
+      recomputePos(); render();
+      log.textContent=`Vertex ${removed} deleted. Remaining: ${verts.length} vertices.`;
+    } else if(op==='search'){
+      const idx=+document.getElementById('searchV').value;
+      if(idx<0||idx>=verts.length){log.textContent=`Vertex ${idx} not found (valid: 0–${verts.length-1}).`; return;}
+      render([idx]);
+      log.textContent=`Vertex ${verts[idx]} (index ${idx}) found! Degree: ${mat[idx].filter(x=>x>0).length}.`;
+    }
+  };
+  render();
+})();
+
+// ===== SECTION 4: EDGE OPS CANVAS =====
+(function(){
+  const c=document.getElementById('edgeCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E'];
+  const pos=[[130,150],[300,70],[470,70],[580,160],[300,240]];
+  let mat=[[0,4,0,0,8],[4,0,3,0,0],[0,3,0,6,0],[0,0,6,0,2],[8,0,0,2,0]];
+
+  function render(hiEdge=null, hiNodes=[]){
+    const nc={},ec={};
+    hiNodes.forEach(i=>nc[i]=COLORS.visited);
+    if(hiEdge){ ec[`${Math.min(...hiEdge)},${Math.max(...hiEdge)}`]=COLORS.edgeHighlight; }
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:ec});
+  }
+
+  window.edgeOp=function(op){
+    const f=+document.getElementById('eFrom').value;
+    const t=+document.getElementById('eTo').value;
+    const w=+document.getElementById('eWeight').value;
+    const log=document.getElementById('edgeLog');
+    if(f<0||f>4||t<0||t>4||f===t){log.textContent='Use vertex indices 0–4, from≠to.'; return;}
+    if(op==='insert'){
+      mat[f][t]=mat[t][f]=w;
+      render([f,t],[f,t]);
+      log.textContent=`✅ Edge ${verts[f]}↔${verts[t]} inserted with weight ${w}.`;
+    } else if(op==='delete'){
+      if(!mat[f][t]){log.textContent=`Edge ${verts[f]}↔${verts[t]} does not exist.`; return;}
+      mat[f][t]=mat[t][f]=0;
+      render(null,[f,t]);
+      log.textContent=`🗑️ Edge ${verts[f]}↔${verts[t]} deleted.`;
+    } else if(op==='search'){
+      const found=mat[f][t];
+      render(found?[f,t]:null, [f,t]);
+      log.textContent=found?`🔍 Edge ${verts[f]}↔${verts[t]} found! Weight = ${found}.`:`Edge ${verts[f]}↔${verts[t]} does not exist (weight = 0).`;
+    } else if(op==='update'){
+      if(!mat[f][t]){log.textContent=`Edge ${verts[f]}↔${verts[t]} does not exist. Insert first.`; return;}
+      const old=mat[f][t];
+      mat[f][t]=mat[t][f]=w;
+      render([f,t],[f,t]);
+      log.textContent=`✏️ Updated edge ${verts[f]}↔${verts[t]}: ${old} → ${w}.`;
+    } else if(op==='display'){
+      let out='Edge List:\n';
+      for(let i=0;i<5;i++) for(let j=i+1;j<5;j++) if(mat[i][j]) out+=`  ${verts[i]} ↔ ${verts[j]} : ${mat[i][j]}\n`;
+      log.textContent=out.trim();
+      render();
+    }
+  };
+  render();
+})();
+
+// ===== SECTION 5: TRAVERSAL =====
+(function(){
+  const c=document.getElementById('traversalCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[120,150],[260,70],[400,70],[540,150],[400,230],[260,230]];
+  const mat=[
+    [0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],
+    [0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]
+  ];
+  let animTimer=null;
+
+  function render(visited=[],queue=[],order=[]){
+    const nc={};
+    visited.forEach((v,i)=>{ if(v) nc[i]=COLORS.visited; });
+    queue.forEach(i=>{ if(nc[i]===undefined) nc[i]=COLORS.edgeHighlight; });
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:order});
+  }
+
+  window.resetTraversal=function(){
+    if(animTimer) clearInterval(animTimer);
+    render();
+    document.getElementById('traversalLog').textContent='Reset. Choose a traversal.';
+  };
+
+  window.runBFS=function(){
+    if(animTimer) clearInterval(animTimer);
+    const start=Math.min(5,+document.getElementById('travStart').value||0);
+    const visited=Array(6).fill(false), queue=[start], order=Array(6).fill('');
+    visited[start]=true; let step=0, front=0;
+    const log=document.getElementById('traversalLog');
+    animTimer=setInterval(()=>{
+      if(front>=queue.length){ clearInterval(animTimer); log.textContent+=' ✅ BFS complete!'; return; }
+      const u=queue[front++]; order[u]=step++;
+      for(let v=0;v<6;v++) if(mat[u][v]&&!visited[v]){ visited[v]=true; queue.push(v); }
+      render(visited,queue.slice(front),order);
+      log.textContent=`BFS Order: ${verts.filter((_,i)=>order[i]!=='').sort((a,b)=>order[verts.indexOf(a)]-order[verts.indexOf(b)]).join(' → ')}`;
+    },700);
+  };
+
+  window.runDFS=function(){
+    if(animTimer) clearInterval(animTimer);
+    const start=Math.min(5,+document.getElementById('travStart').value||0);
+    const visited=Array(6).fill(false), orderArr=[], stack=[start];
+    const order=Array(6).fill('');
+    const log=document.getElementById('traversalLog');
+    let step=0;
+    function dfsStep(){
+      if(!stack.length){ clearInterval(animTimer); log.textContent+=' ✅ DFS complete!'; return; }
+      const u=stack.pop();
+      if(visited[u]) return;
+      visited[u]=true; order[u]=step++;
+      for(let v=5;v>=0;v--) if(mat[u][v]&&!visited[v]) stack.push(v);
+      render(visited,stack,order);
+      log.textContent=`DFS Order: ${verts.filter((_,i)=>order[i]!=='').sort((a,b)=>order[verts.indexOf(a)]-order[verts.indexOf(b)]).join(' → ')}`;
+    }
+    animTimer=setInterval(dfsStep,700);
+  };
+  render();
+})();
+
+// ===== SECTION 6: PATH OPS =====
+(function(){
+  const c=document.getElementById('pathCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,160],[250,70],[410,70],[560,160],[410,250],[250,250]];
+  const mat=[
+    [0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],
+    [0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]
+  ];
+
+  function render(pathNodes=[], cost=null){
+    const nc={}, ec={};
+    pathNodes.forEach((v,i)=>{
+      nc[v]=i===0?COLORS.node:i===pathNodes.length-1?COLORS.path:COLORS.visited;
+      if(i>0){ const a=Math.min(pathNodes[i-1],v),b=Math.max(pathNodes[i-1],v); ec[`${a},${b}`]=COLORS.path; }
+    });
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:ec});
+    if(cost!==null){
+      ctx.fillStyle=COLORS.path; ctx.font='bold 13px DM Sans';
+      ctx.textAlign='left'; ctx.textBaseline='top';
+      ctx.fillText(`Cost: ${cost}`,14,14);
+    }
+  }
+
+  function getAllPaths(src,dst){
+    const paths=[], path=[], vis=Array(6).fill(false);
+    function dfs(u){ path.push(u); vis[u]=true; if(u===dst){ paths.push([...path]); } else { for(let v=0;v<6;v++) if(mat[u][v]&&!vis[v]) dfs(v); } path.pop(); vis[u]=false; }
+    dfs(src); return paths;
+  }
+  function pathCost(path){ let c=0; for(let i=1;i<path.length;i++) c+=mat[path[i-1]][path[i]]; return c; }
+
+  let pathIdx=0, allP=[], pathTimer=null;
+
+  window.findAllPaths=function(){
+    const src=Math.min(5,+document.getElementById('pathSrc').value||0);
+    const dst=Math.min(5,+document.getElementById('pathDst').value||4);
+    allP=getAllPaths(src,dst); pathIdx=0;
+    if(!allP.length){ document.getElementById('pathLog').textContent=`No path from ${verts[src]} to ${verts[dst]}.`; return; }
+    let log=`All paths from ${verts[src]} to ${verts[dst]}:\n`;
+    allP.forEach(p=>log+=`  ${p.map(i=>verts[i]).join('→')} (cost: ${pathCost(p)})\n`);
+    document.getElementById('pathLog').textContent=log;
+    if(pathTimer) clearInterval(pathTimer);
+    let i=0;
+    pathTimer=setInterval(()=>{ render(allP[i%allP.length],pathCost(allP[i%allP.length])); i++; if(i>=allP.length) clearInterval(pathTimer); },900);
+  };
+
+  window.findShortestPath=function(){
+    const src=Math.min(5,+document.getElementById('pathSrc').value||0);
+    const dst=Math.min(5,+document.getElementById('pathDst').value||4);
+    const paths=getAllPaths(src,dst);
+    if(!paths.length){ document.getElementById('pathLog').textContent='No path found.'; return; }
+    const best=paths.reduce((a,b)=>pathCost(a)<pathCost(b)?a:b);
+    render(best,pathCost(best));
+    document.getElementById('pathLog').textContent=`✅ Shortest path: ${best.map(i=>verts[i]).join(' → ')} | Cost: ${pathCost(best)}`;
+  };
+
+  window.findLongestPath=function(){
+    const src=Math.min(5,+document.getElementById('pathSrc').value||0);
+    const dst=Math.min(5,+document.getElementById('pathDst').value||4);
+    const paths=getAllPaths(src,dst);
+    if(!paths.length){ document.getElementById('pathLog').textContent='No path found.'; return; }
+    const worst=paths.reduce((a,b)=>pathCost(a)>pathCost(b)?a:b);
+    render(worst,pathCost(worst));
+    document.getElementById('pathLog').textContent=`⚠️ Longest path: ${worst.map(i=>verts[i]).join(' → ')} | Cost: ${pathCost(worst)}`;
+  };
+
+  window.resetPaths=function(){ render(); document.getElementById('pathLog').textContent='Reset.'; };
+  render();
+})();
+
+// ===== SECTION 7: DIJKSTRA =====
+(function(){
+  const c=document.getElementById('dijkstraCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,155],[260,70],[420,70],[560,155],[420,245],[260,245]];
+  const mat=[
+    [0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],
+    [0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]
+  ];
+  let steps=[], stepIdx=0;
+
+  function computeDijkstra(src){
+    const INF=99999; const n=6;
+    const dist=Array(n).fill(INF), visited=Array(n).fill(false), parent=Array(n).fill(-1);
+    dist[src]=0;
+    const log=[];
+    for(let cnt=0;cnt<n-1;cnt++){
+      let minD=INF, u=-1;
+      for(let v=0;v<n;v++) if(!visited[v]&&dist[v]<minD){minD=dist[v];u=v;}
+      if(u<0) break;
+      visited[u]=true;
+      const snap={visited:[...visited],dist:[...dist],current:u,parent:[...parent]};
+      log.push(snap);
+      for(let v=0;v<n;v++) if(mat[u][v]&&!visited[v]&&dist[u]+mat[u][v]<dist[v]){dist[v]=dist[u]+mat[u][v];parent[v]=u;}
+    }
+    log.push({visited:[...visited],dist:[...dist],current:-1,parent:[...parent]});
+    return log;
+  }
+
+  function renderStep(snap){
+    const nc={}, extra=[];
+    snap.visited.forEach((v,i)=>{ nc[i]=v?COLORS.visited:COLORS.node; });
+    if(snap.current>=0) nc[snap.current]=COLORS.edgeHighlight;
+    const nodeExtra=snap.dist.map(d=>d===99999?'∞':d);
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra});
+  }
+
+  let dijTimer=null;
+  window.runDijkstra=function(){
+    const src=Math.min(5,+document.getElementById('dijkSrc').value||0);
+    steps=computeDijkstra(src); stepIdx=0;
+    document.getElementById('dijkstraLog').textContent=`Running Dijkstra from ${verts[src]}...`;
+    if(dijTimer) clearInterval(dijTimer);
+    dijTimer=setInterval(()=>{
+      if(stepIdx>=steps.length){ clearInterval(dijTimer);
+        const last=steps[steps.length-1];
+        document.getElementById('dijkstraLog').textContent='Final distances from '+verts[src]+':\n'+last.dist.map((d,i)=>`  ${verts[src]}→${verts[i]}: ${d===99999?'∞':d}`).join('\n');
+        return;
+      }
+      renderStep(steps[stepIdx]);
+      document.getElementById('dijkstraLog').textContent=`Step ${stepIdx+1}: Visiting ${steps[stepIdx].current>=0?verts[steps[stepIdx].current]:'done'}. Dist: [${steps[stepIdx].dist.map((d,i)=>verts[i]+':'+(d===99999?'∞':d)).join(', ')}]`;
+      stepIdx++;
+    },800);
+  };
+  window.stepDijkstra=function(){
+    if(!steps.length){ window.runDijkstra(); return; }
+    if(stepIdx<steps.length){ renderStep(steps[stepIdx]); stepIdx++; }
+  };
+  window.resetDijkstra=function(){ if(dijTimer) clearInterval(dijTimer); steps=[]; stepIdx=0; drawGraph(ctx,verts,pos,mat); document.getElementById('dijkstraLog').textContent='Reset.'; };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 8: BELLMAN-FORD =====
+(function(){
+  const c=document.getElementById('bfCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E'];
+  const pos=[[110,155],[260,70],[420,70],[560,155],[335,250]];
+  const mat=[ [0,4,0,0,8],[4,0,3,0,0],[0,3,0,6,0],[0,0,6,0,2],[8,0,0,2,0] ];
+  let bfSteps=[], bfIdx=0, bfTimer=null;
+
+  function computeBF(src){
+    const INF=99999, n=5;
+    let dist=[...Array(n).fill(INF)]; dist[src]=0;
+    const log=[];
+    for(let iter=0;iter<n-1;iter++){
+      let changed=false;
+      for(let u=0;u<n;u++) for(let v=0;v<n;v++) if(mat[u][v]&&dist[u]!==INF&&dist[u]+mat[u][v]<dist[v]){ dist[v]=dist[u]+mat[u][v]; changed=true; }
+      log.push({dist:[...dist],iter});
+      if(!changed) break;
+    }
+    return log;
+  }
+
+  window.runBellmanFord=function(){
+    bfSteps=computeBF(0); bfIdx=0;
+    if(bfTimer) clearInterval(bfTimer);
+    bfTimer=setInterval(()=>{
+      if(bfIdx>=bfSteps.length){ clearInterval(bfTimer);
+        document.getElementById('bfLog').textContent='✅ Bellman-Ford complete!\n'+bfSteps[bfSteps.length-1].dist.map((d,i)=>`  A→${verts[i]}: ${d===99999?'∞':d}`).join('\n');
+        return;
+      }
+      const s=bfSteps[bfIdx];
+      const ne=s.dist.map(d=>d===99999?'∞':d);
+      drawGraph(ctx,verts,pos,mat,{nodeExtra:ne});
+      document.getElementById('bfLog').textContent=`Iteration ${s.iter+1} — Dist: [${verts.map((v,i)=>v+':'+ne[i]).join(', ')}]`;
+      bfIdx++;
+    },900);
+  };
+  window.stepBF=function(){ if(!bfSteps.length){ window.runBellmanFord(); return; } if(bfIdx<bfSteps.length){ const s=bfSteps[bfIdx]; drawGraph(ctx,verts,pos,mat,{nodeExtra:s.dist.map(d=>d===99999?'∞':d)}); bfIdx++; } };
+  window.resetBF=function(){ if(bfTimer) clearInterval(bfTimer); bfSteps=[]; bfIdx=0; drawGraph(ctx,verts,pos,mat); document.getElementById('bfLog').textContent='Reset.'; };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 9: FLOYD-WARSHALL =====
+(function(){
+  const INF=99999;
+  const verts=['A','B','C','D','E'];
+  const orig=[ [0,4,INF,INF,8],[4,0,3,INF,INF],[INF,3,0,6,INF],[INF,INF,6,0,2],[8,INF,INF,2,0] ];
+  let dist=orig.map(r=>[...r]), k=-1;
+
+  function renderFW(highlight=null){
+    const tbl=document.getElementById('fwMatrix');
+    let html='<tr><th>→</th>';
+    verts.forEach(v=>html+=`<th>${v}</th>`);
+    html+='</tr>';
+    for(let i=0;i<5;i++){
+      html+=`<tr><th>${verts[i]}</th>`;
+      for(let j=0;j<5;j++){
+        const val=dist[i][j]===INF?'∞':dist[i][j];
+        const cls=i===j?'':highlight&&(i===highlight[0]||j===highlight[1])?'highlight':dist[i][j]<orig[i][j]?'path':'';
+        html+=`<td class="${cls}">${val}</td>`;
+      }
+      html+='</tr>';
+    }
+    tbl.innerHTML=html;
+  }
+
+  window.runFloydWarshall=function(){
+    dist=orig.map(r=>[...r]); k=0;
+    function step(){
+      if(k>=5){ document.getElementById('fwLog').textContent='✅ All-pairs shortest paths computed! Highlighted cells = improved by intermediary.'; return; }
+      for(let i=0;i<5;i++) for(let j=0;j<5;j++) if(dist[i][k]!==INF&&dist[k][j]!==INF&&dist[i][k]+dist[k][j]<dist[i][j]) dist[i][j]=dist[i][k]+dist[k][j];
+      renderFW([k,k]);
+      document.getElementById('fwLog').textContent=`k=${verts[k]}: trying ${verts[k]} as intermediate. Yellow=updated cells.`;
+      k++; setTimeout(step,900);
+    }
+    step();
+  };
+  window.stepFW=function(){
+    if(k<0||k>=5){ dist=orig.map(r=>[...r]); k=0; }
+    for(let i=0;i<5;i++) for(let j=0;j<5;j++) if(dist[i][k]!==INF&&dist[k][j]!==INF&&dist[i][k]+dist[k][j]<dist[i][j]) dist[i][j]=dist[i][k]+dist[k][j];
+    renderFW([k,k]);
+    document.getElementById('fwLog').textContent=`Step k=${verts[k]}: Using ${verts[k]} as intermediate node.`;
+    k++;
+  };
+  window.resetFW=function(){ dist=orig.map(r=>[...r]); k=-1; renderFW(); document.getElementById('fwLog').textContent='Reset to original adjacency matrix.'; };
+  renderFW();
+})();
+
+// ===== SECTION 10: A* =====
+(function(){
+  const c=document.getElementById('astarCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E'];
+  const pos=[[100,155],[240,75],[390,75],[540,155],[390,240]];
+  const mat=[ [0,4,0,0,8],[4,0,3,0,0],[0,3,0,6,0],[0,0,6,0,2],[8,0,0,2,0] ];
+  const h=[8,5,3,1,0]; // heuristic to E
+
+  window.runAStar=function(){
+    const INF=99999, n=5, src=0, goal=4;
+    const g=Array(n).fill(INF), f=Array(n).fill(INF), vis=Array(n).fill(false), par=Array(n).fill(-1);
+    g[src]=0; f[src]=h[src];
+    const log=document.getElementById('astarLog');
+    let path=[];
+    function step(){
+      let minF=INF, u=-1;
+      for(let v=0;v<n;v++) if(!vis[v]&&f[v]<minF){minF=f[v];u=v;}
+      if(u<0||u===goal){
+        let cur=goal; while(cur>=0){path.unshift(cur);cur=par[cur];}
+        const nc={}, ec={};
+        path.forEach((v,i)=>{nc[v]=i===0?COLORS.node:i===path.length-1?COLORS.path:COLORS.visited; if(i>0){const a=Math.min(path[i-1],v),b=Math.max(path[i-1],v);ec[`${a},${b}`]=COLORS.path;}});
+        drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:ec,nodeExtra:f.map((v,i)=>v===INF?'∞':'f='+v)});
+        log.textContent=`✅ A* path: ${path.map(i=>verts[i]).join('→')} | Total cost: ${g[goal]}\nf=g+h at each node shown below vertex names.`;
+        return;
+      }
+      vis[u]=true;
+      for(let v=0;v<n;v++) if(mat[u][v]&&!vis[v]){ const ng=g[u]+mat[u][v]; if(ng<g[v]){g[v]=ng;f[v]=ng+h[v];par[v]=u;} }
+      const nc={};
+      vis.forEach((v,i)=>nc[i]=v?COLORS.visited:COLORS.node); nc[u]=COLORS.edgeHighlight;
+      drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:f.map(v=>v===INF?'∞':'f='+v)});
+      log.textContent=`Visiting ${verts[u]}: g=${g[u]}, h=${h[u]}, f=${f[u]}. Expanding neighbors...`;
+      setTimeout(step,900);
+    }
+    step();
+  };
+  window.resetAStar=function(){ drawGraph(ctx,verts,pos,mat); document.getElementById('astarLog').textContent='Reset. Click Run A*.'; };
+  drawGraph(ctx,verts,pos,mat,{nodeExtra:h.map(v=>'h='+v)});
+})();
+
+// ===== SECTION 11: CONNECTIVITY =====
+(function(){
+  const c=document.getElementById('connectCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  let verts=['A','B','C','D','E','F'];
+  let pos=[[110,155],[260,75],[420,75],[560,155],[420,235],[260,235]];
+  let mat=[
+    [0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],
+    [0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]
+  ];
+
+  function bfs(src){
+    const vis=Array(6).fill(false),q=[src]; vis[src]=true;
+    while(q.length){ const u=q.shift(); for(let v=0;v<6;v++) if(mat[u][v]&&!vis[v]){vis[v]=true;q.push(v);} }
+    return vis;
+  }
+
+  window.checkConnected=function(){
+    const vis=bfs(0);
+    const connected=vis.every(v=>v);
+    const nc={};
+    vis.forEach((v,i)=>nc[i]=v?COLORS.visited:COLORS.path);
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc});
+    document.getElementById('connectLog').textContent=connected?'✅ Graph is CONNECTED — all vertices reachable from A.':'❌ Graph is DISCONNECTED — some vertices not reachable.';
+  };
+
+  window.findComponents=function(){
+    const vis=Array(6).fill(false); let comp=0; const compId=Array(6).fill(-1);
+    for(let i=0;i<6;i++) if(!vis[i]){ const q=[i]; vis[i]=true; while(q.length){ const u=q.shift(); compId[u]=comp; for(let v=0;v<6;v++) if(mat[u][v]&&!vis[v]){vis[v]=true;q.push(v);} } comp++; }
+    const nc={};
+    compId.forEach((c,i)=>nc[i]=COLORS.colors6[c%6]);
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc});
+    document.getElementById('connectLog').textContent=`Found ${comp} component(s). Component IDs: [${compId.map((c,i)=>verts[i]+':C'+c).join(', ')}]`;
+  };
+
+  window.findIsolated=function(){
+    const nc={};
+    const iso=[];
+    for(let i=0;i<6;i++){ const deg=mat[i].filter(v=>v>0).length; nc[i]=deg===0?COLORS.path:COLORS.visited; if(deg===0) iso.push(verts[i]); }
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc});
+    document.getElementById('connectLog').textContent=iso.length?`Isolated vertices (red): ${iso.join(', ')}`:'No isolated vertices found.';
+  };
+
+  window.breakConnect=function(){
+    mat[0][4]=mat[4][0]=0; mat[3][4]=mat[4][3]=0; mat[4][5]=mat[5][4]=0;
+    drawGraph(ctx,verts,pos,mat);
+    document.getElementById('connectLog').textContent='Removed edges to/from E. Run checks again to see the effect.';
+  };
+
+  window.resetConnect=function(){
+    mat=[[0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],[0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]];
+    drawGraph(ctx,verts,pos,mat); document.getElementById('connectLog').textContent='Graph reset.';
+  };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 12: CYCLE =====
+(function(){
+  const c=document.getElementById('cycleCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E'];
+  const pos=[[110,155],[260,75],[420,75],[560,155],[335,255]];
+  const mat=[ [0,4,0,0,8],[4,0,3,0,0],[0,3,0,6,0],[0,0,6,0,2],[8,0,0,2,0] ];
+  const vis=Array(5).fill(false), cycleNodes=[];
+
+  function dfsFind(u,par,path){
+    vis[u]=true; path.push(u);
+    for(let v=0;v<5;v++){
+      if(!mat[u][v]) continue;
+      if(!vis[v]){ if(dfsFind(v,u,path)) return true; }
+      else if(v!==par){ const idx=path.indexOf(v); if(idx>=0) cycleNodes.push(...path.slice(idx)); return true; }
+    }
+    path.pop(); return false;
+  }
+
+  window.detectCycle=function(){
+    const visL=Array(5).fill(false); cycleNodes.length=0;
+    function dfs(u,par){ visL[u]=true; for(let v=0;v<5;v++){ if(!mat[u][v]) continue; if(!visL[v]){ if(dfs(v,u)) return true; } else if(v!==par){ return true; } } return false; }
+    const hasCyc=dfs(0,-1);
+    // Find cycle for coloring
+    const vis2=Array(5).fill(false), cycleE={};
+    function findC(u,par,path){ vis2[u]=true; path=[...path,u]; for(let v=0;v<5;v++){ if(!mat[u][v]) continue; if(!vis2[v]){ const r=findC(v,u,path); if(r) return r; } else if(v!==par){ const idx=path.indexOf(v); if(idx>=0) return path.slice(idx); } } return null; }
+    const cyc=findC(0,-1,[]);
+    const nc={};
+    if(cyc){ cyc.forEach(v=>nc[v]=COLORS.path); for(let i=0;i<cyc.length;i++){const a=Math.min(cyc[i],cyc[(i+1)%cyc.length]),b=Math.max(cyc[i],cyc[(i+1)%cyc.length]); if(mat[cyc[i]][cyc[(i+1)%cyc.length]]) cycleE[`${a},${b}`]=COLORS.path;} }
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:cycleE});
+    const log=document.getElementById('cycleLog');
+    if(hasCyc&&cyc) log.textContent=`🔄 Cycle DETECTED! Cycle path: ${cyc.map(i=>verts[i]).join(' → ')} → ${verts[cyc[0]]}`;
+    else log.textContent='✅ No cycle detected (this is a tree).';
+  };
+
+  window.computeCycleCost=function(){
+    const vis2=Array(5).fill(false);
+    function findC(u,par,path){ vis2[u]=true; path=[...path,u]; for(let v=0;v<5;v++){ if(!mat[u][v]) continue; if(!vis2[v]){ const r=findC(v,u,path); if(r) return r; } else if(v!==par){ const idx=path.indexOf(v); if(idx>=0) return path.slice(idx); } } return null; }
+    const cyc=findC(0,-1,[]);
+    if(!cyc){document.getElementById('cycleLog').textContent='No cycle found.'; return;}
+    let cost=0; for(let i=0;i<cyc.length;i++) cost+=mat[cyc[i]][cyc[(i+1)%cyc.length]];
+    document.getElementById('cycleLog').textContent=`Cycle: ${cyc.map(i=>verts[i]).join('→')}→${verts[cyc[0]]} | Total cycle cost: ${cost}`;
+  };
+  window.resetCycle=function(){drawGraph(ctx,verts,pos,mat);document.getElementById('cycleLog').textContent='Reset.';};
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 13: DEGREE =====
+(function(){
+  const c=document.getElementById('degreeCanvas');
+  const ctx=c.getContext('2d'); c.height=260;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,145],[265,70],[430,70],[565,145],[430,230],[265,230]];
+  const mat=[[0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],[0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]];
+
+  function deg(u){ return mat[u].filter(v=>v>0).length; }
+  function wdeg(u){ return mat[u].reduce((a,b)=>a+b,0); }
+
+  window.showDegree=function(){
+    const u=Math.min(5,+document.getElementById('degVertex').value||0);
+    const nc={}; nc[u]=COLORS.edgeHighlight;
+    const ne=verts.map((_,i)=>'deg:'+deg(i));
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:ne});
+    document.getElementById('degreeLog').textContent=`Vertex ${verts[u]}: Degree = ${deg(u)} (connected to ${mat[u].map((w,j)=>w?verts[j]:'').filter(Boolean).join(', ')})`;
+  };
+  window.showWeightedDegree=function(){
+    const u=Math.min(5,+document.getElementById('degVertex').value||0);
+    const nc={}; nc[u]=COLORS.accent4||'#c77dff';
+    const ne=verts.map((_,i)=>'w:'+wdeg(i));
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:ne});
+    document.getElementById('degreeLog').textContent=`Vertex ${verts[u]}: Weighted Degree = ${wdeg(u)} (sum of all connected edge weights)`;
+  };
+  window.showTotalCost=function(){
+    let total=0; for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) total+=mat[i][j];
+    drawGraph(ctx,verts,pos,mat,{nodeExtra:verts.map((_,i)=>'w:'+wdeg(i))});
+    document.getElementById('degreeLog').textContent=`Total Edge Cost of graph = ${total}\n(Sum of all unique edge weights)`;
+  };
+  window.showAllDegrees=function(){
+    const ne=verts.map((_,i)=>`d${deg(i)} w${wdeg(i)}`);
+    const maxD=Math.max(...verts.map((_,i)=>deg(i)));
+    const nc={};
+    verts.forEach((_,i)=>{ const t=deg(i)/maxD; nc[i]=`rgb(${Math.round(79+t*176)},${Math.round(158-t*90)},${Math.round(255-t*200)})`; });
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:ne});
+    document.getElementById('degreeLog').textContent='All degrees:\n'+verts.map((v,i)=>`  ${v}: deg=${deg(i)}, wdeg=${wdeg(i)}`).join('\n');
+  };
+  showAllDegrees();
+})();
+
+// ===== SECTION 14: MST =====
+(function(){
+  const c=document.getElementById('mstCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,155],[265,70],[430,70],[565,155],[430,245],[265,245]];
+  const mat=[[0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],[0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]];
+  let mstSteps=[], mstIdx=0, mstTimer=null;
+
+  function computePrim(){
+    const INF=99999, n=6;
+    const inMST=Array(n).fill(false), key=Array(n).fill(INF), par=Array(n).fill(-1);
+    key[0]=0; const log=[];
+    for(let cnt=0;cnt<n;cnt++){
+      let minK=INF, u=-1;
+      for(let v=0;v<n;v++) if(!inMST[v]&&key[v]<minK){minK=key[v];u=v;}
+      if(u<0) break; inMST[u]=true;
+      log.push({u,par:[...par],inMST:[...inMST],key:[...key]});
+      for(let v=0;v<n;v++) if(mat[u][v]&&!inMST[v]&&mat[u][v]<key[v]){key[v]=mat[u][v];par[v]=u;}
+    }
+    return log;
+  }
+
+  window.runPrim=function(){
+    mstSteps=computePrim(); mstIdx=0;
+    if(mstTimer) clearInterval(mstTimer);
+    let total=0;
+    mstTimer=setInterval(()=>{
+      if(mstIdx>=mstSteps.length){ clearInterval(mstTimer);
+        document.getElementById('mstLog').textContent=`✅ Prim's MST complete! Total cost: ${total}\nMST edges highlighted in purple.`; return;
+      }
+      const s=mstSteps[mstIdx]; mstIdx++;
+      const nc={}, ec={};
+      s.inMST.forEach((v,i)=>nc[i]=v?COLORS.mst:COLORS.node);
+      for(let v=0;v<6;v++) if(s.inMST[v]&&s.par[v]>=0){ const a=Math.min(v,s.par[v]),b=Math.max(v,s.par[v]); ec[`${a},${b}`]=COLORS.mst; }
+      total=0; for(let v=0;v<6;v++) if(s.inMST[v]&&s.par[v]>=0) total+=mat[v][s.par[v]];
+      drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:ec});
+      document.getElementById('mstLog').textContent=`Added vertex ${verts[s.u]} to MST. Running cost: ${total}`;
+    },800);
+  };
+
+  window.runKruskal=function(){
+    const edges=[]; for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) if(mat[i][j]) edges.push([mat[i][j],i,j]);
+    edges.sort((a,b)=>a[0]-b[0]);
+    const parent=Array(6).fill(0).map((_,i)=>i);
+    function find(x){ return parent[x]===x?x:find(parent[x]); }
+    const mstEdges=[], nc={}, ec={};
+    let total=0;
+    let step=0;
+    if(mstTimer) clearInterval(mstTimer);
+    mstTimer=setInterval(()=>{
+      if(step>=edges.length||mstEdges.length===5){ clearInterval(mstTimer);
+        document.getElementById('mstLog').textContent=`✅ Kruskal's MST complete! Total cost: ${total}\nMST edges: ${mstEdges.map(([_,u,v])=>verts[u]+'-'+verts[v]).join(', ')}`;
+        return;
+      }
+      const [w,u,v]=edges[step++];
+      const pu=find(u),pv=find(v);
+      if(pu!==pv){
+        parent[pu]=pv; mstEdges.push([w,u,v]); total+=w;
+        nc[u]=nc[v]=COLORS.mst;
+        const a=Math.min(u,v),b=Math.max(u,v); ec[`${a},${b}`]=COLORS.mst;
+        drawGraph(ctx,verts,pos,mat,{nodeColors:{...nc},edgeColors:{...ec}});
+        document.getElementById('mstLog').textContent=`Added edge ${verts[u]}-${verts[v]} (w=${w}). Running cost: ${total}`;
+      } else {
+        document.getElementById('mstLog').textContent=`Skipped edge ${verts[u]}-${verts[v]} (would create a cycle).`;
+      }
+    },900);
+  };
+
+  window.stepMST=function(){ if(!mstSteps.length) window.runPrim(); };
+  window.resetMST=function(){ if(mstTimer) clearInterval(mstTimer); mstSteps=[]; mstIdx=0; drawGraph(ctx,verts,pos,mat); document.getElementById('mstLog').textContent='Reset.'; };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 15: OPTIMIZATION =====
+(function(){
+  const c=document.getElementById('optCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,155],[265,70],[430,70],[565,155],[430,245],[265,245]];
+  const mat=[[0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],[0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]];
+
+  window.runMinCostNet=function(){
+    // MST = min cost network
+    const edges=[]; for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) if(mat[i][j]) edges.push([mat[i][j],i,j]);
+    edges.sort((a,b)=>a[0]-b[0]);
+    const parent=Array(6).fill(0).map((_,i)=>i);
+    function find(x){ return parent[x]===x?x:find(parent[x]); }
+    const nc={}, ec={}; let total=0;
+    for(const [w,u,v] of edges){ const pu=find(u),pv=find(v); if(pu!==pv){ parent[pu]=pv; total+=w; nc[u]=nc[v]=COLORS.green; const a=Math.min(u,v),b=Math.max(u,v); ec[`${a},${b}`]=COLORS.green; } }
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:ec});
+    document.getElementById('optLog').textContent=`✅ Minimum Cost Network (MST):\nTotal infrastructure cost = ${total}\nGreen = selected edges for minimum network.`;
+  };
+
+  window.runRouteOpt=function(){
+    let cur=0, visited=Array(6).fill(false), route=[0], total=0;
+    visited[0]=true;
+    while(route.length<6){
+      let minW=99999,next=-1;
+      for(let v=0;v<6;v++) if(!visited[v]&&mat[cur][v]&&mat[cur][v]<minW){minW=mat[cur][v];next=v;}
+      if(next<0) break;
+      total+=minW; route.push(next); visited[next]=true; cur=next;
+    }
+    total+=mat[cur][0]||0; route.push(0);
+    const nc={}, ec={};
+    route.forEach((v,i)=>{ nc[v]=i===0?COLORS.node:COLORS.path; if(i>0&&route[i-1]!==undefined){ const a=Math.min(route[i-1],v),b=Math.max(route[i-1],v); ec[`${a},${b}`]=COLORS.path; } });
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,edgeColors:ec});
+    document.getElementById('optLog').textContent=`Route: ${route.map(i=>verts[i]).join('→')}\nTotal route cost: ${total}`;
+  };
+
+  window.runResourceAlloc=function(){
+    const src=0, total=100;
+    const wdeg=mat[src].reduce((a,b)=>a+b,0);
+    const ne=verts.map((_,i)=>mat[src][i]?Math.round(total*mat[src][i]/wdeg)+'u':'');
+    const nc={}; nc[src]=COLORS.yellow;
+    for(let v=0;v<6;v++) if(mat[src][v]) nc[v]=COLORS.visited;
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:ne});
+    let out=`Resource Allocation from A (total=${total} units):\n`;
+    for(let v=0;v<6;v++) if(mat[src][v]) out+=`  ${verts[v]}: ${Math.round(total*mat[src][v]/wdeg)} units (weight=${mat[src][v]})\n`;
+    document.getElementById('optLog').textContent=out.trim();
+  };
+  window.resetOpt=function(){ drawGraph(ctx,verts,pos,mat); document.getElementById('optLog').textContent='Reset.'; };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 16: ADVANCED =====
+(function(){
+  const c=document.getElementById('colorCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,155],[265,70],[430,70],[565,155],[430,245],[265,245]];
+  const mat=[[0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],[0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]];
+
+  window.runColoring=function(){
+    const n=6, color=Array(n).fill(-1); color[0]=0;
+    for(let u=1;u<n;u++){
+      const used=Array(n).fill(false);
+      for(let v=0;v<n;v++) if(mat[u][v]&&color[v]>=0) used[color[v]]=true;
+      let c=0; while(used[c]) c++; color[u]=c;
+    }
+    const palettes=['#4f9eff','#38e8b0','#ffd166','#ff7e5f','#c77dff','#ff8fab'];
+    const nc={}; color.forEach((c,i)=>nc[i]=palettes[c]);
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:color.map(c=>'C'+c)});
+    const numColors=Math.max(...color)+1;
+    document.getElementById('colorLog').textContent=`✅ Graph colored with ${numColors} colors.\n${verts.map((v,i)=>v+'→Color'+color[i]).join(', ')}`;
+  };
+
+  window.checkBipartite=function(){
+    const color=Array(6).fill(-1), q=[0]; color[0]=0;
+    let bip=true;
+    while(q.length){ const u=q.shift(); for(let v=0;v<6;v++) if(mat[u][v]){ if(color[v]<0){color[v]=1-color[u];q.push(v);}else if(color[v]===color[u]){bip=false;} } }
+    const nc={}; color.forEach((c,i)=>nc[i]=c===0?COLORS.node:COLORS.visited);
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc,nodeExtra:color.map(c=>c===0?'Set1':'Set2')});
+    document.getElementById('colorLog').textContent=bip?'✅ Graph IS bipartite (2-colorable). Two sets shown in blue/green.':'❌ Graph is NOT bipartite (odd cycle detected).';
+  };
+
+  window.runNetworkFlow=function(){
+    const INF=99999, n=6;
+    const rg=mat.map(r=>[...r]);
+    function bfsFlow(src,sink,par){ const vis=Array(n).fill(false),q=[src]; vis[src]=true; par[src]=-1; while(q.length){ const u=q.shift(); for(let v=0;v<n;v++) if(!vis[v]&&rg[u][v]>0){par[v]=u;vis[v]=true;q.push(v);} } return vis[sink]; }
+    let flow=0; const par=Array(n).fill(-1);
+    while(bfsFlow(0,5,par)){
+      let pf=INF; for(let v=5;v!==0;v=par[v]){const u=par[v];if(rg[u][v]<pf)pf=rg[u][v];}
+      for(let v=5;v!==0;v=par[v]){const u=par[v];rg[u][v]-=pf;rg[v][u]+=pf;} flow+=pf;
+    }
+    const nc={}; nc[0]=COLORS.path; nc[5]=COLORS.green;
+    drawGraph(ctx,verts,pos,mat,{nodeColors:nc});
+    document.getElementById('colorLog').textContent=`Max Flow from A to F = ${flow}\n(Ford-Fulkerson algorithm. Source=A (red), Sink=F (green))`;
+  };
+
+  window.runSCC=function(){
+    document.getElementById('colorLog').textContent='SCC (Kosaraju) requires a directed graph.\nFor this undirected graph, each connected component IS a SCC.\nComponents: 1 (all vertices connected).';
+    window.runColoring();
+  };
+
+  window.resetAdvanced=function(){ drawGraph(ctx,verts,pos,mat); document.getElementById('colorLog').textContent='Reset.'; };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== SECTION 17: REPORTING =====
+(function(){
+  const c=document.getElementById('reportCanvas');
+  const ctx=c.getContext('2d'); c.height=280;
+  const verts=['A','B','C','D','E','F'];
+  const pos=[[110,155],[265,70],[430,70],[565,155],[430,245],[265,245]];
+  const mat=[[0,4,0,0,8,0],[4,0,3,0,0,7],[0,3,0,6,0,2],[0,0,6,0,2,0],[8,0,0,2,0,5],[0,7,2,0,5,0]];
+
+  window.displayGraph=function(){
+    drawGraph(ctx,verts,pos,mat);
+    let out='Weighted Adjacency Matrix:\n   ';
+    verts.forEach(v=>out+=v.padStart(4));
+    out+='\n';
+    for(let i=0;i<6;i++){ out+=verts[i]+'  '; for(let j=0;j<6;j++) out+=String(mat[i][j]).padStart(4); out+='\n'; }
+    document.getElementById('reportLog').textContent=out;
+  };
+
+  window.displayPaths=function(){
+    let out='Edge List (all weighted edges):\n';
+    out+='From  To    Weight\n';
+    for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) if(mat[i][j]) out+=`${verts[i]}     ${verts[j]}     ${mat[i][j]}\n`;
+    document.getElementById('reportLog').textContent=out;
+    drawGraph(ctx,verts,pos,mat);
+  };
+
+  window.displayCostMatrix=function(){
+    const INF=99999;
+    const dist=mat.map(r=>r.map(w=>w||INF));
+    for(let i=0;i<6;i++) dist[i][i]=0;
+    for(let k=0;k<6;k++) for(let i=0;i<6;i++) for(let j=0;j<6;j++) if(dist[i][k]!==INF&&dist[k][j]!==INF&&dist[i][k]+dist[k][j]<dist[i][j]) dist[i][j]=dist[i][k]+dist[k][j];
+    let out='All-Pairs Shortest Path (Floyd-Warshall):\n   ';
+    verts.forEach(v=>out+=v.padStart(5)); out+='\n';
+    for(let i=0;i<6;i++){ out+=verts[i]+'  '; for(let j=0;j<6;j++) out+=(dist[i][j]===INF?'  ∞':String(dist[i][j]).padStart(5)); out+='\n'; }
+    document.getElementById('reportLog').textContent=out;
+  };
+
+  window.displayRouteSummary=function(){
+    let total=0; for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) total+=mat[i][j];
+    let edgeCnt=0; for(let i=0;i<6;i++) for(let j=i+1;j<6;j++) if(mat[i][j]) edgeCnt++;
+    const degs=verts.map((_,i)=>mat[i].filter(v=>v>0).length);
+    const maxDeg=Math.max(...degs), minDeg=Math.min(...degs);
+    let out='=== GRAPH ROUTE SUMMARY ===\n';
+    out+=`Vertices: ${verts.join(', ')}\n`;
+    out+=`Vertex count: 6\n`;
+    out+=`Edge count: ${edgeCnt}\n`;
+    out+=`Total edge weight: ${total}\n`;
+    out+=`Average edge weight: ${(total/edgeCnt).toFixed(1)}\n`;
+    out+=`Max degree: ${maxDeg} (vertex ${verts[degs.indexOf(maxDeg)]})\n`;
+    out+=`Min degree: ${minDeg} (vertex ${verts[degs.indexOf(minDeg)]})\n`;
+    out+=`Connected: Yes\n`;
+    out+=`Has cycle: Yes\n`;
+    out+=`Is bipartite: No (odd cycle exists)\n`;
+    document.getElementById('reportLog').textContent=out;
+    drawGraph(ctx,verts,pos,mat,{nodeExtra:verts.map((_,i)=>'deg:'+degs[i])});
+  };
+  drawGraph(ctx,verts,pos,mat);
+})();
+
+// ===== REFERENCE TABLE =====
+(function(){
+  const rows=[
+    ['BFS Traversal','O(V+E)','N/A','Peer-to-peer networks, social networks'],
+    ['DFS Traversal','O(V+E)','N/A','Maze solving, topological sort'],
+    ["Dijkstra's","O(V²)","❌ No","GPS routing, network paths"],
+    ['Bellman-Ford','O(V×E)','✅ Yes','Currency arbitrage, negative weights'],
+    ['Floyd-Warshall','O(V³)','✅ Yes','All-pairs distances, routing tables'],
+    ['A* Search','O(E log V)','❌ No','Game AI, intelligent routing'],
+    ["Prim's MST",'O(V²)','N/A','Cable laying, network design'],
+    ["Kruskal's MST",'O(E log E)','N/A','Road networks, clustering'],
+    ['Network Flow','O(V×E²)','N/A','Traffic, supply chains'],
+    ['Graph Coloring','O(V²)','N/A','Register allocation, scheduling'],
+  ];
+  const tbody=document.getElementById('refTable');
+  tbody.innerHTML=rows.map(([alg,time,neg,use],i)=>`
+    <tr style="background:${i%2?'var(--bg3)':'var(--bg2)'}">
+      <td style="border:1px solid var(--border);padding:8px 14px;color:var(--accent);font-weight:600">${alg}</td>
+      <td style="border:1px solid var(--border);padding:8px 14px;font-family:var(--mono);color:var(--text)">${time}</td>
+      <td style="border:1px solid var(--border);padding:8px 14px;color:${neg.includes('✅')?'var(--green)':neg==='N/A'?'var(--text3)':'var(--red)'}">${neg}</td>
+      <td style="border:1px solid var(--border);padding:8px 14px;color:var(--text2);font-size:13px">${use}</td>
+    </tr>`).join('');
+})();
+
+// ===== SIDEBAR ACTIVE =====
+(function(){
+  const items=document.querySelectorAll('.nav-item');
+  const sections=document.querySelectorAll('.section, #hero');
+  const bar=document.getElementById('progress-bar');
+
+  function update(){
+    const scrollY=window.scrollY, totalH=document.body.scrollHeight-window.innerHeight;
+    bar.style.transform=`scaleX(${scrollY/totalH})`;
+    let active='';
+    sections.forEach(s=>{ if(scrollY>=s.offsetTop-80) active=s.id; });
+    // also check subsection divs
+    document.querySelectorAll('[id]').forEach(el=>{ if(scrollY>=el.offsetTop-80) active=el.id; });
+    items.forEach(item=>{ item.classList.toggle('active', item.getAttribute('href')==='#'+active); });
+  }
+  window.addEventListener('scroll',update,{passive:true});
+  update();
+})();
+</script>
+</body>
+</html>

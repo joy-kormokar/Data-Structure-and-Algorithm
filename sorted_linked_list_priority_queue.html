@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Priority Queue — Sorted Linked List | Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0d14;
+    --surface: #111520;
+    --surface2: #171c2e;
+    --border: #1e2540;
+    --accent: #4f9eff;
+    --accent2: #7c5cfc;
+    --accent3: #ff6b6b;
+    --accent4: #43e97b;
+    --accent5: #ffd166;
+    --text: #e2e8f8;
+    --text2: #8892b0;
+    --text3: #4a5580;
+    --code-bg: #0d1117;
+    --node-empty: #1e2540;
+    --node-high: #4f9eff;
+    --node-low: #7c5cfc;
+    --node-mid: #43e97b;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ─── SIDEBAR ─────────────────────────────────────────────────── */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 268px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: transform .3s ease;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .sidebar-header {
+    padding: 28px 22px 18px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+  .sidebar-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: .5px;
+    line-height: 1.3;
+  }
+  .sidebar-header p { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+  .nav-group { padding: 10px 12px; }
+  .nav-group-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    padding: 8px 10px 4px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    transition: all .2s;
+    text-decoration: none;
+  }
+  .nav-item:hover, .nav-item.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    min-width: 18px;
+  }
+  .nav-item.active .num { color: var(--accent); }
+
+  /* ─── MAIN ─────────────────────────────────────────────────────── */
+  #main {
+    margin-left: 268px;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* ─── HERO ─────────────────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #0d1117 0%, #111a2e 50%, #0f1620 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 64px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(79,158,255,.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 20%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(124,92,252,.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: rgba(79,158,255,.1);
+    border: 1px solid rgba(79,158,255,.3);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 18px;
+    letter-spacing: 1px;
+  }
+  .hero h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e2e8f8 30%, #4f9eff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    color: var(--text2);
+    max-width: 600px;
+    font-size: 16px;
+    line-height: 1.8;
+    margin-bottom: 28px;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 22px;
+    min-width: 110px;
+  }
+  .hero-stat .val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .hero-stat .lbl { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* ─── SECTION ──────────────────────────────────────────────────── */
+  .section {
+    padding: 56px 64px;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 0;
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 36px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(79,158,255,.1);
+    border: 1px solid rgba(79,158,255,.2);
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-width: 42px;
+    text-align: center;
+    margin-top: 4px;
+    letter-spacing: .5px;
+  }
+  .section-title-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .section-title-block p { color: var(--text2); font-size: 13.5px; }
+
+  /* ─── CARDS ─────────────────────────────────────────────────────── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-accent, var(--accent));
+  }
+  .card h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--card-accent, var(--accent));
+  }
+  .card p { font-size: 13.5px; color: var(--text2); line-height: 1.7; }
+  .card.green { --card-accent: #43e97b; }
+  .card.purple { --card-accent: #7c5cfc; }
+  .card.red { --card-accent: #ff6b6b; }
+  .card.yellow { --card-accent: #ffd166; }
+
+  /* ─── ANALOGY BOX ─────────────────────────────────────────────── */
+  .analogy {
+    background: linear-gradient(135deg, rgba(67,233,123,.06), rgba(79,158,255,.06));
+    border: 1px solid rgba(67,233,123,.2);
+    border-radius: 14px;
+    padding: 22px 26px;
+    margin: 22px 0;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .analogy-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
+  .analogy h5 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--accent4); margin-bottom: 6px; }
+  .analogy p { font-size: 13.5px; color: var(--text2); line-height: 1.7; }
+
+  /* ─── CODE BLOCK ─────────────────────────────────────────────── */
+  .code-wrap { position: relative; margin: 20px 0; }
+  .code-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .code-label span.lang { color: var(--accent); }
+  .copy-btn {
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .copy-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 0 0 10px 10px;
+    padding: 22px 22px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #abb2bf;
+  }
+  .kw { color: #c678dd; }
+  .fn { color: #61afef; }
+  .cm { color: #5c6370; font-style: italic; }
+  .str { color: #98c379; }
+  .num { color: #d19a66; }
+  .tp { color: #e5c07b; }
+  .op { color: #56b6c2; }
+
+  /* ─── VISUALIZATION ──────────────────────────────────────────── */
+  .viz-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin: 22px 0;
+  }
+  .viz-box h5 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .viz-box h5::before {
+    content: '';
+    display: block;
+    width: 4px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+  .viz-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .viz-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .viz-btn:hover, .viz-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .viz-btn.danger:hover { background: var(--accent3); border-color: var(--accent3); color: #fff; }
+  .viz-btn.success:hover { background: var(--accent4); border-color: var(--accent4); color: #000; }
+  .viz-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    width: 80px;
+    outline: none;
+  }
+  .viz-input:focus { border-color: var(--accent); }
+
+  /* Linked List visual */
+  .ll-canvas {
+    background: var(--surface2);
+    border-radius: 10px;
+    min-height: 100px;
+    padding: 20px 16px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    overflow-x: auto;
+    position: relative;
+  }
+  .ll-empty { color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 12px; margin: auto; }
+  .ll-node {
+    display: flex;
+    align-items: center;
+    animation: nodeIn .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes nodeIn {
+    from { opacity: 0; transform: translateY(-16px) scale(.85); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes nodePop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.18); }
+    100% { transform: scale(1); }
+  }
+  .node-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--surface);
+    border: 2px solid var(--node-high);
+    border-radius: 10px;
+    padding: 10px 16px;
+    min-width: 64px;
+    position: relative;
+    cursor: default;
+  }
+  .node-box.highlight { border-color: var(--accent5); animation: nodePop .4s ease; }
+  .node-box.new { border-color: var(--accent4); }
+  .node-box .prio {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--node-high);
+  }
+  .node-box .lbl { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; }
+  .node-box .ptr {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+  .node-arrow {
+    font-size: 18px;
+    color: var(--text3);
+    margin: 0 2px;
+    padding-bottom: 6px;
+  }
+  .node-null {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent3);
+    padding-bottom: 6px;
+    margin-left: 4px;
+  }
+  .head-label {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  .viz-log {
+    margin-top: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent4);
+    min-height: 20px;
+    padding: 8px 12px;
+    background: rgba(67,233,123,.05);
+    border-radius: 6px;
+    border: 1px solid rgba(67,233,123,.1);
+  }
+
+  /* ─── COMPLEXITY TABLE ──────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    background: var(--surface2);
+    color: var(--text2);
+    padding: 10px 16px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .8px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+  tr:hover td { background: var(--surface); }
+  td .good { color: var(--accent4); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+  td .bad  { color: var(--accent3); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+  td .mid  { color: var(--accent5); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+
+  /* ─── STEP LIST ─────────────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 12px; margin: 18px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+  .step-n {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(79,158,255,.1);
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step p { font-size: 13.5px; color: var(--text2); }
+  .step strong { color: var(--text); }
+
+  /* ─── BADGE ─────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 100px;
+    margin-right: 6px;
+  }
+  .badge.blue { background: rgba(79,158,255,.15); color: var(--accent); border: 1px solid rgba(79,158,255,.3); }
+  .badge.green { background: rgba(67,233,123,.12); color: var(--accent4); border: 1px solid rgba(67,233,123,.25); }
+  .badge.red { background: rgba(255,107,107,.12); color: var(--accent3); border: 1px solid rgba(255,107,107,.25); }
+  .badge.yellow { background: rgba(255,209,102,.12); color: var(--accent5); border: 1px solid rgba(255,209,102,.25); }
+
+  /* ─── DIVIDER ────────────────────────────────────────────────── */
+  .divider { height: 1px; background: var(--border); margin: 28px 0; }
+
+  /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+  @media (max-width: 900px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: none; }
+    #main { margin-left: 0; }
+    .section { padding: 40px 24px; }
+    .hero { padding: 40px 24px 36px; }
+  }
+
+  .menu-toggle {
+    display: none;
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 200;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+  @media (max-width: 900px) { .menu-toggle { display: flex; } }
+
+  /* ─── SCROLLBAR ──────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ─── INFO PILL ──────────────────────────────────────────────── */
+  .info-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 14px 0;
+  }
+  .info-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    color: var(--text2);
+  }
+  .info-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .info-pill .dot.green { background: var(--accent4); }
+  .info-pill .dot.red { background: var(--accent3); }
+  .info-pill .dot.purple { background: var(--accent2); }
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" id="menuToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- ─── SIDEBAR ──────────────────────────────────────── -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h1>Priority Queue<br/>Sorted Linked List</h1>
+    <p>// 18 operations covered</p>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Foundation</div>
+    <a class="nav-item active" href="#s0"><span class="num">00</span>Introduction</a>
+    <a class="nav-item" href="#s1"><span class="num">01</span>Initialization</a>
+    <a class="nav-item" href="#s2"><span class="num">02</span>Insert / Enqueue</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Core Operations</div>
+    <a class="nav-item" href="#s3"><span class="num">03</span>Delete Highest Priority</a>
+    <a class="nav-item" href="#s4"><span class="num">04</span>Delete Lowest Priority</a>
+    <a class="nav-item" href="#s5"><span class="num">05</span>Peek Highest</a>
+    <a class="nav-item" href="#s6"><span class="num">06</span>Peek Lowest</a>
+    <a class="nav-item" href="#s7"><span class="num">07</span>IsEmpty</a>
+    <a class="nav-item" href="#s8"><span class="num">08</span>Display</a>
+    <a class="nav-item" href="#s9"><span class="num">09</span>Traverse</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Advanced Operations</div>
+    <a class="nav-item" href="#s10"><span class="num">10</span>Search Element</a>
+    <a class="nav-item" href="#s11"><span class="num">11</span>Update Priority</a>
+    <a class="nav-item" href="#s12"><span class="num">12</span>Count / Size</a>
+    <a class="nav-item" href="#s13"><span class="num">13</span>Clear / Destroy</a>
+    <a class="nav-item" href="#s14"><span class="num">14</span>Reverse</a>
+    <a class="nav-item" href="#s15"><span class="num">15</span>Merge Queues</a>
+    <a class="nav-item" href="#s16"><span class="num">16</span>Copy Queue</a>
+    <a class="nav-item" href="#s17"><span class="num">17</span>Find Maximum</a>
+    <a class="nav-item" href="#s18"><span class="num">18</span>Find Minimum</a>
+  </div>
+</nav>
+
+<!-- ─── MAIN ─────────────────────────────────────────── -->
+<main id="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Data Structures · C Programming</div>
+  <h2>Sorted Linked List<br/>Based Priority Queue</h2>
+  <p>A complete, hands-on guide to understanding, implementing, and mastering every operation of a sorted linked-list priority queue — from the very basics to advanced techniques.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="val">18</div><div class="lbl">Operations</div></div>
+    <div class="hero-stat"><div class="val">C</div><div class="lbl">Language</div></div>
+    <div class="hero-stat"><div class="val">O(n)</div><div class="lbl">Insert</div></div>
+    <div class="hero-stat"><div class="val">O(1)</div><div class="lbl">Peek</div></div>
+  </div>
+</div>
+
+<!-- ─── SECTION 0: Introduction ─────────────────────── -->
+<section class="section" id="s0">
+  <div class="section-header">
+    <div class="section-num">00</div>
+    <div class="section-title-block">
+      <h3>What is a Priority Queue?</h3>
+      <p>Concepts, structure, and why sorted linked lists make sense</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h4>📋 Priority Queue</h4>
+      <p>A special queue where every element has a <strong>priority value</strong>. Elements are served based on priority — not just arrival order. Highest (or lowest) priority goes first.</p>
+    </div>
+    <div class="card green">
+      <h4>🔗 Sorted Linked List</h4>
+      <p>We store nodes in a linked list, always keeping them <strong>sorted by priority</strong>. This makes peek O(1) — the highest-priority item is always at the front (or back).</p>
+    </div>
+    <div class="card purple">
+      <h4>🏗️ Node Structure</h4>
+      <p>Each node holds a <strong>data value</strong>, a <strong>priority number</strong>, and a <strong>next pointer</strong> to the following node. Simple — yet powerful.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🏥</div>
+    <div>
+      <h5>Real-Life Analogy — Hospital Emergency Room</h5>
+      <p>Patients arrive at different times, but the most critically ill are treated first. A patient with priority 1 (critical) is always ahead of priority 5 (minor cut). The doctor always sees the head of the sorted queue — no searching needed. This is exactly how a sorted linked-list priority queue works.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h4 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;color:var(--text)">Node Structure in C</h4>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Node Definition <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">// Every node in our sorted linked list holds:</span>
+<span class="cm">// 1) data   — the actual value stored</span>
+<span class="cm">// 2) priority — determines order (lower number = higher priority here)</span>
+<span class="cm">// 3) next   — pointer to the next node</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span> {
+    <span class="kw">int</span> data;       <span class="cm">// the value we store</span>
+    <span class="kw">int</span> priority;   <span class="cm">// smaller number = higher priority</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* next; <span class="cm">// link to next node</span>
+};
+
+<span class="cm">// Our queue just needs to track the HEAD of the sorted list</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* head = <span class="num">NULL</span>; <span class="cm">// empty queue to start</span></pre>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Data Structure</th><th>Insert</th><th>Delete Max</th><th>Peek</th><th>Space</th></tr></thead>
+      <tbody>
+        <tr><td>Sorted Linked List PQ</td><td class="mid">O(n)</td><td class="good">O(1)</td><td class="good">O(1)</td><td class="mid">O(n)</td></tr>
+        <tr><td>Unsorted Array PQ</td><td class="good">O(1)</td><td class="bad">O(n)</td><td class="bad">O(n)</td><td class="mid">O(n)</td></tr>
+        <tr><td>Binary Heap PQ</td><td class="mid">O(log n)</td><td class="mid">O(log n)</td><td class="good">O(1)</td><td class="mid">O(n)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ─── SECTION 1: Initialization ───────────────────── -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div class="section-title-block">
+      <h3>Priority Queue Initialization</h3>
+      <p>Setting up the empty structure — creating the head pointer</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h4>🎯 What Happens</h4>
+      <p>We simply declare a pointer called <code>head</code> and set it to <code>NULL</code>. A <code>NULL</code> head means the list is empty. That's the entire initialization!</p>
+    </div>
+    <div class="card yellow">
+      <h4>📐 Sorting Rule</h4>
+      <p>Decide upfront: <strong>ascending</strong> (priority 1 is highest) or <strong>descending</strong> (priority 10 is highest). We'll use ascending (lower = higher priority) throughout this guide.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📭</div>
+    <div>
+      <h5>Analogy — Empty Mailbox</h5>
+      <p>Initializing is like placing an empty mailbox outside your house. The mailbox exists (head pointer), but nothing is inside yet (NULL). Later, letters (nodes) arrive and are sorted by importance.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive Visualization</h5>
+    <div class="viz-controls">
+      <button class="viz-btn" onclick="initViz()">Initialize Queue</button>
+    </div>
+    <div class="ll-canvas" id="init-canvas">
+      <span class="ll-empty">[ Click Initialize Queue ]</span>
+    </div>
+    <div class="viz-log" id="init-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Initialization <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">// Step 1: Include required headers</span>
+<span class="op">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="op">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+
+<span class="cm">// Step 2: Define the Node structure</span>
+<span class="kw">struct</span> <span class="tp">Node</span> {
+    <span class="kw">int</span> data;
+    <span class="kw">int</span> priority;
+    <span class="kw">struct</span> <span class="tp">Node</span>* next;
+};
+
+<span class="cm">// Step 3: Create the head pointer (global or in main)</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* head = <span class="num">NULL</span>; <span class="cm">// NULL = empty queue</span>
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="cm">// The queue is now initialized and ready to use!</span>
+    <span class="fn">printf</span>(<span class="str">"Priority Queue initialized successfully.\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"Is empty: %s\n"</span>, head == <span class="num">NULL</span> ? <span class="str">"YES"</span> : <span class="str">"NO"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 2: Insert / Enqueue ─────────────────── -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div class="section-title-block">
+      <h3>Insert / Enqueue Operation</h3>
+      <p>Add a new element into its correct sorted position</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><p><strong>Allocate memory</strong> for a new node using <code>malloc()</code></p></div>
+    <div class="step"><div class="step-n">2</div><p><strong>Set data and priority</strong> values in the new node</p></div>
+    <div class="step"><div class="step-n">3</div><p><strong>Find the correct position</strong> — traverse until we find a node with lower priority (higher number)</p></div>
+    <div class="step"><div class="step-n">4</div><p><strong>Insert the node</strong> — adjust prev→next and newNode→next pointers</p></div>
+    <div class="step"><div class="step-n">5</div><p><strong>Handle edge cases</strong> — inserting at head (empty list, or highest priority)</p></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🗂️</div>
+    <div>
+      <h5>Analogy — Filing Cabinet</h5>
+      <p>When you add a new document, you don't throw it on top. You flip through the folders until you find where it belongs by date/urgency, then slide it in. Every folder stays in order — this is exactly O(n) sorted insertion.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Insert Nodes</h5>
+    <div class="viz-controls">
+      <input class="viz-input" id="ins-data" type="number" placeholder="data" value="10"/>
+      <input class="viz-input" id="ins-prio" type="number" placeholder="priority" value="3" min="1" max="99"/>
+      <button class="viz-btn primary" onclick="vizInsert()">Enqueue</button>
+      <button class="viz-btn" onclick="vizInsertRandom()">Random Insert ×3</button>
+      <button class="viz-btn danger" onclick="vizClear('insert')">Clear</button>
+    </div>
+    <div class="ll-canvas" id="insert-canvas">
+      <span class="ll-empty">[ Queue is empty — insert some nodes ]</span>
+    </div>
+    <div class="viz-log" id="insert-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Insert (Enqueue) <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Insert a node in sorted order (ascending priority).
+   Lower priority number = served first (highest priority). */</span>
+
+<span class="kw">void</span> <span class="fn">enqueue</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head, <span class="kw">int</span> data, <span class="kw">int</span> priority) {
+
+    <span class="cm">// Step 1: Allocate memory for new node</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* newNode = (<span class="kw">struct</span> <span class="tp">Node</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">Node</span>));
+    <span class="kw">if</span> (newNode == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Memory allocation failed!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">// Step 2: Fill the new node</span>
+    newNode-&gt;data     = data;
+    newNode-&gt;priority = priority;
+    newNode-&gt;next     = <span class="num">NULL</span>;
+
+    <span class="cm">// Step 3: Insert at head if list is empty OR new node has highest priority</span>
+    <span class="kw">if</span> (*head == <span class="num">NULL</span> || (*head)-&gt;priority &gt; priority) {
+        newNode-&gt;next = *head;
+        *head = newNode;
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">// Step 4: Find correct position by traversing</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = *head;
+    <span class="kw">while</span> (curr-&gt;next != <span class="num">NULL</span> &amp;&amp; curr-&gt;next-&gt;priority &lt;= priority) {
+        curr = curr-&gt;next;
+    }
+
+    <span class="cm">// Step 5: Insert at found position</span>
+    newNode-&gt;next = curr-&gt;next;
+    curr-&gt;next    = newNode;
+}</pre>
+  </div>
+
+  <div class="info-row">
+    <div class="info-pill"><span class="dot"></span>Time: O(n) — must find correct position</div>
+    <div class="info-pill"><span class="dot green"></span>Space: O(1) — only one new node</div>
+    <div class="info-pill"><span class="dot red"></span>Edge: Insert into empty list</div>
+  </div>
+</section>
+
+<!-- ─── SECTION 3: Delete Highest Priority ──────────── -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div class="section-title-block">
+      <h3>Delete Highest Priority Element</h3>
+      <p>Remove the element that must be served next</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card red">
+      <h4>⚡ O(1) Operation</h4>
+      <p>Because the list is sorted, the highest-priority element is always at the <strong>head</strong>. Deleting it is simply moving the head pointer forward — no traversal needed!</p>
+    </div>
+    <div class="card">
+      <h4>🗑️ Free Memory</h4>
+      <p>Always <code>free()</code> the deleted node's memory to avoid <strong>memory leaks</strong>. This is critical in C where memory is manually managed.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🚦</div>
+    <div>
+      <h5>Analogy — Traffic Priority Lane</h5>
+      <p>The ambulance is always at the front. When the traffic clears, the ambulance (highest priority) goes first. The next-most-urgent vehicle automatically becomes the new front. No one needs to rearrange — it's already sorted!</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Delete Highest Priority</h5>
+    <div class="viz-controls">
+      <button class="viz-btn primary" onclick="vizInsertSample('delhigh')">Load Sample Data</button>
+      <button class="viz-btn danger" onclick="vizDeleteHigh()">Delete Highest Priority</button>
+    </div>
+    <div class="ll-canvas" id="delhigh-canvas">
+      <span class="ll-empty">[ Load sample data first ]</span>
+    </div>
+    <div class="viz-log" id="delhigh-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Delete Highest Priority (Dequeue) <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Remove and return the highest-priority element.
+   It's always at the HEAD of the sorted list! */</span>
+
+<span class="kw">int</span> <span class="fn">dequeueHigh</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head) {
+
+    <span class="cm">// Safety check: don't delete from empty queue</span>
+    <span class="kw">if</span> (*head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty! Cannot delete.\n"</span>);
+        <span class="kw">return</span> <span class="num">-1</span>;
+    }
+
+    <span class="cm">// Save the front node (highest priority)</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp = *head;
+    <span class="kw">int</span> val = temp-&gt;data;
+
+    <span class="cm">// Move head to the next node</span>
+    *head = (*head)-&gt;next;
+
+    <span class="cm">// Free the removed node's memory</span>
+    <span class="fn">free</span>(temp);
+
+    <span class="kw">return</span> val; <span class="cm">// return the deleted value</span>
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">int</span> served = <span class="fn">dequeueHigh</span>(&amp;head);
+<span class="fn">printf</span>(<span class="str">"Served: %d\n"</span>, served);</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 4: Delete Lowest Priority ───────────── -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div class="section-title-block">
+      <h3>Delete Lowest Priority Element</h3>
+      <p>Remove the element at the back of the sorted list</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card purple">
+      <h4>🔚 Tail Operation</h4>
+      <p>The lowest-priority element sits at the <strong>tail</strong> of our sorted list. We must traverse to find the second-to-last node, then unlink and free the last.</p>
+    </div>
+    <div class="card yellow">
+      <h4>⏱️ O(n) Time</h4>
+      <p>Unlike deleting from the head, removing from the tail requires a full traversal to find the node before the last one.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🎭</div>
+    <div>
+      <h5>Analogy — Removing the Least Urgent Task</h5>
+      <p>Imagine a to-do list sorted from most to least urgent. Sometimes you decide "I'll never get to this" and cross off the least urgent item at the bottom. You have to flip to the last page to find it — that's O(n) traversal.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Delete Lowest Priority</h5>
+    <div class="viz-controls">
+      <button class="viz-btn primary" onclick="vizInsertSample('dellow')">Load Sample Data</button>
+      <button class="viz-btn danger" onclick="vizDeleteLow()">Delete Lowest Priority</button>
+    </div>
+    <div class="ll-canvas" id="dellow-canvas">
+      <span class="ll-empty">[ Load sample data first ]</span>
+    </div>
+    <div class="viz-log" id="dellow-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Delete Lowest Priority <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Remove the element with the LOWEST priority (at the TAIL). */</span>
+
+<span class="kw">int</span> <span class="fn">dequeueLow</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head) {
+
+    <span class="kw">if</span> (*head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty!\n"</span>);
+        <span class="kw">return</span> <span class="num">-1</span>;
+    }
+
+    <span class="cm">// Special case: only one node in the list</span>
+    <span class="kw">if</span> ((*head)-&gt;next == <span class="num">NULL</span>) {
+        <span class="kw">int</span> val = (*head)-&gt;data;
+        <span class="fn">free</span>(*head);
+        *head = <span class="num">NULL</span>;
+        <span class="kw">return</span> val;
+    }
+
+    <span class="cm">// Traverse to find the second-to-last node</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = *head;
+    <span class="kw">while</span> (curr-&gt;next-&gt;next != <span class="num">NULL</span>) {
+        curr = curr-&gt;next;
+    }
+
+    <span class="cm">// curr is now the second-to-last node</span>
+    <span class="kw">int</span> val = curr-&gt;next-&gt;data;
+    <span class="fn">free</span>(curr-&gt;next); <span class="cm">// free the tail</span>
+    curr-&gt;next = <span class="num">NULL</span>; <span class="cm">// mark new tail</span>
+
+    <span class="kw">return</span> val;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 5: Peek Highest ──────────────────────── -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div class="section-title-block">
+      <h3>Peek Highest Priority Element</h3>
+      <p>Look at the top element without removing it</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card green">
+      <h4>👀 Non-Destructive</h4>
+      <p>Peek reads without deleting. Think of it as "who's next?" without actually calling them in.</p>
+    </div>
+    <div class="card">
+      <h4>⚡ O(1) Always</h4>
+      <p>The highest-priority element is always at <code>head</code>. Peeking is just <code>head→data</code> — instant!</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">👁️</div>
+    <div>
+      <h5>Analogy — Checking Next Patient</h5>
+      <p>The nurse checks the front of the waiting list to see who's next — without actually calling them in yet. The doctor might be finishing up; the nurse just needs to <em>know</em> who's coming next.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Peek Highest Priority <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Peek at highest priority element WITHOUT removing it. */</span>
+
+<span class="kw">int</span> <span class="fn">peekHigh</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">if</span> (head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty!\n"</span>);
+        <span class="kw">return</span> <span class="num">-1</span>;
+    }
+    <span class="cm">// Highest priority is always at HEAD — O(1)!</span>
+    <span class="kw">return</span> head-&gt;data;
+}
+
+<span class="cm">// Usage:</span>
+<span class="fn">printf</span>(<span class="str">"Next to be served: %d (priority %d)\n"</span>,
+       head-&gt;data, head-&gt;priority);</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 6: Peek Lowest ───────────────────────── -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div class="section-title-block">
+      <h3>Peek Lowest Priority Element</h3>
+      <p>Look at the last element without removing it</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card purple">
+      <h4>🔚 Tail Access</h4>
+      <p>The lowest-priority element is at the tail. We traverse to the end — O(n) operation unless we maintain a tail pointer.</p>
+    </div>
+    <div class="card yellow">
+      <h4>💡 Optimization Tip</h4>
+      <p>Keep a <code>tail</code> pointer alongside <code>head</code> to make this O(1). Advanced versions of this data structure maintain both.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Peek Lowest Priority <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Peek at lowest priority element (tail of sorted list). */</span>
+
+<span class="kw">int</span> <span class="fn">peekLow</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">if</span> (head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty!\n"</span>);
+        <span class="kw">return</span> <span class="num">-1</span>;
+    }
+
+    <span class="cm">// Traverse to the last node</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head;
+    <span class="kw">while</span> (curr-&gt;next != <span class="num">NULL</span>) {
+        curr = curr-&gt;next;
+    }
+
+    <span class="kw">return</span> curr-&gt;data; <span class="cm">// lowest priority element</span>
+}
+
+<span class="cm">// --- OPTIMIZED VERSION with tail pointer ---</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* tail = <span class="num">NULL</span>; <span class="cm">// maintain a tail pointer</span>
+
+<span class="kw">int</span> <span class="fn">peekLowFast</span>() {
+    <span class="kw">if</span> (tail == <span class="num">NULL</span>) <span class="kw">return</span> <span class="num">-1</span>;
+    <span class="kw">return</span> tail-&gt;data; <span class="cm">// O(1) with tail pointer!</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 7: IsEmpty ───────────────────────────── -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div class="section-title-block">
+      <h3>IsEmpty Operation</h3>
+      <p>Check whether the queue contains any elements</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📭</div>
+    <div>
+      <h5>Analogy — Checking the Mailbox</h5>
+      <p>Before reaching into the mailbox, you peek inside. If it's empty, you don't bother. In code, we check <code>head == NULL</code> before any operation to prevent crashes.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — IsEmpty <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Returns 1 (true) if queue is empty, 0 (false) if not. */</span>
+
+<span class="kw">int</span> <span class="fn">isEmpty</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">return</span> (head == <span class="num">NULL</span>); <span class="cm">// 1 = empty, 0 = not empty</span>
+}
+
+<span class="cm">// Usage — always check before delete/peek:</span>
+<span class="kw">if</span> (<span class="fn">isEmpty</span>(head)) {
+    <span class="fn">printf</span>(<span class="str">"Queue is empty! Nothing to process.\n"</span>);
+} <span class="kw">else</span> {
+    <span class="fn">printf</span>(<span class="str">"Queue has elements. Ready to serve.\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 8: Display ───────────────────────────── -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div class="section-title-block">
+      <h3>Display Priority Queue</h3>
+      <p>Print all elements in their sorted priority order</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📋</div>
+    <div>
+      <h5>Analogy — Reading the Waiting List</h5>
+      <p>The receptionist reads out the entire waiting list from most urgent to least urgent. Every patient's name and priority is announced in order. This is what Display does — prints everything in sorted order from head to tail.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Display Queue</h5>
+    <div class="viz-controls">
+      <button class="viz-btn primary" onclick="vizInsertSample('display')">Load Sample Data</button>
+      <button class="viz-btn success" onclick="vizDisplay()">Display All</button>
+    </div>
+    <div class="ll-canvas" id="display-canvas">
+      <span class="ll-empty">[ Load sample data first ]</span>
+    </div>
+    <div class="viz-log" id="display-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Display <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Print all elements from highest to lowest priority. */</span>
+
+<span class="kw">void</span> <span class="fn">display</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">if</span> (head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Priority Queue (High → Low):\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"HEAD → "</span>);
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head;
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"[data:%d, prio:%d] → "</span>, curr-&gt;data, curr-&gt;priority);
+        curr = curr-&gt;next;
+    }
+
+    <span class="fn">printf</span>(<span class="str">"NULL\n"</span>);
+}
+
+<span class="cm">/* Sample output:
+   HEAD → [data:40, prio:1] → [data:20, prio:3] → [data:10, prio:5] → NULL
+*/</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 9: Traverse ──────────────────────────── -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">09</div>
+    <div class="section-title-block">
+      <h3>Traverse Priority Queue</h3>
+      <p>Visit every node sequentially (forward traversal)</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h4>➡️ Forward Only</h4>
+      <p>Singly linked lists can only be traversed <strong>forward</strong> (head → tail). Each node visits its <code>next</code> pointer until reaching <code>NULL</code>.</p>
+    </div>
+    <div class="card green">
+      <h4>🔁 Common Pattern</h4>
+      <p>The traversal pattern <code>curr = curr→next</code> is the most fundamental loop in linked list programming. Master it early!</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Traverse (Forward) <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Standard forward traversal — visits every node once. */</span>
+
+<span class="kw">void</span> <span class="fn">traverse</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head; <span class="cm">// start at head</span>
+
+    <span class="kw">int</span> position = <span class="num">1</span>;
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {  <span class="cm">// stop when we hit NULL</span>
+        <span class="fn">printf</span>(<span class="str">"Position %d: data=%d, priority=%d\n"</span>,
+               position, curr-&gt;data, curr-&gt;priority);
+        curr = curr-&gt;next;   <span class="cm">// move to next node</span>
+        position++;
+    }
+    <span class="fn">printf</span>(<span class="str">"Traversal complete. Total: %d nodes.\n"</span>, position - <span class="num">1</span>);
+}
+
+<span class="cm">/* Key insight:
+   - curr starts at HEAD
+   - Each iteration: process curr, then move curr = curr->next
+   - Stop when curr == NULL (end of list)
+*/</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 10: Search ───────────────────────────── -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div class="section-title-block">
+      <h3>Search Element</h3>
+      <p>Find a node by data value using linear traversal</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card yellow">
+      <h4>🔍 Linear Search</h4>
+      <p>We compare each node's <code>data</code> value as we traverse. Worst case: O(n) — the item is at the tail or doesn't exist.</p>
+    </div>
+    <div class="card">
+      <h4>🎯 Search by Data vs Priority</h4>
+      <p>You can search by <code>data</code> (what's stored) or by <code>priority</code> (its rank). The approach is the same — just compare a different field.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔎</div>
+    <div>
+      <h5>Analogy — Finding a Student in a Sorted Roll Call</h5>
+      <p>The teacher calls names alphabetically. To find "John", she reads through the list until "John" appears. She's doing linear search — exactly what we do with linked list traversal.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Search</h5>
+    <div class="viz-controls">
+      <button class="viz-btn primary" onclick="vizInsertSample('search')">Load Sample Data</button>
+      <input class="viz-input" id="search-val" type="number" placeholder="data" value="20"/>
+      <button class="viz-btn success" onclick="vizSearch()">Search by Data</button>
+    </div>
+    <div class="ll-canvas" id="search-canvas">
+      <span class="ll-empty">[ Load sample data first ]</span>
+    </div>
+    <div class="viz-log" id="search-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Search Element <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Search for a node by its data value.
+   Returns the node pointer if found, NULL if not found. */</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">search</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head, <span class="kw">int</span> target) {
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head;
+    <span class="kw">int</span> position = <span class="num">1</span>;
+
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {
+        <span class="kw">if</span> (curr-&gt;data == target) {
+            <span class="fn">printf</span>(<span class="str">"Found %d at position %d (priority: %d)\n"</span>,
+                   target, position, curr-&gt;priority);
+            <span class="kw">return</span> curr; <span class="cm">// found!</span>
+        }
+        curr = curr-&gt;next;
+        position++;
+    }
+
+    <span class="fn">printf</span>(<span class="str">"%d not found in queue.\n"</span>, target);
+    <span class="kw">return</span> <span class="num">NULL</span>; <span class="cm">// not found</span>
+}
+
+<span class="cm">// Usage:</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* found = <span class="fn">search</span>(head, <span class="num">42</span>);
+<span class="kw">if</span> (found != <span class="num">NULL</span>)
+    <span class="fn">printf</span>(<span class="str">"Priority of found element: %d\n"</span>, found-&gt;priority);</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 11: Update Priority ─────────────────── -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <div class="section-title-block">
+      <h3>Update Element Priority</h3>
+      <p>Change a node's priority and reinsert it in sorted position</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><p><strong>Search</strong> for the target node by data value</p></div>
+    <div class="step"><div class="step-n">2</div><p><strong>Remove</strong> the node from its current position (track prev pointer)</p></div>
+    <div class="step"><div class="step-n">3</div><p><strong>Update</strong> the priority value in the node</p></div>
+    <div class="step"><div class="step-n">4</div><p><strong>Reinsert</strong> the node using <code>enqueue()</code> logic to maintain sort order</p></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔄</div>
+    <div>
+      <h5>Analogy — Patient Condition Change</h5>
+      <p>A patient in the waiting room's condition suddenly worsens. The nurse pulls them from their current spot in the queue and moves them closer to the front based on the new urgency. The queue must remain sorted after the update.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Update Element Priority <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Update a node's priority: remove, modify, reinsert. */</span>
+
+<span class="kw">void</span> <span class="fn">updatePriority</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head, <span class="kw">int</span> target, <span class="kw">int</span> newPriority) {
+    <span class="kw">if</span> (*head == <span class="num">NULL</span>) { <span class="fn">printf</span>(<span class="str">"Empty queue.\n"</span>); <span class="kw">return</span>; }
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = *head;
+    <span class="kw">struct</span> <span class="tp">Node</span>* prev = <span class="num">NULL</span>;
+
+    <span class="cm">// Step 1: Find the target node</span>
+    <span class="kw">while</span> (curr != <span class="num">NULL</span> &amp;&amp; curr-&gt;data != target) {
+        prev = curr;
+        curr = curr-&gt;next;
+    }
+
+    <span class="kw">if</span> (curr == <span class="num">NULL</span>) { <span class="fn">printf</span>(<span class="str">"Element %d not found.\n"</span>, target); <span class="kw">return</span>; }
+
+    <span class="cm">// Step 2: Remove node from current position</span>
+    <span class="kw">if</span> (prev == <span class="num">NULL</span>)
+        *head = curr-&gt;next;          <span class="cm">// removing head</span>
+    <span class="kw">else</span>
+        prev-&gt;next = curr-&gt;next;     <span class="cm">// bypassing curr</span>
+
+    <span class="cm">// Step 3: Update the priority</span>
+    curr-&gt;priority = newPriority;
+    curr-&gt;next = <span class="num">NULL</span>;
+
+    <span class="cm">// Step 4: Re-insert in sorted position</span>
+    <span class="kw">if</span> (*head == <span class="num">NULL</span> || (*head)-&gt;priority &gt; newPriority) {
+        curr-&gt;next = *head;
+        *head = curr;
+        <span class="kw">return</span>;
+    }
+    <span class="kw">struct</span> <span class="tp">Node</span>* it = *head;
+    <span class="kw">while</span> (it-&gt;next != <span class="num">NULL</span> &amp;&amp; it-&gt;next-&gt;priority &lt;= newPriority)
+        it = it-&gt;next;
+    curr-&gt;next = it-&gt;next;
+    it-&gt;next = curr;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 12: Count / Size ─────────────────────── -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <div class="section-title-block">
+      <h3>Count / Size Operation</h3>
+      <p>Determine how many elements are currently in the queue</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h4>🔢 Dynamic Counting</h4>
+      <p>Traverse from head to tail counting each node. O(n) unless you maintain a separate <code>size</code> counter variable that you increment/decrement on each insert/delete.</p>
+    </div>
+    <div class="card green">
+      <h4>💡 Optimization</h4>
+      <p>Maintain a global <code>int size = 0</code> and update it on every enqueue/dequeue. Then <code>getSize()</code> becomes O(1).</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Count / Size <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Method 1: Traverse and count — O(n) */</span>
+<span class="kw">int</span> <span class="fn">countNodes</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">int</span> count = <span class="num">0</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head;
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {
+        count++;
+        curr = curr-&gt;next;
+    }
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Method 2: Maintain a size counter — O(1) size checks */</span>
+<span class="kw">int</span> size = <span class="num">0</span>; <span class="cm">// global counter</span>
+
+<span class="kw">void</span> <span class="fn">enqueue</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head, <span class="kw">int</span> data, <span class="kw">int</span> priority) {
+    <span class="cm">// ... insert logic ...</span>
+    size++; <span class="cm">// increment on every insert</span>
+}
+
+<span class="kw">int</span> <span class="fn">dequeueHigh</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head) {
+    <span class="cm">// ... delete logic ...</span>
+    size--; <span class="cm">// decrement on every delete</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">int</span> <span class="fn">getSize</span>() { <span class="kw">return</span> size; } <span class="cm">// O(1)!</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 13: Clear / Destroy ─────────────────── -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <div class="section-title-block">
+      <h3>Clear / Destroy Priority Queue</h3>
+      <p>Remove all nodes and reset the queue to empty</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card red">
+      <h4>⚠️ Memory Leaks!</h4>
+      <p>In C, simply setting <code>head = NULL</code> does NOT free the memory — nodes are still allocated on the heap. You <strong>must</strong> free each node individually.</p>
+    </div>
+    <div class="card">
+      <h4>🔁 Traverse & Free</h4>
+      <p>Walk through every node, save its <code>next</code> pointer, then <code>free()</code> it. After the loop, set <code>head = NULL</code>.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🗑️</div>
+    <div>
+      <h5>Analogy — Clearing a Board Game</h5>
+      <p>Putting away a board game: you pick up each piece one by one and return it to the box. You can't just flip the board (set head = NULL) because pieces (memory) are still on the table (heap). Each must be individually returned (freed).</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Clear / Destroy <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Free ALL nodes and reset the queue. MUST use this — not just head = NULL! */</span>
+
+<span class="kw">void</span> <span class="fn">clearQueue</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head) {
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = *head;
+    <span class="kw">struct</span> <span class="tp">Node</span>* nextNode;
+
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {
+        nextNode = curr-&gt;next; <span class="cm">// save next BEFORE freeing</span>
+        <span class="fn">free</span>(curr);            <span class="cm">// free current node</span>
+        curr = nextNode;       <span class="cm">// move to saved next</span>
+    }
+
+    *head = <span class="num">NULL</span>; <span class="cm">// reset head to NULL</span>
+    <span class="fn">printf</span>(<span class="str">"Queue cleared. All memory freed.\n"</span>);
+}
+
+<span class="cm">/* ❌ WRONG — memory leak! Don't do this:
+   head = NULL;   // nodes still exist in memory!
+*/</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 14: Reverse ──────────────────────────── -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <div class="section-title-block">
+      <h3>Reverse Priority Queue</h3>
+      <p>Flip the order: ascending ↔ descending priorities</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="step-n">1</div><p>Use three pointers: <strong>prev</strong>, <strong>curr</strong>, and <strong>next</strong></p></div>
+    <div class="step"><div class="step-n">2</div><p>At each step: save <code>curr→next</code>, then point <code>curr→next</code> to <code>prev</code></p></div>
+    <div class="step"><div class="step-n">3</div><p>Advance <strong>prev = curr</strong>, then <strong>curr = next</strong></p></div>
+    <div class="step"><div class="step-n">4</div><p>When <strong>curr == NULL</strong>, set <code>head = prev</code> (the new front)</p></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔄</div>
+    <div>
+      <h5>Analogy — Reversing a Line of People</h5>
+      <p>Ask everyone to turn around and face the other direction. Now the last person in line is first. In code, we reverse each pointer one by one — each person faces backward (to who was behind them, now in front).</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Reverse</h5>
+    <div class="viz-controls">
+      <button class="viz-btn primary" onclick="vizInsertSample('reverse')">Load Sample Data</button>
+      <button class="viz-btn" onclick="vizReverse()">Reverse Queue</button>
+    </div>
+    <div class="ll-canvas" id="reverse-canvas">
+      <span class="ll-empty">[ Load sample data first ]</span>
+    </div>
+    <div class="viz-log" id="reverse-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Reverse <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Reverse the linked list in-place using 3 pointers. */</span>
+
+<span class="kw">void</span> <span class="fn">reverseQueue</span>(<span class="kw">struct</span> <span class="tp">Node</span>** head) {
+    <span class="kw">struct</span> <span class="tp">Node</span>* prev = <span class="num">NULL</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = *head;
+    <span class="kw">struct</span> <span class="tp">Node</span>* next = <span class="num">NULL</span>;
+
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {
+        next       = curr-&gt;next;  <span class="cm">// Step 1: save next</span>
+        curr-&gt;next = prev;        <span class="cm">// Step 2: reverse the link</span>
+        prev       = curr;        <span class="cm">// Step 3: advance prev</span>
+        curr       = next;        <span class="cm">// Step 4: advance curr</span>
+    }
+
+    *head = prev; <span class="cm">// prev is the new head</span>
+    <span class="fn">printf</span>(<span class="str">"Queue reversed: now lowest priority is first.\n"</span>);
+}
+
+<span class="cm">/* After reversing ascending list → descending list
+   [1]→[3]→[5]→NULL   becomes   [5]→[3]→[1]→NULL
+*/</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 15: Merge ─────────────────────────────── -->
+<section class="section" id="s15">
+  <div class="section-header">
+    <div class="section-num">15</div>
+    <div class="section-title-block">
+      <h3>Merge / Concatenate Priority Queues</h3>
+      <p>Combine two sorted queues into one sorted queue</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <h4>🔀 Merge Sort Style</h4>
+      <p>Compare the heads of both lists. Take the smaller-priority node and advance that list's pointer. Repeat until one list is exhausted, then append the rest.</p>
+    </div>
+    <div class="card green">
+      <h4>⏱️ O(m + n)</h4>
+      <p>Where m and n are the sizes of the two queues. We visit each node at most once — very efficient!</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🤝</div>
+    <div>
+      <h5>Analogy — Merging Two Hospital Departments</h5>
+      <p>Two hospital departments each have their own sorted patient queues. When they merge, you interleave both lists: take the most urgent patient from either queue, then the next, keeping the combined queue sorted at all times.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h5>Interactive — Merge Two Queues</h5>
+    <div class="viz-controls">
+      <button class="viz-btn primary" onclick="vizMerge()">Merge Two Sample Queues</button>
+    </div>
+    <div id="merge-a-canvas" class="ll-canvas" style="margin-bottom:10px">
+      <span class="ll-empty">[ Queue A will appear here ]</span>
+    </div>
+    <div id="merge-b-canvas" class="ll-canvas" style="margin-bottom:10px">
+      <span class="ll-empty">[ Queue B will appear here ]</span>
+    </div>
+    <div id="merge-result-canvas" class="ll-canvas">
+      <span class="ll-empty">[ Merged result will appear here ]</span>
+    </div>
+    <div class="viz-log" id="merge-log">—</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Merge Two Sorted Priority Queues <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Merge two sorted linked lists into one sorted list.
+   Similar to the merge step in merge sort! */</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">mergePQ</span>(<span class="kw">struct</span> <span class="tp">Node</span>* h1, <span class="kw">struct</span> <span class="tp">Node</span>* h2) {
+    <span class="cm">// Base cases</span>
+    <span class="kw">if</span> (h1 == <span class="num">NULL</span>) <span class="kw">return</span> h2;
+    <span class="kw">if</span> (h2 == <span class="num">NULL</span>) <span class="kw">return</span> h1;
+
+    <span class="cm">// Use a dummy head to simplify logic</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> dummy;
+    <span class="kw">struct</span> <span class="tp">Node</span>* tail = &amp;dummy;
+    dummy.next = <span class="num">NULL</span>;
+
+    <span class="kw">while</span> (h1 != <span class="num">NULL</span> &amp;&amp; h2 != <span class="num">NULL</span>) {
+        <span class="kw">if</span> (h1-&gt;priority &lt;= h2-&gt;priority) {
+            tail-&gt;next = h1;  <span class="cm">// take from list 1</span>
+            h1 = h1-&gt;next;
+        } <span class="kw">else</span> {
+            tail-&gt;next = h2;  <span class="cm">// take from list 2</span>
+            h2 = h2-&gt;next;
+        }
+        tail = tail-&gt;next;
+    }
+
+    <span class="cm">// Attach remaining nodes</span>
+    tail-&gt;next = (h1 != <span class="num">NULL</span>) ? h1 : h2;
+
+    <span class="kw">return</span> dummy.next; <span class="cm">// head of merged list</span>
+}
+
+<span class="cm">// Usage:
+// struct Node* merged = mergePQ(head1, head2);</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 16: Copy ──────────────────────────────── -->
+<section class="section" id="s16">
+  <div class="section-header">
+    <div class="section-num">16</div>
+    <div class="section-title-block">
+      <h3>Copy Priority Queue</h3>
+      <p>Create a deep copy — completely independent duplicate</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card purple">
+      <h4>🧬 Deep Copy vs Shallow Copy</h4>
+      <p>A <strong>shallow copy</strong> just copies the head pointer — both lists share the same nodes. A <strong>deep copy</strong> allocates new nodes so the two queues are fully independent.</p>
+    </div>
+    <div class="card red">
+      <h4>⚠️ Always Deep Copy</h4>
+      <p>For data structures in C, always deep copy. Shallow copies mean modifying one queue accidentally modifies the other — a nasty bug!</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📄</div>
+    <div>
+      <h5>Analogy — Photocopying a Document</h5>
+      <p>Copying a sorted patient queue is like photocopying a document. The copy looks identical, but changes to the original don't affect the copy, and vice versa. Each node is "photocopied" into new memory.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Deep Copy Priority Queue <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Deep copy: creates completely new nodes. O(n) time and space. */</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">copyQueue</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">if</span> (head == <span class="num">NULL</span>) <span class="kw">return</span> <span class="num">NULL</span>;
+
+    <span class="cm">// Create a dummy node to simplify building the copy</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> dummy;
+    <span class="kw">struct</span> <span class="tp">Node</span>* copyTail = &amp;dummy;
+    dummy.next = <span class="num">NULL</span>;
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head;
+
+    <span class="kw">while</span> (curr != <span class="num">NULL</span>) {
+        <span class="cm">// Allocate a new node</span>
+        <span class="kw">struct</span> <span class="tp">Node</span>* newNode = (<span class="kw">struct</span> <span class="tp">Node</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">Node</span>));
+        newNode-&gt;data     = curr-&gt;data;
+        newNode-&gt;priority = curr-&gt;priority;
+        newNode-&gt;next     = <span class="num">NULL</span>;
+
+        <span class="cm">// Append to copy list</span>
+        copyTail-&gt;next = newNode;
+        copyTail = newNode;
+
+        curr = curr-&gt;next;
+    }
+
+    <span class="kw">return</span> dummy.next; <span class="cm">// head of the copy</span>
+}
+
+<span class="cm">// Usage:
+// struct Node* backup = copyQueue(head);
+// Now backup is a fully independent copy!</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 17: Find Maximum ─────────────────────── -->
+<section class="section" id="s17">
+  <div class="section-header">
+    <div class="section-num">17</div>
+    <div class="section-title-block">
+      <h3>Find Maximum Priority Node</h3>
+      <p>Return the node with the highest priority (most urgent)</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card green">
+      <h4>⚡ O(1) — Already at HEAD</h4>
+      <p>Since our list is sorted in ascending order (lower number = higher priority), the <strong>maximum priority node is always HEAD</strong>. No traversal needed!</p>
+    </div>
+    <div class="card yellow">
+      <h4>📝 Convention Matters</h4>
+      <p>"Maximum priority" can mean different things. In our convention, priority 1 is the <em>highest urgency</em>. Always document your sorting convention clearly.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🥇</div>
+    <div>
+      <h5>Analogy — Gold Medal Winner</h5>
+      <p>In a race sorted by finishing time (lowest = fastest), the winner is always first in the sorted list. Finding the maximum priority node is like asking "who won?" — they're always at the front of the podium.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Find Maximum Priority Node <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* In ascending-sorted list (priority 1 = highest urgency),
+   the MAXIMUM priority node is always at the HEAD. O(1)! */</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMax</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">if</span> (head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty.\n"</span>);
+        <span class="kw">return</span> <span class="num">NULL</span>;
+    }
+    <span class="cm">// Highest priority (lowest number) is always HEAD!</span>
+    <span class="fn">printf</span>(<span class="str">"Max priority node: data=%d, priority=%d\n"</span>,
+           head-&gt;data, head-&gt;priority);
+    <span class="kw">return</span> head;
+}
+
+<span class="cm">/* If your queue uses descending order (high number = high priority),
+   the maximum is at the HEAD still — just adjust your sort direction
+   in enqueue(). The findMax() function itself stays the same! */</span>
+
+<span class="cm">// Usage:
+// struct Node* best = findMax(head);
+// printf("Next to serve: %d\n", best->data);</span></pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 18: Find Minimum ─────────────────────── -->
+<section class="section" id="s18">
+  <div class="section-header">
+    <div class="section-num">18</div>
+    <div class="section-title-block">
+      <h3>Find Minimum Priority Node</h3>
+      <p>Return the node with the lowest priority (least urgent)</p>
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card purple">
+      <h4>🔚 Always at TAIL</h4>
+      <p>The minimum priority node is at the <strong>tail</strong> of our ascending-sorted list. Requires traversal — O(n) — unless a tail pointer is maintained.</p>
+    </div>
+    <div class="card">
+      <h4>💡 Tail Pointer Pattern</h4>
+      <p>Keeping a <code>tail</code> pointer makes this O(1). Update tail on every insert and delete to always know where the last node is.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🥉</div>
+    <div>
+      <h5>Analogy — Last in Line</h5>
+      <p>In a sorted priority queue, the minimum priority element is like the person at the very back of the line — last to be served. To find them, you walk to the end of the queue. With a tail pointer, you already know exactly where they stand.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="lang">C</span> — Find Minimum Priority Node <button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Find the node with the LOWEST priority (least urgent).
+   It's always at the TAIL of the ascending-sorted list. */</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMin</span>(<span class="kw">struct</span> <span class="tp">Node</span>* head) {
+    <span class="kw">if</span> (head == <span class="num">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Queue is empty.\n"</span>);
+        <span class="kw">return</span> <span class="num">NULL</span>;
+    }
+
+    <span class="cm">// Traverse to the last node — O(n)</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* curr = head;
+    <span class="kw">while</span> (curr-&gt;next != <span class="num">NULL</span>)
+        curr = curr-&gt;next;
+
+    <span class="fn">printf</span>(<span class="str">"Min priority node: data=%d, priority=%d\n"</span>,
+           curr-&gt;data, curr-&gt;priority);
+    <span class="kw">return</span> curr; <span class="cm">// tail = lowest priority</span>
+}
+
+<span class="cm">/* --- O(1) version with tail pointer --- */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* tail = <span class="num">NULL</span>; <span class="cm">// maintain alongside head</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMinFast</span>() {
+    <span class="kw">return</span> tail; <span class="cm">// O(1)! Always the minimum priority node</span>
+}</pre>
+  </div>
+
+  <!-- ─── COMPLEXITY SUMMARY ──────────── -->
+  <div class="divider"></div>
+  <h4 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:18px;color:var(--text)">📊 Complete Time Complexity Summary</h4>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Operation</th><th>Time</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>01</td><td>Initialize</td><td class="good">O(1)</td><td>Just set head = NULL</td></tr>
+        <tr><td>02</td><td>Insert / Enqueue</td><td class="mid">O(n)</td><td>Find sorted position</td></tr>
+        <tr><td>03</td><td>Delete Highest</td><td class="good">O(1)</td><td>Always at HEAD</td></tr>
+        <tr><td>04</td><td>Delete Lowest</td><td class="mid">O(n)</td><td>Traverse to tail</td></tr>
+        <tr><td>05</td><td>Peek Highest</td><td class="good">O(1)</td><td>HEAD node</td></tr>
+        <tr><td>06</td><td>Peek Lowest</td><td class="mid">O(n)</td><td>O(1) with tail pointer</td></tr>
+        <tr><td>07</td><td>IsEmpty</td><td class="good">O(1)</td><td>head == NULL check</td></tr>
+        <tr><td>08</td><td>Display</td><td class="mid">O(n)</td><td>Full traversal</td></tr>
+        <tr><td>09</td><td>Traverse</td><td class="mid">O(n)</td><td>Visit all nodes</td></tr>
+        <tr><td>10</td><td>Search</td><td class="mid">O(n)</td><td>Linear scan</td></tr>
+        <tr><td>11</td><td>Update Priority</td><td class="mid">O(n)</td><td>Search + reinsert</td></tr>
+        <tr><td>12</td><td>Count / Size</td><td class="mid">O(n)</td><td>O(1) with counter var</td></tr>
+        <tr><td>13</td><td>Clear / Destroy</td><td class="mid">O(n)</td><td>Must free all nodes</td></tr>
+        <tr><td>14</td><td>Reverse</td><td class="mid">O(n)</td><td>3-pointer technique</td></tr>
+        <tr><td>15</td><td>Merge</td><td class="mid">O(m+n)</td><td>Merge sort approach</td></tr>
+        <tr><td>16</td><td>Copy</td><td class="mid">O(n)</td><td>Deep copy, new nodes</td></tr>
+        <tr><td>17</td><td>Find Maximum</td><td class="good">O(1)</td><td>HEAD node</td></tr>
+        <tr><td>18</td><td>Find Minimum</td><td class="mid">O(n)</td><td>O(1) with tail pointer</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ──────────────────────────────────────────────
+//  Utility: copy code
+// ──────────────────────────────────────────────
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1800);
+  });
+}
+
+// ──────────────────────────────────────────────
+//  Sidebar active link tracking
+// ──────────────────────────────────────────────
+const navItems = document.querySelectorAll('.nav-item');
+const sections = document.querySelectorAll('.section');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navItems.forEach(a => a.classList.remove('active'));
+      const match = document.querySelector(`.nav-item[href="#${e.target.id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => observer.observe(s));
+
+// ──────────────────────────────────────────────
+//  Linked List Data Store (per visualization)
+// ──────────────────────────────────────────────
+const queues = {};
+
+function getQ(id) {
+  if (!queues[id]) queues[id] = [];
+  return queues[id];
+}
+
+function insertSorted(q, data, priority) {
+  const node = { data, priority };
+  let i = 0;
+  while (i < q.length && q[i].priority <= priority) i++;
+  q.splice(i, 0, node);
+}
+
+// ──────────────────────────────────────────────
+//  Render a linked list into a canvas element
+// ──────────────────────────────────────────────
+function renderQueue(canvasId, q, highlightIdx = -1, newIdx = -1) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  if (q.length === 0) {
+    canvas.innerHTML = '<span class="ll-empty">[ Queue is empty — NULL ]</span>';
+    return;
+  }
+
+  let html = '';
+  q.forEach((node, i) => {
+    const isHead = i === 0;
+    const cls = i === highlightIdx ? 'highlight' : i === newIdx ? 'new' : '';
+    html += `<div class="ll-node">
+      <div class="node-box ${cls}">
+        ${isHead ? '<span class="head-label">HEAD</span>' : ''}
+        <span class="prio">${node.data}</span>
+        <span class="lbl">prio: ${node.priority}</span>
+        <span class="ptr">next →</span>
+      </div>
+      <span class="node-arrow">→</span>
+    </div>`;
+  });
+  html += '<span class="node-null">NULL</span>';
+  canvas.innerHTML = html;
+}
+
+function setLog(logId, msg, color) {
+  const el = document.getElementById(logId);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || 'var(--accent4)';
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 1: Initialize
+// ──────────────────────────────────────────────
+function initViz() {
+  queues['init'] = [];
+  renderQueue('init-canvas', []);
+  setLog('init-log', '✓ head = NULL  →  Queue initialized successfully!');
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 2: Insert
+// ──────────────────────────────────────────────
+function vizInsert() {
+  const data = parseInt(document.getElementById('ins-data').value) || 10;
+  const prio = parseInt(document.getElementById('ins-prio').value) || 3;
+  const q = getQ('insert');
+  const oldLen = q.length;
+  insertSorted(q, data, prio);
+  const newIdx = q.findIndex(n => n.data === data && n.priority === prio);
+  renderQueue('insert-canvas', q, -1, newIdx);
+  setLog('insert-log', `✓ Inserted [data:${data}, priority:${prio}] at position ${newIdx + 1} — List stays sorted!`);
+}
+
+function vizInsertRandom() {
+  const q = getQ('insert');
+  for (let i = 0; i < 3; i++) {
+    const d = Math.floor(Math.random() * 90) + 10;
+    const p = Math.floor(Math.random() * 9) + 1;
+    insertSorted(q, d, p);
+  }
+  renderQueue('insert-canvas', q);
+  setLog('insert-log', '✓ Inserted 3 random nodes — queue remains sorted by priority.');
+}
+
+function vizClear(id) {
+  queues[id] = [];
+  renderQueue(id + '-canvas', []);
+  setLog(id + '-log', '— Queue cleared.');
+}
+
+// ──────────────────────────────────────────────
+//  Sample data loader
+// ──────────────────────────────────────────────
+const SAMPLE = [[40,1],[20,3],[55,3],[10,5],[70,7]];
+
+function vizInsertSample(id) {
+  queues[id] = [];
+  SAMPLE.forEach(([d,p]) => insertSorted(getQ(id), d, p));
+  renderQueue(id + '-canvas', getQ(id));
+  setLog(id + '-log', `✓ Loaded ${SAMPLE.length} sample nodes. Queue is sorted by priority.`);
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 3: Delete Highest
+// ──────────────────────────────────────────────
+function vizDeleteHigh() {
+  const q = getQ('delhigh');
+  if (q.length === 0) { setLog('delhigh-log', '✗ Queue is empty!', 'var(--accent3)'); return; }
+  const removed = q.shift();
+  renderQueue('delhigh-canvas', q, 0);
+  setLog('delhigh-log', `✓ Dequeued (highest priority): [data:${removed.data}, priority:${removed.priority}] — Now HEAD points to next node.`);
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 4: Delete Lowest
+// ──────────────────────────────────────────────
+function vizDeleteLow() {
+  const q = getQ('dellow');
+  if (q.length === 0) { setLog('dellow-log', '✗ Queue is empty!', 'var(--accent3)'); return; }
+  const removed = q.pop();
+  renderQueue('dellow-canvas', q, q.length - 1);
+  setLog('dellow-log', `✓ Removed lowest priority: [data:${removed.data}, priority:${removed.priority}] — Traversed ${q.length + 1} nodes to reach tail.`);
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 8: Display
+// ──────────────────────────────────────────────
+function vizDisplay() {
+  const q = getQ('display');
+  if (q.length === 0) { setLog('display-log', '✗ Queue is empty!', 'var(--accent3)'); return; }
+  renderQueue('display-canvas', q);
+  const repr = q.map(n => `[${n.data},p${n.priority}]`).join(' → ');
+  setLog('display-log', `HEAD → ${repr} → NULL`);
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 10: Search
+// ──────────────────────────────────────────────
+function vizSearch() {
+  const target = parseInt(document.getElementById('search-val').value);
+  const q = getQ('search');
+  if (q.length === 0) { setLog('search-log', '✗ Queue is empty!', 'var(--accent3)'); return; }
+  const idx = q.findIndex(n => n.data === target);
+  if (idx === -1) {
+    renderQueue('search-canvas', q);
+    setLog('search-log', `✗ [data:${target}] not found after scanning all ${q.length} nodes.`, 'var(--accent3)');
+  } else {
+    renderQueue('search-canvas', q, idx);
+    setLog('search-log', `✓ Found [data:${target}, priority:${q[idx].priority}] at position ${idx + 1}!`);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 14: Reverse
+// ──────────────────────────────────────────────
+function vizReverse() {
+  const q = getQ('reverse');
+  if (q.length === 0) { setLog('reverse-log', '✗ Load data first!', 'var(--accent3)'); return; }
+  q.reverse();
+  renderQueue('reverse-canvas', q);
+  setLog('reverse-log', `✓ Queue reversed! Now priority ${q[0].priority} is at HEAD (was tail before).`);
+}
+
+// ──────────────────────────────────────────────
+//  SECTION 15: Merge
+// ──────────────────────────────────────────────
+function vizMerge() {
+  const qA = [];
+  const qB = [];
+  [[30,2],[50,4],[80,6]].forEach(([d,p]) => insertSorted(qA, d, p));
+  [[15,1],[45,3],[65,5],[90,8]].forEach(([d,p]) => insertSorted(qB, d, p));
+
+  renderQueue('merge-a-canvas', qA);
+  document.getElementById('merge-a-canvas').style.border = '1px solid rgba(79,158,255,.4)';
+
+  renderQueue('merge-b-canvas', qB);
+  document.getElementById('merge-b-canvas').style.border = '1px solid rgba(124,92,252,.4)';
+
+  // Merge
+  const merged = [];
+  let i = 0, j = 0;
+  while (i < qA.length && j < qB.length) {
+    if (qA[i].priority <= qB[j].priority) merged.push({...qA[i++]});
+    else merged.push({...qB[j++]});
+  }
+  while (i < qA.length) merged.push({...qA[i++]});
+  while (j < qB.length) merged.push({...qB[j++]});
+
+  setTimeout(() => {
+    renderQueue('merge-result-canvas', merged);
+    document.getElementById('merge-result-canvas').style.border = '1px solid rgba(67,233,123,.4)';
+    setLog('merge-log', `✓ Merged! ${qA.length} + ${qB.length} = ${merged.length} nodes. Result is sorted.`);
+  }, 300);
+
+  setLog('merge-log', 'Merging...');
+}
+</script>
+</body>
+</html>

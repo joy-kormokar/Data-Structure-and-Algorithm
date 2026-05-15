@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linked List Based Multiple Stack — Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #0f1525;
+  --bg3: #151d35;
+  --card: #111827;
+  --card2: #1a2340;
+  --border: #1e2d4d;
+  --accent: #3b82f6;
+  --accent2: #06b6d4;
+  --accent3: #8b5cf6;
+  --accent4: #10b981;
+  --accent5: #f59e0b;
+  --accent6: #ef4444;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --node-color: #1e3a5f;
+  --node-border: #3b82f6;
+  --node-top: #164e63;
+  --node-top-border: #06b6d4;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.hero {
+  background: linear-gradient(135deg, #0a0e1a 0%, #0f1d3a 40%, #0c1628 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 56px 40px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -120px; right: -120px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(59,130,246,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: 20%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(59,130,246,.12);
+  border: 1px solid rgba(59,130,246,.3);
+  border-radius: 100px;
+  padding: 6px 16px;
+  font-size: 12px; font-weight: 500; letter-spacing: .08em;
+  color: var(--accent2);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.hero-badge span { width: 6px; height: 6px; background: var(--accent2); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.hero h1 {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+  background: linear-gradient(135deg, #e2e8f0 30%, #93c5fd 70%, #c4b5fd 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 14px;
+}
+.hero p {
+  color: var(--text2);
+  font-size: 1.05rem;
+  max-width: 620px;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+.hero-stats {
+  display: flex; gap: 32px; flex-wrap: wrap;
+}
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+.stat-lbl { font-size: 12px; color: var(--text3); letter-spacing: .06em; text-transform: uppercase; }
+
+/* ── LAYOUT ── */
+.container { display: flex; min-height: calc(100vh - 240px); }
+
+/* SIDEBAR */
+.sidebar {
+  width: 280px; min-width: 280px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+  position: sticky; top: 0; height: 100vh;
+  overflow-y: auto; overflow-x: hidden;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar-title {
+  font-size: 10px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 0 20px 12px; border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px; cursor: pointer;
+  transition: all .2s; border-left: 3px solid transparent;
+  font-size: .875rem;
+}
+.nav-item:hover { background: rgba(59,130,246,.06); color: var(--accent); }
+.nav-item.active { background: rgba(59,130,246,.1); border-left-color: var(--accent); color: var(--accent); }
+.nav-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px; color: var(--text3);
+  min-width: 28px; text-align: center;
+}
+.nav-item.active .nav-num { background: rgba(59,130,246,.2); border-color: rgba(59,130,246,.4); color: var(--accent); }
+
+/* MAIN */
+.main { flex: 1; padding: 40px; overflow-y: auto; max-width: 100%; }
+
+/* SECTION CARD */
+.section-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 32px;
+  overflow: hidden;
+  display: none;
+  animation: fadeUp .35s ease;
+}
+.section-card.visible { display: block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.section-header {
+  padding: 28px 32px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 16px;
+}
+.section-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+}
+.section-meta { flex: 1; }
+.section-label {
+  font-size: 11px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 4px;
+}
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.7rem; font-weight: 700; line-height: 1.2;
+  margin-bottom: 6px;
+}
+.section-sub { color: var(--text2); font-size: .9rem; line-height: 1.6; }
+
+/* TABS */
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border);
+  padding: 0 32px; background: var(--bg2);
+}
+.tab {
+  padding: 14px 20px; font-size: .82rem; font-weight: 500;
+  cursor: pointer; color: var(--text3);
+  border-bottom: 2px solid transparent;
+  transition: all .2s; white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-content { padding: 28px 32px; display: none; }
+.tab-content.active { display: block; }
+
+/* THEORY */
+.theory-text { color: var(--text2); line-height: 1.8; font-size: .95rem; margin-bottom: 18px; }
+.theory-text strong { color: var(--text); }
+
+.concept-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px; margin: 18px 0;
+}
+.concept-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+.concept-card h4 { font-size: .8rem; font-weight: 600; margin-bottom: 6px; color: var(--accent2); }
+.concept-card p { font-size: .8rem; color: var(--text3); line-height: 1.5; }
+
+.info-box {
+  background: rgba(59,130,246,.07);
+  border: 1px solid rgba(59,130,246,.25);
+  border-radius: 10px; padding: 16px 18px; margin: 16px 0;
+}
+.info-box p { font-size: .875rem; color: var(--text2); line-height: 1.7; }
+.info-box strong { color: var(--accent); }
+
+.warning-box {
+  background: rgba(245,158,11,.07);
+  border: 1px solid rgba(245,158,11,.25);
+  border-radius: 10px; padding: 16px 18px; margin: 16px 0;
+}
+.warning-box p { font-size: .875rem; color: var(--text2); line-height: 1.7; }
+.warning-box strong { color: var(--accent5); }
+
+/* ANALOGY */
+.analogy-box {
+  background: linear-gradient(135deg, rgba(16,185,129,.06), rgba(6,182,212,.06));
+  border: 1px solid rgba(16,185,129,.2);
+  border-radius: 12px; padding: 20px 22px; margin-bottom: 16px;
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.analogy-icon { font-size: 28px; flex-shrink: 0; }
+.analogy-text h4 { font-size: .85rem; font-weight: 600; color: var(--accent4); margin-bottom: 6px; letter-spacing: .04em; }
+.analogy-text p { font-size: .875rem; color: var(--text2); line-height: 1.7; }
+
+/* CODE BLOCK */
+.code-wrap {
+  background: #070c18;
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.code-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 16px; background: #0c1322;
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  color: var(--accent); text-transform: uppercase;
+}
+.copy-btn {
+  font-size: 11px; color: var(--text3); cursor: pointer;
+  background: none; border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 10px; transition: all .2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.copy-btn:hover { color: var(--text); border-color: var(--accent); }
+pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem;
+  line-height: 1.75;
+  color: #c9d1d9;
+}
+pre::-webkit-scrollbar { height: 4px; }
+pre::-webkit-scrollbar-track { background: transparent; }
+pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Syntax highlights */
+.kw { color: #ff79c6; }
+.fn { color: #50fa7b; }
+.tp { color: #8be9fd; }
+.cm { color: #6272a4; }
+.st { color: #f1fa8c; }
+.nm { color: #bd93f9; }
+
+/* VISUALIZATION */
+.viz-container {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+  min-height: 200px;
+}
+.viz-title {
+  font-size: .8rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 20px;
+}
+.viz-controls {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+}
+.viz-btn {
+  padding: 8px 16px; border-radius: 8px; cursor: pointer;
+  font-size: .8rem; font-weight: 600; border: 1px solid;
+  transition: all .2s; font-family: 'DM Sans', sans-serif;
+}
+.viz-btn-primary { background: rgba(59,130,246,.15); border-color: rgba(59,130,246,.4); color: var(--accent); }
+.viz-btn-primary:hover { background: rgba(59,130,246,.25); }
+.viz-btn-danger { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: var(--accent6); }
+.viz-btn-danger:hover { background: rgba(239,68,68,.2); }
+.viz-btn-success { background: rgba(16,185,129,.1); border-color: rgba(16,185,129,.3); color: var(--accent4); }
+.viz-btn-success:hover { background: rgba(16,185,129,.2); }
+.viz-btn-warn { background: rgba(245,158,11,.1); border-color: rgba(245,158,11,.3); color: var(--accent5); }
+.viz-btn-warn:hover { background: rgba(245,158,11,.2); }
+.viz-input {
+  padding: 8px 12px; border-radius: 8px;
+  background: var(--bg2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'JetBrains Mono', monospace;
+  font-size: .82rem; width: 80px; outline: none;
+}
+.viz-input:focus { border-color: var(--accent); }
+
+/* Stack Visualization */
+.stacks-row {
+  display: flex; gap: 24px; flex-wrap: wrap;
+  align-items: flex-end;
+}
+.stack-col {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  min-width: 80px;
+}
+.stack-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 700; color: var(--accent2);
+  margin-bottom: 4px; letter-spacing: .06em;
+}
+.stack-base {
+  width: 80px; height: 8px;
+  background: var(--border); border-radius: 2px;
+  margin-top: 4px;
+}
+.node-box {
+  width: 80px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .85rem; font-weight: 600;
+  transition: all .35s cubic-bezier(.34,1.56,.64,1);
+  position: relative; border: 1.5px solid;
+}
+.node-box.stack-node {
+  background: var(--node-color); border-color: var(--node-border); color: #93c5fd;
+}
+.node-box.top-node {
+  background: var(--node-top); border-color: var(--node-top-border); color: #67e8f9;
+}
+.node-box.top-node::after {
+  content: '← TOP'; position: absolute; right: -50px;
+  font-size: 9px; font-weight: 700; color: var(--accent2);
+  letter-spacing: .04em; white-space: nowrap;
+}
+.node-box.new-node { background: rgba(16,185,129,.15); border-color: #10b981; color: #6ee7b7; }
+.node-box.pop-node { background: rgba(239,68,68,.15); border-color: #ef4444; color: #fca5a5; animation: popOut .4s ease forwards; }
+@keyframes popOut { to { opacity: 0; transform: scale(.8) translateY(-12px); } }
+.node-ptr {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--text3); text-align: center;
+  margin: 1px 0;
+}
+.null-node {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--accent6);
+  background: rgba(239,68,68,.06);
+  border: 1px dashed rgba(239,68,68,.3);
+  border-radius: 6px; padding: 4px 12px;
+}
+.status-msg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .8rem; padding: 10px 14px;
+  border-radius: 8px; margin-top: 16px;
+  transition: all .3s;
+}
+.status-ok { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; }
+.status-err { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; }
+.status-info { background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.3); color: #93c5fd; }
+
+/* Step list */
+.steps-list {
+  display: flex; flex-direction: column; gap: 8px; margin: 14px 0;
+}
+.step-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 8px;
+}
+.step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-weight: 700; color: var(--accent); flex-shrink: 0;
+}
+.step-text { font-size: .85rem; color: var(--text2); line-height: 1.5; }
+.step-text strong { color: var(--text); }
+
+/* Complexity badge */
+.complexity-row {
+  display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0;
+}
+.complexity-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+}
+.complexity-badge .label { font-size: 11px; color: var(--text3); letter-spacing: .06em; text-transform: uppercase; }
+.complexity-badge .val {
+  font-family: 'JetBrains Mono', monospace; font-size: .9rem; font-weight: 700; color: var(--accent4);
+}
+
+/* Memory viz */
+.mem-row {
+  display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin: 14px 0;
+}
+.mem-cell {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+  text-align: center; min-width: 72px;
+}
+.mem-cell.used { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.3); color: #93c5fd; }
+.mem-cell.freed { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); color: #fca5a5; text-decoration: line-through; }
+.mem-cell .addr { font-size: 9px; color: var(--text3); margin-bottom: 3px; }
+.mem-cell .val2 { font-weight: 700; }
+
+/* Comparison viz */
+.compare-row {
+  display: flex; gap: 32px; justify-content: center; align-items: flex-end;
+  flex-wrap: wrap; margin: 16px 0;
+}
+.compare-col { text-align: center; }
+.compare-label { font-size: .78rem; color: var(--text3); margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
+
+/* Search highlight */
+.node-box.found { background: rgba(245,158,11,.15); border-color: #f59e0b; color: #fcd34d; animation: found .6s ease; }
+@keyframes found { 0%,50%,100%{transform:scale(1)} 25%,75%{transform:scale(1.08)} }
+.node-box.searching { background: rgba(139,92,246,.15); border-color: #8b5cf6; color: #c4b5fd; }
+
+/* Mobile sidebar */
+.menu-toggle { display: none; }
+@media(max-width:768px) {
+  .hero { padding: 32px 20px 28px; }
+  .container { flex-direction: column; }
+  .sidebar { width: 100%; min-width: unset; height: auto; position: static; }
+  .sidebar.collapsed .nav-item { display: none; }
+  .menu-toggle {
+    display: flex; align-items: center; gap: 8px;
+    padding: 12px 20px; cursor: pointer; font-size: .85rem;
+    color: var(--accent); font-weight: 600;
+  }
+  .main { padding: 20px; }
+  .tab-content { padding: 20px; }
+  .section-header { padding: 20px; }
+  .tabs { padding: 0 20px; overflow-x: auto; }
+  .node-box.top-node::after { display: none; }
+}
+
+/* ALL SECTIONS visible initially — section 1 */
+.section-card:first-child { display: block; }
+
+/* arrow between nodes */
+.node-arrow { color: var(--text3); font-size: 18px; margin: 0 2px; align-self: center; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hero">
+  <div class="hero-badge"><span></span> Data Structures — Complete Guide</div>
+  <h1>Linked List Based<br>Multiple Stack Operations</h1>
+  <p>Master all 14 operations from scratch — with interactive visualizations, beginner-friendly C code, and real-world analogies for every concept.</p>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-val">14</span><span class="stat-lbl">Operations</span></div>
+    <div class="stat"><span class="stat-val">C</span><span class="stat-lbl">Language</span></div>
+    <div class="stat"><span class="stat-val">100%</span><span class="stat-lbl">Interactive</span></div>
+    <div class="stat"><span class="stat-val">∞</span><span class="stat-lbl">Stacks</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="menu-toggle" onclick="toggleSidebar()">☰ &nbsp;Topics Menu</div>
+  <div class="sidebar-title">All Operations</div>
+  <div class="nav-item active" onclick="showSection(0,this)"><span class="nav-num">01</span> Create Stack</div>
+  <div class="nav-item" onclick="showSection(1,this)"><span class="nav-num">02</span> Create Node</div>
+  <div class="nav-item" onclick="showSection(2,this)"><span class="nav-num">03</span> Push Operation</div>
+  <div class="nav-item" onclick="showSection(3,this)"><span class="nav-num">04</span> Pop Operation</div>
+  <div class="nav-item" onclick="showSection(4,this)"><span class="nav-num">05</span> Peek / Top</div>
+  <div class="nav-item" onclick="showSection(5,this)"><span class="nav-num">06</span> isEmpty</div>
+  <div class="nav-item" onclick="showSection(6,this)"><span class="nav-num">07</span> Display</div>
+  <div class="nav-item" onclick="showSection(7,this)"><span class="nav-num">08</span> DisplayAllStacks</div>
+  <div class="nav-item" onclick="showSection(8,this)"><span class="nav-num">09</span> DeleteStack</div>
+  <div class="nav-item" onclick="showSection(9,this)"><span class="nav-num">10</span> ClearStack</div>
+  <div class="nav-item" onclick="showSection(10,this)"><span class="nav-num">11</span> Search</div>
+  <div class="nav-item" onclick="showSection(11,this)"><span class="nav-num">12</span> MoveElement</div>
+  <div class="nav-item" onclick="showSection(12,this)"><span class="nav-num">13</span> CompareStacks</div>
+  <div class="nav-item" onclick="showSection(13,this)"><span class="nav-num">14</span> GetTotalElements</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ════════════ 1. CREATE STACK ════════════ -->
+<div class="section-card visible" id="sec0">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);">🏗️</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 01</div>
+      <div class="section-title">Create Stack</div>
+      <div class="section-sub">Initialize multiple independent stacks using linked list structure with NULL top pointers.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t0-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t0-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t0-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t0-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t0-theory">
+    <p class="theory-text">A <strong>stack</strong> is a linear data structure that follows the <strong>LIFO (Last In, First Out)</strong> principle — the last element added is the first one removed. When we use a <strong>linked list</strong> to implement a stack, each element (node) stores data and a pointer to the next node.</p>
+    <p class="theory-text">A <strong>multiple stack</strong> system means we maintain several independent stacks simultaneously. Each stack has its own <strong>top pointer</strong> (initially NULL), meaning the stack is empty. No fixed memory is pre-allocated — memory grows dynamically as elements are pushed.</p>
+    <div class="concept-grid">
+      <div class="concept-card"><h4>Top Pointer</h4><p>Points to the most recently added (top) node. NULL means the stack is empty.</p></div>
+      <div class="concept-card"><h4>Dynamic Memory</h4><p>No fixed size. Each node is allocated on the heap using malloc() when needed.</p></div>
+      <div class="concept-card"><h4>Multiple Stacks</h4><p>An array of top pointers lets us manage many stacks with a single array structure.</p></div>
+      <div class="concept-card"><h4>NULL Assignment</h4><p>Every stack's top pointer must be set to NULL at creation — mandatory initialization step.</p></div>
+    </div>
+    <div class="info-box"><p><strong>Key idea:</strong> Creating a stack just means declaring a pointer variable (or array of pointers) and setting it to NULL. No memory is allocated yet — memory is allocated only when you push elements.</p></div>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Define the number of stacks (e.g., <strong>MAX_STACKS = 3</strong>)</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Declare an array of top pointers: <strong>Node* top[MAX_STACKS]</strong></div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">Loop through all stacks and set <strong>top[i] = NULL</strong> for each</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">Each stack is now empty and ready for push/pop operations</div></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t0-viz">
+    <div class="viz-container">
+      <div class="viz-title">📊 Multiple Stack Initialization</div>
+      <div class="viz-controls">
+        <input type="number" class="viz-input" id="numStacks" value="3" min="1" max="5" placeholder="#stacks">
+        <button class="viz-btn viz-btn-primary" onclick="createStacksViz()">Create Stacks</button>
+      </div>
+      <div id="createVizArea"></div>
+      <div id="createStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t0-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Linked List Based Multiple Stack: Create Stack ── */</span>
+
+<span class="kw">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;stdlib.h&gt;</span>
+
+<span class="kw">#define</span> <span class="nm">MAX_STACKS</span> <span class="nm">3</span>   <span class="cm">/* Number of stacks we want */</span>
+
+<span class="cm">/* Node structure for linked list */</span>
+<span class="kw">struct</span> <span class="tp">Node</span> {
+    <span class="tp">int</span> data;              <span class="cm">/* Stores the value */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* next;    <span class="cm">/* Pointer to the next node */</span>
+};
+
+<span class="cm">/* Array of top pointers — one per stack */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* top[<span class="nm">MAX_STACKS</span>];
+
+<span class="cm">/* Function to initialize all stacks */</span>
+<span class="tp">void</span> <span class="fn">createStacks</span>() {
+    <span class="tp">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_STACKS</span>; i++) {
+        top[i] = <span class="nm">NULL</span>;   <span class="cm">/* NULL = empty stack */</span>
+    }
+    printf(<span class="st">"All %d stacks created and initialized.\n"</span>, <span class="nm">MAX_STACKS</span>);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    printf(<span class="st">"Stack 0 top: %p\n"</span>, (void*)top[<span class="nm">0</span>]);  <span class="cm">/* Will print NULL */</span>
+    printf(<span class="st">"Stack 1 top: %p\n"</span>, (void*)top[<span class="nm">1</span>]);
+    printf(<span class="st">"Stack 2 top: %p\n"</span>, (void*)top[<span class="nm">2</span>]);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(n)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(n)</span></div>
+      <div class="complexity-badge"><span class="label">n = #stacks</span><span class="val">Linear</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t0-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🏦</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Bank Counters</h4>
+        <p>Imagine a bank opens 3 service counters. At the start of the day, <strong>each counter has no customers</strong> (top = NULL). As customers arrive, they queue up at their respective counter (push). Creating the stacks is like <em>opening the counters</em> — no one is there yet, but the counters are ready to accept customers.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">📚</div>
+      <div class="analogy-text">
+        <h4>Use Case: Browser History per Tab</h4>
+        <p>A browser maintains a separate history stack for each open tab. When you open 3 tabs, the browser creates 3 empty history stacks. As you navigate, pages are pushed. This is exactly <strong>multiple stack creation</strong> — one top pointer per tab, all starting as NULL.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 2. CREATE NODE ════════════ -->
+<div class="section-card" id="sec1">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);">🔷</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 02</div>
+      <div class="section-title">Create Node</div>
+      <div class="section-sub">Dynamically allocate memory for a new node, assign data and set the next pointer.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t1-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t1-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t1-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t1-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t1-theory">
+    <p class="theory-text">A <strong>node</strong> is the basic building block of a linked list stack. Every time we want to push a new value onto a stack, we must first create a node to hold that value. Node creation involves <strong>dynamic memory allocation</strong> using <code>malloc()</code>.</p>
+    <p class="theory-text">Each node has two fields: <strong>data</strong> (stores the actual value) and <strong>next</strong> (a pointer to the next node in the stack). The newly created node's <code>next</code> pointer is initially set to NULL until it is connected to the stack.</p>
+    <div class="concept-grid">
+      <div class="concept-card"><h4>malloc()</h4><p>Allocates a requested size of bytes on the heap and returns a pointer to it.</p></div>
+      <div class="concept-card"><h4>sizeof()</h4><p>Returns the exact byte size of the Node struct — crucial for correct allocation.</p></div>
+      <div class="concept-card"><h4>Data Field</h4><p>Holds the actual value you want to store in the stack (e.g., an integer).</p></div>
+      <div class="concept-card"><h4>Next Pointer</h4><p>Links this node to the next one. Set to NULL when node is first created.</p></div>
+    </div>
+    <div class="warning-box"><p><strong>Always check:</strong> malloc() can return NULL if the system is out of memory. Always check if the returned pointer is NULL before using it to prevent crashes (segmentation fault).</p></div>
+  </div>
+  <div class="tab-content" id="t1-viz">
+    <div class="viz-container">
+      <div class="viz-title">🔷 Node Memory Structure</div>
+      <div class="viz-controls">
+        <input type="number" class="viz-input" id="nodeDataInput" value="42" placeholder="data">
+        <button class="viz-btn viz-btn-primary" onclick="createNodeViz()">Create Node</button>
+        <button class="viz-btn viz-btn-danger" onclick="freeNodeViz()">Free Node</button>
+      </div>
+      <div id="nodeVizArea" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;"></div>
+      <div id="nodeStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t1-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Create Node ── */</span>
+
+<span class="kw">struct</span> <span class="tp">Node</span> {
+    <span class="tp">int</span> data;
+    <span class="kw">struct</span> <span class="tp">Node</span>* next;
+};
+
+<span class="cm">/* Function to create a new node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">createNode</span>(<span class="tp">int</span> value) {
+
+    <span class="cm">/* Step 1: Allocate memory on the heap */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* newNode = (<span class="kw">struct</span> <span class="tp">Node</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">Node</span>));
+
+    <span class="cm">/* Step 2: Always check if malloc succeeded */</span>
+    <span class="kw">if</span> (newNode == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Memory allocation failed!\n"</span>);
+        <span class="kw">return</span> <span class="nm">NULL</span>;
+    }
+
+    <span class="cm">/* Step 3: Assign the data */</span>
+    newNode-&gt;data = value;
+
+    <span class="cm">/* Step 4: Set next to NULL (not linked yet) */</span>
+    newNode-&gt;next = <span class="nm">NULL</span>;
+
+    <span class="kw">return</span> newNode;   <span class="cm">/* Return pointer to new node */</span>
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span>* n = <span class="fn">createNode</span>(<span class="nm">42</span>);
+    <span class="kw">if</span> (n) {
+        printf(<span class="st">"Node created: data=%d, next=%p\n"</span>, n-&gt;data, (void*)n-&gt;next);
+        <span class="fn">free</span>(n);  <span class="cm">/* Always free when done */</span>
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t1-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">📦</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Creating a Box</h4>
+        <p>Think of malloc() as <strong>buying a new box</strong> from a store. The box has two compartments: one for your <em>item (data)</em> and a hook on the side to attach to another box <em>(next pointer)</em>. When you first get the box, the hook is empty (NULL). You'll attach it to the stack when you push.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🧱</div>
+      <div class="analogy-text">
+        <h4>Use Case: Dynamic Memory in Games</h4>
+        <p>In a game, when a player picks up a new item, a node is created to store that item. The game doesn't pre-allocate space for all possible items — it creates a node on-the-fly, just like our createNode() function.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 3. PUSH ════════════ -->
+<div class="section-card" id="sec2">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);">⬆️</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 03</div>
+      <div class="section-title">Push Operation</div>
+      <div class="section-sub">Insert a new element at the top of a specified stack. Memory is allocated dynamically.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t2-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t2-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t2-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t2-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t2-theory">
+    <p class="theory-text"><strong>Push</strong> inserts a new value at the <strong>top</strong> of the stack. In a linked list implementation, this means creating a new node and making it the new top — the old top becomes the second element.</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Create a new node with the given value using <strong>malloc()</strong></div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Set <strong>newNode→next = top[stackIndex]</strong> (new node points to current top)</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">Update <strong>top[stackIndex] = newNode</strong> (new node becomes the top)</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">Stack size increases by 1 — no overflow (linked list grows dynamically)</div></div>
+    </div>
+    <div class="info-box"><p><strong>No Overflow:</strong> Unlike array-based stacks, a linked list stack never overflows (as long as memory is available). This is one of the biggest advantages of using a linked list for stacks.</p></div>
+  </div>
+  <div class="tab-content" id="t2-viz">
+    <div class="viz-container">
+      <div class="viz-title">⬆️ Push — Interactive Stack Simulator</div>
+      <div class="viz-controls">
+        <input type="number" class="viz-input" id="pushVal" value="10" placeholder="value">
+        <select class="viz-input" id="pushStack" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-success" onclick="doPush()">Push</button>
+        <button class="viz-btn viz-btn-danger" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="pushVizArea"></div>
+      <div id="pushStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t2-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Push Operation ── */</span>
+
+<span class="tp">void</span> <span class="fn">push</span>(<span class="tp">int</span> stackIndex, <span class="tp">int</span> value) {
+
+    <span class="cm">/* Step 1: Check valid stack index */</span>
+    <span class="kw">if</span> (stackIndex &lt; <span class="nm">0</span> || stackIndex &gt;= <span class="nm">MAX_STACKS</span>) {
+        printf(<span class="st">"Invalid stack index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 2: Create a new node */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* newNode = <span class="fn">createNode</span>(value);
+    <span class="kw">if</span> (newNode == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Memory allocation failed! Cannot push.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 3: Link new node to current top */</span>
+    newNode-&gt;next = top[stackIndex];
+
+    <span class="cm">/* Step 4: Update top pointer */</span>
+    top[stackIndex] = newNode;
+
+    printf(<span class="st">"Pushed %d onto Stack %d\n"</span>, value, stackIndex);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>);   <span class="cm">/* Stack 0: [10] */</span>
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">20</span>);   <span class="cm">/* Stack 0: [20, 10] */</span>
+    <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">99</span>);   <span class="cm">/* Stack 1: [99] */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Overflow</span><span class="val">Never*</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t2-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🍽️</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Stack of Plates</h4>
+        <p>Imagine stacking plates in a cafeteria. When you add a plate, you place it <strong>on top</strong>. The new plate (newNode) points down to the previous top plate (newNode→next = oldTop). The pile's top pointer now points to the new plate. This is exactly how push works!</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">↩️</div>
+      <div class="analogy-text">
+        <h4>Use Case: Undo History in Text Editors</h4>
+        <p>Every time you type a character or perform an action, it is <strong>pushed</strong> onto the undo stack. If you open multiple documents, each document has its own stack — exactly our multiple stack setup.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 4. POP ════════════ -->
+<div class="section-card" id="sec3">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);">⬇️</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 04</div>
+      <div class="section-title">Pop Operation</div>
+      <div class="section-sub">Remove and return the top element from a stack, then free the memory used by that node.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t3-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t3-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t3-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t3-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t3-theory">
+    <p class="theory-text"><strong>Pop</strong> removes the topmost element from a stack and returns its value. In a linked list, this means updating the top pointer to the next node and freeing the removed node's memory to prevent memory leaks.</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Check if stack is <strong>empty</strong> (top == NULL) — if yes, print underflow error and return</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Save the <strong>top node pointer</strong> in a temporary variable: <code>temp = top[i]</code></div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Store the data</strong>: <code>value = temp→data</code> before freeing</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Update top</strong>: <code>top[i] = temp→next</code></div></div>
+      <div class="step-item"><div class="step-num">5</div><div class="step-text"><strong>Free memory</strong>: <code>free(temp)</code> to avoid memory leaks</div></div>
+    </div>
+    <div class="warning-box"><p><strong>Underflow:</strong> Popping from an empty stack is called <em>underflow</em>. Always check if <code>top == NULL</code> before popping. Attempting to access data from a NULL pointer causes a segmentation fault crash.</p></div>
+  </div>
+  <div class="tab-content" id="t3-viz">
+    <div class="viz-container">
+      <div class="viz-title">⬇️ Pop Visualization</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="popStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-danger" onclick="doPop()">Pop</button>
+        <button class="viz-btn viz-btn-primary" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset All</button>
+      </div>
+      <div class="stacks-row" id="popVizArea"></div>
+      <div id="popStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t3-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Pop Operation ── */</span>
+
+<span class="tp">int</span> <span class="fn">pop</span>(<span class="tp">int</span> stackIndex) {
+
+    <span class="cm">/* Step 1: Check for underflow */</span>
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stack %d is empty (Underflow)!\n"</span>, stackIndex);
+        <span class="kw">return</span> -<span class="nm">1</span>;   <span class="cm">/* Sentinel value */</span>
+    }
+
+    <span class="cm">/* Step 2: Save the top node */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp = top[stackIndex];
+
+    <span class="cm">/* Step 3: Get the data before freeing */</span>
+    <span class="tp">int</span> poppedValue = temp-&gt;data;
+
+    <span class="cm">/* Step 4: Move top to next node */</span>
+    top[stackIndex] = temp-&gt;next;
+
+    <span class="cm">/* Step 5: Free the old top node */</span>
+    <span class="fn">free</span>(temp);
+
+    printf(<span class="st">"Popped %d from Stack %d\n"</span>, poppedValue, stackIndex);
+    <span class="kw">return</span> poppedValue;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>);
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">20</span>);
+    <span class="fn">pop</span>(<span class="nm">0</span>);   <span class="cm">/* Returns 20 — last in, first out */</span>
+    <span class="fn">pop</span>(<span class="nm">0</span>);   <span class="cm">/* Returns 10 */</span>
+    <span class="fn">pop</span>(<span class="nm">0</span>);   <span class="cm">/* Underflow! Stack is empty */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t3-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">↩️</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Ctrl+Z (Undo)</h4>
+        <p>When you press Ctrl+Z in a text editor, the last action is <strong>popped</strong> from the undo stack and reversed. The top node (last action) is removed, its data is used to undo the change, and the memory is released. The previous action is now the new top.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🥞</div>
+      <div class="analogy-text">
+        <h4>Use Case: Function Call Stack</h4>
+        <p>When you call a function in C, a frame is pushed onto the call stack. When the function returns, its frame is <strong>popped</strong> — memory is freed and control returns to the caller. This is exactly a pop operation on the system's call stack.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 5. PEEK ════════════ -->
+<div class="section-card" id="sec4">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3);">👁️</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 05</div>
+      <div class="section-title">Peek / Top Operation</div>
+      <div class="section-sub">View the top element without removing it. Non-destructive read of the stack's top value.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t4-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t4-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t4-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t4-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t4-theory">
+    <p class="theory-text"><strong>Peek</strong> (also called Top) allows you to look at the top element of a stack <em>without removing it</em>. This is useful when you need to make a decision based on the top value but don't want to consume it yet.</p>
+    <p class="theory-text">Implementation is simple: just check if <code>top != NULL</code> and return <code>top→data</code>. No pointers are updated, no memory is freed. The stack remains unchanged.</p>
+    <div class="concept-grid">
+      <div class="concept-card"><h4>Non-Destructive</h4><p>The stack is NOT modified. The top element remains in place after peek.</p></div>
+      <div class="concept-card"><h4>Empty Check</h4><p>Must verify top != NULL before accessing data to avoid NULL pointer crash.</p></div>
+      <div class="concept-card"><h4>O(1) Time</h4><p>Instant access — just reads the top pointer's data field without traversal.</p></div>
+      <div class="concept-card"><h4>Common Use</h4><p>Used in expression parsers, syntax checkers, and decision-making algorithms.</p></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t4-viz">
+    <div class="viz-container">
+      <div class="viz-title">👁️ Peek — View Top Without Removing</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="peekStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-primary" onclick="doPeek()">Peek</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="peekVizArea"></div>
+      <div id="peekStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t4-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Peek / Top Operation ── */</span>
+
+<span class="tp">int</span> <span class="fn">peek</span>(<span class="tp">int</span> stackIndex) {
+
+    <span class="cm">/* Check if stack is empty */</span>
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stack %d is empty! Nothing to peek.\n"</span>, stackIndex);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+
+    <span class="cm">/* Return top data WITHOUT modifying stack */</span>
+    printf(<span class="st">"Top of Stack %d: %d\n"</span>, stackIndex, top[stackIndex]-&gt;data);
+    <span class="kw">return</span> top[stackIndex]-&gt;data;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">100</span>);
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">200</span>);
+
+    <span class="fn">peek</span>(<span class="nm">0</span>);   <span class="cm">/* Prints 200 — stack unchanged */</span>
+    <span class="fn">peek</span>(<span class="nm">0</span>);   <span class="cm">/* Prints 200 again — same result! */</span>
+
+    printf(<span class="st">"Stack still has top = %d\n"</span>, top[<span class="nm">0</span>]-&gt;data);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Destructive</span><span class="val">No</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t4-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">👀</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Peeking at Top Card</h4>
+        <p>In a card game, you might be allowed to <strong>peek</strong> at the top card of the draw pile without taking it. You see the value, decide your strategy, but the card stays on top. Peek does exactly this — look but don't touch.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🧮</div>
+      <div class="analogy-text">
+        <h4>Use Case: Expression Parser</h4>
+        <p>When parsing math expressions like <code>3 + 4 * 2</code>, an expression evaluator frequently <strong>peeks</strong> at the operator stack to decide precedence before pushing or popping — without actually modifying the stack until a decision is made.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 6. isEmpty ════════════ -->
+<div class="section-card" id="sec5">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);">❓</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 06</div>
+      <div class="section-title">isEmpty Operation</div>
+      <div class="section-sub">Check whether a specific stack is empty by verifying if its top pointer is NULL.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t5-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t5-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t5-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t5-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t5-theory">
+    <p class="theory-text"><strong>isEmpty</strong> is a utility/helper function used internally by almost every other stack operation. It checks whether a stack has any elements by testing if the top pointer equals NULL.</p>
+    <p class="theory-text">A stack is <strong>empty</strong> when <code>top[stackIndex] == NULL</code>. This condition is checked before pop, peek, display, and other operations to prevent undefined behavior (crashes from NULL dereference).</p>
+    <div class="concept-grid">
+      <div class="concept-card"><h4>NULL Checking</h4><p>The only condition: if top == NULL, the stack is empty. That simple!</p></div>
+      <div class="concept-card"><h4>Boolean Return</h4><p>Returns 1 (true) if empty, 0 (false) if not. Used in if-conditions.</p></div>
+      <div class="concept-card"><h4>Safety Guard</h4><p>Acts as a guard in pop, peek, and display to prevent crashes on empty stacks.</p></div>
+      <div class="concept-card"><h4>O(1) Always</h4><p>Constant time — just one comparison. Doesn't traverse the list.</p></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t5-viz">
+    <div class="viz-container">
+      <div class="viz-title">❓ isEmpty — Visual Check</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="isEmptyStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-primary" onclick="doIsEmpty()">Check isEmpty</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="isEmptyVizArea"></div>
+      <div id="isEmptyStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t5-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── isEmpty Operation ── */</span>
+
+<span class="cm">/* Returns 1 if empty, 0 if not */</span>
+<span class="tp">int</span> <span class="fn">isEmpty</span>(<span class="tp">int</span> stackIndex) {
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        <span class="kw">return</span> <span class="nm">1</span>;   <span class="cm">/* True: stack is empty */</span>
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;       <span class="cm">/* False: stack has elements */</span>
+}
+
+<span class="cm">/* Shorter version using ternary */</span>
+<span class="tp">int</span> <span class="fn">isEmptyShort</span>(<span class="tp">int</span> stackIndex) {
+    <span class="kw">return</span> (top[stackIndex] == <span class="nm">NULL</span>) ? <span class="nm">1</span> : <span class="nm">0</span>;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+
+    printf(<span class="st">"Stack 0 empty? %d\n"</span>, <span class="fn">isEmpty</span>(<span class="nm">0</span>));  <span class="cm">/* 1 (true) */</span>
+
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">42</span>);
+    printf(<span class="st">"Stack 0 empty? %d\n"</span>, <span class="fn">isEmpty</span>(<span class="nm">0</span>));  <span class="cm">/* 0 (false) */</span>
+
+    <span class="cm">/* Used inside pop safely: */</span>
+    <span class="kw">if</span> (!<span class="fn">isEmpty</span>(<span class="nm">0</span>)) {
+        <span class="fn">pop</span>(<span class="nm">0</span>);
+    }
+    printf(<span class="st">"Stack 0 empty? %d\n"</span>, <span class="fn">isEmpty</span>(<span class="nm">0</span>));  <span class="cm">/* 1 again */</span>
+
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t5-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🪣</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Empty Bucket Check</h4>
+        <p>Before pouring water from a bucket, you check <strong>is it empty?</strong> If yes, there's nothing to pour. The check is instant — you just look. Similarly, isEmpty just checks the top pointer; it doesn't scan through the stack.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🔋</div>
+      <div class="analogy-text">
+        <h4>Use Case: Task Queue Draining</h4>
+        <p>In a job scheduler, a worker thread loops: <code>while (!isEmpty(taskStack)) { pop and execute; }</code>. The isEmpty check prevents the worker from crashing when all tasks are done. It's the most basic safety check in stack-based systems.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 7. DISPLAY ════════════ -->
+<div class="section-card" id="sec6">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);">📋</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 07</div>
+      <div class="section-title">Display Operation</div>
+      <div class="section-sub">Traverse and print all elements in a single stack from top to bottom.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t6-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t6-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t6-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t6-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t6-theory">
+    <p class="theory-text"><strong>Display</strong> traverses a linked list stack from the top node to the last node (where next == NULL), printing each element's data. This is a linear traversal — the only way to see all elements since linked lists don't support random access.</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Check if stack is empty — print message and return if so</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Start a <strong>temp pointer</strong> at top: <code>temp = top[i]</code></div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">Print <code>temp→data</code>, then move: <code>temp = temp→next</code></div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">Repeat until <code>temp == NULL</code> (end of list)</div></div>
+    </div>
+    <div class="info-box"><p><strong>Important:</strong> We use a <em>temporary pointer</em> to traverse — never move the actual top pointer, or you'll lose track of the stack permanently!</p></div>
+  </div>
+  <div class="tab-content" id="t6-viz">
+    <div class="viz-container">
+      <div class="viz-title">📋 Display — Traversal Animation</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="displayStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-primary" onclick="doDisplay()">Display</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="displayVizArea"></div>
+      <div id="displayStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t6-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Display Operation ── */</span>
+
+<span class="tp">void</span> <span class="fn">display</span>(<span class="tp">int</span> stackIndex) {
+
+    <span class="cm">/* Step 1: Check empty */</span>
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stack %d is empty.\n"</span>, stackIndex);
+        <span class="kw">return</span>;
+    }
+
+    printf(<span class="st">"Stack %d (top → bottom): "</span>, stackIndex);
+
+    <span class="cm">/* Step 2: Use a temp pointer — DO NOT move top! */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp = top[stackIndex];
+
+    <span class="cm">/* Step 3: Traverse until NULL */</span>
+    <span class="kw">while</span> (temp != <span class="nm">NULL</span>) {
+        printf(<span class="st">"%d"</span>, temp-&gt;data);
+        <span class="kw">if</span> (temp-&gt;next != <span class="nm">NULL</span>) printf(<span class="st">" → "</span>);
+        temp = temp-&gt;next;   <span class="cm">/* Move to next node */</span>
+    }
+
+    printf(<span class="st">" → NULL\n"</span>);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">5</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">15</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">25</span>);
+    <span class="fn">display</span>(<span class="nm">0</span>);  <span class="cm">/* Output: 25 → 15 → 5 → NULL */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(n)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">n = elements</span><span class="val">Linear</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t6-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🚂</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Reading a Train</h4>
+        <p>Imagine a train of linked wagons. Display starts from the front (top) and walks wagon-by-wagon to the last one, calling out each wagon's cargo. You never detach wagons — you just walk alongside and read.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 8. DISPLAY ALL ════════════ -->
+<div class="section-card" id="sec7">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);">📊</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 08</div>
+      <div class="section-title">DisplayAllStacks</div>
+      <div class="section-sub">Loop through all stacks and display each one, including handling empty stacks gracefully.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t7-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t7-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t7-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t7-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t7-theory">
+    <p class="theory-text"><strong>DisplayAllStacks</strong> iterates over all stacks (using a loop from 0 to MAX_STACKS-1) and calls the Display function for each. It provides a complete snapshot of all stacks at once, showing which are empty and which have elements.</p>
+    <div class="info-box"><p><strong>Implementation:</strong> Simply loop from i=0 to MAX_STACKS-1 and call display(i) for each. The inner display function handles the NULL check for empty stacks.</p></div>
+  </div>
+  <div class="tab-content" id="t7-viz">
+    <div class="viz-container">
+      <div class="viz-title">📊 All Stacks at a Glance</div>
+      <div class="viz-controls">
+        <button class="viz-btn viz-btn-primary" onclick="doDisplayAll()">Display All</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Load Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="displayAllVizArea"></div>
+      <div id="displayAllStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t7-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── DisplayAllStacks Operation ── */</span>
+
+<span class="tp">void</span> <span class="fn">displayAllStacks</span>() {
+    <span class="tp">int</span> i;
+    printf(<span class="st">"====== All Stacks ======\n"</span>);
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_STACKS</span>; i++) {
+        printf(<span class="st">"Stack %d: "</span>, i);
+        <span class="kw">if</span> (top[i] == <span class="nm">NULL</span>) {
+            printf(<span class="st">"[EMPTY]\n"</span>);
+        } <span class="kw">else</span> {
+            <span class="kw">struct</span> <span class="tp">Node</span>* temp = top[i];
+            <span class="kw">while</span> (temp != <span class="nm">NULL</span>) {
+                printf(<span class="st">"%d"</span>, temp-&gt;data);
+                <span class="kw">if</span> (temp-&gt;next) printf(<span class="st">" → "</span>);
+                temp = temp-&gt;next;
+            }
+            printf(<span class="st">" → NULL\n"</span>);
+        }
+    }
+    printf(<span class="st">"========================\n"</span>);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">20</span>);
+    <span class="fn">push</span>(<span class="nm">2</span>, <span class="nm">99</span>);
+    <span class="cm">/* Stack 1 intentionally left empty */</span>
+    <span class="fn">displayAllStacks</span>();
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(S×N)</span></div>
+      <div class="complexity-badge"><span class="label">S = stacks</span><span class="val">N = elements</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t7-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🏬</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Warehouse Inventory</h4>
+        <p>A warehouse manager walks through each aisle (each stack), lists all boxes in order from top to bottom, and notes which aisles are empty. DisplayAllStacks does exactly this — a full inventory report of all stacks.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 9. DELETE STACK ════════════ -->
+<div class="section-card" id="sec8">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);">🗑️</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 09</div>
+      <div class="section-title">DeleteStack Operation</div>
+      <div class="section-sub">Destroy an entire stack by freeing all nodes, or delete the top node, or delete from a specific position.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t8-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t8-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t8-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t8-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t8-theory">
+    <p class="theory-text"><strong>DeleteStack</strong> completely destroys a stack by traversing all nodes and freeing each one's memory, then setting the top pointer to NULL. This is critical for <strong>preventing memory leaks</strong> in C programs.</p>
+    <p class="theory-text">There are three variants covered here:</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">A</div><div class="step-text"><strong>Delete Entire Stack:</strong> Free all nodes one by one, set top = NULL</div></div>
+      <div class="step-item"><div class="step-num">B</div><div class="step-text"><strong>Delete Top Node:</strong> Equivalent to Pop — removes just the top node</div></div>
+      <div class="step-item"><div class="step-num">C</div><div class="step-text"><strong>Delete From Specific Stack:</strong> Target a particular stack index and delete it</div></div>
+    </div>
+    <div class="warning-box"><p><strong>Memory Leak Warning:</strong> If you just set <code>top[i] = NULL</code> without freeing nodes, all those nodes are lost in memory — unreachable but not freed. Always traverse and free before nulling the top pointer!</p></div>
+  </div>
+  <div class="tab-content" id="t8-viz">
+    <div class="viz-container">
+      <div class="viz-title">🗑️ Delete Stack — Memory Freeing</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="delStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-danger" onclick="doDeleteStack()">Delete Stack</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset All</button>
+      </div>
+      <div class="stacks-row" id="delVizArea"></div>
+      <div id="delStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t8-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── DeleteStack Operations ── */</span>
+
+<span class="cm">/* A: Delete entire stack — free all nodes */</span>
+<span class="tp">void</span> <span class="fn">deleteStack</span>(<span class="tp">int</span> stackIndex) {
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp;
+    <span class="kw">while</span> (top[stackIndex] != <span class="nm">NULL</span>) {
+        temp = top[stackIndex];         <span class="cm">/* Hold current top */</span>
+        top[stackIndex] = temp-&gt;next;   <span class="cm">/* Advance top */</span>
+        <span class="fn">free</span>(temp);                     <span class="cm">/* Free old top */</span>
+    }
+    printf(<span class="st">"Stack %d deleted successfully.\n"</span>, stackIndex);
+}
+
+<span class="cm">/* B: Delete just the top node (like pop but no return) */</span>
+<span class="tp">void</span> <span class="fn">deleteTopNode</span>(<span class="tp">int</span> stackIndex) {
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stack %d is empty!\n"</span>, stackIndex);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp = top[stackIndex];
+    top[stackIndex] = temp-&gt;next;
+    <span class="fn">free</span>(temp);
+    printf(<span class="st">"Top node deleted from Stack %d.\n"</span>, stackIndex);
+}
+
+<span class="cm">/* C: Delete from a specific stack (same as deleteStack) */</span>
+<span class="tp">void</span> <span class="fn">deleteFromSpecificStack</span>(<span class="tp">int</span> stackIndex) {
+    <span class="fn">deleteStack</span>(stackIndex);  <span class="cm">/* Same logic, named for clarity */</span>
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">20</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">30</span>);
+    <span class="fn">deleteTopNode</span>(<span class="nm">0</span>);    <span class="cm">/* Removes 30 */</span>
+    <span class="fn">deleteStack</span>(<span class="nm">0</span>);       <span class="cm">/* Removes 20 and 10, frees all */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Full Delete Time</span><span class="val">O(n)</span></div>
+      <div class="complexity-badge"><span class="label">Top Delete Time</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t8-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">♻️</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Shredding Documents</h4>
+        <p>Deleting a stack is like feeding a pile of documents into a shredder one by one. Each sheet (node) is shredded (freed) and the pile (stack) shrinks until nothing remains. Just setting top = NULL without freeing is like throwing the pile in a locked room — wasted space forever.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 10. CLEAR STACK ════════════ -->
+<div class="section-card" id="sec9">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);">🧹</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 10</div>
+      <div class="section-title">ClearStack Operation</div>
+      <div class="section-sub">Remove all elements from a stack and reset it to empty, freeing all memory.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t9-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t9-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t9-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t9-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t9-theory">
+    <p class="theory-text"><strong>ClearStack</strong> is similar to DeleteStack but the key difference is intent: ClearStack <em>resets</em> the stack for reuse (the stack structure remains, just emptied), while DeleteStack implies the stack itself is being destroyed.</p>
+    <p class="theory-text">In practice, the implementation is the same — traverse all nodes, free each one, then set <code>top[i] = NULL</code>. After ClearStack, the stack is in the same state as after CreateStack — empty and ready for new pushes.</p>
+    <div class="concept-grid">
+      <div class="concept-card"><h4>Delete All Nodes</h4><p>Every node is freed using free() to reclaim heap memory.</p></div>
+      <div class="concept-card"><h4>Memory Cleanup</h4><p>No node is left unreachable — proper cleanup prevents memory leaks.</p></div>
+      <div class="concept-card"><h4>Reset Top</h4><p>top[i] = NULL after clearing — stack is now reusable.</p></div>
+      <div class="concept-card"><h4>Reusable</h4><p>Unlike deleteStack, clearStack implies the stack will be reused with new pushes.</p></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t9-viz">
+    <div class="viz-container">
+      <div class="viz-title">🧹 ClearStack Animation</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="clearStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-warn" onclick="doClearStack()">Clear Stack</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-danger" onclick="resetPushViz()">Reset All</button>
+      </div>
+      <div class="stacks-row" id="clearVizArea"></div>
+      <div id="clearStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t9-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── ClearStack Operation ── */</span>
+
+<span class="tp">void</span> <span class="fn">clearStack</span>(<span class="tp">int</span> stackIndex) {
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stack %d is already empty.\n"</span>, stackIndex);
+        <span class="kw">return</span>;
+    }
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp;
+    <span class="tp">int</span> count = <span class="nm">0</span>;
+
+    <span class="cm">/* Free all nodes one by one */</span>
+    <span class="kw">while</span> (top[stackIndex] != <span class="nm">NULL</span>) {
+        temp = top[stackIndex];
+        top[stackIndex] = temp-&gt;next;
+        <span class="fn">free</span>(temp);
+        count++;
+    }
+
+    <span class="cm">/* top is now NULL — stack is reset */</span>
+    printf(<span class="st">"Stack %d cleared. %d nodes freed.\n"</span>, stackIndex, count);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">5</span>); <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">10</span>); <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">15</span>);
+    <span class="fn">clearStack</span>(<span class="nm">1</span>);          <span class="cm">/* Clears Stack 1 */</span>
+    printf(<span class="st">"Empty? %d\n"</span>, <span class="fn">isEmpty</span>(<span class="nm">1</span>));  <span class="cm">/* Output: 1 */</span>
+    <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">999</span>);  <span class="cm">/* Stack reusable! */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(n)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t9-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🧹</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Wiping a Whiteboard</h4>
+        <p>ClearStack is like erasing a whiteboard completely — all written content is gone, but the board still exists and is ready for new content. The board structure (the stack) remains; only the data is wiped and the memory returned.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 11. SEARCH ════════════ -->
+<div class="section-card" id="sec10">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);">🔍</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 11</div>
+      <div class="section-title">Search Operation</div>
+      <div class="section-sub">Perform a linear search through a stack's nodes to find a specific value.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t10-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t10-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t10-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t10-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t10-theory">
+    <p class="theory-text"><strong>Search</strong> traverses the stack from top to bottom comparing each node's data with the target value. Since linked lists don't support random access, we must use <strong>linear search</strong> — checking one node at a time.</p>
+    <p class="theory-text">The function returns the <strong>position</strong> of the element (1 = top, 2 = second from top, etc.) or -1 if not found. The original stack is not modified during search.</p>
+    <div class="concept-grid">
+      <div class="concept-card"><h4>Linear Search</h4><p>Start at top, compare data, move to next — O(n) in worst case.</p></div>
+      <div class="concept-card"><h4>Compare Values</h4><p>Each node's data field is compared with the target using ==.</p></div>
+      <div class="concept-card"><h4>Position Count</h4><p>Track position from top (1-indexed) to tell the caller where it was found.</p></div>
+      <div class="concept-card"><h4>Found/Not Found</h4><p>Return position if found, -1 if the value isn't in the stack.</p></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t10-viz">
+    <div class="viz-container">
+      <div class="viz-title">🔍 Search — Step-by-Step Traversal</div>
+      <div class="viz-controls">
+        <input type="number" class="viz-input" id="searchVal" value="15" placeholder="find">
+        <select class="viz-input" id="searchStackSel" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-warn" onclick="doSearch()">Search</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-danger" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="searchVizArea"></div>
+      <div id="searchStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t10-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── Search Operation ── */</span>
+
+<span class="tp">int</span> <span class="fn">search</span>(<span class="tp">int</span> stackIndex, <span class="tp">int</span> target) {
+
+    <span class="kw">if</span> (top[stackIndex] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stack %d is empty.\n"</span>, stackIndex);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp = top[stackIndex];
+    <span class="tp">int</span> position = <span class="nm">1</span>;   <span class="cm">/* Position 1 = top */</span>
+
+    <span class="kw">while</span> (temp != <span class="nm">NULL</span>) {
+        <span class="kw">if</span> (temp-&gt;data == target) {
+            printf(<span class="st">"Found %d at position %d in Stack %d\n"</span>,
+                   target, position, stackIndex);
+            <span class="kw">return</span> position;   <span class="cm">/* Found! */</span>
+        }
+        temp = temp-&gt;next;
+        position++;
+    }
+
+    printf(<span class="st">"%d not found in Stack %d\n"</span>, target, stackIndex);
+    <span class="kw">return</span> -<span class="nm">1</span>;   <span class="cm">/* Not found */</span>
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">5</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">15</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">25</span>);
+    <span class="fn">search</span>(<span class="nm">0</span>, <span class="nm">15</span>);  <span class="cm">/* Found at position 2 */</span>
+    <span class="fn">search</span>(<span class="nm">0</span>, <span class="nm">99</span>);  <span class="cm">/* Not found */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Best Case</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Worst Case</span><span class="val">O(n)</span></div>
+      <div class="complexity-badge"><span class="label">Average</span><span class="val">O(n/2)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t10-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🔦</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Searching a Stack of Folders</h4>
+        <p>You have a pile of folders on your desk. To find "Project Alpha," you pick them one by one from the top, check the label, and either stop (found!) or put it aside and check the next one. This is linear search — no skipping allowed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 12. MOVE ELEMENT ════════════ -->
+<div class="section-card" id="sec11">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.3);">🔀</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 12</div>
+      <div class="section-title">MoveElement Operation</div>
+      <div class="section-sub">Pop the top element from a source stack and push it onto a destination stack.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t11-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t11-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t11-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t11-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t11-theory">
+    <p class="theory-text"><strong>MoveElement</strong> transfers the top element from one stack to another. It is a combination of Pop (from source) + Push (to destination). The element's value is popped first, then pushed onto the destination stack.</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Validate that source and destination stack indices are different and valid</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Check that the <strong>source stack is not empty</strong> (cannot move from empty)</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text"><strong>Pop</strong> the top value from the source stack</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text"><strong>Push</strong> the popped value onto the destination stack</div></div>
+    </div>
+    <div class="info-box"><p><strong>Optimization:</strong> Instead of popping and pushing (which creates and destroys nodes), we can directly re-link the node from one stack to another — avoiding malloc/free overhead. This is shown in the advanced version.</p></div>
+  </div>
+  <div class="tab-content" id="t11-viz">
+    <div class="viz-container">
+      <div class="viz-title">🔀 MoveElement — Transfer Between Stacks</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="moveSrc" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <span style="color:var(--text3);font-size:.8rem;">→</span>
+        <select class="viz-input" id="moveDst" style="width:90px">
+          <option value="1">Stack 1</option>
+          <option value="0">Stack 0</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-primary" onclick="doMove()">Move Top</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Add Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="moveVizArea"></div>
+      <div id="moveStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t11-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── MoveElement Operation ── */</span>
+
+<span class="tp">void</span> <span class="fn">moveElement</span>(<span class="tp">int</span> src, <span class="tp">int</span> dst) {
+
+    <span class="cm">/* Validate indices */</span>
+    <span class="kw">if</span> (src == dst) {
+        printf(<span class="st">"Source and destination are the same!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">if</span> (src &lt; <span class="nm">0</span> || dst &lt; <span class="nm">0</span> || src &gt;= <span class="nm">MAX_STACKS</span> || dst &gt;= <span class="nm">MAX_STACKS</span>) {
+        printf(<span class="st">"Invalid stack index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Check source is not empty */</span>
+    <span class="kw">if</span> (top[src] == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Source Stack %d is empty!\n"</span>, src);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Pop from source, push to destination */</span>
+    <span class="tp">int</span> value = <span class="fn">pop</span>(src);
+    <span class="fn">push</span>(dst, value);
+
+    printf(<span class="st">"Moved %d from Stack %d to Stack %d\n"</span>, value, src, dst);
+}
+
+<span class="cm">/* Advanced: direct re-linking (no malloc/free overhead) */</span>
+<span class="tp">void</span> <span class="fn">moveElementFast</span>(<span class="tp">int</span> src, <span class="tp">int</span> dst) {
+    <span class="kw">if</span> (top[src] == <span class="nm">NULL</span>) { printf(<span class="st">"Empty source!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* node = top[src];    <span class="cm">/* Grab top node */</span>
+    top[src] = node-&gt;next;            <span class="cm">/* Detach from source */</span>
+    node-&gt;next = top[dst];            <span class="cm">/* Link to destination top */</span>
+    top[dst] = node;                  <span class="cm">/* Make it new dest top */</span>
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">20</span>);
+    <span class="fn">moveElement</span>(<span class="nm">0</span>, <span class="nm">1</span>);  <span class="cm">/* Moves 20 from Stack 0 to Stack 1 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Pop+Push</span><span class="val">O(1)</span></div>
+      <div class="complexity-badge"><span class="label">Fast Re-link</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t11-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">🎴</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Moving Cards Between Piles</h4>
+        <p>In card games like Solitaire, you pick the top card from one pile (source stack) and place it on another pile (destination stack). The card doesn't change — only which pile it belongs to changes. MoveElement does this between stacks.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">📬</div>
+      <div class="analogy-text">
+        <h4>Use Case: Priority Queue Rebalancing</h4>
+        <p>When a task changes priority, it's moved from a lower-priority stack to a higher-priority one. MoveElement enables this <strong>data transfer between stacks</strong> without creating new data — just relocating existing nodes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 13. COMPARE STACKS ════════════ -->
+<div class="section-card" id="sec12">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.3);">⚖️</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 13</div>
+      <div class="section-title">CompareStacks Operation</div>
+      <div class="section-sub">Compare two stacks for equality — same size AND same values in the same order.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t12-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t12-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t12-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t12-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t12-theory">
+    <p class="theory-text"><strong>CompareStacks</strong> determines if two stacks are equal. Two stacks are equal if they have the <strong>same number of elements</strong> and each corresponding element (from top to bottom) has the <strong>same value</strong>.</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Start two temp pointers, one at each stack's top</div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse both simultaneously: if data values differ, return NOT EQUAL</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">Move both pointers forward: <code>t1 = t1→next, t2 = t2→next</code></div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">If both reach NULL at the same time → EQUAL. If one reaches NULL first → different size → NOT EQUAL</div></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t12-viz">
+    <div class="viz-container">
+      <div class="viz-title">⚖️ Compare Two Stacks</div>
+      <div class="viz-controls">
+        <select class="viz-input" id="cmpS1" style="width:90px">
+          <option value="0">Stack 0</option>
+          <option value="1">Stack 1</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <span style="color:var(--text3);font-size:.8rem;">vs</span>
+        <select class="viz-input" id="cmpS2" style="width:90px">
+          <option value="1">Stack 1</option>
+          <option value="0">Stack 0</option>
+          <option value="2">Stack 2</option>
+        </select>
+        <button class="viz-btn viz-btn-primary" onclick="doCompare()">Compare</button>
+        <button class="viz-btn viz-btn-success" onclick="seedCompareViz()">Load Compare Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="compareVizArea"></div>
+      <div id="compareStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t12-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── CompareStacks Operation ── */</span>
+
+<span class="tp">int</span> <span class="fn">compareStacks</span>(<span class="tp">int</span> s1, <span class="tp">int</span> s2) {
+
+    <span class="kw">struct</span> <span class="tp">Node</span>* t1 = top[s1];
+    <span class="kw">struct</span> <span class="tp">Node</span>* t2 = top[s2];
+
+    <span class="kw">while</span> (t1 != <span class="nm">NULL</span> &amp;&amp; t2 != <span class="nm">NULL</span>) {
+
+        <span class="cm">/* Compare node values */</span>
+        <span class="kw">if</span> (t1-&gt;data != t2-&gt;data) {
+            printf(<span class="st">"Stacks %d and %d are NOT equal.\n"</span>, s1, s2);
+            <span class="kw">return</span> <span class="nm">0</span>;
+        }
+
+        <span class="cm">/* Advance both pointers */</span>
+        t1 = t1-&gt;next;
+        t2 = t2-&gt;next;
+    }
+
+    <span class="cm">/* If both NULL → same size and same values */</span>
+    <span class="kw">if</span> (t1 == <span class="nm">NULL</span> &amp;&amp; t2 == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Stacks %d and %d are EQUAL!\n"</span>, s1, s2);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+
+    <span class="cm">/* One reached NULL first → different sizes */</span>
+    printf(<span class="st">"Stacks %d and %d have different sizes.\n"</span>, s1, s2);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">5</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>);
+    <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">5</span>); <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">10</span>);
+    <span class="fn">compareStacks</span>(<span class="nm">0</span>, <span class="nm">1</span>);  <span class="cm">/* EQUAL */</span>
+
+    <span class="fn">push</span>(<span class="nm">2</span>, <span class="nm">99</span>);
+    <span class="fn">compareStacks</span>(<span class="nm">0</span>, <span class="nm">2</span>);  <span class="cm">/* NOT EQUAL */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(min(n,m))</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t12-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">⚖️</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Comparing Two Receipts</h4>
+        <p>You have two shopping receipts and want to check if they're identical. You read them line by line from top to bottom, comparing each item. If any line differs, or one receipt is longer, they're not equal. If both end at the same time with all matches — identical!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ 14. GET TOTAL ELEMENTS ════════════ -->
+<div class="section-card" id="sec13">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);">🔢</div>
+    <div class="section-meta">
+      <div class="section-label">Operation 14</div>
+      <div class="section-title">GetTotalElements Operation</div>
+      <div class="section-sub">Count the total number of elements across all stacks by traversing every stack.</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'t13-theory')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'t13-viz')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'t13-code')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'t13-analogy')">Analogy</div>
+  </div>
+  <div class="tab-content active" id="t13-theory">
+    <p class="theory-text"><strong>GetTotalElements</strong> counts <em>all</em> elements across <em>all</em> stacks by iterating through every stack and counting nodes in each. It returns a grand total — the overall count across the entire multiple stack system.</p>
+    <div class="steps-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-text">Initialize <code>total = 0</code></div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-text">Loop through each stack index from 0 to MAX_STACKS-1</div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-text">For each stack, traverse from top to NULL, incrementing total for each node</div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-text">After all stacks traversed, return total</div></div>
+    </div>
+    <div class="complexity-row" style="margin-top:14px;">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(S × N)</span></div>
+      <div class="complexity-badge"><span class="label">S = stacks</span><span class="val">N = avg elements</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t13-viz">
+    <div class="viz-container">
+      <div class="viz-title">🔢 GetTotalElements — Count Across All Stacks</div>
+      <div class="viz-controls">
+        <button class="viz-btn viz-btn-primary" onclick="doGetTotal()">Count All Elements</button>
+        <button class="viz-btn viz-btn-success" onclick="seedPopViz()">Load Demo Data</button>
+        <button class="viz-btn viz-btn-warn" onclick="resetPushViz()">Reset</button>
+      </div>
+      <div class="stacks-row" id="totalVizArea"></div>
+      <div id="totalStatus"></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t13-code">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* ── GetTotalElements Operation ── */</span>
+
+<span class="cm">/* Count elements in a single stack */</span>
+<span class="tp">int</span> <span class="fn">stackSize</span>(<span class="tp">int</span> stackIndex) {
+    <span class="tp">int</span> count = <span class="nm">0</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span>* temp = top[stackIndex];
+    <span class="kw">while</span> (temp != <span class="nm">NULL</span>) {
+        count++;
+        temp = temp-&gt;next;
+    }
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Count all elements across ALL stacks */</span>
+<span class="tp">int</span> <span class="fn">getTotalElements</span>() {
+    <span class="tp">int</span> total = <span class="nm">0</span>;
+    <span class="tp">int</span> i;
+
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_STACKS</span>; i++) {
+        <span class="tp">int</span> count = <span class="fn">stackSize</span>(i);
+        printf(<span class="st">"  Stack %d: %d elements\n"</span>, i, count);
+        total += count;
+    }
+
+    printf(<span class="st">"Total elements across all stacks: %d\n"</span>, total);
+    <span class="kw">return</span> total;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">createStacks</span>();
+    <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">10</span>); <span class="fn">push</span>(<span class="nm">0</span>, <span class="nm">20</span>);   <span class="cm">/* Stack 0: 2 elements */</span>
+    <span class="fn">push</span>(<span class="nm">1</span>, <span class="nm">30</span>);              <span class="cm">/* Stack 1: 1 element  */</span>
+    <span class="fn">push</span>(<span class="nm">2</span>, <span class="nm">40</span>); <span class="fn">push</span>(<span class="nm">2</span>, <span class="nm">50</span>); <span class="fn">push</span>(<span class="nm">2</span>, <span class="nm">60</span>); <span class="cm">/* Stack 2: 3 elements */</span>
+
+    <span class="fn">getTotalElements</span>();  <span class="cm">/* Total: 6 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+    </div>
+    <div class="complexity-row">
+      <div class="complexity-badge"><span class="label">Time</span><span class="val">O(total nodes)</span></div>
+      <div class="complexity-badge"><span class="label">Space</span><span class="val">O(1)</span></div>
+    </div>
+  </div>
+  <div class="tab-content" id="t13-analogy">
+    <div class="analogy-box">
+      <div class="analogy-icon">📦</div>
+      <div class="analogy-text">
+        <h4>Real-Life Analogy: Counting Inventory</h4>
+        <p>A warehouse manager counts boxes in all aisles: Aisle 1 has 3 boxes, Aisle 2 has 5, Aisle 3 has 2. Total: 10 boxes. GetTotalElements does the same — visits every stack (aisle) and counts every node (box), returning the grand total.</p>
+      </div>
+    </div>
+    <div class="analogy-box">
+      <div class="analogy-icon">📊</div>
+      <div class="analogy-text">
+        <h4>Use Case: Memory Usage Reporting</h4>
+        <p>A system might call getTotalElements() to understand <strong>how much memory is currently in use</strong> across all task queues. Since each node uses sizeof(Node) bytes, multiplying total by node size gives the exact heap usage for all stacks.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  SHARED STATE — multiple stacks
+// ══════════════════════════════════════
+const NUM_STACKS = 3;
+// stacks[i] = array of values, index 0 = top
+const stacks = [[], [], []];
+
+// ── Navigation ──
+function showSection(idx, el) {
+  document.querySelectorAll('.section-card').forEach(c => c.classList.remove('visible'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec' + idx).classList.add('visible');
+  el.classList.add('active');
+  refreshAllViz();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+function switchTab(tabEl, contentId) {
+  const parent = tabEl.closest('.section-card');
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  tabEl.classList.add('active');
+  const tc = document.getElementById(contentId);
+  if (tc) tc.classList.add('active');
+}
+
+// ── Copy code ──
+function copyCode(btn) {
+  const code = btn.closest('.code-wrap').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+// ══════════════════════════════════════
+//  RENDER HELPERS
+// ══════════════════════════════════════
+function renderStacks(containerId, highlightStack=-1, highlightTop=false, searchIdx={}, foundIdx={}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  for (let s = 0; s < NUM_STACKS; s++) {
+    const col = document.createElement('div');
+    col.className = 'stack-col';
+    const lbl = document.createElement('div');
+    lbl.className = 'stack-label';
+    lbl.textContent = 'Stack ' + s;
+    col.appendChild(lbl);
+    if (stacks[s].length === 0) {
+      const n = document.createElement('div');
+      n.className = 'null-node';
+      n.textContent = 'NULL';
+      col.appendChild(n);
+    } else {
+      stacks[s].forEach((val, i) => {
+        const n = document.createElement('div');
+        n.className = 'node-box stack-node';
+        if (i === 0 && (highlightStack === s || highlightTop)) n.classList.add('top-node');
+        if (searchIdx[s] === i) n.classList.add('searching');
+        if (foundIdx[s] === i) n.classList.add('found');
+        n.textContent = val;
+        col.appendChild(n);
+        if (i < stacks[s].length - 1) {
+          const ptr = document.createElement('div');
+          ptr.className = 'node-ptr';
+          ptr.textContent = '↓';
+          col.appendChild(ptr);
+        } else {
+          const ptr = document.createElement('div');
+          ptr.className = 'node-ptr';
+          ptr.textContent = '↓';
+          col.appendChild(ptr);
+          const nul = document.createElement('div');
+          nul.className = 'null-node';
+          nul.textContent = 'NULL';
+          col.appendChild(nul);
+        }
+      });
+    }
+    const base = document.createElement('div');
+    base.className = 'stack-base';
+    col.appendChild(base);
+    container.appendChild(col);
+  }
+}
+
+function setStatus(id, msg, type='info') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'status-msg status-' + type;
+  el.textContent = msg;
+}
+
+// ══════════════════════════════════════
+//  OP 1: CREATE STACKS
+// ══════════════════════════════════════
+function createStacksViz() {
+  const n = parseInt(document.getElementById('numStacks').value) || 3;
+  const area = document.getElementById('createVizArea');
+  area.innerHTML = '';
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:24px;flex-wrap:wrap;';
+  for (let i = 0; i < Math.min(n, 5); i++) {
+    const col = document.createElement('div');
+    col.className = 'stack-col';
+    col.innerHTML = `<div class="stack-label">Stack ${i}</div><div class="null-node" style="animation:fadeUp .3s ease ${i*0.1}s both">NULL</div><div class="stack-base"></div>`;
+    row.appendChild(col);
+  }
+  area.appendChild(row);
+  document.getElementById('createStatus').className = 'status-msg status-ok';
+  document.getElementById('createStatus').textContent = `✓ ${Math.min(n,5)} stacks created. All top pointers = NULL.`;
+}
+
+// ══════════════════════════════════════
+//  OP 2: CREATE NODE VIZ
+// ══════════════════════════════════════
+let nodeCreated = false;
+function createNodeViz() {
+  const val = document.getElementById('nodeDataInput').value || '42';
+  const area = document.getElementById('nodeVizArea');
+  area.innerHTML = '';
+  const addr = '0x' + Math.floor(Math.random()*0xffff).toString(16).toUpperCase().padStart(4,'0');
+  area.innerHTML = `
+    <div class="mem-cell used" style="min-width:120px">
+      <div class="addr">${addr}</div>
+      <div class="val2">data = ${val}</div>
+      <div style="font-size:9px;color:var(--text3);margin-top:2px;">next → NULL</div>
+    </div>
+    <div style="color:var(--text3);font-size:18px;align-self:center">→</div>
+    <div style="font-size:.78rem;color:var(--accent4);font-family:'JetBrains Mono',monospace;align-self:center">malloc()<br>success ✓</div>
+  `;
+  nodeCreated = true;
+  document.getElementById('nodeStatus').className = 'status-msg status-ok';
+  document.getElementById('nodeStatus').textContent = `✓ Node created at ${addr}: data=${val}, next=NULL`;
+}
+function freeNodeViz() {
+  if (!nodeCreated) { setStatus('nodeStatus','No node to free!','err'); return; }
+  const cell = document.querySelector('#nodeVizArea .mem-cell');
+  if (cell) cell.className = 'mem-cell freed';
+  nodeCreated = false;
+  setStatus('nodeStatus', '✓ free() called — memory returned to heap.', 'ok');
+}
+
+// ══════════════════════════════════════
+//  SHARED PUSH VIZ (used by many ops)
+// ══════════════════════════════════════
+function renderAllViz() {
+  const ids = ['pushVizArea','popVizArea','peekVizArea','isEmptyVizArea',
+               'displayVizArea','displayAllVizArea','delVizArea','clearVizArea',
+               'searchVizArea','moveVizArea','compareVizArea','totalVizArea'];
+  ids.forEach(id => { if (document.getElementById(id)) renderStacks(id); });
+}
+
+function doPush() {
+  const val = parseInt(document.getElementById('pushVal').value);
+  const s = parseInt(document.getElementById('pushStack').value);
+  if (isNaN(val)) { setStatus('pushStatus','Enter a valid number!','err'); return; }
+  stacks[s].unshift(val);
+  renderStacks('pushVizArea', s, true);
+  setStatus('pushStatus', `✓ Pushed ${val} onto Stack ${s}. New top = ${stacks[s][0]}`, 'ok');
+  document.getElementById('pushVal').value = val + 5;
+}
+
+function doPop() {
+  const s = parseInt(document.getElementById('popStackSel').value);
+  if (stacks[s].length === 0) { setStatus('popStatus', `✗ Stack ${s} is EMPTY — Underflow!`, 'err'); renderStacks('popVizArea'); return; }
+  const popped = stacks[s].shift();
+  renderStacks('popVizArea');
+  setStatus('popStatus', `✓ Popped ${popped} from Stack ${s}. ${stacks[s].length > 0 ? 'New top = ' + stacks[s][0] : 'Stack is now empty.'}`, 'ok');
+}
+
+function doPeek() {
+  const s = parseInt(document.getElementById('peekStackSel').value);
+  if (stacks[s].length === 0) { setStatus('peekStatus', `✗ Stack ${s} is EMPTY — nothing to peek!`, 'err'); renderStacks('peekVizArea'); return; }
+  renderStacks('peekVizArea', s, true);
+  setStatus('peekStatus', `👁️ Peek on Stack ${s}: top = ${stacks[s][0]}  (stack NOT modified)`, 'ok');
+}
+
+function doIsEmpty() {
+  const s = parseInt(document.getElementById('isEmptyStackSel').value);
+  const empty = stacks[s].length === 0;
+  renderStacks('isEmptyVizArea', s);
+  setStatus('isEmptyStatus', empty ? `✓ Stack ${s} isEmpty() → TRUE (top == NULL)` : `Stack ${s} isEmpty() → FALSE (top = ${stacks[s][0]})`, empty ? 'ok' : 'info');
+}
+
+function doDisplay() {
+  const s = parseInt(document.getElementById('displayStackSel').value);
+  if (stacks[s].length === 0) { setStatus('displayStatus', `Stack ${s} is EMPTY.`, 'err'); renderStacks('displayVizArea'); return; }
+  const display = stacks[s].join(' → ') + ' → NULL';
+  renderStacks('displayVizArea', s);
+  setStatus('displayStatus', `Stack ${s}: ${display}`, 'ok');
+}
+
+function doDisplayAll() {
+  renderStacks('displayAllVizArea');
+  let msg = '';
+  for (let i = 0; i < NUM_STACKS; i++) {
+    msg += `Stack ${i}: ${stacks[i].length > 0 ? stacks[i].join('→') + '→NULL' : '[EMPTY]'}  `;
+  }
+  setStatus('displayAllStatus', msg, 'info');
+}
+
+function doDeleteStack() {
+  const s = parseInt(document.getElementById('delStackSel').value);
+  if (stacks[s].length === 0) { setStatus('delStatus', `Stack ${s} is already empty.`, 'err'); renderStacks('delVizArea'); return; }
+  const count = stacks[s].length;
+  stacks[s] = [];
+  renderStacks('delVizArea');
+  setStatus('delStatus', `✓ Stack ${s} deleted. ${count} nodes freed from heap.`, 'ok');
+}
+
+function doClearStack() {
+  const s = parseInt(document.getElementById('clearStackSel').value);
+  if (stacks[s].length === 0) { setStatus('clearStatus', `Stack ${s} already empty.`, 'err'); renderStacks('clearVizArea'); return; }
+  const count = stacks[s].length;
+  stacks[s] = [];
+  renderStacks('clearVizArea');
+  setStatus('clearStatus', `🧹 Stack ${s} cleared. ${count} nodes freed. top[${s}] = NULL. Ready for reuse!`, 'ok');
+}
+
+function doSearch() {
+  const target = parseInt(document.getElementById('searchVal').value);
+  const s = parseInt(document.getElementById('searchStackSel').value);
+  if (stacks[s].length === 0) { setStatus('searchStatus', `Stack ${s} is empty.`, 'err'); renderStacks('searchVizArea'); return; }
+  const idx = stacks[s].indexOf(target);
+  if (idx === -1) {
+    renderStacks('searchVizArea');
+    setStatus('searchStatus', `✗ ${target} not found in Stack ${s}.`, 'err');
+  } else {
+    renderStacks('searchVizArea', -1, false, {}, {[s]: idx});
+    setStatus('searchStatus', `✓ Found ${target} at position ${idx+1} (from top) in Stack ${s}!`, 'ok');
+  }
+}
+
+function doMove() {
+  const src = parseInt(document.getElementById('moveSrc').value);
+  const dst = parseInt(document.getElementById('moveDst').value);
+  if (src === dst) { setStatus('moveStatus', 'Source and destination are the same!', 'err'); return; }
+  if (stacks[src].length === 0) { setStatus('moveStatus', `Stack ${src} is empty — nothing to move!`, 'err'); renderStacks('moveVizArea'); return; }
+  const val = stacks[src].shift();
+  stacks[dst].unshift(val);
+  renderStacks('moveVizArea');
+  setStatus('moveStatus', `✓ Moved ${val} from Stack ${src} to Stack ${dst}.`, 'ok');
+}
+
+function doCompare() {
+  const s1 = parseInt(document.getElementById('cmpS1').value);
+  const s2 = parseInt(document.getElementById('cmpS2').value);
+  const a = stacks[s1], b = stacks[s2];
+  renderStacks('compareVizArea');
+  if (a.length !== b.length) { setStatus('compareStatus', `✗ Stacks ${s1} and ${s2} have different sizes (${a.length} vs ${b.length}). NOT EQUAL.`, 'err'); return; }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) { setStatus('compareStatus', `✗ Stacks ${s1} and ${s2} differ at position ${i+1}: ${a[i]} ≠ ${b[i]}. NOT EQUAL.`, 'err'); return; }
+  }
+  if (a.length === 0) { setStatus('compareStatus', `Both stacks are empty — EQUAL (trivially).`, 'ok'); return; }
+  setStatus('compareStatus', `✓ Stack ${s1} and Stack ${s2} are EQUAL! Same size (${a.length}) and same values.`, 'ok');
+}
+
+function doGetTotal() {
+  renderStacks('totalVizArea');
+  let total = 0;
+  let msg = '';
+  for (let i = 0; i < NUM_STACKS; i++) {
+    msg += `Stack ${i}: ${stacks[i].length} nodes  `;
+    total += stacks[i].length;
+  }
+  setStatus('totalStatus', `${msg}→ TOTAL = ${total} elements across all stacks.`, total > 0 ? 'ok' : 'info');
+}
+
+function resetPushViz() {
+  for (let i = 0; i < NUM_STACKS; i++) stacks[i] = [];
+  renderAllViz();
+  ['pushStatus','popStatus','peekStatus','isEmptyStatus','displayStatus','displayAllStatus','delStatus','clearStatus','searchStatus','moveStatus','compareStatus','totalStatus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className=''; el.textContent=''; }
+  });
+}
+
+function seedPopViz() {
+  stacks[0] = [30, 20, 10];
+  stacks[1] = [55];
+  stacks[2] = [15, 5];
+  renderAllViz();
+}
+
+function seedCompareViz() {
+  stacks[0] = [20, 10];
+  stacks[1] = [20, 10];
+  stacks[2] = [99];
+  renderAllViz();
+}
+
+function refreshAllViz() {
+  setTimeout(renderAllViz, 50);
+}
+
+// ── Init ──
+createStacksViz();
+renderAllViz();
+</script>
+</body>
+</html>

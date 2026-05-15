@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weighted Graph — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --card: #1a1e2a;
+  --border: #252b3b;
+  --accent: #00d4aa;
+  --accent2: #7c6af7;
+  --accent3: #f7a23e;
+  --accent4: #f76e6e;
+  --text: #e8ecf4;
+  --muted: #8b92a8;
+  --code-bg: #0a0c12;
+  --node-fill: #1a1e2a;
+  --node-stroke: #00d4aa;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;font-size:15px;line-height:1.7;overflow-x:hidden;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── SIDEBAR ── */
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:260px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:100;padding:0 0 40px 0;transition:.3s;}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--border);}
+.sidebar-logo{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;}
+.sidebar-title{font-size:17px;font-weight:800;color:var(--text);}
+.sidebar-subtitle{font-size:11px;color:var(--muted);margin-top:2px;}
+.nav-group{margin-top:8px;}
+.nav-group-label{padding:14px 20px 4px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.nav-item{display:block;padding:8px 20px;font-size:12.5px;color:var(--muted);text-decoration:none;cursor:pointer;transition:.2s;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-item:hover{color:var(--text);background:rgba(0,212,170,.05);border-left-color:var(--accent);}
+.nav-item.active{color:var(--accent);background:rgba(0,212,170,.08);border-left-color:var(--accent);}
+
+/* ── MAIN ── */
+#main{margin-left:260px;min-height:100vh;padding:40px 48px;}
+.page-hero{margin-bottom:48px;}
+.hero-tag{display:inline-block;background:rgba(0,212,170,.12);color:var(--accent);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:4px;margin-bottom:16px;}
+.hero-h1{font-size:42px;font-weight:800;line-height:1.15;margin-bottom:12px;}
+.hero-h1 span{color:var(--accent);}
+.hero-sub{font-size:15px;color:var(--muted);max-width:560px;}
+
+/* ── SECTION ── */
+.section{margin-bottom:72px;scroll-margin-top:32px;}
+.section-heading{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+.section-num{width:38px;height:38px;border-radius:8px;background:rgba(0,212,170,.12);color:var(--accent);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.section-num.v2{background:rgba(124,106,247,.12);color:var(--accent2);}
+.section-num.v3{background:rgba(247,162,62,.12);color:var(--accent3);}
+.section-num.v4{background:rgba(247,110,110,.12);color:var(--accent4);}
+.section-title{font-size:22px;font-weight:800;}
+.section-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;}
+.card-title{font-size:14px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.card-title.v2{color:var(--accent2);}
+.card-title.v3{color:var(--accent3);}
+.card-title.v4{color:var(--accent4);}
+.card p{color:var(--muted);font-size:14px;line-height:1.75;}
+.card p+p{margin-top:10px;}
+.tag{display:inline-block;background:rgba(0,212,170,.1);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:4px;margin:2px;}
+.tag.v2{background:rgba(124,106,247,.1);color:var(--accent2);}
+.tag.v3{background:rgba(247,162,62,.1);color:var(--accent3);}
+.tag.v4{background:rgba(247,110,110,.1);color:var(--accent4);}
+
+/* ── ANALOGY BOX ── */
+.analogy{background:linear-gradient(135deg,rgba(247,162,62,.07),rgba(247,162,62,.03));border:1px solid rgba(247,162,62,.2);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+.analogy-label{font-size:11px;font-weight:700;color:var(--accent3);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.analogy p{color:#c9b08a;font-size:14px;}
+
+/* ── CODE BLOCK ── */
+.code-wrap{background:var(--code-bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;}
+.code-header{background:#0f1219;padding:10px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.code-lang{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;}
+.copy-btn{font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:4px;padding:3px 10px;cursor:pointer;transition:.2s;font-family:inherit;}
+.copy-btn:hover{color:var(--accent);border-color:var(--accent);}
+pre{padding:20px 18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.8;color:#abb2bf;}
+.kw{color:#c678dd;}
+.fn{color:#61afef;}
+.str{color:#98c379;}
+.num{color:#d19a66;}
+.cmt{color:#5c6370;font-style:italic;}
+.tp{color:#e5c07b;}
+.op{color:#56b6c2;}
+
+/* ── CANVAS / VIZ ── */
+.viz-wrap{background:var(--code-bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;}
+.viz-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+canvas{display:block;max-width:100%;}
+.viz-controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.btn{background:rgba(0,212,170,.1);color:var(--accent);border:1px solid rgba(0,212,170,.3);border-radius:6px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;}
+.btn:hover{background:rgba(0,212,170,.2);}
+.btn.v2{background:rgba(124,106,247,.1);color:var(--accent2);border-color:rgba(124,106,247,.3);}
+.btn.v2:hover{background:rgba(124,106,247,.2);}
+.btn.v3{background:rgba(247,162,62,.1);color:var(--accent3);border-color:rgba(247,162,62,.3);}
+.btn.v3:hover{background:rgba(247,162,62,.2);}
+.btn.v4{background:rgba(247,110,110,.1);color:var(--accent4);border-color:rgba(247,110,110,.3);}
+.btn.v4:hover{background:rgba(247,110,110,.2);}
+.viz-info{font-size:12px;color:var(--muted);margin-top:8px;min-height:20px;}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#0f1219;color:var(--accent);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:10px 14px;border:1px solid var(--border);text-align:left;}
+td{padding:9px 14px;border:1px solid var(--border);color:var(--muted);}
+tr:hover td{background:rgba(0,212,170,.03);}
+code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#e5c07b;}
+
+/* ── GRID ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+/* ── STEPS ── */
+.steps{counter-reset:step;}
+.step{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start;}
+.step-num{counter-increment:step;min-width:28px;height:28px;border-radius:50%;background:rgba(0,212,170,.12);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.step-body{font-size:13.5px;color:var(--muted);padding-top:4px;}
+
+/* ── COMPLEXITY BADGE ── */
+.complexity{display:inline-flex;gap:16px;flex-wrap:wrap;margin:8px 0;}
+.cplx{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;}
+.cplx span{color:var(--muted);margin-right:4px;}
+.cplx strong{color:var(--accent3);}
+
+/* ── TOGGLE HAMBURGER (mobile) ── */
+#menu-btn{display:none;position:fixed;top:16px;left:16px;z-index:200;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;}
+@media(max-width:768px){
+  #menu-btn{display:block;}
+  #sidebar{left:-260px;}
+  #sidebar.open{left:0;}
+  #main{margin-left:0;padding:20px 16px;}
+  .hero-h1{font-size:26px;}
+}
+
+/* ── PROGRESS BAR ── */
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s;z-index:999;width:0%;}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<button id="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Data Structures</div>
+    <div class="sidebar-title">Weighted Graph</div>
+    <div class="sidebar-subtitle">Adjacency List · C Language</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-group-label">Foundation</div>
+    <a class="nav-item" href="#intro">Introduction</a>
+    <a class="nav-item" href="#representation">Representation</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Vertex Operations</div>
+    <a class="nav-item" href="#insert-vertex">Insert Vertex</a>
+    <a class="nav-item" href="#delete-vertex">Delete Vertex</a>
+    <a class="nav-item" href="#search-vertex">Search Vertex</a>
+    <a class="nav-item" href="#update-vertex">Update Vertex</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Edge Operations</div>
+    <a class="nav-item" href="#insert-edge">Insert Weighted Edge</a>
+    <a class="nav-item" href="#delete-edge">Delete Edge</a>
+    <a class="nav-item" href="#search-edge">Search Edge</a>
+    <a class="nav-item" href="#update-edge">Update Edge Weight</a>
+    <a class="nav-item" href="#display-edge">Display Edge Weights</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Traversal</div>
+    <a class="nav-item" href="#bfs">BFS</a>
+    <a class="nav-item" href="#dfs">DFS</a>
+    <a class="nav-item" href="#weighted-traversal">Weighted Traversal Analysis</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Path Operations</div>
+    <a class="nav-item" href="#find-path">Find Path</a>
+    <a class="nav-item" href="#shortest-path">Shortest Path</a>
+    <a class="nav-item" href="#longest-path">Longest Path</a>
+    <a class="nav-item" href="#all-paths">All Paths</a>
+    <a class="nav-item" href="#min-cost-path">Minimum Cost Path</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Shortest Path Algorithms</div>
+    <a class="nav-item" href="#dijkstra">Dijkstra's Algorithm</a>
+    <a class="nav-item" href="#bellman-ford">Bellman-Ford</a>
+    <a class="nav-item" href="#floyd-warshall">Floyd-Warshall</a>
+    <a class="nav-item" href="#astar">A* Search</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Connectivity</div>
+    <a class="nav-item" href="#connected-check">Connected Check</a>
+    <a class="nav-item" href="#components">Components Detection</a>
+    <a class="nav-item" href="#isolation">Isolation Check</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Cycle Operations</div>
+    <a class="nav-item" href="#detect-cycle">Detect Cycle</a>
+    <a class="nav-item" href="#cycle-cost">Weighted Cycle Cost</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Degree Operations</div>
+    <a class="nav-item" href="#degree-analysis">Degree Analysis</a>
+    <a class="nav-item" href="#weighted-degree">Weighted Degree</a>
+    <a class="nav-item" href="#total-cost">Total Edge Cost</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">MST</div>
+    <a class="nav-item" href="#prims">Prim's Algorithm</a>
+    <a class="nav-item" href="#kruskal">Kruskal's Algorithm</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Optimization</div>
+    <a class="nav-item" href="#min-cost-network">Min Cost Network</a>
+    <a class="nav-item" href="#route-opt">Route Optimization</a>
+    <a class="nav-item" href="#resource-alloc">Resource Allocation</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Advanced</div>
+    <a class="nav-item" href="#graph-coloring">Graph Coloring</a>
+    <a class="nav-item" href="#bipartite">Bipartite Check</a>
+    <a class="nav-item" href="#network-flow">Network Flow</a>
+    <a class="nav-item" href="#scc">Strongly Connected Comp.</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Visualization</div>
+    <a class="nav-item" href="#display-graph">Display Weighted Graph</a>
+    <a class="nav-item" href="#display-paths">Display Paths</a>
+    <a class="nav-item" href="#cost-matrix">Cost Matrix</a>
+    <a class="nav-item" href="#route-summary">Route Summary</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- HERO -->
+<div class="page-hero" id="intro">
+  <div class="hero-tag">Complete Guide · C Language</div>
+  <h1 class="hero-h1">Weighted Graph<br><span>Adjacency List</span></h1>
+  <p class="hero-sub">From beginner fundamentals to advanced algorithms — every concept explained with theory, visualization, and working C code.</p>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     1. INTRODUCTION
+══════════════════════════════════════════════════ -->
+<section class="section" id="intro-sec">
+  <div class="section-heading">
+    <div class="section-num">01</div>
+    <div><div class="section-title">What is a Weighted Graph?</div><div class="section-sub">Core concept &amp; terminology</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>A <strong>graph</strong> is a collection of <strong>vertices</strong> (nodes) connected by <strong>edges</strong>. In a <strong>weighted graph</strong>, every edge carries a number called its <strong>weight</strong> (or cost). That weight can represent distance, time, money, bandwidth — anything measurable.</p>
+    <p>Key terms: <span class="tag">Vertex</span> a point/node. <span class="tag">Edge</span> a connection between two vertices. <span class="tag">Weight</span> the cost of traversing an edge. <span class="tag">Directed</span> edges have direction. <span class="tag">Undirected</span> edges go both ways.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-label">🌍 Real-Life Analogy</div>
+    <p>Think of <strong>Google Maps</strong>. Cities are vertices. Roads connecting them are edges. The distance (or travel time) on each road is the weight. Finding the shortest route = finding the path with minimum total weight.</p>
+  </div>
+
+  <div class="viz-wrap">
+    <div class="viz-title">Interactive — Weighted Graph Preview</div>
+    <canvas id="c-intro" width="560" height="280"></canvas>
+    <div class="viz-info" id="intro-info">Hover over an edge to see its weight.</div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     2. REPRESENTATION
+══════════════════════════════════════════════════ -->
+<section class="section" id="representation">
+  <div class="section-heading">
+    <div class="section-num v2">02</div>
+    <div><div class="section-title">Weighted Adjacency List</div><div class="section-sub">Memory-efficient representation</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>An <strong>adjacency list</strong> stores each vertex's neighbors in a linked list. For weighted graphs, each node in that list also stores the edge weight. This is more memory-efficient than an adjacency matrix for sparse graphs.</p>
+    <p>Structure: an array of size <code>V</code> (vertices). Each index stores a pointer to a linked list of <code>(neighbor, weight)</code> pairs.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title v2">Adjacency List</div>
+      <p><strong>Space:</strong> O(V + E) — only stores existing edges.</p>
+      <p><strong>Best for:</strong> Sparse graphs (few edges). Most real-world networks.</p>
+    </div>
+    <div class="card">
+      <div class="card-title v3">Adjacency Matrix</div>
+      <p><strong>Space:</strong> O(V²) — stores even non-existent edges as 0.</p>
+      <p><strong>Best for:</strong> Dense graphs where almost all pairs are connected.</p>
+    </div>
+  </div>
+
+  <div class="viz-wrap">
+    <div class="viz-title">Structure Visualization — Adjacency List in Memory</div>
+    <canvas id="c-repr" width="560" height="220"></canvas>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Structure Definition</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* Node in the adjacency list (neighbor + weight) */</span>
+<span class="kw">struct</span> <span class="tp">AdjNode</span> {
+    <span class="kw">int</span> dest;           <span class="cmt">/* destination vertex */</span>
+    <span class="kw">int</span> weight;         <span class="cmt">/* edge weight       */</span>
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *next; <span class="cmt">/* pointer to next node */</span>
+};
+
+<span class="cmt">/* Adjacency list head for one vertex */</span>
+<span class="kw">struct</span> <span class="tp">AdjList</span> {
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *head;
+};
+
+<span class="cmt">/* The graph: array of adjacency lists */</span>
+<span class="kw">struct</span> <span class="tp">Graph</span> {
+    <span class="kw">int</span> numVertices;
+    <span class="kw">struct</span> <span class="tp">AdjList</span> *array; <span class="cmt">/* size = numVertices */</span>
+};
+
+<span class="cmt">/* Create a new graph with V vertices */</span>
+<span class="kw">struct</span> <span class="tp">Graph</span>* <span class="fn">createGraph</span>(<span class="kw">int</span> V) {
+    <span class="kw">struct</span> <span class="tp">Graph</span> *g = (<span class="kw">struct</span> <span class="tp">Graph</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">Graph</span>));
+    g->numVertices = V;
+    g->array = (<span class="kw">struct</span> <span class="tp">AdjList</span>*) <span class="fn">malloc</span>(V * <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">AdjList</span>));
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        g->array[i].head = <span class="kw">NULL</span>;
+    <span class="kw">return</span> g;
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     VERTEX OPERATIONS
+══════════════════════════════════════════════════ -->
+<section class="section" id="insert-vertex">
+  <div class="section-heading">
+    <div class="section-num">03</div>
+    <div><div class="section-title">Insert Vertex</div><div class="section-sub">Vertex Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Adding a vertex means growing the adjacency list array by one slot and initializing its head pointer to <code>NULL</code>. The new vertex starts with no edges.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Like adding a new city to a map. The city exists but has no roads yet — those come later when you add edges.</p></div>
+  <div class="viz-wrap">
+    <div class="viz-title">Visualization — Insert Vertex</div>
+    <canvas id="c-iv" width="560" height="200"></canvas>
+    <div class="viz-controls">
+      <button class="btn" onclick="vizInsertVertex()">Add Vertex</button>
+      <button class="btn v4" onclick="vizResetIV()">Reset</button>
+    </div>
+    <div class="viz-info" id="iv-info">Press "Add Vertex" to insert a new node.</div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Insert Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* Add a new vertex — resize the adjacency list array */</span>
+<span class="kw">void</span> <span class="fn">insertVertex</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> V = g->numVertices;
+    g->array = (<span class="kw">struct</span> <span class="tp">AdjList</span>*) <span class="fn">realloc</span>(
+        g->array, (V + <span class="num">1</span>) * <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">AdjList</span>)
+    );
+    g->array[V].head = <span class="kw">NULL</span>; <span class="cmt">/* no edges yet */</span>
+    g->numVertices++;
+    <span class="fn">printf</span>(<span class="str">"Vertex %d inserted.\n"</span>, V);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(1) amortized</strong></div><div class="cplx"><span>Space:</span><strong>O(1)</strong></div></div>
+</section>
+
+<section class="section" id="delete-vertex">
+  <div class="section-heading">
+    <div class="section-num">04</div>
+    <div><div class="section-title">Delete Vertex</div><div class="section-sub">Vertex Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Deleting vertex <code>v</code> requires: (1) free its entire adjacency list, (2) scan every other vertex's list and remove any edge pointing to <code>v</code>, (3) shift the array and update indices. This is the most complex vertex operation.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Closing an airport. You must cancel not just the flights from that airport but also all flights from other airports that landed there.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Delete Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* Free an adjacency list */</span>
+<span class="kw">void</span> <span class="fn">freeList</span>(<span class="kw">struct</span> <span class="tp">AdjNode</span> *head) {
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *tmp;
+    <span class="kw">while</span> (head) { tmp = head; head = head->next; <span class="fn">free</span>(tmp); }
+}
+
+<span class="kw">void</span> <span class="fn">deleteVertex</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">if</span> (v < <span class="num">0</span> || v >= V) { <span class="fn">printf</span>(<span class="str">"Invalid vertex\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cmt">/* Step 1: free vertex v's list */</span>
+    <span class="fn">freeList</span>(g->array[v].head);
+
+    <span class="cmt">/* Step 2: remove edges pointing TO v in all other lists */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) {
+        <span class="kw">if</span> (i == v) <span class="kw">continue</span>;
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *prev = <span class="kw">NULL</span>, *cur = g->array[i].head;
+        <span class="kw">while</span> (cur) {
+            <span class="kw">if</span> (cur->dest == v) {
+                <span class="kw">if</span> (prev) prev->next = cur->next;
+                <span class="kw">else</span> g->array[i].head = cur->next;
+                <span class="fn">free</span>(cur); cur = (prev ? prev->next : g->array[i].head);
+            } <span class="kw">else</span> { prev = cur; cur = cur->next; }
+        }
+        <span class="cmt">/* Decrement destinations > v (re-index) */</span>
+        <span class="kw">for</span> (<span class="tp">AdjNode</span> *n = g->array[i].head; n; n = n->next)
+            <span class="kw">if</span> (n->dest > v) n->dest--;
+    }
+    <span class="cmt">/* Step 3: shift array */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = v; i < V - <span class="num">1</span>; i++)
+        g->array[i] = g->array[i + <span class="num">1</span>];
+    g->numVertices--;
+    <span class="fn">printf</span>(<span class="str">"Vertex %d deleted.\n"</span>, v);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V + E)</strong></div><div class="cplx"><span>Space:</span><strong>O(1)</strong></div></div>
+</section>
+
+<section class="section" id="search-vertex">
+  <div class="section-heading">
+    <div class="section-num">05</div>
+    <div><div class="section-title">Search Vertex</div><div class="section-sub">Vertex Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Searching for a vertex simply checks whether the given vertex ID is within the valid range <code>[0, numVertices-1]</code>. Since vertices are indexed, this is an O(1) check. Optionally, you can also display its neighbor list.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Checking if city #5 exists on your map — just look at the index. If the map has 10 cities (0–9), city 5 exists.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Search Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">searchVertex</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v) {
+    <span class="kw">if</span> (v >= <span class="num">0</span> && v < g->numVertices) {
+        <span class="fn">printf</span>(<span class="str">"Vertex %d found. Neighbors: "</span>, v);
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+        <span class="kw">if</span> (!n) <span class="fn">printf</span>(<span class="str">"(none)"</span>);
+        <span class="kw">while</span> (n) {
+            <span class="fn">printf</span>(<span class="str">"%d(w=%d) "</span>, n->dest, n->weight);
+            n = n->next;
+        }
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+        <span class="kw">return</span> <span class="num">1</span>; <span class="cmt">/* found */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex %d not found.\n"</span>, v);
+    <span class="kw">return</span> <span class="num">0</span>; <span class="cmt">/* not found */</span>
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(1)</strong></div></div>
+</section>
+
+<section class="section" id="update-vertex">
+  <div class="section-heading">
+    <div class="section-num">06</div>
+    <div><div class="section-title">Update Vertex</div><div class="section-sub">Vertex Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Pure integer-indexed graphs don't store a "value" at a vertex. To support vertex data (e.g. city names), we extend the graph with a <code>labels[]</code> array. Updating means changing a label at index <code>v</code>.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Graph with Labels + Update</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">struct</span> <span class="tp">GraphLabeled</span> {
+    <span class="kw">int</span> numVertices;
+    <span class="kw">char</span> labels[<span class="num">100</span>][<span class="num">50</span>]; <span class="cmt">/* up to 100 vertices, name ≤ 49 chars */</span>
+    <span class="kw">struct</span> <span class="tp">AdjList</span> *array;
+};
+
+<span class="kw">void</span> <span class="fn">updateVertex</span>(<span class="kw">struct</span> <span class="tp">GraphLabeled</span> *g, <span class="kw">int</span> v, <span class="kw">char</span> *newLabel) {
+    <span class="kw">if</span> (v < <span class="num">0</span> || v >= g->numVertices) {
+        <span class="fn">printf</span>(<span class="str">"Invalid vertex.\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="fn">strcpy</span>(g->labels[v], newLabel);
+    <span class="fn">printf</span>(<span class="str">"Vertex %d label updated to: %s\n"</span>, v, newLabel);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(1)</strong></div></div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     EDGE OPERATIONS
+══════════════════════════════════════════════════ -->
+<section class="section" id="insert-edge">
+  <div class="section-heading">
+    <div class="section-num v2">07</div>
+    <div><div class="section-title">Insert Weighted Edge</div><div class="section-sub">Edge Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>To add edge <code>(src → dest, weight)</code>: create a new <code>AdjNode</code> with <code>dest</code> and <code>weight</code>, then prepend it to <code>array[src].head</code>. For undirected graphs, also add <code>(dest → src, weight)</code>.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Building a road of known length between two cities. You record the road in both cities' travel guides (undirected), noting the exact distance.</p></div>
+  <div class="viz-wrap">
+    <div class="viz-title">Interactive — Add Edges Step by Step</div>
+    <canvas id="c-ie" width="560" height="240"></canvas>
+    <div class="viz-controls">
+      <button class="btn v2" onclick="vizAddEdge()">Add Next Edge</button>
+      <button class="btn v4" onclick="vizResetIE()">Reset</button>
+    </div>
+    <div class="viz-info" id="ie-info">Click "Add Next Edge" to build the graph.</div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Insert Weighted Edge</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* Create a new adjacency node */</span>
+<span class="kw">struct</span> <span class="tp">AdjNode</span>* <span class="fn">newNode</span>(<span class="kw">int</span> dest, <span class="kw">int</span> weight) {
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *node = (<span class="kw">struct</span> <span class="tp">AdjNode</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">AdjNode</span>));
+    node->dest   = dest;
+    node->weight = weight;
+    node->next   = <span class="kw">NULL</span>;
+    <span class="kw">return</span> node;
+}
+
+<span class="cmt">/* Add undirected weighted edge (src -- dest, weight) */</span>
+<span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest, <span class="kw">int</span> weight) {
+    <span class="cmt">/* src -> dest */</span>
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *node = <span class="fn">newNode</span>(dest, weight);
+    node->next = g->array[src].head;
+    g->array[src].head = node;
+
+    <span class="cmt">/* dest -> src (undirected) */</span>
+    node = <span class="fn">newNode</span>(src, weight);
+    node->next = g->array[dest].head;
+    g->array[dest].head = node;
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(1)</strong></div><div class="cplx"><span>Space:</span><strong>O(1)</strong></div></div>
+</section>
+
+<section class="section" id="delete-edge">
+  <div class="section-heading">
+    <div class="section-num v2">08</div>
+    <div><div class="section-title">Delete Edge</div><div class="section-sub">Edge Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>Walk the adjacency list of <code>src</code>, find the node with <code>dest</code>, remove and free it. For undirected graphs, repeat for <code>dest</code>'s list. Use a previous-pointer technique to safely unlink the node.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Delete Edge</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">removeFromList</span>(<span class="kw">struct</span> <span class="tp">AdjList</span> *list, <span class="kw">int</span> target) {
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *prev = <span class="kw">NULL</span>, *cur = list->head;
+    <span class="kw">while</span> (cur && cur->dest != target) {
+        prev = cur; cur = cur->next;
+    }
+    <span class="kw">if</span> (!cur) { <span class="fn">printf</span>(<span class="str">"Edge not found.\n"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span> (prev) prev->next = cur->next;
+    <span class="kw">else</span>      list->head = cur->next;
+    <span class="fn">free</span>(cur);
+}
+
+<span class="kw">void</span> <span class="fn">deleteEdge</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="fn">removeFromList</span>(&g->array[src],  dest);
+    <span class="fn">removeFromList</span>(&g->array[dest], src);  <span class="cmt">/* undirected */</span>
+    <span class="fn">printf</span>(<span class="str">"Edge %d -- %d deleted.\n"</span>, src, dest);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(degree(src))</strong></div></div>
+</section>
+
+<section class="section" id="search-edge">
+  <div class="section-heading">
+    <div class="section-num v2">09</div>
+    <div><div class="section-title">Search Edge</div><div class="section-sub">Edge Operations</div></div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Search Edge</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">searchEdge</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[src].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (n->dest == dest) {
+            <span class="fn">printf</span>(<span class="str">"Edge %d->%d found! Weight = %d\n"</span>, src, dest, n->weight);
+            <span class="kw">return</span> n->weight; <span class="cmt">/* return the weight */</span>
+        }
+        n = n->next;
+    }
+    <span class="fn">printf</span>(<span class="str">"Edge %d->%d not found.\n"</span>, src, dest);
+    <span class="kw">return</span> -<span class="num">1</span>; <span class="cmt">/* -1 means no edge */</span>
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(degree(src))</strong></div></div>
+</section>
+
+<section class="section" id="update-edge">
+  <div class="section-heading">
+    <div class="section-num v2">10</div>
+    <div><div class="section-title">Update Edge Weight</div><div class="section-sub">Edge Operations</div></div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Update Edge Weight</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">updateEdgeWeight</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest, <span class="kw">int</span> newWeight) {
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[src].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (n->dest == dest) {
+            n->weight = newWeight;
+            <span class="fn">printf</span>(<span class="str">"Weight of %d->%d updated to %d\n"</span>, src, dest, newWeight);
+            <span class="kw">return</span>;
+        }
+        n = n->next;
+    }
+    <span class="fn">printf</span>(<span class="str">"Edge not found.\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="display-edge">
+  <div class="section-heading">
+    <div class="section-num v2">11</div>
+    <div><div class="section-title">Display Edge Weights</div><div class="section-sub">Edge Operations</div></div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Display All Edge Weights</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">displayEdgeWeights</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"Edge List (src -> dest : weight)\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[i].head;
+        <span class="kw">while</span> (n) {
+            <span class="fn">printf</span>(<span class="str">"  %d -> %d : %d\n"</span>, i, n->dest, n->weight);
+            n = n->next;
+        }
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     TRAVERSAL
+══════════════════════════════════════════════════ -->
+<section class="section" id="bfs">
+  <div class="section-heading">
+    <div class="section-num v3">12</div>
+    <div><div class="section-title">Breadth-First Search (BFS)</div><div class="section-sub">Traversal Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>BFS explores neighbors level by level. It uses a <strong>queue</strong>. Start at source, mark visited, enqueue it. Dequeue a vertex, visit all its unvisited neighbors, enqueue them. BFS finds the fewest-hop path (ignoring weights). In weighted graphs, BFS is used for structure analysis, not shortest weighted paths.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Ripples in a pond — all nodes at distance 1 are visited before nodes at distance 2, before nodes at distance 3, and so on.</p></div>
+  <div class="viz-wrap">
+    <div class="viz-title">BFS Traversal Animation</div>
+    <canvas id="c-bfs" width="560" height="260"></canvas>
+    <div class="viz-controls">
+      <button class="btn v3" onclick="vizBFS()">Run BFS from A</button>
+      <button class="btn v4" onclick="vizResetBFS()">Reset</button>
+    </div>
+    <div class="viz-info" id="bfs-info">Click "Run BFS" to animate traversal.</div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — BFS</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">BFS</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};   <span class="cmt">/* visited flags */</span>
+    <span class="kw">int</span> queue[<span class="num">100</span>], front = <span class="num">0</span>, rear = <span class="num">0</span>;
+
+    visited[start] = <span class="num">1</span>;
+    queue[rear++] = start;
+
+    <span class="fn">printf</span>(<span class="str">"BFS: "</span>);
+    <span class="kw">while</span> (front < rear) {
+        <span class="kw">int</span> v = queue[front++];
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, v);
+
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+        <span class="kw">while</span> (n) {
+            <span class="kw">if</span> (!visited[n->dest]) {
+                visited[n->dest] = <span class="num">1</span>;
+                queue[rear++] = n->dest;
+            }
+            n = n->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V + E)</strong></div><div class="cplx"><span>Space:</span><strong>O(V)</strong></div></div>
+</section>
+
+<section class="section" id="dfs">
+  <div class="section-heading">
+    <div class="section-num v3">13</div>
+    <div><div class="section-title">Depth-First Search (DFS)</div><div class="section-sub">Traversal Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>DFS dives as deep as possible along each branch before backtracking. It uses a <strong>stack</strong> (or recursion). DFS is used for cycle detection, topological sort, and finding connected components. In weighted graphs it helps detect all reachable nodes.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Exploring a maze — always go forward until you hit a dead end, then backtrack and try another route.</p></div>
+  <div class="viz-wrap">
+    <div class="viz-title">DFS Traversal Animation</div>
+    <canvas id="c-dfs" width="560" height="260"></canvas>
+    <div class="viz-controls">
+      <button class="btn v3" onclick="vizDFS()">Run DFS from A</button>
+      <button class="btn v4" onclick="vizResetDFS()">Reset</button>
+    </div>
+    <div class="viz-info" id="dfs-info">Click "Run DFS" to animate traversal.</div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — DFS (Recursive)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">DFSUtil</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v, <span class="kw">int</span> visited[]) {
+    visited[v] = <span class="num">1</span>;
+    <span class="fn">printf</span>(<span class="str">"%d "</span>, v);
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest])
+            <span class="fn">DFSUtil</span>(g, n->dest, visited);
+        n = n->next;
+    }
+}
+
+<span class="kw">void</span> <span class="fn">DFS</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="fn">printf</span>(<span class="str">"DFS: "</span>);
+    <span class="fn">DFSUtil</span>(g, start, visited);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V + E)</strong></div><div class="cplx"><span>Space:</span><strong>O(V)</strong></div></div>
+</section>
+
+<section class="section" id="weighted-traversal">
+  <div class="section-heading">
+    <div class="section-num v3">14</div>
+    <div><div class="section-title">Weighted Traversal Analysis</div><div class="section-sub">Traversal Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>During a BFS or DFS traversal of a weighted graph, we can accumulate the total weight of edges visited, find the maximum/minimum edge encountered, or analyze cost per depth level. This is useful for network capacity planning and route cost estimation.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — DFS with Accumulated Weight</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">DFSWeighted</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v,
+                  <span class="kw">int</span> visited[], <span class="kw">int</span> *totalCost) {
+    visited[v] = <span class="num">1</span>;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest]) {
+            *totalCost += n->weight;
+            <span class="fn">printf</span>(<span class="str">"  Edge %d->%d  weight=%d  running total=%d\n"</span>,
+                   v, n->dest, n->weight, *totalCost);
+            <span class="fn">DFSWeighted</span>(g, n->dest, visited, totalCost);
+        }
+        n = n->next;
+    }
+}
+
+<span class="kw">void</span> <span class="fn">weightedTraversal</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">int</span> total = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Weighted DFS from %d:\n"</span>, src);
+    <span class="fn">DFSWeighted</span>(g, src, visited, &total);
+    <span class="fn">printf</span>(<span class="str">"Total traversal cost = %d\n"</span>, total);
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     PATH OPERATIONS
+══════════════════════════════════════════════════ -->
+<section class="section" id="find-path">
+  <div class="section-heading">
+    <div class="section-num v4">15</div>
+    <div><div class="section-title">Find Path</div><div class="section-sub">Path Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>Find <em>any</em> path from source to destination using DFS. We keep a <code>path[]</code> array to track the current route and a <code>visited[]</code> array to avoid revisiting. When we reach the destination, we print the path and its total weight.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Finding ANY road from city A to city B — not necessarily the fastest, just a valid connected route.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Find Path (DFS-based)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">findPathUtil</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest,
+                  <span class="kw">int</span> visited[], <span class="kw">int</span> path[], <span class="kw">int</span> pathIdx) {
+    visited[src] = <span class="num">1</span>;
+    path[pathIdx] = src;
+
+    <span class="kw">if</span> (src == dest) {
+        <span class="fn">printf</span>(<span class="str">"Path: "</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i <= pathIdx; i++)
+            <span class="fn">printf</span>(<span class="str">"%d%s"</span>, path[i], i < pathIdx ? <span class="str">"->"</span> : <span class="str">"\n"</span>);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[src].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest])
+            <span class="kw">if</span> (<span class="fn">findPathUtil</span>(g, n->dest, dest, visited, path, pathIdx + <span class="num">1</span>))
+                <span class="kw">return</span> <span class="num">1</span>;
+        n = n->next;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">void</span> <span class="fn">findPath</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">int</span> path[<span class="num">100</span>];
+    <span class="kw">if</span> (!<span class="fn">findPathUtil</span>(g, src, dest, visited, path, <span class="num">0</span>))
+        <span class="fn">printf</span>(<span class="str">"No path from %d to %d.\n"</span>, src, dest);
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="shortest-path">
+  <div class="section-heading">
+    <div class="section-num v4">16</div>
+    <div><div class="section-title">Shortest Path (Basic)</div><div class="section-sub">Path Operations — Greedy DFS</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>A simple approach to find the path with minimum total weight is exhaustive DFS — explore all paths and track the minimum cost. This is O(V!) in the worst case. For large graphs, use Dijkstra's algorithm (covered later).</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Shortest Path via Exhaustive DFS</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">shortestDFS</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> cur, <span class="kw">int</span> dest,
+                  <span class="kw">int</span> visited[], <span class="kw">int</span> curCost, <span class="kw">int</span> *minCost) {
+    <span class="kw">if</span> (cur == dest) {
+        <span class="kw">if</span> (curCost < *minCost) *minCost = curCost;
+        <span class="kw">return</span>;
+    }
+    visited[cur] = <span class="num">1</span>;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[cur].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest])
+            <span class="fn">shortestDFS</span>(g, n->dest, dest, visited,
+                         curCost + n->weight, minCost);
+        n = n->next;
+    }
+    visited[cur] = <span class="num">0</span>; <span class="cmt">/* backtrack */</span>
+}
+
+<span class="kw">void</span> <span class="fn">findShortestPath</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">int</span> minCost = <span class="num">99999</span>;
+    <span class="fn">shortestDFS</span>(g, src, dest, visited, <span class="num">0</span>, &minCost);
+    <span class="kw">if</span> (minCost == <span class="num">99999</span>) <span class="fn">printf</span>(<span class="str">"No path.\n"</span>);
+    <span class="kw">else</span> <span class="fn">printf</span>(<span class="str">"Min cost from %d to %d = %d\n"</span>, src, dest, minCost);
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="longest-path">
+  <div class="section-heading">
+    <div class="section-num v4">17</div>
+    <div><div class="section-title">Longest Path (Specific Cases)</div><div class="section-sub">Path Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>The longest path problem is NP-hard for general graphs. However, in <strong>DAGs (Directed Acyclic Graphs)</strong> it can be solved in O(V+E) using topological sort + dynamic programming. For weighted DAGs, we negate weights and run Bellman-Ford, or use DP directly.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Finding the longest scenic route from A to B that visits the most beautiful (high-weight) roads — useful in pipeline scheduling where we want the critical path.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Longest Path (Exhaustive DFS)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">longestDFS</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> cur, <span class="kw">int</span> dest,
+                 <span class="kw">int</span> visited[], <span class="kw">int</span> curCost, <span class="kw">int</span> *maxCost) {
+    <span class="kw">if</span> (cur == dest) {
+        <span class="kw">if</span> (curCost > *maxCost) *maxCost = curCost;
+        <span class="kw">return</span>;
+    }
+    visited[cur] = <span class="num">1</span>;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[cur].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest])
+            <span class="fn">longestDFS</span>(g, n->dest, dest, visited,
+                        curCost + n->weight, maxCost);
+        n = n->next;
+    }
+    visited[cur] = <span class="num">0</span>; <span class="cmt">/* backtrack */</span>
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="all-paths">
+  <div class="section-heading">
+    <div class="section-num v4">18</div>
+    <div><div class="section-title">All Paths</div><div class="section-sub">Path Operations</div></div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Print All Paths with Costs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">printAllPaths</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest,
+                    <span class="kw">int</span> visited[], <span class="kw">int</span> path[], <span class="kw">int</span> idx, <span class="kw">int</span> cost) {
+    visited[src] = <span class="num">1</span>;
+    path[idx++] = src;
+
+    <span class="kw">if</span> (src == dest) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < idx; i++)
+            <span class="fn">printf</span>(<span class="str">"%d%s"</span>, path[i], i < idx-<span class="num">1</span> ? <span class="str">"->"</span> : <span class="str">""</span>);
+        <span class="fn">printf</span>(<span class="str">"  (cost=%d)\n"</span>, cost);
+    } <span class="kw">else</span> {
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[src].head;
+        <span class="kw">while</span> (n) {
+            <span class="kw">if</span> (!visited[n->dest])
+                <span class="fn">printAllPaths</span>(g, n->dest, dest, visited,
+                               path, idx, cost + n->weight);
+            n = n->next;
+        }
+    }
+    visited[src] = <span class="num">0</span>; <span class="cmt">/* backtrack */</span>
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="min-cost-path">
+  <div class="section-heading">
+    <div class="section-num v4">19</div>
+    <div><div class="section-title">Minimum Cost Path</div><div class="section-sub">Path Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>The minimum cost path in an unweighted sense means fewest hops (BFS). With weights, it means minimum total weight (Dijkstra). Here we use the exhaustive approach to also track and print the actual path, not just the cost.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Min Cost Path with Route Tracking</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> bestPath[<span class="num">100</span>], bestLen = <span class="num">0</span>, bestCost = <span class="num">99999</span>;
+
+<span class="kw">void</span> <span class="fn">minCostDFS</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> cur, <span class="kw">int</span> dest,
+               <span class="kw">int</span> visited[], <span class="kw">int</span> path[], <span class="kw">int</span> idx, <span class="kw">int</span> cost) {
+    visited[cur] = <span class="num">1</span>;
+    path[idx++] = cur;
+    <span class="kw">if</span> (cur == dest && cost < bestCost) {
+        bestCost = cost; bestLen = idx;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < idx; i++) bestPath[i] = path[i];
+    }
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[cur].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest])
+            <span class="fn">minCostDFS</span>(g, n->dest, dest, visited, path,
+                        idx, cost + n->weight);
+        n = n->next;
+    }
+    visited[cur] = <span class="num">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     SHORTEST PATH ALGORITHMS
+══════════════════════════════════════════════════ -->
+<section class="section" id="dijkstra">
+  <div class="section-heading">
+    <div class="section-num">20</div>
+    <div><div class="section-title">Dijkstra's Algorithm</div><div class="section-sub">Shortest Path Algorithms</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Dijkstra's finds the shortest path from a source to all other vertices in a weighted graph with <strong>non-negative weights</strong>. It uses a greedy approach: always pick the unvisited vertex with the smallest known distance, then relax its neighbors.</p>
+    <p>Steps: (1) Set dist[src]=0, all others=∞. (2) Pick unvisited vertex u with min dist. (3) For each neighbor v: if dist[u]+w(u,v) &lt; dist[v], update dist[v]. (4) Mark u visited. Repeat.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Spreading water from a source — it always flows along the cheapest path first, gradually reaching all nodes in order of increasing distance.</p></div>
+  <div class="viz-wrap">
+    <div class="viz-title">Dijkstra Step-by-Step Animation</div>
+    <canvas id="c-dijk" width="560" height="280"></canvas>
+    <div class="viz-controls">
+      <button class="btn" onclick="vizDijkStep()">Next Step</button>
+      <button class="btn v4" onclick="vizResetDijk()">Reset</button>
+    </div>
+    <div class="viz-info" id="dijk-info">Click "Next Step" to run Dijkstra from node A.</div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Dijkstra's Algorithm</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">#define</span> INF <span class="num">99999</span>
+
+<span class="kw">int</span> <span class="fn">minDistance</span>(<span class="kw">int</span> dist[], <span class="kw">int</span> visited[], <span class="kw">int</span> V) {
+    <span class="kw">int</span> min = INF, minIdx = -<span class="num">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v < V; v++)
+        <span class="kw">if</span> (!visited[v] && dist[v] < min)
+            { min = dist[v]; minIdx = v; }
+    <span class="kw">return</span> minIdx;
+}
+
+<span class="kw">void</span> <span class="fn">dijkstra</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> dist[<span class="num">100</span>], visited[<span class="num">100</span>], parent[<span class="num">100</span>];
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        { dist[i] = INF; visited[i] = <span class="num">0</span>; parent[i] = -<span class="num">1</span>; }
+    dist[src] = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> count = <span class="num">0</span>; count < V - <span class="num">1</span>; count++) {
+        <span class="kw">int</span> u = <span class="fn">minDistance</span>(dist, visited, V);
+        <span class="kw">if</span> (u == -<span class="num">1</span>) <span class="kw">break</span>;
+        visited[u] = <span class="num">1</span>;
+
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[u].head;
+        <span class="kw">while</span> (n) {
+            <span class="kw">int</span> v = n->dest, w = n->weight;
+            <span class="kw">if</span> (!visited[v] && dist[u] + w < dist[v]) {
+                dist[v]   = dist[u] + w;
+                parent[v] = u;
+            }
+            n = n->next;
+        }
+    }
+    <span class="cmt">/* Print results */</span>
+    <span class="fn">printf</span>(<span class="str">"Vertex  Distance  Parent\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        <span class="fn">printf</span>(<span class="str">"%6d  %8d  %6d\n"</span>, i, dist[i], parent[i]);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V²)</strong></div><div class="cplx"><span>With min-heap:</span><strong>O((V+E) log V)</strong></div><div class="cplx"><span>Limitation:</span><strong>No negative weights</strong></div></div>
+</section>
+
+<section class="section" id="bellman-ford">
+  <div class="section-heading">
+    <div class="section-num">21</div>
+    <div><div class="section-title">Bellman-Ford Algorithm</div><div class="section-sub">Shortest Path Algorithms</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Bellman-Ford handles <strong>negative weight edges</strong> (but not negative cycles). It relaxes ALL edges V-1 times. On the V-th relaxation, if any distance still improves, a negative cycle exists.</p>
+    <p>Key difference from Dijkstra: slower (O(V·E)) but supports negative weights. Used in currency arbitrage detection.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>A rumor spreading through a network — it takes multiple "rounds" before everyone has the most accurate (cheapest) information, especially if some routes have discounts (negative weights).</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Bellman-Ford Algorithm</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">struct</span> <span class="tp">Edge</span> { <span class="kw">int</span> src, dest, weight; };
+
+<span class="kw">void</span> <span class="fn">bellmanFord</span>(<span class="kw">struct</span> <span class="tp">Edge</span> edges[], <span class="kw">int</span> E, <span class="kw">int</span> V, <span class="kw">int</span> src) {
+    <span class="kw">int</span> dist[<span class="num">100</span>];
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) dist[i] = INF;
+    dist[src] = <span class="num">0</span>;
+
+    <span class="cmt">/* Relax all edges V-1 times */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i <= V - <span class="num">1</span>; i++) {
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < E; j++) {
+            <span class="kw">int</span> u = edges[j].src, v = edges[j].dest, w = edges[j].weight;
+            <span class="kw">if</span> (dist[u] != INF && dist[u] + w < dist[v])
+                dist[v] = dist[u] + w;
+        }
+    }
+    <span class="cmt">/* Check for negative-weight cycles */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < E; j++) {
+        <span class="kw">int</span> u = edges[j].src, v = edges[j].dest, w = edges[j].weight;
+        <span class="kw">if</span> (dist[u] != INF && dist[u] + w < dist[v])
+            { <span class="fn">printf</span>(<span class="str">"Negative cycle detected!\n"</span>); <span class="kw">return</span>; }
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        <span class="fn">printf</span>(<span class="str">"dist[%d] = %d\n"</span>, i, dist[i]);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V · E)</strong></div><div class="cplx"><span>Supports:</span><strong>Negative weights</strong></div></div>
+</section>
+
+<section class="section" id="floyd-warshall">
+  <div class="section-heading">
+    <div class="section-num">22</div>
+    <div><div class="section-title">Floyd-Warshall Algorithm</div><div class="section-sub">Shortest Path Algorithms — All Pairs</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Floyd-Warshall finds shortest paths between <strong>ALL pairs</strong> of vertices. It uses dynamic programming: for each intermediate vertex <code>k</code>, check if going through <code>k</code> is shorter than the direct path. Uses an adjacency matrix internally.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>A complete travel guide for all city pairs — for every possible origin and destination, it tells you the cheapest route, potentially via intermediate hubs.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Floyd-Warshall</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">floydWarshall</span>(<span class="kw">int</span> dist[][<span class="num">100</span>], <span class="kw">int</span> V) {
+    <span class="cmt">/* dist[][] initialized from adjacency matrix
+       dist[i][i]=0, dist[i][j]=weight or INF */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> k = <span class="num">0</span>; k < V; k++)       <span class="cmt">/* intermediate vertex */</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)   <span class="cmt">/* source */</span>
+            <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < V; j++) <span class="cmt">/* dest */</span>
+                <span class="kw">if</span> (dist[i][k] != INF && dist[k][j] != INF &&
+                    dist[i][k] + dist[k][j] < dist[i][j])
+                    dist[i][j] = dist[i][k] + dist[k][j];
+
+    <span class="cmt">/* Print shortest distances */</span>
+    <span class="fn">printf</span>(<span class="str">"All-Pairs Shortest Paths:\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) {
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j < V; j++)
+            <span class="kw">if</span> (dist[i][j] == INF) <span class="fn">printf</span>(<span class="str">"%5s"</span>, <span class="str">"INF"</span>);
+            <span class="kw">else</span> <span class="fn">printf</span>(<span class="str">"%5d"</span>, dist[i][j]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V³)</strong></div><div class="cplx"><span>Space:</span><strong>O(V²)</strong></div><div class="cplx"><span>Finds:</span><strong>All pairs</strong></div></div>
+</section>
+
+<section class="section" id="astar">
+  <div class="section-heading">
+    <div class="section-num">23</div>
+    <div><div class="section-title">A* Search (Advanced)</div><div class="section-sub">Shortest Path Algorithms — Heuristic</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>A* extends Dijkstra with a <strong>heuristic function h(n)</strong> that estimates the cost from node n to the goal. It selects nodes based on <code>f(n) = g(n) + h(n)</code> where g(n) is actual cost from start and h(n) is estimated cost to goal. If h is admissible (never overestimates), A* is guaranteed optimal.</p>
+    <p>Common heuristics: Manhattan distance for grids, Euclidean distance for geometric graphs. A* is used in GPS navigation, game AI pathfinding, and robotics.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Navigation that "looks ahead" — instead of exploring equally in all directions like Dijkstra, A* uses your compass to preferentially explore roads going toward your destination.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — A* Search (Simplified)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* heuristic[]: pre-computed h(n) estimates for each vertex */</span>
+<span class="kw">void</span> <span class="fn">aStar</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest, <span class="kw">int</span> heuristic[]) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> gCost[<span class="num">100</span>], fCost[<span class="num">100</span>], visited[<span class="num">100</span>], parent[<span class="num">100</span>];
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) {
+        gCost[i] = INF; fCost[i] = INF;
+        visited[i] = <span class="num">0</span>;  parent[i] = -<span class="num">1</span>;
+    }
+    gCost[src] = <span class="num">0</span>;
+    fCost[src] = heuristic[src];
+
+    <span class="kw">while</span> (<span class="num">1</span>) {
+        <span class="cmt">/* Pick unvisited node with smallest fCost */</span>
+        <span class="kw">int</span> u = -<span class="num">1</span>, minF = INF;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+            <span class="kw">if</span> (!visited[i] && fCost[i] < minF)
+                { minF = fCost[i]; u = i; }
+        <span class="kw">if</span> (u == -<span class="num">1</span> || u == dest) <span class="kw">break</span>;
+        visited[u] = <span class="num">1</span>;
+
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[u].head;
+        <span class="kw">while</span> (n) {
+            <span class="kw">int</span> v = n->dest;
+            <span class="kw">int</span> tentG = gCost[u] + n->weight;
+            <span class="kw">if</span> (tentG < gCost[v]) {
+                gCost[v]  = tentG;
+                fCost[v]  = tentG + heuristic[v];
+                parent[v] = u;
+            }
+            n = n->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"A* cost to %d = %d\n"</span>, dest,
+           gCost[dest] == INF ? -<span class="num">1</span> : gCost[dest]);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(E log V)</strong></div><div class="cplx"><span>Best for:</span><strong>Known goal, good heuristic</strong></div></div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     CONNECTIVITY
+══════════════════════════════════════════════════ -->
+<section class="section" id="connected-check">
+  <div class="section-heading">
+    <div class="section-num v2">24</div>
+    <div><div class="section-title">Connected Check</div><div class="section-sub">Connectivity Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>A graph is <strong>connected</strong> if every vertex can be reached from every other vertex. To check: start a DFS/BFS from vertex 0; if the count of visited vertices equals V, the graph is connected.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Can you drive from any city to any other city in the road network? If yes — it's connected. If some cities are isolated islands — it's not.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Connected Check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">isConnected</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">int</span> count = <span class="num">0</span>;
+    <span class="cmt">/* DFS from vertex 0 */</span>
+    <span class="fn">DFSUtil</span>(g, <span class="num">0</span>, visited);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < g->numVertices; i++)
+        <span class="kw">if</span> (visited[i]) count++;
+    <span class="kw">if</span> (count == g->numVertices) {
+        <span class="fn">printf</span>(<span class="str">"Graph is CONNECTED.\n"</span>); <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Graph is NOT connected. Only %d/%d reachable.\n"</span>,
+           count, g->numVertices);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="components">
+  <div class="section-heading">
+    <div class="section-num v2">25</div>
+    <div><div class="section-title">Components Detection</div><div class="section-sub">Connectivity Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>A <strong>connected component</strong> is a maximal subgraph where all vertices are reachable from each other. We run DFS from every unvisited vertex; each DFS call explores one complete component.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Find All Components</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">findComponents</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">int</span> compNum = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v < g->numVertices; v++) {
+        <span class="kw">if</span> (!visited[v]) {
+            compNum++;
+            <span class="fn">printf</span>(<span class="str">"Component %d: "</span>, compNum);
+            <span class="fn">DFSUtil</span>(g, v, visited);
+            <span class="fn">printf</span>(<span class="str">"\n"</span>);
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Total components: %d\n"</span>, compNum);
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="isolation">
+  <div class="section-heading">
+    <div class="section-num v2">26</div>
+    <div><div class="section-title">Isolation Check</div><div class="section-sub">Connectivity Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>An <strong>isolated vertex</strong> has degree 0 — no edges connect to it. Checking is simple: see if its adjacency list is empty.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Isolation Check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">isIsolated</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v) {
+    <span class="kw">if</span> (g->array[v].head == <span class="kw">NULL</span>) {
+        <span class="fn">printf</span>(<span class="str">"Vertex %d is ISOLATED (no edges).\n"</span>, v);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex %d is NOT isolated.\n"</span>, v);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">void</span> <span class="fn">printAllIsolated</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"Isolated vertices: "</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < g->numVertices; i++)
+        <span class="kw">if</span> (g->array[i].head == <span class="kw">NULL</span>) <span class="fn">printf</span>(<span class="str">"%d "</span>, i);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     CYCLE OPERATIONS
+══════════════════════════════════════════════════ -->
+<section class="section" id="detect-cycle">
+  <div class="section-heading">
+    <div class="section-num v3">27</div>
+    <div><div class="section-title">Detect Cycle</div><div class="section-sub">Cycle Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>For <strong>undirected graphs</strong>: use DFS. If you visit a neighbor that is already visited and is NOT the parent, a cycle exists. For <strong>directed graphs</strong>: use a recursion stack — if a node is visited and on the current DFS stack, there's a cycle.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Walking roads and realizing you've returned to a city you already visited by a different route — that's a cycle in the road network.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Cycle Detection (Undirected)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">cycleUtil</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v, <span class="kw">int</span> visited[], <span class="kw">int</span> parent) {
+    visited[v] = <span class="num">1</span>;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest]) {
+            <span class="kw">if</span> (<span class="fn">cycleUtil</span>(g, n->dest, visited, v)) <span class="kw">return</span> <span class="num">1</span>;
+        } <span class="kw">else if</span> (n->dest != parent) {
+            <span class="kw">return</span> <span class="num">1</span>; <span class="cmt">/* back edge = cycle */</span>
+        }
+        n = n->next;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">int</span> <span class="fn">hasCycle</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < g->numVertices; i++)
+        <span class="kw">if</span> (!visited[i])
+            <span class="kw">if</span> (<span class="fn">cycleUtil</span>(g, i, visited, -<span class="num">1</span>)) {
+                <span class="fn">printf</span>(<span class="str">"Cycle DETECTED!\n"</span>); <span class="kw">return</span> <span class="num">1</span>;
+            }
+    <span class="fn">printf</span>(<span class="str">"No cycle found.\n"</span>); <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="cycle-cost">
+  <div class="section-heading">
+    <div class="section-num v3">28</div>
+    <div><div class="section-title">Weighted Cycle Cost Analysis</div><div class="section-sub">Cycle Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>Once a cycle is detected, we can compute its total weight by summing the weights of all edges in the cycle. This is critical in finance (negative-weight cycles = arbitrage) and network routing (routing loops can waste bandwidth proportional to the loop's weight).</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>A delivery driver going in a circular route — the cycle cost tells you exactly how much fuel is wasted by the unnecessary loop.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Compute Cycle Weight</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* Detect cycle AND compute its cost */</span>
+<span class="kw">int</span> <span class="fn">cycleWeightUtil</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v,
+                    <span class="kw">int</span> visited[], <span class="kw">int</span> parent,
+                    <span class="kw">int</span> path[], <span class="kw">int</span> idx, <span class="kw">int</span> *cycleCost) {
+    visited[v] = <span class="num">1</span>;
+    path[idx++] = v;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+    <span class="kw">while</span> (n) {
+        <span class="kw">if</span> (!visited[n->dest]) {
+            <span class="kw">if</span> (<span class="fn">cycleWeightUtil</span>(g, n->dest, visited, v, path, idx, cycleCost))
+                <span class="kw">return</span> <span class="num">1</span>;
+        } <span class="kw">else if</span> (n->dest != parent) {
+            *cycleCost += n->weight;
+            <span class="kw">return</span> <span class="num">1</span>;
+        }
+        n = n->next;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     DEGREE OPERATIONS
+══════════════════════════════════════════════════ -->
+<section class="section" id="degree-analysis">
+  <div class="section-heading">
+    <div class="section-num v4">29</div>
+    <div><div class="section-title">Degree Analysis</div><div class="section-sub">Degree Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>The <strong>degree</strong> of a vertex is the number of edges connected to it. In directed graphs, we distinguish <strong>in-degree</strong> (edges coming in) and <strong>out-degree</strong> (edges going out). High-degree nodes are "hubs" in networks.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>An airport's degree = number of direct routes. A hub like Dubai has very high degree; a small regional airport has low degree.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Degree Analysis</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">degreeAnalysis</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"Vertex  Degree\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < g->numVertices; i++) {
+        <span class="kw">int</span> deg = <span class="num">0</span>;
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[i].head;
+        <span class="kw">while</span> (n) { deg++; n = n->next; }
+        <span class="fn">printf</span>(<span class="str">"%7d  %6d\n"</span>, i, deg);
+    }
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="weighted-degree">
+  <div class="section-heading">
+    <div class="section-num v4">30</div>
+    <div><div class="section-title">Weighted Degree</div><div class="section-sub">Degree Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>The <strong>weighted degree</strong> (or strength) of a vertex is the sum of all edge weights incident to it. This measures the total capacity or importance of a node in a weighted network.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Weighted Degree</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">weightedDegree</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v) {
+    <span class="kw">int</span> wDeg = <span class="num">0</span>;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+    <span class="kw">while</span> (n) { wDeg += n->weight; n = n->next; }
+    <span class="fn">printf</span>(<span class="str">"Weighted degree of vertex %d = %d\n"</span>, v, wDeg);
+    <span class="kw">return</span> wDeg;
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="total-cost">
+  <div class="section-heading">
+    <div class="section-num v4">31</div>
+    <div><div class="section-title">Total Edge Cost</div><div class="section-sub">Degree Operations</div></div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Total Edge Cost of Graph</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">totalEdgeCost</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> total = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[i].head;
+        <span class="kw">while</span> (n) { total += n->weight; n = n->next; }
+    }
+    total /= <span class="num">2</span>; <span class="cmt">/* undirected: each edge counted twice */</span>
+    <span class="fn">printf</span>(<span class="str">"Total edge cost = %d\n"</span>, total);
+    <span class="kw">return</span> total;
+}</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     MST
+══════════════════════════════════════════════════ -->
+<section class="section" id="prims">
+  <div class="section-heading">
+    <div class="section-num">32</div>
+    <div><div class="section-title">Prim's Algorithm (MST)</div><div class="section-sub">Minimum Spanning Tree</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>A <strong>Minimum Spanning Tree (MST)</strong> is a subset of edges that connects all vertices with minimum total weight and no cycles. Prim's algorithm grows the MST greedily: start with any vertex, always add the cheapest edge that connects a new vertex to the tree.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Laying the cheapest possible network of pipes to supply water to all houses — add the cheapest pipe that connects a new unserved house each time.</p></div>
+  <div class="viz-wrap">
+    <div class="viz-title">Prim's MST Animation</div>
+    <canvas id="c-prim" width="560" height="280"></canvas>
+    <div class="viz-controls">
+      <button class="btn" onclick="vizPrimStep()">Next MST Edge</button>
+      <button class="btn v4" onclick="vizResetPrim()">Reset</button>
+    </div>
+    <div class="viz-info" id="prim-info">Click "Next MST Edge" to build the tree.</div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Prim's Algorithm</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">primsAlgo</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> parent[<span class="num">100</span>], key[<span class="num">100</span>], inMST[<span class="num">100</span>];
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        { key[i] = INF; inMST[i] = <span class="num">0</span>; parent[i] = -<span class="num">1</span>; }
+    key[<span class="num">0</span>] = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> cnt = <span class="num">0</span>; cnt < V; cnt++) {
+        <span class="cmt">/* Pick vertex not in MST with minimum key */</span>
+        <span class="kw">int</span> u = -<span class="num">1</span>, minKey = INF;
+        <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v < V; v++)
+            <span class="kw">if</span> (!inMST[v] && key[v] < minKey)
+                { minKey = key[v]; u = v; }
+        <span class="kw">if</span> (u == -<span class="num">1</span>) <span class="kw">break</span>;
+        inMST[u] = <span class="num">1</span>;
+
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[u].head;
+        <span class="kw">while</span> (n) {
+            <span class="kw">if</span> (!inMST[n->dest] && n->weight < key[n->dest]) {
+                key[n->dest]    = n->weight;
+                parent[n->dest] = u;
+            }
+            n = n->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"MST edges (Prim):\n"</span>);
+    <span class="kw">int</span> total = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">1</span>; i < V; i++) {
+        <span class="fn">printf</span>(<span class="str">"  %d -- %d  weight=%d\n"</span>, parent[i], i, key[i]);
+        total += key[i];
+    }
+    <span class="fn">printf</span>(<span class="str">"Total MST cost = %d\n"</span>, total);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V²)</strong></div><div class="cplx"><span>With heap:</span><strong>O(E log V)</strong></div></div>
+</section>
+
+<section class="section" id="kruskal">
+  <div class="section-heading">
+    <div class="section-num">33</div>
+    <div><div class="section-title">Kruskal's Algorithm (MST)</div><div class="section-sub">Minimum Spanning Tree</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📌 Theory</div>
+    <p>Kruskal's sorts all edges by weight, then adds each edge to the MST if it doesn't create a cycle (checked using Union-Find/Disjoint Set). It works edge-by-edge regardless of vertex connectivity.</p>
+    <p>Key data structure: <strong>Union-Find (Disjoint Set Union)</strong> — efficiently tracks which vertices are in the same component to detect cycles in O(α(n)) ≈ O(1).</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Sorting all possible roads by cost and building cheapest first — skip any road that would create a loop between already-connected cities.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Kruskal's Algorithm with Union-Find</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> parent_uf[<span class="num">100</span>], rank_uf[<span class="num">100</span>];
+
+<span class="kw">int</span> <span class="fn">find</span>(<span class="kw">int</span> x) {
+    <span class="kw">if</span> (parent_uf[x] != x) parent_uf[x] = <span class="fn">find</span>(parent_uf[x]);
+    <span class="kw">return</span> parent_uf[x];
+}
+<span class="kw">void</span> <span class="fn">unionSets</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="kw">int</span> ra = <span class="fn">find</span>(a), rb = <span class="fn">find</span>(b);
+    <span class="kw">if</span> (rank_uf[ra] < rank_uf[rb]) parent_uf[ra] = rb;
+    <span class="kw">else if</span> (rank_uf[ra] > rank_uf[rb]) parent_uf[rb] = ra;
+    <span class="kw">else</span> { parent_uf[rb] = ra; rank_uf[ra]++; }
+}
+<span class="cmt">/* Comparison for qsort */</span>
+<span class="kw">int</span> <span class="fn">cmpEdge</span>(<span class="kw">const void</span> *a, <span class="kw">const void</span> *b) {
+    <span class="kw">return</span> ((<span class="kw">struct</span> <span class="tp">Edge</span>*)a)->weight - ((<span class="kw">struct</span> <span class="tp">Edge</span>*)b)->weight;
+}
+
+<span class="kw">void</span> <span class="fn">kruskal</span>(<span class="kw">struct</span> <span class="tp">Edge</span> edges[], <span class="kw">int</span> E, <span class="kw">int</span> V) {
+    <span class="fn">qsort</span>(edges, E, <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">Edge</span>), cmpEdge);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        { parent_uf[i] = i; rank_uf[i] = <span class="num">0</span>; }
+
+    <span class="fn">printf</span>(<span class="str">"MST edges (Kruskal):\n"</span>);
+    <span class="kw">int</span> total = <span class="num">0</span>, edgesCnt = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < E && edgesCnt < V - <span class="num">1</span>; i++) {
+        <span class="kw">int</span> u = edges[i].src, v = edges[i].dest;
+        <span class="kw">if</span> (<span class="fn">find</span>(u) != <span class="fn">find</span>(v)) {
+            <span class="fn">unionSets</span>(u, v);
+            <span class="fn">printf</span>(<span class="str">"  %d -- %d  w=%d\n"</span>, u, v, edges[i].weight);
+            total += edges[i].weight;
+            edgesCnt++;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Total MST cost = %d\n"</span>, total);
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(E log E)</strong></div><div class="cplx"><span>Union-Find:</span><strong>O(α(V)) ≈ O(1)</strong></div></div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     OPTIMIZATION
+══════════════════════════════════════════════════ -->
+<section class="section" id="min-cost-network">
+  <div class="section-heading">
+    <div class="section-num v2">34</div>
+    <div><div class="section-title">Minimum Cost Network</div><div class="section-sub">Optimization Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>A minimum cost network connects all required nodes (or a subset) at minimum total edge cost. This is the MST problem at its core. Extensions include the <strong>Steiner tree problem</strong> (connect a subset of required terminals at min cost — NP-hard in general).</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Designing a fiber optic network that connects all offices at the lowest cable installation cost. You don't need every possible connection — just enough to reach everyone.</p></div>
+  <div class="card">
+    <div class="card-title v2">Application</div>
+    <p>Use Kruskal's or Prim's (shown above) to find the MST, which IS the minimum cost network for full connectivity. For partial connectivity requirements, define required terminals and use Steiner-tree heuristics.</p>
+  </div>
+</section>
+
+<section class="section" id="route-opt">
+  <div class="section-heading">
+    <div class="section-num v2">35</div>
+    <div><div class="section-title">Route Optimization</div><div class="section-sub">Optimization Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>Route optimization finds the best path between origin and destination considering cost, time, distance, or multi-criteria objectives. Single-source: Dijkstra / Bellman-Ford. Multi-stop: Travelling Salesman Problem (NP-hard, solved with DP or heuristics for small N).</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Multi-Criteria Route (min hops + min weight)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="cmt">/* Find shortest path in hops, break ties by weight */</span>
+<span class="kw">void</span> <span class="fn">routeOptBFS</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">int</span> dist[<span class="num">100</span>], weight[<span class="num">100</span>], parent[<span class="num">100</span>];
+    <span class="kw">int</span> visited[<span class="num">100</span>] = {<span class="num">0</span>};
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<g->numVertices;i++)
+        {dist[i]=INF;weight[i]=INF;parent[i]=-<span class="num">1</span>;}
+    dist[src]=<span class="num">0</span>; weight[src]=<span class="num">0</span>;
+    <span class="kw">int</span> q[<span class="num">100</span>],f=<span class="num">0</span>,r=<span class="num">0</span>;
+    q[r++]=src; visited[src]=<span class="num">1</span>;
+    <span class="kw">while</span>(f<r){
+        <span class="kw">int</span> u=q[f++];
+        <span class="kw">struct</span> <span class="tp">AdjNode</span>*n=g->array[u].head;
+        <span class="kw">while</span>(n){
+            <span class="kw">int</span> v=n->dest,w=n->weight;
+            <span class="kw">if</span>(!visited[v]){
+                visited[v]=<span class="num">1</span>;
+                dist[v]=dist[u]+<span class="num">1</span>;
+                weight[v]=weight[u]+w;
+                parent[v]=u;
+                q[r++]=v;
+            } <span class="kw">else if</span>(dist[v]==dist[u]+<span class="num">1</span> && weight[u]+w<weight[v]){
+                weight[v]=weight[u]+w; <span class="cmt">/* same hops, less weight */</span>
+                parent[v]=u;
+            }
+            n=n->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Optimal route: hops=%d, cost=%d\n"</span>,dist[dest],weight[dest]);
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="resource-alloc">
+  <div class="section-heading">
+    <div class="section-num v2">36</div>
+    <div><div class="section-title">Resource Allocation</div><div class="section-sub">Optimization Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v2">📌 Theory</div>
+    <p>In network resource allocation, edge weights represent capacities (bandwidth, flow limits). The goal is to allocate resources across paths to meet demands without exceeding capacities. This is modeled as a <strong>flow problem</strong>. The max-flow algorithm (Ford-Fulkerson) finds how much "resource" can flow from source to sink.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Traffic management: how many cars can flow through a road network per hour, given each road has a maximum capacity? The answer is the max flow.</p></div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     ADVANCED
+══════════════════════════════════════════════════ -->
+<section class="section" id="graph-coloring">
+  <div class="section-heading">
+    <div class="section-num v3">37</div>
+    <div><div class="section-title">Graph Coloring</div><div class="section-sub">Advanced Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>Graph coloring assigns colors to vertices so no two adjacent vertices share the same color. The minimum number of colors needed is the <strong>chromatic number χ(G)</strong>. The greedy algorithm gives a good (not always optimal) coloring. In weighted graphs, coloring is used in scheduling where edge weights represent conflict intensity.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Scheduling exams so no student has two exams at the same time — students share an "edge" if they take both exams. Coloring = time slot assignment.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Greedy Graph Coloring</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">graphColoring</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> color[<span class="num">100</span>];
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) color[i] = -<span class="num">1</span>;
+    color[<span class="num">0</span>] = <span class="num">0</span>;
+
+    <span class="kw">int</span> available[<span class="num">100</span>];
+    <span class="kw">for</span> (<span class="kw">int</span> u = <span class="num">1</span>; u < V; u++) {
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c < V; c++) available[c] = <span class="num">1</span>;
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[u].head;
+        <span class="kw">while</span> (n) {
+            <span class="kw">if</span> (color[n->dest] != -<span class="num">1</span>)
+                available[color[n->dest]] = <span class="num">0</span>;
+            n = n->next;
+        }
+        <span class="kw">for</span> (<span class="kw">int</span> c = <span class="num">0</span>; c < V; c++)
+            <span class="kw">if</span> (available[c]) { color[u] = c; <span class="kw">break</span>; }
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex Colors:\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++)
+        <span class="fn">printf</span>(<span class="str">"  Vertex %d -> Color %d\n"</span>, i, color[i]);
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="bipartite">
+  <div class="section-heading">
+    <div class="section-num v3">38</div>
+    <div><div class="section-title">Bipartite Check</div><div class="section-sub">Advanced Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>A graph is <strong>bipartite</strong> if its vertices can be split into two sets such that every edge connects a vertex in one set to one in the other. Equivalently, a graph is bipartite if and only if it has no odd-length cycles. Check using BFS 2-coloring.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>A job market graph — workers on one side, jobs on the other. Edges represent "this worker can do this job." No worker-worker or job-job edges. This is bipartite by design.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Bipartite Check (BFS)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> <span class="fn">isBipartite</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> color[<span class="num">100</span>];
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<g->numVertices;i++) color[i]=-<span class="num">1</span>;
+    <span class="kw">int</span> queue[<span class="num">100</span>],f=<span class="num">0</span>,r=<span class="num">0</span>;
+
+    <span class="kw">for</span>(<span class="kw">int</span> start=<span class="num">0</span>;start<g->numVertices;start++){
+        <span class="kw">if</span>(color[start]!=-<span class="num">1</span>) <span class="kw">continue</span>;
+        color[start]=<span class="num">0</span>; queue[r++]=start;
+        <span class="kw">while</span>(f<r){
+            <span class="kw">int</span> u=queue[f++];
+            <span class="kw">struct</span> <span class="tp">AdjNode</span>*n=g->array[u].head;
+            <span class="kw">while</span>(n){
+                <span class="kw">if</span>(color[n->dest]==-<span class="num">1</span>){
+                    color[n->dest]=<span class="num">1</span>-color[u];
+                    queue[r++]=n->dest;
+                } <span class="kw">else if</span>(color[n->dest]==color[u]){
+                    <span class="fn">printf</span>(<span class="str">"NOT bipartite.\n"</span>); <span class="kw">return</span> <span class="num">0</span>;
+                }
+                n=n->next;
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Graph IS bipartite.\n"</span>); <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="network-flow">
+  <div class="section-heading">
+    <div class="section-num v3">39</div>
+    <div><div class="section-title">Network Flow (Ford-Fulkerson)</div><div class="section-sub">Advanced Operations</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p><strong>Network flow</strong> finds the maximum flow from a source to a sink in a directed weighted graph where edge weights represent <em>capacities</em>. Ford-Fulkerson uses BFS to find augmenting paths in the residual graph, adding flow until no more paths exist.</p>
+    <p>Key concepts: <span class="tag v3">Capacity</span> max flow on an edge. <span class="tag v3">Residual graph</span> remaining capacity. <span class="tag v3">Augmenting path</span> path from source to sink with spare capacity. <span class="tag v3">Max-flow min-cut theorem</span> max flow = min cut.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Water flowing through pipes of different diameters — the maximum water that can flow from reservoir to city, limited by the narrowest pipes (bottleneck).</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Ford-Fulkerson (Edmonds-Karp)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> cap[<span class="num">100</span>][<span class="num">100</span>]; <span class="cmt">/* capacity matrix */</span>
+
+<span class="kw">int</span> <span class="fn">bfsFord</span>(<span class="kw">int</span> V, <span class="kw">int</span> src, <span class="kw">int</span> sink, <span class="kw">int</span> parent[]) {
+    <span class="kw">int</span> visited[<span class="num">100</span>]={<span class="num">0</span>};
+    <span class="kw">int</span> q[<span class="num">100</span>],f=<span class="num">0</span>,r=<span class="num">0</span>;
+    visited[src]=<span class="num">1</span>; parent[src]=-<span class="num">1</span>; q[r++]=src;
+    <span class="kw">while</span>(f<r){
+        <span class="kw">int</span> u=q[f++];
+        <span class="kw">for</span>(<span class="kw">int</span> v=<span class="num">0</span>;v<V;v++)
+            <span class="kw">if</span>(!visited[v] && cap[u][v]><span class="num">0</span>){
+                visited[v]=<span class="num">1</span>; parent[v]=u; q[r++]=v;
+                <span class="kw">if</span>(v==sink) <span class="kw">return</span> <span class="num">1</span>;
+            }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="kw">int</span> <span class="fn">maxFlow</span>(<span class="kw">int</span> V, <span class="kw">int</span> src, <span class="kw">int</span> sink) {
+    <span class="kw">int</span> parent[<span class="num">100</span>], flow = <span class="num">0</span>;
+    <span class="kw">while</span>(<span class="fn">bfsFord</span>(V, src, sink, parent)){
+        <span class="kw">int</span> pathFlow = INF;
+        <span class="kw">for</span>(<span class="kw">int</span> v=sink;v!=src;v=parent[v]){
+            <span class="kw">int</span> u=parent[v];
+            <span class="kw">if</span>(cap[u][v]<pathFlow) pathFlow=cap[u][v];
+        }
+        <span class="kw">for</span>(<span class="kw">int</span> v=sink;v!=src;v=parent[v]){
+            <span class="kw">int</span> u=parent[v];
+            cap[u][v]-=pathFlow;
+            cap[v][u]+=pathFlow;
+        }
+        flow+=pathFlow;
+    }
+    <span class="fn">printf</span>(<span class="str">"Maximum flow = %d\n"</span>,flow);
+    <span class="kw">return</span> flow;
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V · E²)</strong></div></div>
+</section>
+
+<section class="section" id="scc">
+  <div class="section-heading">
+    <div class="section-num v3">40</div>
+    <div><div class="section-title">Strongly Connected Components</div><div class="section-sub">Advanced Operations — Kosaraju's</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v3">📌 Theory</div>
+    <p>In a <strong>directed graph</strong>, a <strong>Strongly Connected Component (SCC)</strong> is a maximal subgraph where every vertex is reachable from every other. Kosaraju's algorithm: (1) DFS on original graph recording finish times, (2) transpose the graph (reverse all edges), (3) DFS in decreasing finish order on transposed graph — each DFS tree is one SCC.</p>
+  </div>
+  <div class="analogy"><div class="analogy-label">🌍 Analogy</div><p>Social circles in a directed "who follows whom" network — an SCC is a group where everyone can reach everyone else by following the follow chains.</p></div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Kosaraju's SCC Algorithm</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">int</span> finishStack[<span class="num">100</span>], top_fs = <span class="num">0</span>;
+
+<span class="kw">void</span> <span class="fn">dfsFinish</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> v, <span class="kw">int</span> vis[]) {
+    vis[v] = <span class="num">1</span>;
+    <span class="kw">struct</span> <span class="tp">AdjNode</span>*n=g->array[v].head;
+    <span class="kw">while</span>(n){ <span class="kw">if</span>(!vis[n->dest]) <span class="fn">dfsFinish</span>(g,n->dest,vis); n=n->next;}
+    finishStack[top_fs++] = v; <span class="cmt">/* push on finish */</span>
+}
+
+<span class="kw">struct</span> <span class="tp">Graph</span>* <span class="fn">transpose</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">struct</span> <span class="tp">Graph</span> *t = <span class="fn">createGraph</span>(g->numVertices);
+    <span class="kw">for</span>(<span class="kw">int</span> v=<span class="num">0</span>;v<g->numVertices;v++){
+        <span class="kw">struct</span> <span class="tp">AdjNode</span>*n=g->array[v].head;
+        <span class="kw">while</span>(n){ <span class="fn">addEdge</span>(t,n->dest,v,n->weight); n=n->next;}
+    }
+    <span class="kw">return</span> t;
+}
+
+<span class="kw">void</span> <span class="fn">kosarajuSCC</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="kw">int</span> vis[<span class="num">100</span>]={<span class="num">0</span>};
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<g->numVertices;i++)
+        <span class="kw">if</span>(!vis[i]) <span class="fn">dfsFinish</span>(g,i,vis);
+
+    <span class="kw">struct</span> <span class="tp">Graph</span>*gt = <span class="fn">transpose</span>(g);
+    <span class="kw">int</span> vis2[<span class="num">100</span>]={<span class="num">0</span>};
+    <span class="kw">int</span> sccNum=<span class="num">0</span>;
+    <span class="kw">while</span>(top_fs>0){
+        <span class="kw">int</span> v=finishStack[--top_fs];
+        <span class="kw">if</span>(!vis2[v]){
+            sccNum++;
+            <span class="fn">printf</span>(<span class="str">"SCC %d: "</span>,sccNum);
+            <span class="fn">DFSUtil</span>(gt,v,vis2);
+            <span class="fn">printf</span>(<span class="str">"\n"</span>);
+        }
+    }
+}</pre>
+  </div>
+  <div class="complexity"><div class="cplx"><span>Time:</span><strong>O(V + E)</strong></div></div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     VISUALIZATION & REPORTING
+══════════════════════════════════════════════════ -->
+<section class="section" id="display-graph">
+  <div class="section-heading">
+    <div class="section-num v4">41</div>
+    <div><div class="section-title">Display Weighted Graph</div><div class="section-sub">Visualization &amp; Reporting</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>Printing the adjacency list is the standard textual representation. Each vertex is listed with its neighbors and corresponding edge weights. This is the foundation of all debugging and reporting.</p>
+  </div>
+  <div class="viz-wrap">
+    <div class="viz-title">Interactive — Full Weighted Graph Display</div>
+    <canvas id="c-display" width="560" height="300"></canvas>
+    <div class="viz-controls">
+      <button class="btn v4" onclick="vizDisplayGraph()">Redraw</button>
+    </div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Print Weighted Adjacency List</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">printGraph</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g) {
+    <span class="fn">printf</span>(<span class="str">"\n=== Weighted Graph (Adjacency List) ===\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> v = <span class="num">0</span>; v < g->numVertices; v++) {
+        <span class="fn">printf</span>(<span class="str">"Vertex %d: "</span>, v);
+        <span class="kw">struct</span> <span class="tp">AdjNode</span> *n = g->array[v].head;
+        <span class="kw">while</span> (n) {
+            <span class="fn">printf</span>(<span class="str">"--[%d]--> %d  "</span>, n->weight, n->dest);
+            n = n->next;
+        }
+        <span class="fn">printf</span>(<span class="str">"NULL\n"</span>);
+    }
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="display-paths">
+  <div class="section-heading">
+    <div class="section-num v4">42</div>
+    <div><div class="section-title">Display Paths</div><div class="section-sub">Visualization &amp; Reporting</div></div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Print Shortest Path Route from Dijkstra</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">printPath</span>(<span class="kw">int</span> parent[], <span class="kw">int</span> v) {
+    <span class="kw">if</span> (parent[v] == -<span class="num">1</span>) { <span class="fn">printf</span>(<span class="str">"%d"</span>, v); <span class="kw">return</span>; }
+    <span class="fn">printPath</span>(parent, parent[v]);
+    <span class="fn">printf</span>(<span class="str">" -> %d"</span>, v);
+}
+
+<span class="kw">void</span> <span class="fn">displayAllPaths</span>(<span class="kw">int</span> dist[], <span class="kw">int</span> parent[], <span class="kw">int</span> V, <span class="kw">int</span> src) {
+    <span class="fn">printf</span>(<span class="str">"Shortest paths from vertex %d:\n"</span>, src);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) {
+        <span class="fn">printf</span>(<span class="str">"  To %d (cost=%d): "</span>, i, dist[i]);
+        <span class="fn">printPath</span>(parent, i);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="cost-matrix">
+  <div class="section-heading">
+    <div class="section-num v4">43</div>
+    <div><div class="section-title">Cost Matrix</div><div class="section-sub">Visualization &amp; Reporting</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>A cost matrix is a 2D array where <code>matrix[i][j]</code> = weight of edge from i to j, or INF if no direct edge. It's useful for algorithms like Floyd-Warshall and for visual display of all pairwise costs.</p>
+  </div>
+  <div class="viz-wrap">
+    <div class="viz-title">Interactive — Cost Matrix Display</div>
+    <canvas id="c-matrix" width="560" height="200"></canvas>
+    <div class="viz-controls">
+      <button class="btn v4" onclick="vizCostMatrix()">Draw Matrix</button>
+    </div>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Build and Print Cost Matrix</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">buildCostMatrix</span>(<span class="kw">struct</span> <span class="tp">Graph</span> *g, <span class="kw">int</span> mat[][<span class="num">100</span>]) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<V;i++)
+        <span class="kw">for</span>(<span class="kw">int</span> j=<span class="num">0</span>;j<V;j++)
+            mat[i][j]=(i==j)?<span class="num">0</span>:INF;
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<V;i++){
+        <span class="kw">struct</span> <span class="tp">AdjNode</span>*n=g->array[i].head;
+        <span class="kw">while</span>(n){mat[i][n->dest]=n->weight;n=n->next;}
+    }
+}
+
+<span class="kw">void</span> <span class="fn">printCostMatrix</span>(<span class="kw">int</span> mat[][<span class="num">100</span>], <span class="kw">int</span> V) {
+    <span class="fn">printf</span>(<span class="str">"    "</span>);
+    <span class="kw">for</span>(<span class="kw">int</span> j=<span class="num">0</span>;j<V;j++) <span class="fn">printf</span>(<span class="str">"%5d"</span>,j);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    <span class="kw">for</span>(<span class="kw">int</span> i=<span class="num">0</span>;i<V;i++){
+        <span class="fn">printf</span>(<span class="str">"%2d: "</span>,i);
+        <span class="kw">for</span>(<span class="kw">int</span> j=<span class="num">0</span>;j<V;j++)
+            <span class="kw">if</span>(mat[i][j]==INF) <span class="fn">printf</span>(<span class="str">"%5s"</span>,<span class="str">"INF"</span>);
+            <span class="kw">else</span> <span class="fn">printf</span>(<span class="str">"%5d"</span>,mat[i][j]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+  </div>
+</section>
+
+<section class="section" id="route-summary">
+  <div class="section-heading">
+    <div class="section-num v4">44</div>
+    <div><div class="section-title">Route Summary</div><div class="section-sub">Visualization &amp; Reporting</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title v4">📌 Theory</div>
+    <p>A route summary aggregates path information into a readable report: source, destination, route taken, number of hops, and total cost. This is the final output layer used in GPS apps, network planners, and logistics systems.</p>
+  </div>
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C — Complete Route Summary Report</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">routeSummary</span>(<span class="kw">int</span> dist[], <span class="kw">int</span> parent[], <span class="kw">int</span> V, <span class="kw">int</span> src) {
+    <span class="fn">printf</span>(<span class="str">"\n========== ROUTE SUMMARY ==========\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"Source: %d\n\n"</span>, src);
+    <span class="fn">printf</span>(<span class="str">"%-8s %-10s %-5s %s\n"</span>,
+           <span class="str">"Dest"</span>, <span class="str">"Cost"</span>, <span class="str">"Hops"</span>, <span class="str">"Route"</span>);
+    <span class="fn">printf</span>(<span class="str">"------------------------------------\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i < V; i++) {
+        <span class="kw">if</span> (i == src) <span class="kw">continue</span>;
+        <span class="kw">int</span> hops = <span class="num">0</span>;
+        <span class="cmt">/* Count hops */</span>
+        <span class="kw">int</span> cur = i;
+        <span class="kw">while</span> (cur != src) { hops++; cur = parent[cur]; <span class="kw">if</span>(cur==-<span class="num">1</span>)<span class="kw">break</span>; }
+        <span class="fn">printf</span>(<span class="str">"%-8d %-10d %-5d "</span>, i,
+               dist[i]==INF?-<span class="num">1</span>:dist[i], hops);
+        <span class="fn">printPath</span>(parent, i);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+    <span class="fn">printf</span>(<span class="str">"====================================\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- SUMMARY TABLE -->
+<section class="section">
+  <div class="section-heading">
+    <div class="section-num">📊</div>
+    <div><div class="section-title">Algorithm Complexity Reference</div><div class="section-sub">Quick lookup for all operations</div></div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <tr><th>Algorithm / Operation</th><th>Time</th><th>Space</th><th>Notes</th></tr>
+      <tr><td>Insert/Delete Vertex</td><td>O(V+E)</td><td>O(1)</td><td>Realloc + reindex</td></tr>
+      <tr><td>Insert/Delete Edge</td><td>O(1) / O(deg)</td><td>O(1)</td><td>Prepend to list</td></tr>
+      <tr><td>Search Edge</td><td>O(deg(v))</td><td>O(1)</td><td>Walk adjacency list</td></tr>
+      <tr><td>BFS / DFS</td><td>O(V+E)</td><td>O(V)</td><td>With visited array</td></tr>
+      <tr><td>Dijkstra (basic)</td><td>O(V²)</td><td>O(V)</td><td>No negative weights</td></tr>
+      <tr><td>Dijkstra (min-heap)</td><td>O((V+E) log V)</td><td>O(V)</td><td>Priority queue</td></tr>
+      <tr><td>Bellman-Ford</td><td>O(V·E)</td><td>O(V)</td><td>Handles negatives</td></tr>
+      <tr><td>Floyd-Warshall</td><td>O(V³)</td><td>O(V²)</td><td>All pairs</td></tr>
+      <tr><td>A* Search</td><td>O(E log V)</td><td>O(V)</td><td>Needs heuristic</td></tr>
+      <tr><td>Prim's MST</td><td>O(V²) / O(E log V)</td><td>O(V)</td><td>Grows from vertex</td></tr>
+      <tr><td>Kruskal's MST</td><td>O(E log E)</td><td>O(V)</td><td>Sorts edges + UF</td></tr>
+      <tr><td>Ford-Fulkerson</td><td>O(V·E²)</td><td>O(V²)</td><td>Max flow</td></tr>
+      <tr><td>Kosaraju's SCC</td><td>O(V+E)</td><td>O(V)</td><td>Two DFS passes</td></tr>
+      <tr><td>Cycle Detection</td><td>O(V+E)</td><td>O(V)</td><td>DFS back edge</td></tr>
+      <tr><td>Bipartite Check</td><td>O(V+E)</td><td>O(V)</td><td>BFS 2-coloring</td></tr>
+      <tr><td>Graph Coloring</td><td>O(V²)</td><td>O(V)</td><td>Greedy (not optimal)</td></tr>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+/* ── UTILITIES ── */
+function copyCode(btn){
+  const pre=btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1500);
+  });
+}
+
+/* progress bar */
+window.addEventListener('scroll',()=>{
+  const el=document.getElementById('progress');
+  const h=document.documentElement;
+  const pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+  el.style.width=pct+'%';
+});
+
+/* nav active highlight */
+const sections=[...document.querySelectorAll('section[id]')];
+const navItems=[...document.querySelectorAll('.nav-item')];
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(s.getBoundingClientRect().top<120)cur=s.id;});
+  navItems.forEach(n=>{
+    n.classList.toggle('active',n.getAttribute('href')==='#'+cur);
+  });
+},{passive:true});
+
+/* ── DRAWING HELPERS ── */
+const ACC='#00d4aa', ACC2='#7c6af7', ACC3='#f7a23e', ACC4='#f76e6e';
+const BG='#0a0c12', CARD='#1a1e2a', TEXT='#e8ecf4', MUTED='#8b92a8';
+
+function setup(id){
+  const c=document.getElementById(id);
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  return{c,ctx,W:c.width,H:c.height};
+}
+
+function drawNode(ctx,x,y,label,fill=CARD,stroke=ACC,r=22){
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=TEXT;ctx.font='bold 13px Sora,sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,y);
+}
+
+function drawEdge(ctx,x1,y1,x2,y2,w,color=MUTED,width=1.5,labelColor=ACC3){
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  ctx.fillStyle='#0a0c12';
+  ctx.fillRect(mx-14,my-10,28,18);
+  ctx.fillStyle=labelColor;ctx.font='bold 11px JetBrains Mono,monospace';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(w,mx,my);
+}
+
+/* ── 1. INTRO CANVAS ── */
+(function(){
+  const {ctx,W,H}=setup('c-intro');
+  const nodes=[
+    {id:'A',x:100,y:80},{id:'B',x:280,y:50},{id:'C',x:460,y:80},
+    {id:'D',x:160,y:200},{id:'E',x:380,y:200}
+  ];
+  const edges=[
+    {a:0,b:1,w:4},{a:1,b:2,w:2},{a:0,b:3,w:7},
+    {a:1,b:3,w:1},{a:1,b:4,w:5},{a:2,b:4,w:3},{a:3,b:4,w:6}
+  ];
+  edges.forEach(e=>{
+    const n1=nodes[e.a],n2=nodes[e.b];
+    drawEdge(ctx,n1.x,n1.y,n2.x,n2.y,e.w);
+  });
+  nodes.forEach(n=>drawNode(ctx,n.x,n.y,n.id));
+})();
+
+/* ── 2. REPR CANVAS ── */
+(function(){
+  const {ctx,W,H}=setup('c-repr');
+  // Draw array boxes and linked list
+  const labels=['A','B','C','D'];
+  const startX=30, bW=55, bH=36, gap=8;
+  labels.forEach((l,i)=>{
+    const x=startX, y=20+i*(bH+gap);
+    ctx.strokeStyle=ACC2;ctx.lineWidth=1.5;
+    ctx.strokeRect(x,y,bW,bH);
+    ctx.fillStyle=ACC2;ctx.font='bold 12px Sora';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(l,x+bW/2,y+bH/2);
+    // arrow
+    ctx.beginPath();ctx.moveTo(x+bW,y+bH/2);ctx.lineTo(x+bW+18,y+bH/2);
+    ctx.strokeStyle=MUTED;ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle=MUTED;ctx.fillText('>',x+bW+22,y+bH/2);
+  });
+  // Sample linked list for A: B(4) -> C(7) -> NULL
+  const lists=[
+    [{v:'B',w:4},{v:'D',w:7}],
+    [{v:'A',w:4},{v:'C',w:2},{v:'D',w:1}],
+    [{v:'B',w:2}],
+    [{v:'A',w:7},{v:'B',w:1}]
+  ];
+  lists.forEach((list,i)=>{
+    const y0=20+i*(bH+gap);
+    list.forEach((item,j)=>{
+      const nx=120+j*100, ny=y0;
+      ctx.strokeStyle=ACC;ctx.lineWidth=1.2;
+      ctx.strokeRect(nx,ny,90,bH);
+      ctx.fillStyle=TEXT;ctx.font='12px JetBrains Mono';
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText(item.v+'  w='+item.w, nx+6, ny+bH/2);
+      if(j<list.length-1){
+        ctx.beginPath();ctx.moveTo(nx+90,ny+bH/2);ctx.lineTo(nx+100,ny+bH/2);
+        ctx.strokeStyle=MUTED;ctx.stroke();
+      } else {
+        ctx.fillStyle=MUTED;ctx.font='11px mono';
+        ctx.fillText('NULL',nx+95,ny+bH/2);
+      }
+    });
+  });
+})();
+
+/* ── 3. INSERT VERTEX ── */
+let ivCount=4;
+const ivNodes=[
+  {x:120,y:100},{x:280,y:60},{x:420,y:100},{x:260,y:190}
+];
+function drawIV(){
+  const {ctx,W,H}=setup('c-iv');
+  ivNodes.forEach((n,i)=>drawNode(ctx,n.x,n.y,String.fromCharCode(65+i)));
+}
+function vizInsertVertex(){
+  if(ivCount>=8){document.getElementById('iv-info').textContent='Max reached.';return;}
+  const angles=[0,72,144,216,288];
+  const r=90,cx=280,cy=110;
+  const a=angles[ivCount%5]*(Math.PI/180);
+  ivNodes.push({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});
+  ivCount++;
+  drawIV();
+  document.getElementById('iv-info').textContent=`Vertex ${String.fromCharCode(64+ivCount)} inserted. numVertices = ${ivCount}`;
+}
+function vizResetIV(){ivNodes.length=0;ivCount=0;[{x:120,y:100},{x:280,y:60},{x:420,y:100},{x:260,y:190}].forEach(n=>ivNodes.push(n));ivCount=4;drawIV();document.getElementById('iv-info').textContent='Press "Add Vertex" to insert a new node.';}
+drawIV();
+
+/* ── 7. ADD EDGE ── */
+const ieNodes=[{x:100,y:120,l:'A'},{x:250,y:50,l:'B'},{x:420,y:100,l:'C'},{x:160,y:210,l:'D'},{x:380,y:200,l:'E'}];
+const ieEdges=[{a:0,b:1,w:4},{a:1,b:2,w:2},{a:0,b:3,w:7},{a:1,b:3,w:1},{a:1,b:4,w:5},{a:2,b:4,w:3},{a:3,b:4,w:6}];
+let ieStep=0;
+function drawIE(){
+  const {ctx}=setup('c-ie');
+  ieEdges.slice(0,ieStep).forEach(e=>{
+    drawEdge(ctx,ieNodes[e.a].x,ieNodes[e.a].y,ieNodes[e.b].x,ieNodes[e.b].y,e.w,ACC,2);
+  });
+  ieNodes.forEach(n=>drawNode(ctx,n.x,n.y,n.l));
+}
+function vizAddEdge(){
+  if(ieStep>=ieEdges.length){document.getElementById('ie-info').textContent='All edges added!';return;}
+  const e=ieEdges[ieStep]; ieStep++;
+  drawIE();
+  document.getElementById('ie-info').textContent=`Added edge ${ieNodes[e.a].l} -- ${ieNodes[e.b].l} with weight ${e.w}`;
+}
+function vizResetIE(){ieStep=0;drawIE();document.getElementById('ie-info').textContent='Click "Add Next Edge" to build the graph.';}
+drawIE();
+
+/* ── BFS ── */
+const bNodes=[{x:100,y:130,l:'A'},{x:250,y:50,l:'B'},{x:420,y:100,l:'C'},{x:180,y:220,l:'D'},{x:370,y:210,l:'E'}];
+const bAdj=[[1,3],[0,2,3,4],[1,4],[0,1,4],[1,2,3]];
+const bEdgePairs=[[0,1,5],[0,3,4],[1,2,7],[1,3,2],[1,4,6],[2,4,3],[3,4,8]];
+let bfsQueue=[],bfsVisited=[],bfsStep=0,bfsOrder=[];
+function drawGraphBase(canId,visited=[],highlight=-1,activeEdges=[]){
+  const {ctx}=setup(canId);
+  bEdgePairs.forEach(([a,b,w])=>{
+    const active=activeEdges.some(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a));
+    drawEdge(ctx,bNodes[a].x,bNodes[a].y,bNodes[b].x,bNodes[b].y,w,active?ACC:'#2a3040',active?2:1.5);
+  });
+  bNodes.forEach((n,i)=>{
+    const col=i===highlight?ACC3:visited[i]?ACC:CARD;
+    const stroke=i===highlight?ACC3:visited[i]?ACC:ACC2;
+    drawNode(ctx,n.x,n.y,n.l,col,stroke);
+  });
+}
+function vizBFS(){
+  if(bfsStep===0){bfsVisited=new Array(5).fill(false);bfsQueue=[0];bfsVisited[0]=true;bfsOrder=[0];}
+  if(bfsQueue.length===0){document.getElementById('bfs-info').textContent='BFS complete! Order: '+bfsOrder.map(i=>bNodes[i].l).join(' → ');return;}
+  const v=bfsQueue.shift();
+  const newEdges=[];
+  bAdj[v].forEach(nb=>{if(!bfsVisited[nb]){bfsVisited[nb]=true;bfsQueue.push(nb);bfsOrder.push(nb);newEdges.push([v,nb]);}});
+  drawGraphBase('c-bfs',bfsVisited,v,newEdges);
+  bfsStep++;
+  document.getElementById('bfs-info').textContent=`Visiting ${bNodes[v].l}. Queue: [${bfsQueue.map(i=>bNodes[i].l).join(', ')}]`;
+}
+function vizResetBFS(){bfsStep=0;bfsQueue=[];bfsVisited=[];bfsOrder=[];drawGraphBase('c-bfs');document.getElementById('bfs-info').textContent='Click "Run BFS" to animate traversal.';}
+drawGraphBase('c-bfs');
+
+/* ── DFS ── */
+let dfsVisited=[],dfsStack=[],dfsStep=0,dfsOrder=[];
+function vizDFS(){
+  if(dfsStep===0){dfsVisited=new Array(5).fill(false);dfsStack=[0];dfsOrder=[];}
+  if(dfsStack.length===0){document.getElementById('dfs-info').textContent='DFS complete! Order: '+dfsOrder.map(i=>bNodes[i].l).join(' → ');return;}
+  const v=dfsStack.pop();
+  if(dfsVisited[v]){vizDFS();return;}
+  dfsVisited[v]=true;dfsOrder.push(v);
+  const toAdd=[...bAdj[v]].reverse();
+  toAdd.forEach(nb=>{if(!dfsVisited[nb])dfsStack.push(nb);});
+  drawGraphBase('c-dfs',dfsVisited,v);
+  dfsStep++;
+  document.getElementById('dfs-info').textContent=`Visiting ${bNodes[v].l}. Stack depth: ${dfsStack.length}`;
+}
+function vizResetDFS(){dfsStep=0;dfsStack=[];dfsVisited=[];dfsOrder=[];drawGraphBase('c-dfs');document.getElementById('dfs-info').textContent='Click "Run DFS" to animate traversal.';}
+drawGraphBase('c-dfs');
+
+/* ── DIJKSTRA ── */
+const dNodes=[{x:80,y:140,l:'A'},{x:220,y:55,l:'B'},{x:400,y:55,l:'C'},{x:220,y:230,l:'D'},{x:400,y:230,l:'E'},{x:520,y:140,l:'F'}];
+const dEdges=[[0,1,4],[0,2,2],[1,2,1],[1,3,5],[2,4,10],[3,4,2],[3,5,6],[4,5,3]];
+const dAdj=[
+  [{v:1,w:4},{v:2,w:2}],
+  [{v:0,w:4},{v:2,w:1},{v:3,w:5}],
+  [{v:0,w:2},{v:1,w:1},{v:4,w:10}],
+  [{v:1,w:5},{v:4,w:2},{v:5,w:6}],
+  [{v:2,w:10},{v:3,w:2},{v:5,w:3}],
+  [{v:3,w:6},{v:4,w:3}]
+];
+let dijkDist,dijkVis,dijkPar,dijkDone=false;
+function resetDijkData(){
+  dijkDist=new Array(6).fill(99999);dijkVis=new Array(6).fill(false);
+  dijkPar=new Array(6).fill(-1);dijkDist[0]=0;dijkDone=false;
+}
+function drawDijkGraph(highlight=-1){
+  const {ctx}=setup('c-dijk');
+  dEdges.forEach(([a,b,w])=>drawEdge(ctx,dNodes[a].x,dNodes[a].y,dNodes[b].x,dNodes[b].y,w));
+  dNodes.forEach((n,i)=>{
+    const col=i===highlight?ACC3:dijkVis&&dijkVis[i]?ACC:CARD;
+    const stroke=i===highlight?ACC3:dijkVis&&dijkVis[i]?ACC:ACC2;
+    drawNode(ctx,n.x,n.y,n.l,col,stroke,22);
+    if(dijkDist&&dijkDist[i]<99999){
+      ctx.fillStyle=ACC3;ctx.font='10px JetBrains Mono';
+      ctx.textAlign='center';ctx.fillText('d='+dijkDist[i],n.x,n.y+34);
+    }
+  });
+}
+resetDijkData();drawDijkGraph();
+function vizDijkStep(){
+  if(!dijkDist)resetDijkData();
+  if(dijkDone){document.getElementById('dijk-info').textContent='Dijkstra complete!';return;}
+  let u=-1,min=99999;
+  for(let i=0;i<6;i++) if(!dijkVis[i]&&dijkDist[i]<min){min=dijkDist[i];u=i;}
+  if(u===-1){dijkDone=true;document.getElementById('dijk-info').textContent='Done! All distances finalized.';return;}
+  dijkVis[u]=true;
+  dAdj[u].forEach(({v,w})=>{
+    if(!dijkVis[v]&&dijkDist[u]+w<dijkDist[v]){dijkDist[v]=dijkDist[u]+w;dijkPar[v]=u;}
+  });
+  drawDijkGraph(u);
+  document.getElementById('dijk-info').textContent=`Finalized vertex ${dNodes[u].l} (dist=${dijkDist[u]}). Relaxing neighbors...`;
+}
+function vizResetDijk(){resetDijkData();drawDijkGraph();document.getElementById('dijk-info').textContent='Click "Next Step" to run Dijkstra from node A.';}
+
+/* ── PRIM ── */
+const pNodes=[{x:80,y:150,l:'A'},{x:220,y:60,l:'B'},{x:400,y:60,l:'C'},{x:220,y:240,l:'D'},{x:400,y:240,l:'E'},{x:520,y:150,l:'F'}];
+const pEdges=[[0,1,2],[0,3,6],[1,2,3],[1,3,8],[1,4,5],[2,4,7],[3,4,9],[4,5,1],[2,5,4]];
+const pAdj=[
+  [{v:1,w:2},{v:3,w:6}],
+  [{v:0,w:2},{v:2,w:3},{v:3,w:8},{v:4,w:5}],
+  [{v:1,w:3},{v:4,w:7},{v:5,w:4}],
+  [{v:0,w:6},{v:1,w:8},{v:4,w:9}],
+  [{v:1,w:5},{v:2,w:7},{v:3,w:9},{v:5,w:1}],
+  [{v:2,w:4},{v:4,w:1}]
+];
+let primInMST,primKey,primPar,primMSTEdges,primDone=false;
+function resetPrimData(){
+  primInMST=new Array(6).fill(false);primKey=new Array(6).fill(99999);
+  primPar=new Array(6).fill(-1);primKey[0]=0;primMSTEdges=[];primDone=false;
+}
+function drawPrimGraph(){
+  const {ctx}=setup('c-prim');
+  pEdges.forEach(([a,b,w])=>drawEdge(ctx,pNodes[a].x,pNodes[a].y,pNodes[b].x,pNodes[b].y,w));
+  primMSTEdges&&primMSTEdges.forEach(([a,b,w])=>{
+    drawEdge(ctx,pNodes[a].x,pNodes[a].y,pNodes[b].x,pNodes[b].y,w,ACC,3,ACC);
+  });
+  pNodes.forEach((n,i)=>{
+    const col=primInMST&&primInMST[i]?ACC:CARD;
+    drawNode(ctx,n.x,n.y,n.l,col,primInMST&&primInMST[i]?ACC:ACC2,22);
+  });
+}
+resetPrimData();drawPrimGraph();
+function vizPrimStep(){
+  if(primDone){document.getElementById('prim-info').textContent='MST complete!';return;}
+  let u=-1,min=99999;
+  for(let i=0;i<6;i++) if(!primInMST[i]&&primKey[i]<min){min=primKey[i];u=i;}
+  if(u===-1){primDone=true;document.getElementById('prim-info').textContent='Prim MST done!';return;}
+  primInMST[u]=true;
+  if(primPar[u]!==-1) primMSTEdges.push([primPar[u],u,primKey[u]]);
+  pAdj[u].forEach(({v,w})=>{if(!primInMST[v]&&w<primKey[v]){primKey[v]=w;primPar[v]=u;}});
+  drawPrimGraph();
+  const cost=primMSTEdges.reduce((s,e)=>s+e[2],0);
+  document.getElementById('prim-info').textContent=`Added ${pNodes[u].l} to MST. Running cost = ${cost}`;
+}
+function vizResetPrim(){resetPrimData();drawPrimGraph();document.getElementById('prim-info').textContent='Click "Next MST Edge" to build the tree.';}
+
+/* ── DISPLAY GRAPH (full) ── */
+function vizDisplayGraph(){
+  const {ctx,W,H}=setup('c-display');
+  const nodes=[{x:90,y:150,l:'A'},{x:230,y:60,l:'B'},{x:400,y:60,l:'C'},{x:230,y:240,l:'D'},{x:400,y:230,l:'E'}];
+  const edges=[[0,1,4],[0,3,7],[1,2,2],[1,3,1],[1,4,5],[2,4,3],[3,4,6]];
+  edges.forEach(([a,b,w])=>drawEdge(ctx,nodes[a].x,nodes[a].y,nodes[b].x,nodes[b].y,w,ACC,2));
+  nodes.forEach(n=>drawNode(ctx,n.x,n.y,n.l));
+  // text list
+  ctx.fillStyle=MUTED;ctx.font='11px JetBrains Mono';ctx.textAlign='left';
+  const lines=['A: --[4]-->B  --[7]-->D  NULL','B: --[4]-->A  --[2]-->C  --[1]-->D  --[5]-->E  NULL','C: --[2]-->B  --[3]-->E  NULL','D: --[7]-->A  --[1]-->B  --[6]-->E  NULL','E: --[5]-->B  --[3]-->C  --[6]-->D  NULL'];
+  lines.forEach((l,i)=>ctx.fillText(l,30,i*18+H-100));
+}
+vizDisplayGraph();
+
+/* ── COST MATRIX ── */
+function vizCostMatrix(){
+  const {ctx,W,H}=setup('c-matrix');
+  const labels=['A','B','C','D','E'];
+  const mat=[
+    [0,4,99,7,99],
+    [4,0,2,1,5],
+    [99,2,0,99,3],
+    [7,1,99,0,6],
+    [99,5,3,6,0]
+  ];
+  const cell=34,ox=60,oy=20;
+  ctx.fillStyle=ACC;ctx.font='bold 12px JetBrains Mono';ctx.textAlign='center';
+  labels.forEach((l,i)=>{
+    ctx.fillText(l,ox+i*cell+cell/2,oy-6);
+    ctx.fillText(l,ox-22,oy+i*cell+cell/2);
+  });
+  mat.forEach((row,i)=>{
+    row.forEach((val,j)=>{
+      const x=ox+j*cell,y=oy+i*cell;
+      ctx.strokeStyle=val===0?ACC:val===99?ACC4:ACC2;ctx.lineWidth=1;
+      ctx.strokeRect(x,y,cell,cell);
+      ctx.fillStyle=val===0?ACC:val===99?ACC4:TEXT;
+      ctx.font='11px JetBrains Mono';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(val===99?'∞':val,x+cell/2,y+cell/2);
+    });
+  });
+}
+vizCostMatrix();
+</script>
+</body>
+</html>

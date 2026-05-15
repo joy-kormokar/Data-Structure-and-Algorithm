@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Separate Chaining Hash Table – Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e17;--bg2:#111624;--bg3:#161d30;--bg4:#1c2540;
+  --accent:#00e5ff;--accent2:#7b61ff;--accent3:#ff6b6b;--accent4:#39d98a;
+  --text:#e8eaf6;--text2:#8892b0;--text3:#4a5568;
+  --border:#1e2d4a;--card:#131929;
+  --font-head:'Syne',sans-serif;--font-code:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-code);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{width:280px;min-width:280px;background:var(--bg2);border-right:1px solid var(--border);height:100vh;overflow-y:auto;position:fixed;top:0;left:0;z-index:100;display:flex;flex-direction:column}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-title{font-family:var(--font-head);font-size:1.05rem;font-weight:800;color:var(--accent);letter-spacing:-0.5px;line-height:1.3}
+.sidebar-sub{font-size:.68rem;color:var(--text2);margin-top:4px;letter-spacing:.5px}
+.sidebar-nav{padding:12px 0;flex:1}
+.nav-group{margin-bottom:2px}
+.nav-group-title{font-size:.62rem;color:var(--text3);padding:10px 20px 4px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 20px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;font-size:.75rem;color:var(--text2);line-height:1.3}
+.nav-item:hover{background:var(--bg3);color:var(--text);border-left-color:var(--accent2)}
+.nav-item.active{background:var(--bg4);color:var(--accent);border-left-color:var(--accent);font-weight:700}
+.nav-num{font-size:.6rem;color:var(--text3);min-width:18px}
+
+/* ── MAIN ── */
+#main{margin-left:280px;flex:1;padding:0 0 80px}
+.top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 40px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between}
+.top-bar h1{font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--text)}
+.badge{background:var(--accent);color:#000;font-size:.6rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px}
+
+/* ── SECTION ── */
+.section{padding:40px 40px 24px;border-bottom:1px solid var(--border);max-width:1100px}
+.section-header{margin-bottom:28px}
+.section-num{font-size:.65rem;color:var(--accent2);font-weight:700;letter-spacing:2px;margin-bottom:6px}
+.section-title{font-family:var(--font-head);font-size:1.8rem;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:10px}
+.section-desc{font-size:.8rem;color:var(--text2);line-height:1.7;max-width:680px}
+
+/* ── CARDS ── */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.cards.single{grid-template-columns:1fr}
+.cards.triple{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:900px){.cards,.cards.triple{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.card.blue::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.card.purple::before{background:linear-gradient(90deg,var(--accent2),#ff6b9d)}
+.card.green::before{background:linear-gradient(90deg,var(--accent4),var(--accent))}
+.card.red::before{background:linear-gradient(90deg,var(--accent3),#ffb347)}
+.card-label{font-size:.6rem;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;font-weight:700}
+.card-title{font-size:.85rem;color:var(--text);font-weight:600;margin-bottom:10px;font-family:var(--font-head)}
+.card p{font-size:.75rem;color:var(--text2);line-height:1.7}
+
+/* ── ANALOGY BOX ── */
+.analogy{background:linear-gradient(135deg,#0f1f3d,#1a1040);border:1px solid #2a3a6a;border-radius:12px;padding:18px 22px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start}
+.analogy-icon{font-size:1.6rem;flex-shrink:0;margin-top:2px}
+.analogy-content .label{font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent2);margin-bottom:5px;font-weight:700}
+.analogy-content p{font-size:.78rem;color:var(--text2);line-height:1.7}
+.analogy-content strong{color:var(--text)}
+
+/* ── CODE ── */
+.code-block{background:#080d1a;border:1px solid var(--border);border-radius:10px;margin:16px 0;overflow:hidden}
+.code-header{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#0d1425;border-bottom:1px solid var(--border)}
+.code-lang{font-size:.62rem;color:var(--accent);font-weight:700;letter-spacing:1px}
+.copy-btn{background:none;border:1px solid var(--border);color:var(--text2);font-size:.6rem;padding:4px 12px;border-radius:6px;cursor:pointer;font-family:var(--font-code);transition:.2s}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.code-block pre{padding:18px;overflow-x:auto;font-size:.72rem;line-height:1.75;color:#e8eaf6}
+.code-block pre::-webkit-scrollbar{height:4px}
+.code-block pre::-webkit-scrollbar-thumb{background:var(--border)}
+/* syntax colors */
+.k{color:#7b61ff}.fn{color:#00e5ff}.c{color:#4a6080;font-style:italic}.s{color:#39d98a}.n{color:#ffb347}.cm{color:#8892b0}
+
+/* ── VIZ CANVAS ── */
+.viz-container{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:16px 0}
+.viz-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:14px;font-weight:700}
+.viz-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.viz-input{background:#080d1a;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-family:var(--font-code);font-size:.75rem;width:120px;outline:none;transition:.2s}
+.viz-input:focus{border-color:var(--accent)}
+.btn{padding:8px 18px;border-radius:8px;border:none;font-family:var(--font-code);font-size:.72rem;cursor:pointer;transition:.2s;font-weight:600}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:#00c8e0}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent2);color:var(--accent2)}
+.btn-danger{background:var(--accent3);color:#fff}.btn-danger:hover{background:#e05555}
+.btn-success{background:var(--accent4);color:#000}.btn-success:hover{background:#30c07a}
+.btn-sm{padding:5px 12px;font-size:.65rem}
+
+.hash-table-viz{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.bucket-col{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:80px}
+.bucket-index{font-size:.6rem;color:var(--text3);margin-bottom:4px;font-weight:700}
+.bucket-node{background:var(--bg3);border:2px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.7rem;font-weight:600;text-align:center;position:relative;min-width:72px;transition:all .3s;cursor:default}
+.bucket-node.empty{border-style:dashed;color:var(--text3);background:transparent}
+.bucket-node.head{border-color:var(--accent);color:var(--accent);background:#001e2b}
+.bucket-node.chain{border-color:var(--accent2);color:var(--accent2);background:#120d24}
+.bucket-node.highlight{border-color:var(--accent3);color:var(--accent3);background:#2d0e0e;animation:pulse .6s ease-in-out}
+.bucket-node.found{border-color:var(--accent4);color:var(--accent4);background:#0d2018;animation:pulse .6s ease-in-out}
+.chain-arrow{color:var(--text3);font-size:.8rem;margin:2px 0}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+.msg{font-size:.72rem;padding:8px 14px;border-radius:8px;margin-top:10px;line-height:1.5}
+.msg-info{background:#001e2b;color:var(--accent);border:1px solid #003348}
+.msg-success{background:#0d2018;color:var(--accent4);border:1px solid #1a4030}
+.msg-error{background:#2d0e0e;color:var(--accent3);border:1px solid #5c1e1e}
+.msg-warn{background:#1f1500;color:#ffb347;border:1px solid #3d2a00}
+
+.stats-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;min-width:100px}
+.stat-val{font-size:1.3rem;font-weight:700;color:var(--accent);font-family:var(--font-head)}
+.stat-lbl{font-size:.58rem;color:var(--text2);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+
+.ops-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.op-item{display:flex;gap:10px;align-items:center;padding:8px 12px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent)}
+.op-name{font-size:.73rem;color:var(--text);font-weight:600}
+.op-desc{font-size:.67rem;color:var(--text2)}
+
+.subop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}
+.subop-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:default;transition:.2s}
+.subop-card:hover{border-color:var(--accent2);transform:translateY(-2px)}
+.subop-card .so-title{font-size:.73rem;color:var(--accent2);font-weight:700;margin-bottom:4px}
+.subop-card .so-desc{font-size:.65rem;color:var(--text2);line-height:1.5}
+
+.step-list{counter-reset:step;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.step-item{display:flex;gap:12px;padding:10px 14px;background:var(--bg3);border-radius:8px;align-items:flex-start;counter-increment:step;border-left:3px solid var(--accent4)}
+.step-item::before{content:counter(step);min-width:20px;height:20px;background:var(--accent4);color:#000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-text{font-size:.73rem;color:var(--text2);line-height:1.6}
+.step-text strong{color:var(--text)}
+
+/* load factor bar */
+.lf-bar-wrap{background:var(--bg3);border-radius:8px;overflow:hidden;height:16px;margin:10px 0}
+.lf-bar{height:100%;transition:width .5s;border-radius:8px}
+
+/* chain length viz */
+.chain-bars{display:flex;gap:6px;align-items:flex-end;height:120px;margin-top:12px}
+.chain-bar-col{display:flex;flex-direction:column;align-items:center;gap:4px}
+.chain-bar{width:40px;border-radius:4px 4px 0 0;transition:height .4s;min-height:4px}
+.chain-bar-lbl{font-size:.58rem;color:var(--text2)}
+
+/* iterator viz */
+.iter-grid{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.iter-row{display:flex;gap:6px;align-items:center}
+.iter-bucket-lbl{font-size:.62rem;color:var(--text3);min-width:60px}
+.iter-node{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:.67rem;color:var(--text2);transition:all .3s}
+.iter-node.current{background:#001e2b;border-color:var(--accent);color:var(--accent);font-weight:700}
+.iter-arrow{color:var(--text3);font-size:.7rem}
+
+/* table */
+.data-table{width:100%;border-collapse:collapse;font-size:.72rem;margin-top:12px}
+.data-table th{background:var(--bg4);color:var(--accent2);padding:10px 14px;text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+.data-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text2);line-height:1.5}
+.data-table tr:hover td{background:var(--bg3)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.58rem;font-weight:700}
+.tag-blue{background:#001e2b;color:var(--accent);border:1px solid var(--accent)}
+.tag-green{background:#0d2018;color:var(--accent4);border:1px solid var(--accent4)}
+.tag-red{background:#2d0e0e;color:var(--accent3);border:1px solid var(--accent3)}
+.tag-purple{background:#120d24;color:var(--accent2);border:1px solid var(--accent2)}
+
+.divider{height:1px;background:var(--border);margin:24px 0}
+
+/* mobile */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-100%);transition:.3s}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  .section{padding:20px}
+  .top-bar{padding:12px 20px}
+  .cards{grid-template-columns:1fr}
+}
+
+.hamburger{display:none;background:none;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;cursor:pointer;font-size:1rem}
+@media(max-width:768px){.hamburger{display:block}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">⛓ Hash Table<br>Separate Chaining</div>
+    <div class="sidebar-sub">COMPLETE LEARNING GUIDE · C LANGUAGE</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-group-title">Foundation</div>
+    <div class="nav-item active" onclick="goTo('s0')"><span class="nav-num">00</span>Introduction & Concept</div>
+    <div class="nav-item" onclick="goTo('s1')"><span class="nav-num">01</span>Initialization Operations</div>
+    <div class="nav-group-title">Core Operations</div>
+    <div class="nav-item" onclick="goTo('s2')"><span class="nav-num">02</span>Insertion Operations</div>
+    <div class="nav-item" onclick="goTo('s3')"><span class="nav-num">03</span>Deletion Operations</div>
+    <div class="nav-item" onclick="goTo('s4')"><span class="nav-num">04</span>Search Operations</div>
+    <div class="nav-item" onclick="goTo('s5')"><span class="nav-num">05</span>Update Operations</div>
+    <div class="nav-item" onclick="goTo('s6')"><span class="nav-num">06</span>Traversal Operations</div>
+    <div class="nav-group-title">Advanced</div>
+    <div class="nav-item" onclick="goTo('s7')"><span class="nav-num">07</span>Collision Handling</div>
+    <div class="nav-item" onclick="goTo('s8')"><span class="nav-num">08</span>Bucket Management</div>
+    <div class="nav-item" onclick="goTo('s9')"><span class="nav-num">09</span>Load Factor Operations</div>
+    <div class="nav-item" onclick="goTo('s10')"><span class="nav-num">10</span>Rehashing Operations</div>
+    <div class="nav-group-title">System</div>
+    <div class="nav-item" onclick="goTo('s11')"><span class="nav-num">11</span>Utility Operations</div>
+    <div class="nav-item" onclick="goTo('s12')"><span class="nav-num">12</span>Memory Management</div>
+    <div class="nav-item" onclick="goTo('s13')"><span class="nav-num">13</span>Advanced Analytical</div>
+    <div class="nav-item" onclick="goTo('s14')"><span class="nav-num">14</span>Iterator Operations</div>
+    <div class="nav-item" onclick="goTo('s15')"><span class="nav-num">15</span>Optional Advanced Ops</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="top-bar">
+    <div style="display:flex;align-items:center;gap:14px">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <h1>Separate Chaining Hash Table — From Beginner to Advanced</h1>
+    </div>
+    <span class="badge">15 MODULES · C LANGUAGE</span>
+  </div>
+
+  <!-- ══ SECTION 0: INTRO ══ -->
+  <div class="section" id="s0">
+    <div class="section-header">
+      <div class="section-num">MODULE 00</div>
+      <div class="section-title">Introduction & Core Concept</div>
+      <div class="section-desc">Understand what a hash table is, what separate chaining solves, and how the entire structure works before we dive into operations.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🏫</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Imagine a <strong>school with numbered lockers (1–10)</strong>. Each student's locker is determined by: <strong>locker# = last digit of student ID</strong>. Two students with IDs 23 and 43 both map to locker 3 — so they share a locker using a <strong>chain (linked list)</strong> attached to slot 3. That's separate chaining!</p>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card blue">
+        <div class="card-label">What is a Hash Table?</div>
+        <div class="card-title">Key → Index Mapping</div>
+        <p>A hash table is a data structure that maps <strong>keys</strong> to <strong>values</strong> using a <strong>hash function</strong>. The hash function converts a key (e.g., a name or number) into an array index (bucket number) in O(1) average time.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-label">What is Separate Chaining?</div>
+        <div class="card-title">Collision Resolution via Linked Lists</div>
+        <p>When two keys hash to the <strong>same index</strong> (collision), separate chaining stores both in a <strong>linked list</strong> attached to that bucket. Each bucket is the head of its own linked list chain.</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">📊 Interactive — Live Hash Table Playground (Size 7)</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="intro-key" placeholder="Key (int)" type="number" min="0" max="999" value="23">
+        <input class="viz-input" id="intro-val" placeholder="Value" type="text" value="Alice">
+        <button class="btn btn-primary" onclick="introInsert()">Insert</button>
+        <button class="btn btn-danger btn-sm" onclick="introReset()">Reset</button>
+      </div>
+      <div id="intro-table" class="hash-table-viz"></div>
+      <div id="intro-msg" class="msg msg-info" style="margin-top:10px">Enter a key and value, then click Insert to see hashing in action!</div>
+    </div>
+
+    <div class="cards triple">
+      <div class="card green">
+        <div class="card-label">Time Complexity</div>
+        <div class="card-title">Average Case O(1)</div>
+        <p>Insert, Delete, Search all average O(1) when load factor is low. Worst case O(n) when all keys collide into one chain.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-label">Space Complexity</div>
+        <div class="card-title">O(n + m)</div>
+        <p>n = number of stored elements, m = number of buckets. Extra pointers per node for linking.</p>
+      </div>
+      <div class="card red">
+        <div class="card-label">Hash Function (Simple)</div>
+        <div class="card-title">index = key % tableSize</div>
+        <p>Modulo operation maps any key to a valid bucket index. Good hash functions distribute keys uniformly.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Data Structures</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Node of a linked list (one element in the chain) */</span>
+<span class="k">struct</span> <span class="fn">Node</span> {
+    <span class="k">int</span>    key;        <span class="c">/* the key we store */</span>
+    <span class="k">int</span>    value;      <span class="c">/* data associated with the key */</span>
+    <span class="k">struct</span> Node *next; <span class="c">/* pointer to next node in chain */</span>
+};
+
+<span class="c">/* Hash Table = array of Node pointers (bucket array) */</span>
+<span class="k">struct</span> <span class="fn">HashTable</span> {
+    <span class="k">struct</span> Node **buckets; <span class="c">/* array of linked list heads */</span>
+    <span class="k">int</span>          size;     <span class="c">/* number of buckets */</span>
+    <span class="k">int</span>          count;    <span class="c">/* total elements stored */</span>
+};
+
+<span class="c">/* Hash Function: maps key → bucket index */</span>
+<span class="k">int</span> <span class="fn">hashFunction</span>(<span class="k">int</span> key, <span class="k">int</span> size) {
+    <span class="k">return</span> key % size; <span class="c">/* simple modulo hash */</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 1: INIT ══ -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">MODULE 01</div>
+      <div class="section-title">Initialization Operations</div>
+      <div class="section-desc">Before storing any data, we must set up the hash table: allocate memory for the bucket array, set all buckets to NULL, and configure the size and hash function.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🏗️</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Think of initialization like <strong>building a new apartment complex</strong>. First you decide <strong>how many floors (table size)</strong>, then you construct each floor with an <strong>empty mailbox (bucket = NULL)</strong>. Until residents move in, all mailboxes are empty.</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">🔧 Create Hash Table</div><div class="so-desc">Allocate memory for the HashTable struct itself using malloc()</div></div>
+      <div class="subop-card"><div class="so-title">📦 Initialize Buckets</div><div class="so-desc">Set each bucket pointer to NULL — no chains exist yet</div></div>
+      <div class="subop-card"><div class="so-title">📐 Set Table Size</div><div class="so-desc">Choose size (preferably a prime number for better distribution)</div></div>
+      <div class="subop-card"><div class="so-title">🔢 Define Hash Function</div><div class="so-desc">Decide the formula: typically key % size for integer keys</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🛠️ Visualization — Initialization Process</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="init-size" placeholder="Table Size" type="number" min="3" max="10" value="7">
+        <button class="btn btn-primary" onclick="initViz()">Initialize Table</button>
+      </div>
+      <div id="init-display" class="hash-table-viz" style="margin-top:10px"></div>
+      <div id="init-msg" class="msg msg-info" style="margin-top:10px">Click Initialize to create an empty hash table.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Initialization</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Step 1: Create and Initialize a Hash Table */</span>
+<span class="k">struct</span> HashTable* <span class="fn">createHashTable</span>(<span class="k">int</span> size) {
+
+    <span class="c">/* Allocate memory for the hash table struct */</span>
+    <span class="k">struct</span> HashTable *ht = (<span class="k">struct</span> HashTable*) <span class="fn">malloc</span>(<span class="k">sizeof</span>(<span class="k">struct</span> HashTable));
+
+    <span class="k">if</span> (ht == NULL) {
+        <span class="fn">printf</span>(<span class="s">"Memory allocation failed!\n"</span>);
+        <span class="k">return</span> NULL;
+    }
+
+    <span class="c">/* Set table size */</span>
+    ht->size  = size;
+    ht->count = <span class="n">0</span>;
+
+    <span class="c">/* Allocate the bucket array (array of Node pointers) */</span>
+    ht->buckets = (<span class="k">struct</span> Node**) <span class="fn">calloc</span>(size, <span class="k">sizeof</span>(<span class="k">struct</span> Node*));
+
+    <span class="c">/* calloc already sets all buckets to NULL (zero-initialized) */</span>
+    <span class="k">if</span> (ht->buckets == NULL) {
+        <span class="fn">free</span>(ht);
+        <span class="k">return</span> NULL;
+    }
+
+    <span class="fn">printf</span>(<span class="s">"Hash table of size %d created successfully!\n"</span>, size);
+    <span class="k">return</span> ht;
+}
+
+<span class="c">/* Usage */</span>
+<span class="k">int</span> <span class="fn">main</span>() {
+    <span class="k">struct</span> HashTable *ht = <span class="fn">createHashTable</span>(<span class="n">7</span>);
+    <span class="c">/* Now ht->buckets[0..6] are all NULL — empty chains */</span>
+    <span class="k">return</span> <span class="n">0</span>;
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 2: INSERTION ══ -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num">MODULE 02</div>
+      <div class="section-title">Insertion Operations</div>
+      <div class="section-desc">Inserting a key-value pair involves hashing the key, navigating to the correct bucket, checking for duplicates, and adding a new node to the linked list chain.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">📬</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Inserting is like a <strong>postal worker delivering mail</strong>. They compute the <strong>street number (hash)</strong>, walk to that building, check if the tenant already exists (duplicate), then <strong>add the letter to the mailbox chain</strong>. If the box is full they link it to a side-chain.</p>
+      </div>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item"><div class="step-text"><strong>Compute Hash Index:</strong> index = key % tableSize — find which bucket this key belongs to</div></div>
+      <div class="step-item"><div class="step-text"><strong>Traverse Bucket List:</strong> Walk the existing linked list in that bucket to find the end or a duplicate</div></div>
+      <div class="step-item"><div class="step-text"><strong>Check Duplicate Key:</strong> If key already exists → update its value (no duplicate nodes)</div></div>
+      <div class="step-item"><div class="step-text"><strong>Insert at Head / Tail:</strong> Create new node; insert at head (O(1)) or tail (O(n))</div></div>
+      <div class="step-item"><div class="step-text"><strong>Handle Collision:</strong> If another key already occupies the bucket, chain the new node behind it</div></div>
+      <div class="step-item"><div class="step-text"><strong>Increase Element Count:</strong> Increment ht→count after successful insert</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🎮 Interactive — Insert into Hash Table (Size 7)</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="ins-key" placeholder="Key" type="number" value="12">
+        <input class="viz-input" id="ins-val" placeholder="Value" type="text" value="Bob">
+        <button class="btn btn-primary" onclick="insertViz()">Insert at Head</button>
+        <button class="btn btn-secondary" onclick="insertTailViz()">Insert at Tail</button>
+        <button class="btn btn-danger btn-sm" onclick="resetInsViz()">Reset</button>
+      </div>
+      <div id="ins-table" class="hash-table-viz"></div>
+      <div id="ins-msg" class="msg msg-info" style="margin-top:10px">Insert keys to see collision chaining in action!</div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-val" id="ins-count">0</div><div class="stat-lbl">Elements</div></div>
+        <div class="stat-box"><div class="stat-val" id="ins-cols">0</div><div class="stat-lbl">Collisions</div></div>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card blue">
+        <div class="card-label">Insert at Head — O(1)</div>
+        <div class="card-title">Fastest — New node becomes new head</div>
+        <p>Simply point new node's next to current head, then update bucket to point to new node. No traversal needed.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-label">Insert at Tail — O(n)</div>
+        <div class="card-title">Maintains order — traverses to end</div>
+        <p>Walk the entire chain to find the last node, then append. Useful when insertion order matters.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Insert at Head</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Create a brand new node */</span>
+<span class="k">struct</span> Node* <span class="fn">createNode</span>(<span class="k">int</span> key, <span class="k">int</span> value) {
+    <span class="k">struct</span> Node *node = (<span class="k">struct</span> Node*) <span class="fn">malloc</span>(<span class="k">sizeof</span>(<span class="k">struct</span> Node));
+    node->key   = key;
+    node->value = value;
+    node->next  = NULL;
+    <span class="k">return</span> node;
+}
+
+<span class="c">/* Insert key-value pair (insert at head for O(1)) */</span>
+<span class="k">void</span> <span class="fn">insert</span>(<span class="k">struct</span> HashTable *ht, <span class="k">int</span> key, <span class="k">int</span> value) {
+
+    <span class="c">/* Step 1: Compute bucket index */</span>
+    <span class="k">int</span> index = key % ht->size;
+
+    <span class="c">/* Step 2: Check for duplicate key — update if found */</span>
+    <span class="k">struct</span> Node *curr = ht->buckets[index];
+    <span class="k">while</span> (curr != NULL) {
+        <span class="k">if</span> (curr->key == key) {
+            curr->value = value; <span class="c">/* update existing */</span>
+            <span class="fn">printf</span>(<span class="s">"Key %d updated to %d\n"</span>, key, value);
+            <span class="k">return</span>;
+        }
+        curr = curr->next;
+    }
+
+    <span class="c">/* Step 3: Create new node */</span>
+    <span class="k">struct</span> Node *newNode = <span class="fn">createNode</span>(key, value);
+
+    <span class="c">/* Step 4: Insert at HEAD of bucket chain — O(1) */</span>
+    newNode->next        = ht->buckets[index]; <span class="c">/* new→next = old head */</span>
+    ht->buckets[index]   = newNode;            <span class="c">/* bucket = new node */</span>
+
+    <span class="c">/* Step 5: Increase element count */</span>
+    ht->count++;
+    <span class="fn">printf</span>(<span class="s">"Key %d inserted at bucket %d\n"</span>, key, index);
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 3: DELETION ══ -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num">MODULE 03</div>
+      <div class="section-title">Deletion Operations</div>
+      <div class="section-desc">Deleting a node requires finding it in the chain while maintaining the links of surrounding nodes, then freeing the memory.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🔗</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Imagine a <strong>chain of paperclips</strong>. To remove one from the middle, you <strong>unclip it</strong> and directly <strong>link the clip before it to the clip after it</strong>. The chain stays intact — just one clip shorter.</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">🔍 Find Target Node</div><div class="so-desc">Traverse the chain keeping track of previous node pointer</div></div>
+      <div class="subop-card"><div class="so-title">🗑️ Delete Head Node</div><div class="so-desc">Special case: bucket pointer updated to head's next node</div></div>
+      <div class="subop-card"><div class="so-title">✂️ Delete Middle Node</div><div class="so-desc">prev→next = curr→next, bypassing the target node</div></div>
+      <div class="subop-card"><div class="so-title">🔚 Delete Tail Node</div><div class="so-desc">prev→next = NULL, removing last element of chain</div></div>
+      <div class="subop-card"><div class="so-title">🔄 Update Links</div><div class="so-desc">Ensure chain integrity after removal — no broken pointers</div></div>
+      <div class="subop-card"><div class="so-title">🆓 Free Node Memory</div><div class="so-desc">Call free(node) to prevent memory leaks</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🗑️ Interactive — Deletion Visualization</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="del-key" placeholder="Key to delete" type="number" value="5">
+        <button class="btn btn-danger" onclick="deleteViz()">Delete</button>
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForDel()">Add Sample Data</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetDelViz()">Reset</button>
+      </div>
+      <div id="del-table" class="hash-table-viz"></div>
+      <div id="del-msg" class="msg msg-info" style="margin-top:10px">Click "Add Sample Data" first, then delete a key.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Deletion (All Cases)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="k">void</span> <span class="fn">delete</span>(<span class="k">struct</span> HashTable *ht, <span class="k">int</span> key) {
+
+    <span class="c">/* Step 1: Compute bucket index */</span>
+    <span class="k">int</span> index = key % ht->size;
+
+    <span class="k">struct</span> Node *curr = ht->buckets[index];
+    <span class="k">struct</span> Node *prev = NULL;  <span class="c">/* track previous node */</span>
+
+    <span class="c">/* Step 2: Traverse the chain to find target */</span>
+    <span class="k">while</span> (curr != NULL && curr->key != key) {
+        prev = curr;
+        curr = curr->next;
+    }
+
+    <span class="c">/* Key not found */</span>
+    <span class="k">if</span> (curr == NULL) {
+        <span class="fn">printf</span>(<span class="s">"Key %d not found!\n"</span>, key);
+        <span class="k">return</span>;
+    }
+
+    <span class="c">/* Step 3: Delete head node (special case) */</span>
+    <span class="k">if</span> (prev == NULL) {
+        ht->buckets[index] = curr->next; <span class="c">/* move head forward */</span>
+    }
+    <span class="c">/* Step 4: Delete middle or tail node */</span>
+    <span class="k">else</span> {
+        prev->next = curr->next; <span class="c">/* bypass current node */</span>
+    }
+
+    <span class="c">/* Step 5: Free memory and update count */</span>
+    <span class="fn">free</span>(curr);
+    ht->count--;
+    <span class="fn">printf</span>(<span class="s">"Key %d deleted from bucket %d\n"</span>, key, index);
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 4: SEARCH ══ -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num">MODULE 04</div>
+      <div class="section-title">Search Operations</div>
+      <div class="section-desc">Search is the most common hash table operation. We hash the key to find the bucket, then traverse the chain comparing keys.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🔎</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Like a <strong>library catalog</strong> — instead of searching every shelf, you look up the <strong>call number (hash)</strong> to jump directly to the right aisle, then scan only that aisle for your book.</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🔍 Interactive — Search Visualization</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="srch-key" placeholder="Key to search" type="number" value="19">
+        <button class="btn btn-primary" onclick="searchViz()">Search</button>
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForSearch()">Add Sample Data</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetSearchViz()">Reset</button>
+      </div>
+      <div id="srch-table" class="hash-table-viz"></div>
+      <div id="srch-msg" class="msg msg-info" style="margin-top:10px">Add sample data first, then search for a key.</div>
+      <div id="srch-steps" style="margin-top:10px"></div>
+    </div>
+
+    <div class="cards">
+      <div class="card green">
+        <div class="card-label">Best Case — O(1)</div>
+        <div class="card-title">Key is the only element in bucket</div>
+        <p>Hash directly to bucket, first node matches. No traversal needed.</p>
+      </div>
+      <div class="card red">
+        <div class="card-label">Worst Case — O(n)</div>
+        <div class="card-title">All keys in same bucket (poor hash)</div>
+        <p>Must traverse entire chain of n nodes. Happens with bad hash functions or clustered keys.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Search Operation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Search for a key and return its value (-1 if not found) */</span>
+<span class="k">int</span> <span class="fn">search</span>(<span class="k">struct</span> HashTable *ht, <span class="k">int</span> key) {
+
+    <span class="c">/* Step 1: Compute bucket index */</span>
+    <span class="k">int</span> index = key % ht->size;
+
+    <span class="c">/* Step 2: Traverse the bucket's linked list */</span>
+    <span class="k">struct</span> Node *curr = ht->buckets[index];
+
+    <span class="k">while</span> (curr != NULL) {
+
+        <span class="c">/* Step 3: Compare keys */</span>
+        <span class="k">if</span> (curr->key == key) {
+            <span class="fn">printf</span>(<span class="s">"Found! Key=%d, Value=%d\n"</span>, key, curr->value);
+            <span class="k">return</span> curr->value; <span class="c">/* Step 4: Return value */</span>
+        }
+        curr = curr->next;
+    }
+
+    <span class="c">/* Step 5: Detect missing key */</span>
+    <span class="fn">printf</span>(<span class="s">"Key %d not found in table.\n"</span>, key);
+    <span class="k">return</span> -<span class="n">1</span>;
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 5: UPDATE ══ -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num">MODULE 05</div>
+      <div class="section-title">Update Operations</div>
+      <div class="section-desc">Updating modifies the value of an existing key without changing its position in the hash table. Key must exist first.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">✏️</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Like <strong>editing a contact in your phone</strong>. You search by name (key), find the contact card, and <strong>change the phone number (value)</strong>. The contact's position in your address book doesn't change.</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">🔍 Search Target Key</div><div class="so-desc">Must first find the node — same as Search operation</div></div>
+      <div class="subop-card"><div class="so-title">✅ Validate Key Exists</div><div class="so-desc">If key not found, report error — can't update ghost node</div></div>
+      <div class="subop-card"><div class="so-title">📝 Modify Node Data</div><div class="so-desc">Change node→value to new value in-place</div></div>
+      <div class="subop-card"><div class="so-title">🔄 Replace Old Value</div><div class="so-desc">Previous value overwritten; node structure unchanged</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">✏️ Interactive — Update Value</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="upd-key" placeholder="Key" type="number" value="12">
+        <input class="viz-input" id="upd-val" placeholder="New Value" type="text" value="99">
+        <button class="btn btn-primary" onclick="updateViz()">Update</button>
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForUpdate()">Add Sample Data</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetUpdateViz()">Reset</button>
+      </div>
+      <div id="upd-table" class="hash-table-viz"></div>
+      <div id="upd-msg" class="msg msg-info" style="margin-top:10px">Add sample data, then update a key's value.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Update Operation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="k">int</span> <span class="fn">update</span>(<span class="k">struct</span> HashTable *ht, <span class="k">int</span> key, <span class="k">int</span> newValue) {
+
+    <span class="c">/* Step 1: Compute bucket index */</span>
+    <span class="k">int</span> index = key % ht->size;
+
+    <span class="c">/* Step 2: Search for the target key */</span>
+    <span class="k">struct</span> Node *curr = ht->buckets[index];
+
+    <span class="k">while</span> (curr != NULL) {
+        <span class="k">if</span> (curr->key == key) {
+
+            <span class="c">/* Step 3: Key found — replace old value */</span>
+            <span class="k">int</span> oldValue = curr->value;
+            curr->value  = newValue;
+            <span class="fn">printf</span>(<span class="s">"Key %d: %d → %d\n"</span>, key, oldValue, newValue);
+            <span class="k">return</span> <span class="n">1</span>; <span class="c">/* success */</span>
+        }
+        curr = curr->next;
+    }
+
+    <span class="c">/* Step 4: Key not found */</span>
+    <span class="fn">printf</span>(<span class="s">"Error: Key %d does not exist!\n"</span>, key);
+    <span class="k">return</span> <span class="n">0</span>; <span class="c">/* failure */</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 6: TRAVERSAL ══ -->
+  <div class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">MODULE 06</div>
+      <div class="section-title">Traversal Operations</div>
+      <div class="section-desc">Traversal visits every key-value pair in the entire hash table — visiting each bucket and walking its linked list chain.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🚶</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Like a <strong>census worker</strong> going apartment by apartment. They visit <strong>every building (bucket)</strong>, then every <strong>unit in each building (linked list nodes)</strong>, recording every resident they find.</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🚶 Animated — Full Table Traversal</div>
+      <div class="viz-controls">
+        <button class="btn btn-primary" onclick="startTraversal()">Start Traversal</button>
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForTrav()">Add Sample Data</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetTravViz()">Reset</button>
+      </div>
+      <div id="trav-table" class="hash-table-viz"></div>
+      <div id="trav-log" style="margin-top:12px;max-height:160px;overflow-y:auto;background:#080d1a;border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.7rem;line-height:1.8;color:var(--text2)">Traversal log will appear here...</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Display All Key-Value Pairs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="k">void</span> <span class="fn">display</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="fn">printf</span>(<span class="s">"\n=== Hash Table Contents ===\n"</span>);
+
+    <span class="c">/* Step 1: Visit each bucket (outer loop) */</span>
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++) {
+        <span class="fn">printf</span>(<span class="s">"Bucket[%d]: "</span>, i);
+
+        <span class="k">struct</span> Node *curr = ht->buckets[i];
+
+        <span class="c">/* Step 2: Traverse linked list at this bucket */</span>
+        <span class="k">if</span> (curr == NULL) {
+            <span class="fn">printf</span>(<span class="s">"[EMPTY]"</span>);
+        }
+        <span class="k">while</span> (curr != NULL) {
+
+            <span class="c">/* Step 3 & 4: Display key and value */</span>
+            <span class="fn">printf</span>(<span class="s">"[%d:%d]"</span>, curr->key, curr->value);
+
+            <span class="k">if</span> (curr->next != NULL)
+                <span class="fn">printf</span>(<span class="s">" → "</span>);
+
+            curr = curr->next;
+        }
+        <span class="fn">printf</span>(<span class="s">"\n"</span>);
+    }
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 7: COLLISION ══ -->
+  <div class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num">MODULE 07</div>
+      <div class="section-title">Collision Handling Operations</div>
+      <div class="section-desc">A collision happens when two different keys produce the same hash index. Separate chaining handles this elegantly by building linked list chains.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🚗</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Think of a <strong>parking lot</strong> where spaces are numbered 0–6. Two cars arrive and both are assigned space 3 (same hash). Instead of turning one away, we <strong>park them in a chain</strong> — car A, then car B linked behind it. Any more collisions just extend the chain.</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">⛓ Create Chain</div><div class="so-desc">First collision: bucket gets its first node, chain is born</div></div>
+      <div class="subop-card"><div class="so-title">➕ Insert into Existing Chain</div><div class="so-desc">Subsequent collision: add node to existing chain (head or tail)</div></div>
+      <div class="subop-card"><div class="so-title">🚶 Traverse Collision Chain</div><div class="so-desc">Walk the chain node-by-node to find/delete/update</div></div>
+      <div class="subop-card"><div class="so-title">🔗 Maintain Chain Links</div><div class="so-desc">Keep next pointers intact during all modifications</div></div>
+      <div class="subop-card"><div class="so-title">🚫 Resolve Duplicate Entry</div><div class="so-desc">Same key collision → update value, not create a new node</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">💥 Collision Demo — Keys that map to same bucket</div>
+      <div id="collision-demo" style="margin-top:10px"></div>
+      <div id="collision-msg" class="msg msg-info" style="margin-top:10px">The table below shows which keys collide in a size-7 table.</div>
+      <div style="margin-top:14px">
+        <table class="data-table">
+          <thead><tr><th>Key</th><th>key % 7</th><th>Bucket</th><th>Status</th></tr></thead>
+          <tbody id="col-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Collision Handling in Insertion</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/*
+ * Separate chaining handles collision AUTOMATICALLY
+ * in the insert function — no extra logic needed.
+ * When bucket[index] already has a node, we just
+ * chain the new node at the head.
+ */</span>
+
+<span class="k">void</span> <span class="fn">insertWithCollisionHandling</span>(<span class="k">struct</span> HashTable *ht,
+                                    <span class="k">int</span> key, <span class="k">int</span> value) {
+    <span class="k">int</span> index = key % ht->size;
+
+    <span class="c">/* Check for same-key collision (duplicate) */</span>
+    <span class="k">struct</span> Node *curr = ht->buckets[index];
+    <span class="k">while</span> (curr) {
+        <span class="k">if</span> (curr->key == key) {
+            <span class="fn">printf</span>(<span class="s">"Duplicate key %d — updating value\n"</span>, key);
+            curr->value = value;
+            <span class="k">return</span>;
+        }
+        curr = curr->next;
+    }
+
+    <span class="c">/* Different-key collision: just chain it at head */</span>
+    <span class="k">struct</span> Node *newNode  = <span class="fn">createNode</span>(key, value);
+    newNode->next         = ht->buckets[index]; <span class="c">/* chain to existing */</span>
+    ht->buckets[index]    = newNode;            <span class="c">/* new head */</span>
+    ht->count++;
+
+    <span class="k">if</span> (newNode->next != NULL)
+        <span class="fn">printf</span>(<span class="s">"Collision at bucket %d — chain extended!\n"</span>, index);
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 8: BUCKET MANAGEMENT ══ -->
+  <div class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num">MODULE 08</div>
+      <div class="section-title">Bucket Management Operations</div>
+      <div class="section-desc">Managing individual buckets: detecting empty/non-empty buckets, measuring chain lengths, and finding longest/shortest chains for performance analysis.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🏠</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Think of each bucket as a <strong>checkout lane in a supermarket</strong>. Bucket management is like the manager who checks: <strong>which lanes are empty?</strong> Which has the longest queue? Which is shortest? This helps <strong>balance the load</strong>.</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">📊 Bucket Analysis Dashboard</div>
+      <div class="viz-controls">
+        <button class="btn btn-primary" onclick="addSomeBuckets()">Load Sample Data</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetBucketViz()">Reset</button>
+      </div>
+      <div id="bkt-table" class="hash-table-viz" style="margin-top:10px"></div>
+      <div class="chain-bars" id="chain-bar-viz" style="margin-top:16px;align-items:flex-end;height:140px"></div>
+      <div id="bkt-stats" class="stats-row" style="margin-top:12px"></div>
+      <div id="bkt-msg" class="msg msg-info" style="margin-top:10px">Load sample data to see bucket statistics.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Bucket Management</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Detect empty bucket */</span>
+<span class="k">int</span> <span class="fn">isBucketEmpty</span>(<span class="k">struct</span> HashTable *ht, <span class="k">int</span> index) {
+    <span class="k">return</span> ht->buckets[index] == NULL;
+}
+
+<span class="c">/* Count chain length at a given bucket */</span>
+<span class="k">int</span> <span class="fn">chainLength</span>(<span class="k">struct</span> HashTable *ht, <span class="k">int</span> index) {
+    <span class="k">int</span> count = <span class="n">0</span>;
+    <span class="k">struct</span> Node *curr = ht->buckets[index];
+    <span class="k">while</span> (curr != NULL) {
+        count++;
+        curr = curr->next;
+    }
+    <span class="k">return</span> count;
+}
+
+<span class="c">/* Find the bucket with the longest chain */</span>
+<span class="k">int</span> <span class="fn">findLongestChain</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">int</span> maxLen = <span class="n">0</span>, maxIdx = <span class="n">-1</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++) {
+        <span class="k">int</span> len = <span class="fn">chainLength</span>(ht, i);
+        <span class="k">if</span> (len > maxLen) {
+            maxLen = len;
+            maxIdx = i;
+        }
+    }
+    <span class="fn">printf</span>(<span class="s">"Longest chain: bucket %d (length %d)\n"</span>, maxIdx, maxLen);
+    <span class="k">return</span> maxIdx;
+}
+
+<span class="c">/* Find shortest non-empty chain */</span>
+<span class="k">int</span> <span class="fn">findShortestChain</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">int</span> minLen = ht->count + <span class="n">1</span>, minIdx = <span class="n">-1</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++) {
+        <span class="k">int</span> len = <span class="fn">chainLength</span>(ht, i);
+        <span class="k">if</span> (len > <span class="n">0</span> && len < minLen) {
+            minLen = len;
+            minIdx = i;
+        }
+    }
+    <span class="k">return</span> minIdx;
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 9: LOAD FACTOR ══ -->
+  <div class="section" id="s9">
+    <div class="section-header">
+      <div class="section-num">MODULE 09</div>
+      <div class="section-title">Load Factor Operations</div>
+      <div class="section-desc">The load factor measures how "full" the hash table is. It determines when to resize (rehash) to maintain O(1) performance.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">⚖️</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Load factor is like a <strong>hotel occupancy rate</strong>. At 30% occupancy (load=0.3), guests easily find rooms. At 95% (load=0.95), finding a room takes much longer — staff has to check many floors. When occupancy is too high, the hotel <strong>builds a new wing (rehash)</strong>!</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">📈 Load Factor Calculator</div>
+      <div class="viz-controls">
+        <input class="viz-input" id="lf-elements" placeholder="Total elements" type="number" value="8">
+        <input class="viz-input" id="lf-size" placeholder="Table size" type="number" value="7">
+        <button class="btn btn-primary" onclick="calcLoadFactor()">Calculate</button>
+      </div>
+      <div style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text2);margin-bottom:6px">
+          <span>Load Factor: <span id="lf-val" style="color:var(--accent);font-weight:700">-</span></span>
+          <span>Threshold: 0.75</span>
+        </div>
+        <div class="lf-bar-wrap">
+          <div class="lf-bar" id="lf-bar" style="width:0%;background:var(--accent4)"></div>
+        </div>
+        <div id="lf-msg" class="msg msg-info" style="margin-top:10px">Enter total elements and table size, then calculate.</div>
+      </div>
+      <div class="cards triple" style="margin-top:14px">
+        <div class="card green"><div class="card-label">Low (λ &lt; 0.5)</div><div class="card-title">Excellent Performance</div><p>Very few collisions. Average O(1) operations. Some memory wasted.</p></div>
+        <div class="card blue"><div class="card-label">Medium (0.5 – 0.75)</div><div class="card-title">Good Performance</div><p>Balanced trade-off between speed and memory usage. Ideal zone.</p></div>
+        <div class="card red"><div class="card-label">High (λ &gt; 0.75)</div><div class="card-title">Rehash Needed!</div><p>Many collisions, long chains. Performance degrades. Time to resize!</p></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Load Factor Operations</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Count total elements */</span>
+<span class="k">int</span> <span class="fn">countElements</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">return</span> ht->count; <span class="c">/* maintained by insert/delete */</span>
+}
+
+<span class="c">/* Calculate load factor: λ = n / m */</span>
+<span class="k">float</span> <span class="fn">loadFactor</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">return</span> (<span class="k">float</span>) ht->count / (<span class="k">float</span>) ht->size;
+}
+
+<span class="c">/* Check if load factor exceeds threshold (0.75) */</span>
+<span class="k">int</span> <span class="fn">needsRehash</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">float</span> lf = <span class="fn">loadFactor</span>(ht);
+    <span class="k">if</span> (lf > <span class="n">0.75f</span>) {
+        <span class="fn">printf</span>(<span class="s">"Load factor %.2f > 0.75 — Rehashing needed!\n"</span>, lf);
+        <span class="k">return</span> <span class="n">1</span>; <span class="c">/* true */</span>
+    }
+    <span class="fn">printf</span>(<span class="s">"Load factor %.2f — OK\n"</span>, lf);
+    <span class="k">return</span> <span class="n">0</span>; <span class="c">/* false */</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 10: REHASHING ══ -->
+  <div class="section" id="s10">
+    <div class="section-header">
+      <div class="section-num">MODULE 10</div>
+      <div class="section-title">Rehashing Operations</div>
+      <div class="section-desc">When load factor is too high, we create a bigger table (usually 2× size), recompute all hash indices, and reinsert all existing elements.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🏗️</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Like moving from a <strong>small apartment to a bigger house</strong>. You pack all your belongings (existing nodes), move to the new larger house (new table with 2× buckets), and <strong>replace each item in its new correct spot</strong> based on the new layout. Then demolish the old apartment.</p>
+      </div>
+    </div>
+
+    <div class="step-list">
+      <div class="step-item"><div class="step-text"><strong>Create New Table:</strong> Allocate new bucket array with 2× the original size</div></div>
+      <div class="step-item"><div class="step-text"><strong>Recompute Hash Index:</strong> For every existing node, compute new_index = key % newSize</div></div>
+      <div class="step-item"><div class="step-text"><strong>Reinsert Existing Nodes:</strong> Insert each node into the new table at its new index</div></div>
+      <div class="step-item"><div class="step-text"><strong>Transfer Linked Lists:</strong> All chains are redistributed into the new table</div></div>
+      <div class="step-item"><div class="step-text"><strong>Delete Old Table:</strong> Free old bucket array memory to prevent leaks</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🔄 Rehashing Visualization</div>
+      <div class="viz-controls">
+        <button class="btn btn-primary" onclick="doRehash()">Trigger Rehash (Size 7 → 14)</button>
+        <button class="btn btn-secondary btn-sm" onclick="setupRehash()">Load Pre-Rehash State</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetRehash()">Reset</button>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:.62rem;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Old Table (size 7)</div>
+          <div id="rehash-old" class="hash-table-viz" style="flex-direction:column;gap:6px"></div>
+        </div>
+        <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--accent2)">→</div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:.62rem;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">New Table (size 14)</div>
+          <div id="rehash-new" class="hash-table-viz" style="flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+      <div id="rehash-msg" class="msg msg-info" style="margin-top:10px">Load pre-rehash state first, then trigger rehash.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Rehashing</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="k">void</span> <span class="fn">rehash</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">int</span> oldSize      = ht->size;
+    <span class="k">int</span> newSize      = oldSize * <span class="n">2</span>; <span class="c">/* double the size */</span>
+
+    <span class="c">/* Step 1: Create new bucket array */</span>
+    <span class="k">struct</span> Node **newBuckets = (<span class="k">struct</span> Node**)
+        <span class="fn">calloc</span>(newSize, <span class="k">sizeof</span>(<span class="k">struct</span> Node*));
+
+    <span class="c">/* Step 2: Traverse all old buckets */</span>
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < oldSize; i++) {
+        <span class="k">struct</span> Node *curr = ht->buckets[i];
+
+        <span class="c">/* Step 3: Reinsert each node into new table */</span>
+        <span class="k">while</span> (curr != NULL) {
+            <span class="k">struct</span> Node *next  = curr->next; <span class="c">/* save next */</span>
+
+            <span class="c">/* Step 4: Recompute hash index for new size */</span>
+            <span class="k">int</span> newIndex = curr->key % newSize;
+
+            <span class="c">/* Insert at head of new bucket */</span>
+            curr->next         = newBuckets[newIndex];
+            newBuckets[newIndex] = curr;
+
+            curr = next; <span class="c">/* move to next old node */</span>
+        }
+    }
+
+    <span class="c">/* Step 5: Delete old bucket array */</span>
+    <span class="fn">free</span>(ht->buckets);
+
+    <span class="c">/* Update hash table */</span>
+    ht->buckets = newBuckets;
+    ht->size    = newSize;
+    <span class="fn">printf</span>(<span class="s">"Rehashed: size %d → %d\n"</span>, oldSize, newSize);
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 11: UTILITY ══ -->
+  <div class="section" id="s11">
+    <div class="section-header">
+      <div class="section-num">MODULE 11</div>
+      <div class="section-title">Utility Operations</div>
+      <div class="section-desc">Helper functions that provide convenience checks and table-wide operations: isEmpty, isFull, getSize, and clearTable.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🛠️</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Utility functions are like a <strong>building's control panel</strong>. At a glance you can check: Is the parking lot empty? Is it full? How many floors? Press reset to clear all reservations.</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">❓ Check Empty Table</div><div class="so-desc">Returns 1 if count == 0, meaning no elements stored</div></div>
+      <div class="subop-card"><div class="so-title">🔴 Check Full Table</div><div class="so-desc">Rare for chaining but signals very high load factor</div></div>
+      <div class="subop-card"><div class="so-title">📏 Get Size</div><div class="so-desc">Returns number of buckets or number of elements</div></div>
+      <div class="subop-card"><div class="so-title">🗑️ Clear Table</div><div class="so-desc">Free all chains, reset all buckets to NULL, count = 0</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🔧 Utility Operations Demo</div>
+      <div class="viz-controls">
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForUtil()">Add Data</button>
+        <button class="btn btn-primary btn-sm" onclick="checkEmpty()">Is Empty?</button>
+        <button class="btn btn-primary btn-sm" onclick="getSize()">Get Size</button>
+        <button class="btn btn-danger btn-sm" onclick="clearTable()">Clear Table</button>
+      </div>
+      <div id="util-table" class="hash-table-viz" style="margin-top:10px"></div>
+      <div id="util-msg" class="msg msg-info" style="margin-top:10px">Use the buttons above to test utility operations.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Utility Operations</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Check if hash table is empty */</span>
+<span class="k">int</span> <span class="fn">isEmpty</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">return</span> ht->count == <span class="n">0</span>;
+}
+
+<span class="c">/* Get number of elements */</span>
+<span class="k">int</span> <span class="fn">getCount</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">return</span> ht->count;
+}
+
+<span class="c">/* Get number of buckets */</span>
+<span class="k">int</span> <span class="fn">getSize</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">return</span> ht->size;
+}
+
+<span class="c">/* Clear all elements from the table (keep structure) */</span>
+<span class="k">void</span> <span class="fn">clearTable</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++) {
+        <span class="k">struct</span> Node *curr = ht->buckets[i];
+        <span class="k">while</span> (curr != NULL) {
+            <span class="k">struct</span> Node *temp = curr;
+            curr = curr->next;
+            <span class="fn">free</span>(temp); <span class="c">/* free each node */</span>
+        }
+        ht->buckets[i] = NULL; <span class="c">/* reset bucket */</span>
+    }
+    ht->count = <span class="n">0</span>;
+    <span class="fn">printf</span>(<span class="s">"Table cleared.\n"</span>);
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 12: MEMORY ══ -->
+  <div class="section" id="s12">
+    <div class="section-header">
+      <div class="section-num">MODULE 12</div>
+      <div class="section-title">Memory Management Operations</div>
+      <div class="section-desc">C programs manage memory manually. Every malloc() must have a corresponding free(). Poor memory management causes leaks and crashes.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🏛️</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Memory management is like <strong>renting hotel rooms</strong>. When you check in (malloc), a room is reserved. When you check out (free), the room is released for others. If you <strong>never check out</strong>, the room is unavailable forever — that's a <strong>memory leak</strong>!</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">🆕 Create Node</div><div class="so-desc">malloc(sizeof(struct Node)) — allocate one node on heap</div></div>
+      <div class="subop-card"><div class="so-title">🆓 Free Single Node</div><div class="so-desc">free(node) — release one node's memory back to OS</div></div>
+      <div class="subop-card"><div class="so-title">🗑️ Free Entire Chain</div><div class="so-desc">Loop through chain, saving next before freeing each node</div></div>
+      <div class="subop-card"><div class="so-title">⚠️ Prevent Memory Leak</div><div class="so-desc">Always free before losing pointer reference; set to NULL after free</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">💾 Memory Lifecycle Visualization</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:12px" id="mem-blocks"></div>
+      <div class="viz-controls" style="margin-top:14px">
+        <button class="btn btn-primary btn-sm" onclick="allocMem()">malloc() — Allocate</button>
+        <button class="btn btn-danger btn-sm" onclick="freeMem()">free() — Deallocate</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetMem()">Reset Heap</button>
+      </div>
+      <div id="mem-msg" class="msg msg-info" style="margin-top:10px">Click malloc to allocate nodes, then free them.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Memory Management</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Create (allocate) a new node */</span>
+<span class="k">struct</span> Node* <span class="fn">createNode</span>(<span class="k">int</span> key, <span class="k">int</span> value) {
+    <span class="k">struct</span> Node *node = (<span class="k">struct</span> Node*) <span class="fn">malloc</span>(<span class="k">sizeof</span>(<span class="k">struct</span> Node));
+    <span class="k">if</span> (!node) { <span class="fn">perror</span>(<span class="s">"malloc failed"</span>); <span class="k">exit</span>(<span class="n">1</span>); }
+    node->key   = key;
+    node->value = value;
+    node->next  = NULL;
+    <span class="k">return</span> node;
+}
+
+<span class="c">/* Free an entire linked list chain */</span>
+<span class="k">void</span> <span class="fn">freeChain</span>(<span class="k">struct</span> Node *head) {
+    <span class="k">while</span> (head != NULL) {
+        <span class="k">struct</span> Node *temp = head;   <span class="c">/* save current */</span>
+        head = head->next;           <span class="c">/* advance BEFORE free! */</span>
+        <span class="fn">free</span>(temp);                  <span class="c">/* release memory */</span>
+        temp = NULL;                 <span class="c">/* avoid dangling pointer */</span>
+    }
+}
+
+<span class="c">/* Completely free the entire hash table */</span>
+<span class="k">void</span> <span class="fn">freeHashTable</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++)
+        <span class="fn">freeChain</span>(ht->buckets[i]); <span class="c">/* free each chain */</span>
+    <span class="fn">free</span>(ht->buckets);              <span class="c">/* free bucket array */</span>
+    <span class="fn">free</span>(ht);                       <span class="c">/* free struct itself */</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 13: ANALYTICS ══ -->
+  <div class="section" id="s13">
+    <div class="section-header">
+      <div class="section-num">MODULE 13</div>
+      <div class="section-title">Advanced Analytical Operations</div>
+      <div class="section-desc">Measure hash table efficiency: collision rate, average chain length, and hash function quality to identify and fix performance bottlenecks.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">📊</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>Like a <strong>hospital performance audit</strong>: How many patients share a room (collision rate)? What's the average wait time (chain length)? Is the triage system efficient (hash function)? These <strong>analytics drive improvement</strong>.</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">📈 Analytics Dashboard</div>
+      <div class="viz-controls">
+        <button class="btn btn-primary" onclick="runAnalytics()">Run Analytics</button>
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForAnalytics()">Load Sample Data</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetAnalytics()">Reset</button>
+      </div>
+      <div id="anl-table" class="hash-table-viz" style="margin-top:10px"></div>
+      <div id="anl-stats" class="stats-row" style="margin-top:14px"></div>
+      <div id="anl-detail" style="margin-top:14px"></div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Analytical Operations</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Count total collisions */</span>
+<span class="k">int</span> <span class="fn">countCollisions</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">int</span> cols = <span class="n">0</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++) {
+        <span class="k">int</span> len = <span class="fn">chainLength</span>(ht, i);
+        <span class="k">if</span> (len > <span class="n">1</span>) cols += (len - <span class="n">1</span>); <span class="c">/* first is non-collision */</span>
+    }
+    <span class="k">return</span> cols;
+}
+
+<span class="c">/* Measure collision rate = collisions / total elements */</span>
+<span class="k">float</span> <span class="fn">collisionRate</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">if</span> (ht->count == <span class="n">0</span>) <span class="k">return</span> <span class="n">0.0</span>;
+    <span class="k">return</span> (<span class="k">float</span>) <span class="fn">countCollisions</span>(ht) / ht->count;
+}
+
+<span class="c">/* Calculate average chain length (non-empty buckets) */</span>
+<span class="k">float</span> <span class="fn">avgChainLength</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="k">int</span> nonEmpty = <span class="n">0</span>, total = <span class="n">0</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < ht->size; i++) {
+        <span class="k">int</span> len = <span class="fn">chainLength</span>(ht, i);
+        <span class="k">if</span> (len > <span class="n">0</span>) { nonEmpty++; total += len; }
+    }
+    <span class="k">return</span> nonEmpty ? (<span class="k">float</span>) total / nonEmpty : <span class="n">0.0</span>;
+}
+
+<span class="c">/* Evaluate hash function efficiency (distribution uniformity) */</span>
+<span class="k">void</span> <span class="fn">evaluateHashFunction</span>(<span class="k">struct</span> HashTable *ht) {
+    <span class="fn">printf</span>(<span class="s">"=== Hash Function Evaluation ===\n"</span>);
+    <span class="fn">printf</span>(<span class="s">"Load Factor:      %.2f\n"</span>, <span class="fn">loadFactor</span>(ht));
+    <span class="fn">printf</span>(<span class="s">"Collision Rate:   %.2f%%\n"</span>, <span class="fn">collisionRate</span>(ht) * <span class="n">100</span>);
+    <span class="fn">printf</span>(<span class="s">"Avg Chain Length: %.2f\n"</span>, <span class="fn">avgChainLength</span>(ht));
+    <span class="fn">printf</span>(<span class="s">"Longest Chain:    bucket %d\n"</span>, <span class="fn">findLongestChain</span>(ht));
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 14: ITERATOR ══ -->
+  <div class="section" id="s14">
+    <div class="section-header">
+      <div class="section-num">MODULE 14</div>
+      <div class="section-title">Iterator Operations</div>
+      <div class="section-desc">An iterator allows sequential access to all elements without exposing the internal structure. It maintains state between calls using bucket index and node pointer.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🎬</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p>An iterator is like a <strong>TV remote's "Next Channel" button</strong>. Each press moves you to the next channel (element) — you don't need to know which frequency it's on internally. The remote <strong>tracks where you are</strong> so you can resume anytime.</p>
+      </div>
+    </div>
+
+    <div class="subop-grid">
+      <div class="subop-card"><div class="so-title">➡️ Move to Next Bucket</div><div class="so-desc">When current chain is exhausted, advance to next non-empty bucket</div></div>
+      <div class="subop-card"><div class="so-title">⬇️ Move to Next Node</div><div class="so-desc">Follow node→next to advance within the current chain</div></div>
+      <div class="subop-card"><div class="so-title">👁️ Access Current Element</div><div class="so-desc">Return key and value of the node the iterator currently points to</div></div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🎯 Animated Iterator — Step Through All Elements</div>
+      <div class="viz-controls">
+        <button class="btn btn-primary" onclick="iterNext()">Next →</button>
+        <button class="btn btn-secondary btn-sm" onclick="iterReset()">Reset Iterator</button>
+        <button class="btn btn-secondary btn-sm" onclick="addSomeForIter()">Add Sample Data</button>
+      </div>
+      <div id="iter-table" class="iter-grid" style="margin-top:10px"></div>
+      <div id="iter-msg" class="msg msg-info" style="margin-top:10px">Click Next → to step through all elements one by one.</div>
+      <div id="iter-current" style="margin-top:10px;font-size:.78rem;color:var(--text2)"></div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Iterator Pattern</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Iterator structure maintains traversal state */</span>
+<span class="k">struct</span> <span class="fn">Iterator</span> {
+    <span class="k">struct</span> HashTable *ht;          <span class="c">/* reference to table */</span>
+    <span class="k">int</span>              bucketIndex;  <span class="c">/* current bucket */</span>
+    <span class="k">struct</span> Node     *currentNode;  <span class="c">/* current node in chain */</span>
+};
+
+<span class="c">/* Initialize iterator at first element */</span>
+<span class="k">void</span> <span class="fn">iterInit</span>(<span class="k">struct</span> Iterator *it, <span class="k">struct</span> HashTable *ht) {
+    it->ht          = ht;
+    it->bucketIndex = <span class="n">0</span>;
+    it->currentNode = NULL;
+
+    <span class="c">/* Advance to first non-empty bucket */</span>
+    <span class="k">while</span> (it->bucketIndex < ht->size &&
+           ht->buckets[it->bucketIndex] == NULL)
+        it->bucketIndex++;
+
+    <span class="k">if</span> (it->bucketIndex < ht->size)
+        it->currentNode = ht->buckets[it->bucketIndex];
+}
+
+<span class="c">/* Move to next element, return 1 if valid, 0 if done */</span>
+<span class="k">int</span> <span class="fn">iterNext</span>(<span class="k">struct</span> Iterator *it) {
+    <span class="k">if</span> (it->currentNode == NULL) <span class="k">return</span> <span class="n">0</span>; <span class="c">/* done */</span>
+
+    <span class="c">/* Access current element */</span>
+    <span class="fn">printf</span>(<span class="s">"[%d → %d] "</span>, it->currentNode->key, it->currentNode->value);
+
+    <span class="c">/* Move to next node in chain */</span>
+    it->currentNode = it->currentNode->next;
+
+    <span class="c">/* If chain exhausted, move to next non-empty bucket */</span>
+    <span class="k">while</span> (it->currentNode == NULL &&
+           ++it->bucketIndex < it->ht->size)
+        it->currentNode = it->ht->buckets[it->bucketIndex];
+
+    <span class="k">return</span> it->currentNode != NULL || it->bucketIndex < it->ht->size;
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 15: ADVANCED OPS ══ -->
+  <div class="section" id="s15">
+    <div class="section-header">
+      <div class="section-num">MODULE 15</div>
+      <div class="section-title">Optional Advanced Operations</div>
+      <div class="section-desc">These operations combine multiple basic operations for complex scenarios: merging two tables, copying a table, and comparing two tables.</div>
+    </div>
+
+    <div class="analogy">
+      <div class="analogy-icon">🧩</div>
+      <div class="analogy-content">
+        <div class="label">Real-life Analogy</div>
+        <p><strong>Merge</strong> is like combining two company databases after an acquisition. <strong>Copy</strong> is like making a backup of your contacts. <strong>Compare</strong> is like checking if two student grade databases are identical.</p>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card blue">
+        <div class="card-label">Merge Hash Tables</div>
+        <div class="card-title">Union of Two Tables</div>
+        <p>Traverse all elements of table B and insert them into table A. On key conflicts, typically B's value overrides A's (or vice versa depending on policy).</p>
+      </div>
+      <div class="card purple">
+        <div class="card-label">Copy Hash Table</div>
+        <div class="card-title">Deep Clone</div>
+        <p>Create a new table of same size, then insert every key-value pair from original. Must allocate new nodes — not just copy pointers (that would be shallow copy).</p>
+      </div>
+    </div>
+    <div class="cards single" style="margin-top:0">
+      <div class="card green">
+        <div class="card-label">Compare Hash Tables</div>
+        <div class="card-title">Check Equality</div>
+        <p>Two tables are equal if: same number of elements, and for every key in table A, the same key exists in table B with the same value. Search-based comparison — O(n) average.</p>
+      </div>
+    </div>
+
+    <div class="viz-container">
+      <div class="viz-label">🔀 Merge Demo — Combine Two Tables</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px">
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:.62rem;color:var(--accent);margin-bottom:8px;font-weight:700">TABLE A</div>
+          <div id="merge-a" class="hash-table-viz" style="flex-direction:column;gap:4px"></div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--accent2);font-size:1.2rem">⊕</div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:.62rem;color:var(--accent2);margin-bottom:8px;font-weight:700">TABLE B</div>
+          <div id="merge-b" class="hash-table-viz" style="flex-direction:column;gap:4px"></div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--text3);font-size:1.2rem">→</div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:.62rem;color:var(--accent4);margin-bottom:8px;font-weight:700">MERGED</div>
+          <div id="merge-result" class="hash-table-viz" style="flex-direction:column;gap:4px"></div>
+        </div>
+      </div>
+      <div class="viz-controls" style="margin-top:14px">
+        <button class="btn btn-primary" onclick="doMerge()">Merge A ⊕ B</button>
+        <button class="btn btn-secondary btn-sm" onclick="setupMerge()">Setup Tables</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetMerge()">Reset</button>
+      </div>
+      <div id="merge-msg" class="msg msg-info" style="margin-top:10px">Click Setup Tables first, then Merge.</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C — Merge, Copy, Compare</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="c">/* Merge table B into table A (B's values override on conflict) */</span>
+<span class="k">void</span> <span class="fn">mergeTables</span>(<span class="k">struct</span> HashTable *a, <span class="k">struct</span> HashTable *b) {
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < b->size; i++) {
+        <span class="k">struct</span> Node *curr = b->buckets[i];
+        <span class="k">while</span> (curr != NULL) {
+            <span class="fn">insert</span>(a, curr->key, curr->value); <span class="c">/* reuse insert */</span>
+            curr = curr->next;
+        }
+    }
+}
+
+<span class="c">/* Deep copy of hash table */</span>
+<span class="k">struct</span> HashTable* <span class="fn">copyTable</span>(<span class="k">struct</span> HashTable *src) {
+    <span class="k">struct</span> HashTable *dest = <span class="fn">createHashTable</span>(src->size);
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < src->size; i++) {
+        <span class="k">struct</span> Node *curr = src->buckets[i];
+        <span class="k">while</span> (curr != NULL) {
+            <span class="fn">insert</span>(dest, curr->key, curr->value);
+            curr = curr->next;
+        }
+    }
+    <span class="k">return</span> dest;
+}
+
+<span class="c">/* Compare two hash tables (1 = equal, 0 = different) */</span>
+<span class="k">int</span> <span class="fn">compareTables</span>(<span class="k">struct</span> HashTable *a, <span class="k">struct</span> HashTable *b) {
+    <span class="k">if</span> (a->count != b->count) <span class="k">return</span> <span class="n">0</span>;
+    <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i < a->size; i++) {
+        <span class="k">struct</span> Node *curr = a->buckets[i];
+        <span class="k">while</span> (curr != NULL) {
+            <span class="k">int</span> val = <span class="fn">search</span>(b, curr->key);
+            <span class="k">if</span> (val != curr->value) <span class="k">return</span> <span class="n">0</span>; <span class="c">/* mismatch */</span>
+            curr = curr->next;
+        }
+    }
+    <span class="k">return</span> <span class="n">1</span>; <span class="c">/* equal */</span>
+}</pre>
+    </div>
+
+    <!-- SUMMARY TABLE -->
+    <div class="divider"></div>
+    <div style="font-family:var(--font-head);font-size:1.2rem;font-weight:800;color:var(--text);margin-bottom:14px">📋 Complete Operations Summary</div>
+    <table class="data-table">
+      <thead><tr><th>Module</th><th>Operation</th><th>Avg Time</th><th>Space</th><th>Category</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>Create / Initialize Table</td><td>O(m)</td><td>O(m)</td><td><span class="tag tag-blue">Foundation</span></td></tr>
+        <tr><td>02</td><td>Insert (at head)</td><td>O(1)</td><td>O(1)</td><td><span class="tag tag-green">Core</span></td></tr>
+        <tr><td>02</td><td>Insert (at tail / sorted)</td><td>O(n/m)</td><td>O(1)</td><td><span class="tag tag-green">Core</span></td></tr>
+        <tr><td>03</td><td>Delete</td><td>O(1)</td><td>O(1)</td><td><span class="tag tag-green">Core</span></td></tr>
+        <tr><td>04</td><td>Search</td><td>O(1)</td><td>O(1)</td><td><span class="tag tag-green">Core</span></td></tr>
+        <tr><td>05</td><td>Update</td><td>O(1)</td><td>O(1)</td><td><span class="tag tag-green">Core</span></td></tr>
+        <tr><td>06</td><td>Full Traversal</td><td>O(n+m)</td><td>O(1)</td><td><span class="tag tag-blue">Traversal</span></td></tr>
+        <tr><td>07</td><td>Collision Handling</td><td>O(1)</td><td>O(1)</td><td><span class="tag tag-purple">Auto</span></td></tr>
+        <tr><td>08</td><td>Chain Length / Bucket Stats</td><td>O(n/m)</td><td>O(1)</td><td><span class="tag tag-blue">Analysis</span></td></tr>
+        <tr><td>09</td><td>Load Factor Calculation</td><td>O(1)</td><td>O(1)</td><td><span class="tag tag-blue">Analysis</span></td></tr>
+        <tr><td>10</td><td>Rehash</td><td>O(n+m)</td><td>O(n+m)</td><td><span class="tag tag-red">Resize</span></td></tr>
+        <tr><td>11</td><td>Utility (isEmpty, clear)</td><td>O(1)/O(n)</td><td>O(1)</td><td><span class="tag tag-blue">Utility</span></td></tr>
+        <tr><td>12</td><td>Memory Management</td><td>O(n)</td><td>—</td><td><span class="tag tag-red">System</span></td></tr>
+        <tr><td>13</td><td>Analytics (collision rate)</td><td>O(n+m)</td><td>O(1)</td><td><span class="tag tag-purple">Advanced</span></td></tr>
+        <tr><td>14</td><td>Iterator (next)</td><td>O(1)*</td><td>O(1)</td><td><span class="tag tag-purple">Advanced</span></td></tr>
+        <tr><td>15</td><td>Merge / Copy / Compare</td><td>O(n)</td><td>O(n)</td><td><span class="tag tag-purple">Advanced</span></td></tr>
+      </tbody>
+    </table>
+    <div style="font-size:.65rem;color:var(--text3);margin-top:8px">* m = table size (buckets), n = total elements stored. O(1)* iterator amortized over all elements.</div>
+  </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SHARED HASH TABLE ENGINE
+// ═══════════════════════════════════════════════════════
+const TABLE_SIZE = 7;
+
+function hashFn(key, size) { return ((key % size) + size) % size; }
+
+class HT {
+  constructor(size = TABLE_SIZE) {
+    this.size = size;
+    this.buckets = Array.from({length: size}, () => []);
+    this.count = 0;
+    this.collisions = 0;
+  }
+  insert(key, val, atHead = true) {
+    const idx = hashFn(key, this.size);
+    const chain = this.buckets[idx];
+    const existing = chain.find(n => n.k === key);
+    if (existing) { existing.v = val; return {updated: true, idx}; }
+    const wasCollision = chain.length > 0;
+    if (wasCollision) this.collisions++;
+    if (atHead) chain.unshift({k: key, v: val});
+    else chain.push({k: key, v: val});
+    this.count++;
+    return {updated: false, idx, collision: wasCollision};
+  }
+  delete(key) {
+    const idx = hashFn(key, this.size);
+    const chain = this.buckets[idx];
+    const i = chain.findIndex(n => n.k === key);
+    if (i === -1) return null;
+    chain.splice(i, 1);
+    this.count--;
+    return {idx, pos: i === 0 ? 'head' : i === chain.length ? 'tail' : 'middle'};
+  }
+  search(key) {
+    const idx = hashFn(key, this.size);
+    const node = this.buckets[idx].find(n => n.k === key);
+    return {idx, node: node || null};
+  }
+  update(key, val) {
+    const {node} = this.search(key);
+    if (!node) return false;
+    const old = node.v; node.v = val; return {old};
+  }
+  chainLen(idx) { return this.buckets[idx].length; }
+  maxChain() { return Math.max(...this.buckets.map(b=>b.length)); }
+  minChainNonEmpty() {
+    const lens = this.buckets.map(b=>b.length).filter(l=>l>0);
+    return lens.length ? Math.min(...lens) : 0;
+  }
+  avgChain() {
+    const non = this.buckets.filter(b=>b.length>0);
+    return non.length ? (non.reduce((a,b)=>a+b.length,0)/non.length).toFixed(2) : '0.00';
+  }
+  collisionRate() {
+    if (!this.count) return 0;
+    let cols = 0;
+    this.buckets.forEach(b => { if (b.length > 1) cols += b.length - 1; });
+    return ((cols/this.count)*100).toFixed(1);
+  }
+  loadFactor() { return (this.count/this.size).toFixed(3); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RENDER HELPER
+// ═══════════════════════════════════════════════════════
+function renderTable(ht, containerId, highlights={}, found=new Set()) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  ht.buckets.forEach((chain, i) => {
+    const col = document.createElement('div');
+    col.className = 'bucket-col';
+    const lbl = document.createElement('div');
+    lbl.className = 'bucket-index';
+    lbl.textContent = `B[${i}]`;
+    col.appendChild(lbl);
+    if (chain.length === 0) {
+      const n = document.createElement('div');
+      n.className = 'bucket-node empty';
+      n.textContent = 'NULL';
+      col.appendChild(n);
+    } else {
+      chain.forEach((node, j) => {
+        const n = document.createElement('div');
+        let cls = j === 0 ? 'head' : 'chain';
+        if (highlights[i] === node.k) cls = 'highlight';
+        if (found.has(node.k)) cls = 'found';
+        n.className = `bucket-node ${cls}`;
+        n.textContent = `${node.k}:${node.v}`;
+        col.appendChild(n);
+        if (j < chain.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'chain-arrow';
+          arrow.textContent = '↓';
+          col.appendChild(arrow);
+        }
+      });
+    }
+    el.appendChild(col);
+  });
+}
+
+function setMsg(id, text, type='info') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `msg msg-${type}`;
+  el.innerHTML = text;
+}
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 0 — INTRO
+// ═══════════════════════════════════════════════════════
+let introHT = new HT(7);
+function renderIntro() { renderTable(introHT, 'intro-table'); }
+function introInsert() {
+  const k = parseInt(document.getElementById('intro-key').value);
+  const v = document.getElementById('intro-val').value || '?';
+  if (isNaN(k)) { setMsg('intro-msg','Please enter a valid integer key.','error'); return; }
+  const r = introHT.insert(k, v);
+  renderIntro();
+  const idx = hashFn(k, 7);
+  setMsg('intro-msg', `Key <strong>${k}</strong> → <strong>${k} % 7 = ${idx}</strong> → Bucket[${idx}]${r.collision ? ' 💥 Collision! Node chained.' : r.updated ? ' ✏️ Value updated.' : ' ✅ Inserted at head.'}`, r.collision ? 'warn' : r.updated ? 'info' : 'success');
+}
+function introReset() { introHT = new HT(7); renderIntro(); setMsg('intro-msg','Table reset. Enter a key and value to begin.','info'); }
+renderIntro();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 1 — INIT
+// ═══════════════════════════════════════════════════════
+let initHT = null;
+function initViz() {
+  const s = Math.max(3, Math.min(10, parseInt(document.getElementById('init-size').value)||7));
+  initHT = new HT(s);
+  renderTable(initHT, 'init-display');
+  setMsg('init-msg', `✅ Hash table created with <strong>${s} buckets</strong>. All initialized to NULL. count=0, size=${s}.`, 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 2 — INSERTION
+// ═══════════════════════════════════════════════════════
+let insHT = new HT(7);
+function renderIns() {
+  renderTable(insHT, 'ins-table');
+  document.getElementById('ins-count').textContent = insHT.count;
+  document.getElementById('ins-cols').textContent = insHT.collisions;
+}
+function insertViz() {
+  const k = parseInt(document.getElementById('ins-key').value);
+  const v = document.getElementById('ins-val').value || '?';
+  if (isNaN(k)) return;
+  const r = insHT.insert(k, v, true);
+  renderIns();
+  setMsg('ins-msg', `🔢 hash(${k}) = ${k}%7 = ${r.idx} → Bucket[${r.idx}]${r.collision ? ' <span style="color:var(--accent3)">💥 COLLISION — node chained at head</span>' : r.updated ? ' ✏️ Duplicate key — value updated' : ' ✅ Inserted at HEAD'}`, r.collision ? 'warn' : r.updated ? 'info' : 'success');
+}
+function insertTailViz() {
+  const k = parseInt(document.getElementById('ins-key').value);
+  const v = document.getElementById('ins-val').value || '?';
+  if (isNaN(k)) return;
+  const r = insHT.insert(k, v, false);
+  renderIns();
+  setMsg('ins-msg', `🔢 hash(${k}) = ${r.idx} → Inserted at <strong>TAIL</strong> of Bucket[${r.idx}]${r.collision ? ' 💥 Collision handled' : ''}`, 'success');
+}
+function resetInsViz() { insHT = new HT(7); renderIns(); setMsg('ins-msg','Table reset.','info'); }
+renderIns();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 3 — DELETION
+// ═══════════════════════════════════════════════════════
+let delHT = new HT(7);
+function renderDel() { renderTable(delHT, 'del-table'); }
+function addSomeForDel() {
+  [[5,'E'],[12,'L'],[19,'T'],[26,'X'],[3,'C'],[10,'J'],[7,'G']].forEach(([k,v])=>delHT.insert(k,v));
+  renderDel();
+  setMsg('del-msg','Sample data loaded. Enter a key to delete.','info');
+}
+function deleteViz() {
+  const k = parseInt(document.getElementById('del-key').value);
+  if (isNaN(k)) return;
+  const r = delHT.delete(k);
+  renderDel();
+  if (!r) setMsg('del-msg', `❌ Key <strong>${k}</strong> not found in table!`, 'error');
+  else setMsg('del-msg', `🗑️ Key <strong>${k}</strong> deleted from Bucket[${r.idx}] (was ${r.pos} node). Memory freed, count decremented.`, 'success');
+}
+function resetDelViz() { delHT = new HT(7); renderDel(); setMsg('del-msg','Table reset.','info'); }
+renderDel();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 4 — SEARCH
+// ═══════════════════════════════════════════════════════
+let srchHT = new HT(7);
+function renderSrch(found=new Set()) { renderTable(srchHT, 'srch-table', {}, found); }
+function addSomeForSearch() {
+  [[5,'E'],[12,'L'],[19,'T'],[26,'X'],[3,'C'],[10,'J']].forEach(([k,v])=>srchHT.insert(k,v));
+  renderSrch();
+  setMsg('srch-msg','Sample data loaded. Enter a key to search.','info');
+}
+function searchViz() {
+  const k = parseInt(document.getElementById('srch-key').value);
+  if (isNaN(k)) return;
+  const r = srchHT.search(k);
+  const steps = document.getElementById('srch-steps');
+  const idx = hashFn(k, 7);
+  let html = `<div class="step-list">
+    <div class="step-item"><div class="step-text"><strong>Compute Hash:</strong> ${k} % 7 = <strong>${idx}</strong> → Go to Bucket[${idx}]</div></div>
+    <div class="step-item"><div class="step-text"><strong>Traverse Bucket[${idx}]:</strong> Chain length = ${srchHT.chainLen(idx)}</div></div>`;
+  if (r.node) {
+    html += `<div class="step-item"><div class="step-text"><strong>Key Found!</strong> ${k} → Value: <strong>${r.node.v}</strong></div></div>`;
+    renderSrch(new Set([k]));
+    setMsg('srch-msg', `✅ Key <strong>${k}</strong> FOUND in Bucket[${idx}] → Value: <strong>${r.node.v}</strong>`, 'success');
+  } else {
+    html += `<div class="step-item"><div class="step-text"><strong>Key ${k} NOT FOUND</strong> — missing key detected</div></div>`;
+    renderSrch();
+    setMsg('srch-msg', `❌ Key <strong>${k}</strong> not found! Searched Bucket[${idx}], traversed ${srchHT.chainLen(idx)} node(s).`, 'error');
+  }
+  html += '</div>';
+  steps.innerHTML = html;
+}
+function resetSearchViz() { srchHT = new HT(7); renderSrch(); setMsg('srch-msg','Table reset.','info'); document.getElementById('srch-steps').innerHTML=''; }
+renderSrch();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 5 — UPDATE
+// ═══════════════════════════════════════════════════════
+let updHT = new HT(7);
+function renderUpd(found=new Set()) { renderTable(updHT, 'upd-table', {}, found); }
+function addSomeForUpdate() {
+  [[5,55],[12,120],[19,190],[3,33]].forEach(([k,v])=>updHT.insert(k,v));
+  renderUpd();
+  setMsg('upd-msg','Data loaded. Enter a key and new value to update.','info');
+}
+function updateViz() {
+  const k = parseInt(document.getElementById('upd-key').value);
+  const v = document.getElementById('upd-val').value;
+  if (isNaN(k)) return;
+  const r = updHT.update(k, isNaN(+v) ? v : +v);
+  if (!r) { setMsg('upd-msg', `❌ Key <strong>${k}</strong> not found. Cannot update.`, 'error'); return; }
+  renderUpd(new Set([k]));
+  setMsg('upd-msg', `✏️ Key <strong>${k}</strong>: value changed from <strong>${r.old}</strong> → <strong>${v}</strong>`, 'success');
+}
+function resetUpdateViz() { updHT = new HT(7); renderUpd(); setMsg('upd-msg','Table reset.','info'); }
+renderUpd();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 6 — TRAVERSAL
+// ═══════════════════════════════════════════════════════
+let travHT = new HT(7);
+let travTimer = null;
+function renderTrav(hi={}) { renderTable(travHT, 'trav-table', hi); }
+function addSomeForTrav() {
+  [[5,'E'],[12,'L'],[19,'T'],[3,'C'],[10,'J'],[7,'G']].forEach(([k,v])=>travHT.insert(k,v));
+  renderTrav();
+}
+function startTraversal() {
+  if (travTimer) { clearTimeout(travTimer); }
+  const log = document.getElementById('trav-log');
+  log.innerHTML = '<span style="color:var(--accent)">Starting traversal...</span><br>';
+  const all = [];
+  travHT.buckets.forEach((chain, i) => {
+    if (chain.length === 0) all.push({i, node: null});
+    chain.forEach(n => all.push({i, node: n}));
+  });
+  let idx = 0;
+  function step() {
+    if (idx >= all.length) {
+      renderTrav({});
+      log.innerHTML += `<span style="color:var(--accent4)">✅ Traversal complete! Visited ${travHT.count} elements across ${travHT.size} buckets.</span>`;
+      return;
+    }
+    const {i, node} = all[idx];
+    if (node) {
+      const hi = {}; hi[i] = node.k;
+      renderTrav(hi);
+      log.innerHTML += `Bucket[${i}] → key: <strong style="color:var(--accent)">${node.k}</strong>, val: ${node.v}<br>`;
+      log.scrollTop = log.scrollHeight;
+    } else {
+      log.innerHTML += `Bucket[${i}] → <span style="color:var(--text3)">[EMPTY]</span><br>`;
+    }
+    idx++;
+    travTimer = setTimeout(step, 500);
+  }
+  step();
+}
+function resetTravViz() { travHT = new HT(7); renderTrav(); document.getElementById('trav-log').innerHTML = 'Traversal log will appear here...'; }
+renderTrav();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 7 — COLLISION
+// ═══════════════════════════════════════════════════════
+(function() {
+  const body = document.getElementById('col-table-body');
+  const keys = [0,7,14,3,10,5,12,19,1,8];
+  body.innerHTML = keys.map(k => {
+    const idx = hashFn(k,7);
+    const prev = keys.slice(0, keys.indexOf(k)).filter(pk => hashFn(pk,7)===idx);
+    const col = prev.length > 0;
+    return `<tr><td>${k}</td><td>${k} % 7 = ${idx}</td><td>Bucket[${idx}]</td><td>${col ? `<span class="tag tag-red">COLLISION with ${prev.join(',')}</span>` : '<span class="tag tag-green">No Collision</span>'}</td></tr>`;
+  }).join('');
+  // demo viz
+  const demoHT = new HT(7);
+  keys.forEach(k => demoHT.insert(k, k*10));
+  renderTable(demoHT, 'collision-demo');
+  setMsg('collision-msg', `Inserted keys: [${keys.join(', ')}]. Observe how keys with same k%7 form chains!`, 'info');
+})();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 8 — BUCKET MANAGEMENT
+// ═══════════════════════════════════════════════════════
+let bktHT = new HT(7);
+function renderBkt() {
+  renderTable(bktHT, 'bkt-table');
+  const bars = document.getElementById('chain-bar-viz');
+  bars.innerHTML = '';
+  const maxLen = Math.max(1, bktHT.maxChain());
+  bktHT.buckets.forEach((chain, i) => {
+    const col = document.createElement('div');
+    col.className = 'chain-bar-col';
+    const bar = document.createElement('div');
+    bar.className = 'chain-bar';
+    bar.style.height = `${Math.max(4, (chain.length/maxLen)*100)}px`;
+    bar.style.background = chain.length === 0 ? 'var(--border)' : chain.length === maxLen ? 'var(--accent3)' : 'var(--accent)';
+    col.appendChild(bar);
+    const lbl = document.createElement('div');
+    lbl.className = 'chain-bar-lbl';
+    lbl.textContent = `B[${i}]\n${chain.length}`;
+    lbl.style.whiteSpace = 'pre';
+    lbl.style.textAlign = 'center';
+    col.appendChild(lbl);
+    bars.appendChild(col);
+  });
+  const stats = document.getElementById('bkt-stats');
+  const empty = bktHT.buckets.filter(b=>b.length===0).length;
+  stats.innerHTML = `
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent4)">${bktHT.count}</div><div class="stat-lbl">Elements</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent3)">${bktHT.maxChain()}</div><div class="stat-lbl">Max Chain</div></div>
+    <div class="stat-box"><div class="stat-val">${bktHT.minChainNonEmpty()}</div><div class="stat-lbl">Min Chain</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent2)">${bktHT.avgChain()}</div><div class="stat-lbl">Avg Chain</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--text2)">${empty}</div><div class="stat-lbl">Empty Buckets</div></div>
+  `;
+}
+function addSomeBuckets() {
+  [[5,50],[12,120],[19,190],[26,260],[3,30],[10,100],[7,70],[14,140]].forEach(([k,v])=>bktHT.insert(k,v));
+  renderBkt();
+  setMsg('bkt-msg','Sample data loaded. Bar chart shows chain lengths per bucket.','success');
+}
+function resetBucketViz() { bktHT = new HT(7); renderBkt(); setMsg('bkt-msg','Reset.','info'); }
+renderBkt();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 9 — LOAD FACTOR
+// ═══════════════════════════════════════════════════════
+function calcLoadFactor() {
+  const n = parseFloat(document.getElementById('lf-elements').value)||0;
+  const m = parseFloat(document.getElementById('lf-size').value)||1;
+  const lf = n/m;
+  document.getElementById('lf-val').textContent = lf.toFixed(3);
+  const pct = Math.min(100, lf*100);
+  const bar = document.getElementById('lf-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = lf < 0.5 ? 'var(--accent4)' : lf < 0.75 ? 'var(--accent)' : 'var(--accent3)';
+  const msg = lf < 0.5
+    ? `✅ Load Factor = <strong>${lf.toFixed(3)}</strong> (LOW) — Excellent performance, minimal collisions.`
+    : lf < 0.75
+    ? `⚡ Load Factor = <strong>${lf.toFixed(3)}</strong> (MEDIUM) — Good performance, balanced memory use.`
+    : `⚠️ Load Factor = <strong>${lf.toFixed(3)}</strong> (HIGH) — Consider <strong>rehashing</strong>! Performance degrading.`;
+  setMsg('lf-msg', msg, lf < 0.5 ? 'success' : lf < 0.75 ? 'info' : 'error');
+}
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 10 — REHASHING
+// ═══════════════════════════════════════════════════════
+let rehashOldHT = new HT(7);
+let rehashNewHT = null;
+function renderRehashOld() {
+  const el = document.getElementById('rehash-old');
+  el.innerHTML = '';
+  rehashOldHT.buckets.forEach((chain, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:.7rem;';
+    row.innerHTML = `<span style="color:var(--text3);min-width:48px">B[${i}]:</span>`;
+    if (chain.length === 0) row.innerHTML += `<span style="color:var(--text3)">NULL</span>`;
+    else row.innerHTML += chain.map(n=>`<span class="bucket-node head" style="padding:4px 8px">${n.k}</span>`).join('<span style="color:var(--text3)">→</span>');
+    el.appendChild(row);
+  });
+}
+function renderRehashNew() {
+  const el = document.getElementById('rehash-new');
+  el.innerHTML = '';
+  if (!rehashNewHT) { el.innerHTML = '<span style="color:var(--text3);font-size:.7rem">Not yet created</span>'; return; }
+  rehashNewHT.buckets.forEach((chain, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:.7rem;';
+    row.innerHTML = `<span style="color:var(--text3);min-width:54px">B[${i}]:</span>`;
+    if (chain.length === 0) row.innerHTML += `<span style="color:var(--text3)">NULL</span>`;
+    else row.innerHTML += chain.map(n=>`<span class="bucket-node chain" style="padding:4px 8px">${n.k}</span>`).join('<span style="color:var(--text3)">→</span>');
+    el.appendChild(row);
+  });
+}
+function setupRehash() {
+  rehashOldHT = new HT(7);
+  [[5,50],[12,120],[19,190],[3,30],[10,100],[7,70],[14,140],[21,210],[1,10],[8,80]].forEach(([k,v])=>rehashOldHT.insert(k,v));
+  rehashNewHT = null;
+  renderRehashOld(); renderRehashNew();
+  setMsg('rehash-msg',`Old table: size=7, count=${rehashOldHT.count}, LF=${rehashOldHT.loadFactor()} — Click Trigger Rehash!`,'warn');
+}
+function doRehash() {
+  if (rehashOldHT.count === 0) { setMsg('rehash-msg','Load data first!','error'); return; }
+  rehashNewHT = new HT(rehashOldHT.size * 2);
+  rehashOldHT.buckets.forEach(chain => {
+    chain.forEach(node => rehashNewHT.insert(node.k, node.v));
+  });
+  renderRehashOld(); renderRehashNew();
+  setMsg('rehash-msg', `✅ Rehash complete! Size 7 → 14. All ${rehashNewHT.count} elements reinserted. New LF = ${rehashNewHT.loadFactor()}`, 'success');
+}
+function resetRehash() { rehashOldHT = new HT(7); rehashNewHT = null; renderRehashOld(); renderRehashNew(); setMsg('rehash-msg','Reset.','info'); }
+renderRehashOld(); renderRehashNew();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 11 — UTILITY
+// ═══════════════════════════════════════════════════════
+let utilHT = new HT(7);
+function renderUtil() { renderTable(utilHT, 'util-table'); }
+function addSomeForUtil() {
+  [[5,50],[12,120],[3,30]].forEach(([k,v])=>utilHT.insert(k,v));
+  renderUtil();
+}
+function checkEmpty() {
+  const emp = utilHT.count === 0;
+  setMsg('util-msg', emp ? '📭 Table is <strong>EMPTY</strong> (count = 0)' : `📬 Table is <strong>NOT empty</strong> — contains ${utilHT.count} elements`, emp ? 'warn' : 'success');
+}
+function getSize() {
+  setMsg('util-msg', `📐 Table size (buckets) = <strong>${utilHT.size}</strong> | Element count = <strong>${utilHT.count}</strong> | Load factor = <strong>${utilHT.loadFactor()}</strong>`, 'info');
+}
+function clearTable() {
+  utilHT = new HT(7); renderUtil();
+  setMsg('util-msg', '🗑️ Table cleared! All chains freed, all buckets set to NULL, count = 0', 'success');
+}
+renderUtil();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 12 — MEMORY
+// ═══════════════════════════════════════════════════════
+let memBlocks = [];
+let memId = 0;
+function renderMem() {
+  const el = document.getElementById('mem-blocks');
+  el.innerHTML = '';
+  if (memBlocks.length === 0) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:.7rem;grid-column:1/-1">Heap is empty — no allocated nodes</div>';
+    return;
+  }
+  memBlocks.forEach(b => {
+    const d = document.createElement('div');
+    d.style.cssText = `background:${b.freed ? '#1c1c1c' : '#001e2b'};border:1px solid ${b.freed ? 'var(--text3)' : 'var(--accent)'};border-radius:8px;padding:10px;text-align:center;transition:.3s;`;
+    d.innerHTML = `<div style="font-size:.58rem;color:var(--text3)">addr: 0x${b.addr}</div><div style="font-size:.75rem;color:${b.freed ? 'var(--text3)' : 'var(--accent)'};font-weight:700;margin:4px 0">Node #${b.id}</div><div style="font-size:.65rem;color:${b.freed ? 'var(--text3)' : 'var(--text2)'}">key=${b.key}, val=${b.val}</div><div style="font-size:.58rem;margin-top:4px;color:${b.freed ? 'var(--accent3)' : 'var(--accent4)'}">● ${b.freed ? 'FREE' : 'ALLOCATED'}</div>`;
+    el.appendChild(d);
+  });
+}
+function allocMem() {
+  if (memBlocks.filter(b=>!b.freed).length >= 8) { setMsg('mem-msg','Heap full (max 8 shown). Free some nodes first!','error'); return; }
+  const id = ++memId;
+  const key = Math.floor(Math.random()*50);
+  memBlocks.push({id, key, val: key*10, freed: false, addr: Math.floor(Math.random()*0xffff).toString(16).toUpperCase().padStart(4,'0')});
+  renderMem();
+  setMsg('mem-msg', `✅ malloc() called → Node #${id} allocated at 0x... (key=${key})`, 'success');
+}
+function freeMem() {
+  const live = memBlocks.filter(b=>!b.freed);
+  if (!live.length) { setMsg('mem-msg','No allocated nodes to free!','error'); return; }
+  const b = live[live.length-1];
+  b.freed = true;
+  renderMem();
+  setMsg('mem-msg', `🗑️ free() called → Node #${b.id} (key=${b.key}) deallocated. Memory returned to heap.`, 'warn');
+}
+function resetMem() { memBlocks = []; memId = 0; renderMem(); setMsg('mem-msg','Heap reset.','info'); }
+renderMem();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 13 — ANALYTICS
+// ═══════════════════════════════════════════════════════
+let anlHT = new HT(7);
+function renderAnl() { renderTable(anlHT, 'anl-table'); }
+function addSomeForAnalytics() {
+  [[5,50],[12,120],[19,190],[3,30],[10,100],[7,70],[14,140],[1,10]].forEach(([k,v])=>anlHT.insert(k,v));
+  renderAnl();
+}
+function runAnalytics() {
+  if (!anlHT.count) { setMsg('anl-msg','Load data first!','error'); return; }
+  const cr = anlHT.collisionRate();
+  const avg = anlHT.avgChain();
+  const lf = anlHT.loadFactor();
+  const mc = anlHT.maxChain();
+  const empty = anlHT.buckets.filter(b=>b.length===0).length;
+  document.getElementById('anl-stats').innerHTML = `
+    <div class="stat-box"><div class="stat-val">${lf}</div><div class="stat-lbl">Load Factor</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent3)">${cr}%</div><div class="stat-lbl">Collision Rate</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent2)">${avg}</div><div class="stat-lbl">Avg Chain</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--accent3)">${mc}</div><div class="stat-lbl">Max Chain</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--text2)">${empty}</div><div class="stat-lbl">Empty Buckets</div></div>
+  `;
+  const eff = parseFloat(lf) < 0.5 ? 'Excellent' : parseFloat(lf) < 0.75 ? 'Good' : 'Poor — Rehash!';
+  document.getElementById('anl-detail').innerHTML = `
+    <div class="msg ${parseFloat(lf)<0.75?'msg-success':'msg-error'}">
+      🔬 Hash Function Efficiency: <strong>${eff}</strong><br>
+      Elements: ${anlHT.count} | Buckets: ${anlHT.size} | Collision Rate: ${cr}%<br>
+      Average search cost: ~${avg} comparisons per lookup
+    </div>`;
+}
+function resetAnalytics() { anlHT = new HT(7); renderAnl(); document.getElementById('anl-stats').innerHTML=''; document.getElementById('anl-detail').innerHTML=''; }
+renderAnl();
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 14 — ITERATOR
+// ═══════════════════════════════════════════════════════
+let iterHT = new HT(7);
+let iterBucket = 0, iterNode = 0;
+let iterAll = [];
+
+function buildIterAll() {
+  iterAll = [];
+  iterHT.buckets.forEach((chain, i) => {
+    chain.forEach((node, j) => iterAll.push({i, j, node}));
+  });
+}
+function renderIterTable(currentIdx = -1) {
+  const el = document.getElementById('iter-table');
+  el.innerHTML = '';
+  iterHT.buckets.forEach((chain, i) => {
+    const row = document.createElement('div');
+    row.className = 'iter-row';
+    row.innerHTML = `<div class="iter-bucket-lbl">Bucket[${i}]:</div>`;
+    if (chain.length === 0) {
+      row.innerHTML += `<div class="iter-node" style="color:var(--text3)">NULL</div>`;
+    } else {
+      chain.forEach((node, j) => {
+        const idx = iterAll.findIndex(x => x.i === i && x.j === j);
+        const isCurr = idx === currentIdx;
+        row.innerHTML += `<div class="iter-node ${isCurr ? 'current' : ''}">${node.k}:${node.v}</div>`;
+        if (j < chain.length - 1) row.innerHTML += `<div class="iter-arrow">→</div>`;
+      });
+    }
+    el.appendChild(row);
+  });
+}
+function addSomeForIter() {
+  [[5,'E'],[12,'L'],[3,'C'],[10,'J'],[19,'T'],[7,'G']].forEach(([k,v])=>iterHT.insert(k,v));
+  buildIterAll();
+  iterBucket = 0;
+  renderIterTable(-1);
+  setMsg('iter-msg','Sample data loaded. Click Next → to iterate.','info');
+  document.getElementById('iter-current').textContent = '';
+}
+function iterNext() {
+  if (!iterAll.length) { buildIterAll(); }
+  if (iterBucket >= iterAll.length) {
+    renderIterTable(-1);
+    setMsg('iter-msg','🏁 Iterator exhausted — all elements visited. Reset to start over.','warn');
+    document.getElementById('iter-current').textContent = '';
+    return;
+  }
+  const cur = iterAll[iterBucket];
+  renderIterTable(iterBucket);
+  setMsg('iter-msg', `📍 Current: Bucket[${cur.i}] → Node[${cur.j}] — Key: <strong>${cur.node.k}</strong>, Value: <strong>${cur.node.v}</strong>`, 'success');
+  document.getElementById('iter-current').textContent = `Step ${iterBucket+1} of ${iterAll.length}`;
+  iterBucket++;
+}
+function iterReset() {
+  buildIterAll();
+  iterBucket = 0;
+  renderIterTable(-1);
+  setMsg('iter-msg','Iterator reset to beginning.','info');
+  document.getElementById('iter-current').textContent = '';
+}
+renderIterTable(-1);
+
+// ═══════════════════════════════════════════════════════
+//  SECTION 15 — ADVANCED / MERGE
+// ═══════════════════════════════════════════════════════
+let mergeA = new HT(7), mergeB = new HT(7), mergeResult = null;
+function renderMergeTable(ht, elId) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  ht.buckets.forEach((chain, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:.68rem;';
+    row.innerHTML = `<span style="color:var(--text3);min-width:42px">B[${i}]:</span>`;
+    if (chain.length === 0) row.innerHTML += `<span style="color:var(--text3)">∅</span>`;
+    else row.innerHTML += chain.map(n=>`<span class="bucket-node ${elId.includes('result') ? 'found' : 'head'}" style="padding:3px 7px;font-size:.65rem">${n.k}</span>`).join('<span style="color:var(--text3)">→</span>');
+    el.appendChild(row);
+  });
+}
+function setupMerge() {
+  mergeA = new HT(7); mergeB = new HT(7); mergeResult = null;
+  [[5,50],[3,30],[10,100]].forEach(([k,v])=>mergeA.insert(k,v));
+  [[7,70],[14,140],[3,999]].forEach(([k,v])=>mergeB.insert(k,v));
+  renderMergeTable(mergeA, 'merge-a');
+  renderMergeTable(mergeB, 'merge-b');
+  document.getElementById('merge-result').innerHTML = '<span style="color:var(--text3);font-size:.7rem">Not yet merged</span>';
+  setMsg('merge-msg', 'Tables A and B ready. Note: key 3 exists in both (B will override A on merge).', 'info');
+}
+function doMerge() {
+  if (!mergeA.count) { setMsg('merge-msg','Setup tables first!','error'); return; }
+  mergeResult = new HT(7);
+  mergeA.buckets.forEach(chain => chain.forEach(n => mergeResult.insert(n.k, n.v)));
+  mergeB.buckets.forEach(chain => chain.forEach(n => mergeResult.insert(n.k, n.v)));
+  renderMergeTable(mergeResult, 'merge-result');
+  setMsg('merge-msg', `✅ Merged! Result has ${mergeResult.count} unique keys. Key 3: B's value (999) overrode A's value (30).`, 'success');
+}
+function resetMerge() { mergeA = new HT(7); mergeB = new HT(7); mergeResult = null; ['merge-a','merge-b','merge-result'].forEach(id=>{ document.getElementById(id).innerHTML = ''; }); setMsg('merge-msg','Reset.','info'); }
+
+// ═══════════════════════════════════════════════════════
+//  COPY CODE BUTTON
+// ═══════════════════════════════════════════════════════
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.style.borderColor = 'var(--accent4)';
+    btn.style.color = 'var(--accent4)';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.borderColor=''; btn.style.color=''; }, 2000);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAV ACTIVE STATE
+// ═══════════════════════════════════════════════════════
+function goTo(id) {
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth', block:'start'});
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  // close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// Update nav on scroll
+const sections = ['s0','s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11','s12','s13','s14','s15'];
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let current = 's0';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top < 120) current = id;
+  });
+  navItems.forEach((nav, i) => {
+    nav.classList.toggle('active', sections[i] === current);
+  });
+}, {passive: true});
+</script>
+</body>
+</html>

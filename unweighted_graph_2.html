@@ -1,0 +1,3060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unweighted Graph — Adjacency List | Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --accent: #00d4ff;
+  --accent2: #7c3aed;
+  --accent3: #10b981;
+  --accent4: #f59e0b;
+  --accent5: #ef4444;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --node-fill: #1e3a5f;
+  --node-stroke: #00d4ff;
+  --edge-color: #334155;
+  --visited: #10b981;
+  --queued: #f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Lora',serif;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+/* HERO */
+.hero{
+  background:linear-gradient(135deg,#0a0e1a 0%,#0d1b2e 50%,#0a1628 100%);
+  border-bottom:1px solid var(--border);
+  padding:60px 40px 40px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';
+  position:absolute;
+  top:-100px;right:-100px;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(0,212,255,0.08) 0%,transparent 70%);
+  border-radius:50%;
+}
+.hero::after{
+  content:'';
+  position:absolute;
+  bottom:-80px;left:200px;
+  width:400px;height:400px;
+  background:radial-gradient(circle,rgba(124,58,237,0.06) 0%,transparent 70%);
+  border-radius:50%;
+}
+.hero-inner{max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.hero-badge{
+  display:inline-block;
+  background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.3);
+  color:var(--accent);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:4px 12px;
+  border-radius:20px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  margin-bottom:20px;
+}
+.hero h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(2.2rem,5vw,4rem);
+  font-weight:800;
+  line-height:1.1;
+  margin-bottom:16px;
+  background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--accent2) 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.hero p{color:var(--text2);font-size:1.1rem;max-width:600px;margin-bottom:30px;}
+.hero-stats{display:flex;gap:30px;flex-wrap:wrap;}
+.stat{text-align:center;}
+.stat-num{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--accent);}
+.stat-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
+
+/* LAYOUT */
+.layout{display:flex;min-height:100vh;max-width:1400px;margin:0 auto;}
+.sidebar{
+  width:280px;
+  flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  padding:20px 0;
+}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-track{background:transparent;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.nav-section{margin-bottom:8px;}
+.nav-section-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--text3);
+  padding:8px 20px 4px;
+}
+.nav-item{
+  display:block;
+  padding:7px 20px;
+  color:var(--text2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;
+  cursor:pointer;
+  transition:all 0.2s;
+  border-left:2px solid transparent;
+  text-decoration:none;
+}
+.nav-item:hover,.nav-item.active{
+  color:var(--accent);
+  background:rgba(0,212,255,0.06);
+  border-left-color:var(--accent);
+}
+.nav-item.sub{padding-left:34px;font-size:11px;}
+
+/* MAIN */
+.main{flex:1;padding:0;overflow-x:hidden;}
+
+/* SECTION */
+.section{
+  padding:50px 50px;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.section:nth-child(even){background:rgba(255,255,255,0.01);}
+.section-header{margin-bottom:35px;}
+.section-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:2px;
+  margin-bottom:8px;
+}
+.section h2{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(1.5rem,3vw,2.2rem);
+  font-weight:700;
+  color:#fff;
+  margin-bottom:10px;
+}
+.section h3{
+  font-family:'Syne',sans-serif;
+  font-size:1.2rem;
+  font-weight:600;
+  color:var(--accent);
+  margin:25px 0 10px;
+}
+.section h4{
+  font-family:'Syne',sans-serif;
+  font-size:1rem;
+  font-weight:600;
+  color:var(--accent4);
+  margin:20px 0 8px;
+}
+.section p{color:var(--text2);margin-bottom:12px;font-size:0.97rem;}
+.section ul{color:var(--text2);padding-left:20px;margin-bottom:12px;}
+.section ul li{margin-bottom:6px;font-size:0.95rem;}
+
+/* CARDS GRID */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:20px 0;}
+.card{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  transition:border-color 0.2s;
+}
+.card:hover{border-color:rgba(0,212,255,0.3);}
+.card-icon{font-size:1.5rem;margin-bottom:10px;}
+.card-title{font-family:'Syne',sans-serif;font-weight:600;color:#fff;margin-bottom:6px;font-size:0.95rem;}
+.card-desc{font-size:0.85rem;color:var(--text2);}
+
+/* ANALOGY BOX */
+.analogy{
+  background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(0,212,255,0.05));
+  border:1px solid rgba(124,58,237,0.3);
+  border-radius:10px;
+  padding:20px 24px;
+  margin:20px 0;
+}
+.analogy-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--accent2);
+  margin-bottom:8px;
+}
+.analogy p{color:var(--text);margin:0;font-style:italic;}
+
+/* CODE BLOCK */
+.code-wrap{margin:20px 0;}
+.code-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:#0d1117;
+  border:1px solid var(--border);
+  border-bottom:none;
+  border-radius:8px 8px 0 0;
+  padding:10px 16px;
+}
+.code-lang{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--accent);
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+.copy-btn{
+  background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.2);
+  color:var(--accent);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  padding:4px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.copy-btn:hover{background:rgba(0,212,255,0.2);}
+pre{
+  background:#0d1117;
+  border:1px solid var(--border);
+  border-radius:0 0 8px 8px;
+  padding:20px;
+  overflow-x:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  line-height:1.6;
+}
+pre::-webkit-scrollbar{height:4px;}
+pre::-webkit-scrollbar-thumb{background:var(--border);}
+.kw{color:#ff7b72;}
+.ty{color:#79c0ff;}
+.fn{color:#d2a8ff;}
+.cm{color:#8b949e;font-style:italic;}
+.st{color:#a5d6ff;}
+.nm{color:#f0883e;}
+.pp{color:#ff9f0a;}
+
+/* CANVAS VIZ */
+.viz-box{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  margin:20px 0;
+}
+.viz-title{
+  font-family:'Syne',sans-serif;
+  font-weight:600;
+  color:#fff;
+  margin-bottom:4px;
+  font-size:0.95rem;
+}
+.viz-desc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:14px;}
+canvas{display:block;width:100%;border-radius:6px;background:#0d1117;}
+.viz-controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+.btn{
+  background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.25);
+  color:var(--accent);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  padding:7px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.btn:hover{background:rgba(0,212,255,0.2);border-color:rgba(0,212,255,0.5);}
+.btn.green{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:var(--accent3);}
+.btn.green:hover{background:rgba(16,185,129,0.2);}
+.btn.red{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:var(--accent5);}
+.btn.amber{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);color:var(--accent4);}
+.btn.purple{background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.3);color:#a78bfa;}
+
+/* OUTPUT BOX */
+.output{
+  background:#0d1117;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px 16px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--accent3);
+  margin-top:10px;
+  min-height:40px;
+  max-height:120px;
+  overflow-y:auto;
+}
+
+/* COMPLEXITY TABLE */
+.ctable{width:100%;border-collapse:collapse;margin:16px 0;}
+.ctable th{
+  background:var(--surface2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--accent);
+  padding:10px 14px;
+  text-align:left;
+  border:1px solid var(--border);
+}
+.ctable td{
+  padding:9px 14px;
+  border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--text2);
+}
+.ctable tr:hover td{background:rgba(255,255,255,0.02);}
+.good{color:var(--accent3);}
+.avg{color:var(--accent4);}
+.bad{color:var(--accent5);}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;}
+.leg-item{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);}
+.leg-dot{width:12px;height:12px;border-radius:50%;}
+
+/* STEP LIST */
+.steps{counter-reset:step;margin:16px 0;}
+.step-item{
+  display:flex;
+  gap:14px;
+  margin-bottom:12px;
+  align-items:flex-start;
+}
+.step-num{
+  width:28px;height:28px;
+  background:rgba(0,212,255,0.15);
+  border:1px solid rgba(0,212,255,0.3);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:11px;
+  color:var(--accent);flex-shrink:0;
+}
+.step-text{color:var(--text2);font-size:0.9rem;padding-top:4px;}
+
+/* HIGHLIGHT */
+.hl{color:var(--accent);font-weight:600;}
+.hl2{color:var(--accent3);font-weight:600;}
+.hl3{color:var(--accent4);font-weight:600;}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:28px 0;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .section{padding:35px 22px;}
+}
+@media(max-width:600px){
+  .hero{padding:40px 20px 30px;}
+  .section{padding:28px 16px;}
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* INPUT */
+.inp-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.inp{
+  background:#0d1117;
+  border:1px solid var(--border);
+  border-radius:6px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  padding:7px 12px;
+  width:120px;
+  outline:none;
+}
+.inp:focus{border-color:var(--accent);}
+.inp-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-bottom:4px;}
+
+/* PROGRESS BAR */
+.progress-bar{
+  height:3px;
+  background:var(--border);
+  border-radius:2px;
+  margin:8px 0;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:2px;
+  transition:width 0.4s ease;
+}
+
+/* NOTICE */
+.notice{
+  background:rgba(16,185,129,0.08);
+  border:1px solid rgba(16,185,129,0.2);
+  border-left:3px solid var(--accent3);
+  border-radius:6px;
+  padding:12px 16px;
+  margin:16px 0;
+  font-size:0.88rem;
+  color:var(--text2);
+}
+.notice.warn{
+  background:rgba(245,158,11,0.08);
+  border-color:rgba(245,158,11,0.2);
+  border-left-color:var(--accent4);
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">Data Structures · Complete Guide</div>
+    <h1>Unweighted Graph<br>Adjacency List</h1>
+    <p>A comprehensive, beginner-to-advanced walkthrough with theory, live visualizations, C code, and real-life analogies — covering every operation systematically.</p>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">11</div><div class="stat-label">Categories</div></div>
+      <div class="stat"><div class="stat-num">40+</div><div class="stat-label">Operations</div></div>
+      <div class="stat"><div class="stat-num">C</div><div class="stat-label">Language</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-section-title">Foundation</div>
+    <a class="nav-item" href="#intro">What is a Graph?</a>
+    <a class="nav-item" href="#representation">Adjacency List Repr.</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Vertex Operations</div>
+    <a class="nav-item sub" href="#insert-vertex">Insert Vertex</a>
+    <a class="nav-item sub" href="#delete-vertex">Delete Vertex</a>
+    <a class="nav-item sub" href="#search-vertex">Search Vertex</a>
+    <a class="nav-item sub" href="#update-vertex">Update Vertex</a>
+    <a class="nav-item sub" href="#count-vertices">Count Vertices</a>
+    <a class="nav-item sub" href="#display-vertices">Display Vertices</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Edge Operations</div>
+    <a class="nav-item sub" href="#insert-edge">Insert Edge</a>
+    <a class="nav-item sub" href="#delete-edge">Delete Edge</a>
+    <a class="nav-item sub" href="#search-edge">Search Edge</a>
+    <a class="nav-item sub" href="#count-edges">Count Edges</a>
+    <a class="nav-item sub" href="#display-edges">Display Edges</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Traversal</div>
+    <a class="nav-item sub" href="#bfs">BFS</a>
+    <a class="nav-item sub" href="#dfs">DFS</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Path Operations</div>
+    <a class="nav-item sub" href="#find-path">Find Path</a>
+    <a class="nav-item sub" href="#shortest-path">Shortest Path</a>
+    <a class="nav-item sub" href="#all-paths">All Paths</a>
+    <a class="nav-item sub" href="#reachability">Reachability</a>
+    <a class="nav-item sub" href="#path-length">Path Length</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Connectivity</div>
+    <a class="nav-item sub" href="#check-connected">Check Connected</a>
+    <a class="nav-item sub" href="#components">Find Components</a>
+    <a class="nav-item sub" href="#isolated">Isolated Vertex</a>
+    <a class="nav-item sub" href="#reachable">Reachable Vertices</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Cycle Operations</div>
+    <a class="nav-item sub" href="#detect-cycle">Detect Cycle</a>
+    <a class="nav-item sub" href="#count-cycles">Count Cycles</a>
+    <a class="nav-item sub" href="#cyclic-check">Cyclic Check</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Degree Operations</div>
+    <a class="nav-item sub" href="#find-degree">Find Degree</a>
+    <a class="nav-item sub" href="#max-degree">Max/Min Degree</a>
+    <a class="nav-item sub" href="#avg-degree">Average Degree</a>
+    <a class="nav-item sub" href="#degree-dist">Degree Distribution</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Bipartite</div>
+    <a class="nav-item sub" href="#bipartite">Bipartite Check</a>
+    <a class="nav-item sub" href="#coloring">Graph Coloring</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Structural</div>
+    <a class="nav-item sub" href="#size-order">Size &amp; Order</a>
+    <a class="nav-item sub" href="#density">Density Check</a>
+    <a class="nav-item sub" href="#complete-graph">Complete Graph</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">Utility</div>
+    <a class="nav-item sub" href="#is-empty">Is Empty</a>
+    <a class="nav-item sub" href="#clear-copy">Clear &amp; Copy</a>
+    <a class="nav-item sub" href="#display-reset">Display &amp; Reset</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 0: INTRO -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="intro">
+<div class="section-header">
+  <div class="section-tag">Foundation · Chapter 0</div>
+  <h2>What is an Unweighted Graph?</h2>
+</div>
+
+<p>A <span class="hl">graph</span> is a collection of <span class="hl">vertices</span> (nodes) connected by <span class="hl">edges</span> (lines). In an <em>unweighted</em> graph, every edge simply means "these two nodes are connected" — no cost or distance is attached.</p>
+
+<div class="cards">
+  <div class="card"><div class="card-icon">🔵</div><div class="card-title">Vertex (Node)</div><div class="card-desc">A single entity — like a city, person, or webpage.</div></div>
+  <div class="card"><div class="card-icon">➡️</div><div class="card-title">Edge (Link)</div><div class="card-desc">A connection between two vertices. Can be directed or undirected.</div></div>
+  <div class="card"><div class="card-icon">⚖️</div><div class="card-title">Unweighted</div><div class="card-desc">All edges are equal — no distance, cost, or priority assigned.</div></div>
+  <div class="card"><div class="card-icon">🔁</div><div class="card-title">Undirected</div><div class="card-desc">If A→B exists, then B→A also exists. Like a two-way road.</div></div>
+</div>
+
+<div class="analogy">
+  <div class="analogy-label">🌍 Real-life Analogy</div>
+  <p>Think of Facebook friendships: you and your friend are <em>vertices</em>. The friendship is an <em>edge</em>. Since friendships are mutual (unweighted, undirected), if you're friends with someone, they're friends with you too — and the friendship has no "score" or "weight".</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Interactive Graph Playground</div>
+  <div class="viz-desc">Click nodes to select · Drag to rearrange · See the adjacency list update live</div>
+  <canvas id="introCanvas" height="300"></canvas>
+  <div class="viz-controls">
+    <button class="btn" onclick="introAddNode()">+ Add Node</button>
+    <button class="btn green" onclick="introAddEdge()">+ Add Edge</button>
+    <button class="btn red" onclick="introReset()">Reset</button>
+  </div>
+  <div class="output" id="introOutput">Adjacency List will appear here...</div>
+</div>
+
+<h3>Key Terminology</h3>
+<ul>
+  <li><span class="hl">Adjacent vertices:</span> Two vertices connected by an edge.</li>
+  <li><span class="hl">Degree of a vertex:</span> Number of edges connected to it.</li>
+  <li><span class="hl">Path:</span> A sequence of vertices connected by edges.</li>
+  <li><span class="hl">Cycle:</span> A path that starts and ends at the same vertex.</li>
+  <li><span class="hl">Connected graph:</span> Every vertex can reach every other vertex.</li>
+</ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- SECTION 1: REPRESENTATION -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="representation">
+<div class="section-header">
+  <div class="section-tag">Foundation · Chapter 1</div>
+  <h2>Adjacency List Representation</h2>
+</div>
+
+<p>An <span class="hl">adjacency list</span> stores a graph as an array of linked lists. Each index <code>i</code> holds a list of all vertices adjacent to vertex <code>i</code>. It's memory-efficient for <em>sparse graphs</em> (few edges).</p>
+
+<div class="cards">
+  <div class="card"><div class="card-icon">💾</div><div class="card-title">Memory: O(V + E)</div><div class="card-desc">Only stores existing edges. Sparse graphs use very little memory.</div></div>
+  <div class="card"><div class="card-icon">⚡</div><div class="card-title">Edge Check: O(degree)</div><div class="card-desc">To check if edge (u,v) exists, scan u's list. Fast for low-degree nodes.</div></div>
+  <div class="card"><div class="card-icon">🔗</div><div class="card-title">Uses Linked Lists</div><div class="card-desc">Each vertex's neighbor list is a dynamic linked list — grows as edges are added.</div></div>
+</div>
+
+<div class="analogy">
+  <div class="analogy-label">📒 Real-life Analogy</div>
+  <p>Imagine a class attendance register. Each student (vertex) has a list of classmates they sit next to (edges). Instead of a full grid showing all possible pairs, you just list who's next to whom — that's an adjacency list!</p>
+</div>
+
+<h3>Data Structures in C</h3>
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Graph Structure</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* ─── Node in the adjacency linked list ─── */</span>
+<span class="kw">struct</span> <span class="ty">Node</span> {
+    <span class="kw">int</span> vertex;           <span class="cm">/* which neighbor vertex */</span>
+    <span class="kw">struct</span> <span class="ty">Node</span>* next;   <span class="cm">/* pointer to next neighbor */</span>
+};
+
+<span class="cm">/* ─── Graph: array of adjacency lists ─── */</span>
+<span class="kw">struct</span> <span class="ty">Graph</span> {
+    <span class="kw">int</span> numVertices;      <span class="cm">/* total number of vertices */</span>
+    <span class="kw">struct</span> <span class="ty">Node</span>** adjList; <span class="cm">/* array of linked list heads */</span>
+    <span class="kw">char</span> names[<span class="nm">50</span>][<span class="nm">20</span>];  <span class="cm">/* optional: vertex labels */</span>
+};
+
+<span class="cm">/* ─── Create a new graph with V vertices ─── */</span>
+<span class="kw">struct</span> <span class="ty">Graph</span>* <span class="fn">createGraph</span>(<span class="kw">int</span> V) {
+    <span class="kw">struct</span> <span class="ty">Graph</span>* g = (<span class="kw">struct</span> <span class="ty">Graph</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Graph</span>));
+    g->numVertices = V;
+    g->adjList = (<span class="kw">struct</span> <span class="ty">Node</span>**) <span class="fn">malloc</span>(V * <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Node</span>*));
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < V; i++)
+        g->adjList[i] = NULL; <span class="cm">/* start with empty lists */</span>
+    <span class="kw">return</span> g;
+}</pre>
+</div>
+
+<h3>Visual Structure</h3>
+<div class="viz-box">
+  <div class="viz-title">Adjacency List — Memory Layout</div>
+  <div class="viz-desc">See how each vertex maps to a linked list of its neighbors</div>
+  <canvas id="reprCanvas" height="260"></canvas>
+</div>
+
+<h3>Why Adjacency List over Matrix?</h3>
+<table class="ctable">
+  <tr><th>Aspect</th><th>Adjacency List</th><th>Adjacency Matrix</th></tr>
+  <tr><td>Space</td><td class="good">O(V+E)</td><td class="bad">O(V²)</td></tr>
+  <tr><td>Add Edge</td><td class="good">O(1)</td><td class="good">O(1)</td></tr>
+  <tr><td>Remove Edge</td><td class="avg">O(E)</td><td class="good">O(1)</td></tr>
+  <tr><td>Check Edge</td><td class="avg">O(degree)</td><td class="good">O(1)</td></tr>
+  <tr><td>Get Neighbors</td><td class="good">O(degree)</td><td class="bad">O(V)</td></tr>
+  <tr><td>Best for</td><td class="good">Sparse graphs</td><td class="avg">Dense graphs</td></tr>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- VERTEX OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="insert-vertex">
+<div class="section-header">
+  <div class="section-tag">Vertex Operations · 2.1</div>
+  <h2>Insert Vertex</h2>
+</div>
+<p>Adding a new vertex expands the graph. In an adjacency list, we increase the array size and add a new empty linked list for that vertex.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🏙️ Analogy</div>
+  <p>Building a new city on a map. The city exists but has no roads yet — we just register it so roads can be added later.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Insert Vertex — Live Demo</div>
+  <div class="viz-desc">Add new vertices and watch the adjacency list grow</div>
+  <canvas id="insVCanvas" height="240"></canvas>
+  <div class="viz-controls">
+    <div>
+      <div class="inp-label">Vertex Name</div>
+      <div class="inp-row">
+        <input class="inp" id="insVName" placeholder="e.g. E" maxlength="8">
+        <button class="btn green" onclick="insertVertex()">Insert</button>
+        <button class="btn red" onclick="resetVertexDemo()">Reset</button>
+      </div>
+    </div>
+  </div>
+  <div class="output" id="insVOutput">Graph: 4 vertices [A, B, C, D]</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Insert Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Insert a new vertex into the graph */</span>
+<span class="kw">void</span> <span class="fn">insertVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span>** g, <span class="kw">char</span>* name) {
+    <span class="kw">int</span> V = (*g)->numVertices;
+
+    <span class="cm">/* Reallocate adjacency list array with one more slot */</span>
+    (*g)->adjList = (<span class="kw">struct</span> <span class="ty">Node</span>**) <span class="fn">realloc</span>(
+        (*g)->adjList, (V+<span class="nm">1</span>) * <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Node</span>*)
+    );
+
+    (*g)->adjList[V] = NULL; <span class="cm">/* new vertex has no edges */</span>
+    <span class="fn">strcpy</span>((*g)->names[V], name);
+    (*g)->numVertices++;
+
+    <span class="fn">printf</span>(<span class="st">"Vertex '%s' inserted at index %d\n"</span>, name, V);
+}</pre>
+</div>
+
+<h4>Time & Space Complexity</h4>
+<table class="ctable">
+  <tr><th>Operation</th><th>Complexity</th></tr>
+  <tr><td>Insert Vertex</td><td class="avg">O(V) — due to realloc</td></tr>
+  <tr><td>Space (new vertex)</td><td class="good">O(1)</td></tr>
+</table>
+</section>
+
+<section class="section" id="delete-vertex">
+<div class="section-header">
+  <div class="section-tag">Vertex Operations · 2.2</div>
+  <h2>Delete Vertex</h2>
+</div>
+<p>Deleting a vertex requires: (1) freeing its adjacency list, (2) removing all edges pointing <em>to</em> it from other vertices, and (3) shifting the array. It's more complex than insertion!</p>
+
+<div class="analogy">
+  <div class="analogy-label">💥 Analogy</div>
+  <p>Demolishing a city: you must also remove all roads that led to it, not just erase it from the map.</p>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Delete Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Helper: remove vertex 'target' from a linked list */</span>
+<span class="kw">struct</span> <span class="ty">Node</span>* <span class="fn">removeFromList</span>(<span class="kw">struct</span> <span class="ty">Node</span>* head, <span class="kw">int</span> target) {
+    <span class="kw">struct</span> <span class="ty">Node</span>* prev = NULL;
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = head;
+    <span class="kw">while</span> (curr) {
+        <span class="kw">if</span> (curr->vertex == target) {
+            <span class="kw">if</span> (prev) prev->next = curr->next;
+            <span class="kw">else</span> head = curr->next;
+            <span class="fn">free</span>(curr);
+            <span class="kw">return</span> head;
+        }
+        prev = curr; curr = curr->next;
+    }
+    <span class="kw">return</span> head;
+}
+
+<span class="cm">/* Delete vertex at index 'v' */</span>
+<span class="kw">void</span> <span class="fn">deleteVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> v) {
+    <span class="kw">int</span> V = g->numVertices;
+
+    <span class="cm">/* 1. Free the vertex's own adjacency list */</span>
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+    <span class="kw">while</span> (curr) {
+        <span class="kw">struct</span> <span class="ty">Node</span>* temp = curr->next;
+        <span class="fn">free</span>(curr); curr = temp;
+    }
+
+    <span class="cm">/* 2. Remove 'v' from all other adjacency lists */</span>
+    <span class="cm">/*    Also fix indices > v (they shift down by 1) */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < V; i++) {
+        <span class="kw">if</span> (i == v) <span class="kw">continue</span>;
+        g->adjList[i] = <span class="fn">removeFromList</span>(g->adjList[i], v);
+        <span class="cm">/* Decrement indices > v in the remaining list */</span>
+        <span class="kw">struct</span> <span class="ty">Node</span>* n = g->adjList[i];
+        <span class="kw">while</span> (n) { <span class="kw">if</span> (n->vertex > v) n->vertex--; n = n->next; }
+    }
+
+    <span class="cm">/* 3. Shift adjList array left */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = v; i < V-<span class="nm">1</span>; i++)
+        g->adjList[i] = g->adjList[i+<span class="nm">1</span>];
+    g->numVertices--;
+    <span class="fn">printf</span>(<span class="st">"Vertex %d deleted.\n"</span>, v);
+}</pre>
+</div>
+</section>
+
+<section class="section" id="search-vertex">
+<div class="section-header">
+  <div class="section-tag">Vertex Operations · 2.3</div>
+  <h2>Search Vertex</h2>
+</div>
+<p>Searching for a vertex by name or index. Since vertices are stored in an array, this is a linear scan.</p>
+
+<div class="viz-box">
+  <div class="viz-title">Search Vertex — Live Demo</div>
+  <div class="viz-desc">Type a vertex name to search</div>
+  <canvas id="searchVCanvas" height="200"></canvas>
+  <div class="inp-row">
+    <input class="inp" id="searchVInput" placeholder="e.g. C" maxlength="8">
+    <button class="btn" onclick="searchVertex()">Search</button>
+  </div>
+  <div class="output" id="searchVOutput">Enter a vertex name to search...</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Search Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns index of vertex with given name, or -1 if not found */</span>
+<span class="kw">int</span> <span class="fn">searchVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">char</span>* name) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">if</span> (<span class="fn">strcmp</span>(g->names[i], name) == <span class="nm">0</span>) {
+            <span class="fn">printf</span>(<span class="st">"Found '%s' at index %d\n"</span>, name, i);
+            <span class="kw">return</span> i;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"Vertex '%s' not found!\n"</span>, name);
+    <span class="kw">return</span> -<span class="nm">1</span>;
+}</pre>
+</div>
+<table class="ctable">
+  <tr><th>Case</th><th>Complexity</th></tr>
+  <tr><td>Best (first vertex)</td><td class="good">O(1)</td></tr>
+  <tr><td>Worst (last or not found)</td><td class="avg">O(V)</td></tr>
+</table>
+</section>
+
+<section class="section" id="update-vertex">
+<div class="section-header">
+  <div class="section-tag">Vertex Operations · 2.4</div>
+  <h2>Update Vertex</h2>
+</div>
+<p>Updating a vertex means changing its label/name. The edges remain unchanged — only the vertex's stored data is modified.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Update Vertex</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Update the name/label of vertex at given index */</span>
+<span class="kw">void</span> <span class="fn">updateVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> index, <span class="kw">char</span>* newName) {
+    <span class="kw">if</span> (index < <span class="nm">0</span> || index >= g->numVertices) {
+        <span class="fn">printf</span>(<span class="st">"Error: Invalid vertex index %d\n"</span>, index);
+        <span class="kw">return</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"Vertex '%s' renamed to '%s'\n"</span>,
+           g->names[index], newName);
+    <span class="fn">strcpy</span>(g->names[index], newName);  <span class="cm">/* update the label */</span>
+}</pre>
+</div>
+
+<div class="analogy">
+  <div class="analogy-label">✏️ Analogy</div>
+  <p>Renaming a city without changing any roads. Mumbai was once called Bombay — the roads didn't change, just the name on the map.</p>
+</div>
+</section>
+
+<section class="section" id="count-vertices">
+<div class="section-header">
+  <div class="section-tag">Vertex Operations · 2.5</div>
+  <h2>Count Vertices</h2>
+</div>
+<p>Counting vertices is trivial — it's just returning the <code>numVertices</code> field of our graph structure. This is O(1).</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Count Vertices</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns the number of vertices in the graph */</span>
+<span class="kw">int</span> <span class="fn">countVertices</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="fn">printf</span>(<span class="st">"Total vertices: %d\n"</span>, g->numVertices);
+    <span class="kw">return</span> g->numVertices;  <span class="cm">/* O(1) — just read a field */</span>
+}
+
+<span class="cm">/* Usage */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="ty">Graph</span>* g = <span class="fn">createGraph</span>(<span class="nm">5</span>);
+    <span class="fn">printf</span>(<span class="st">"Vertices: %d\n"</span>, <span class="fn">countVertices</span>(g)); <span class="cm">/* prints 5 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="display-vertices">
+<div class="section-header">
+  <div class="section-tag">Vertex Operations · 2.6</div>
+  <h2>Display Vertices</h2>
+</div>
+<p>Print all vertex names/labels stored in the graph.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Display Vertices</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Print all vertex names */</span>
+<span class="kw">void</span> <span class="fn">displayVertices</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="fn">printf</span>(<span class="st">"Vertices (%d total):\n"</span>, g->numVertices);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="fn">printf</span>(<span class="st">"  [%d] %s\n"</span>, i, g->names[i]);
+    }
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- EDGE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="insert-edge">
+<div class="section-header">
+  <div class="section-tag">Edge Operations · 3.1</div>
+  <h2>Insert Edge</h2>
+</div>
+<p>Adding an edge between vertex <code>u</code> and vertex <code>v</code>: create a new node with value <code>v</code> and prepend it to <code>adjList[u]</code>. For undirected graphs, also add <code>u</code> to <code>adjList[v]</code>.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🛣️ Analogy</div>
+  <p>Building a road between two cities. If it's a two-way road (undirected), you add the road to both cities' connection lists.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Insert Edge — Live Demo</div>
+  <div class="viz-desc">Choose two vertices to connect with an edge</div>
+  <canvas id="insECanvas" height="260"></canvas>
+  <div class="inp-row">
+    <div>
+      <div class="inp-label">From</div>
+      <input class="inp" id="insEFrom" placeholder="0–4" style="width:70px">
+    </div>
+    <div>
+      <div class="inp-label">To</div>
+      <input class="inp" id="insETo" placeholder="0–4" style="width:70px">
+    </div>
+    <button class="btn green" onclick="insertEdgeDemo()" style="align-self:flex-end">Insert Edge</button>
+    <button class="btn red" onclick="resetEdgeDemo()" style="align-self:flex-end">Reset</button>
+  </div>
+  <div class="output" id="insEOutput">Add edges between vertices 0–4</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Insert Edge (Undirected)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Create a new list node */</span>
+<span class="kw">struct</span> <span class="ty">Node</span>* <span class="fn">newNode</span>(<span class="kw">int</span> vertex) {
+    <span class="kw">struct</span> <span class="ty">Node</span>* node =
+        (<span class="kw">struct</span> <span class="ty">Node</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Node</span>));
+    node->vertex = vertex;
+    node->next   = NULL;
+    <span class="kw">return</span> node;
+}
+
+<span class="cm">/* Insert undirected edge between u and v */</span>
+<span class="kw">void</span> <span class="fn">insertEdge</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> u, <span class="kw">int</span> v) {
+    <span class="kw">if</span> (u < <span class="nm">0</span> || v < <span class="nm">0</span> || u >= g->numVertices || v >= g->numVertices) {
+        <span class="fn">printf</span>(<span class="st">"Error: Invalid vertex!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Add v to u's adjacency list (prepend = O(1)) */</span>
+    <span class="kw">struct</span> <span class="ty">Node</span>* n1 = <span class="fn">newNode</span>(v);
+    n1->next = g->adjList[u];
+    g->adjList[u] = n1;
+
+    <span class="cm">/* Add u to v's adjacency list (undirected) */</span>
+    <span class="kw">struct</span> <span class="ty">Node</span>* n2 = <span class="fn">newNode</span>(u);
+    n2->next = g->adjList[v];
+    g->adjList[v] = n2;
+
+    <span class="fn">printf</span>(<span class="st">"Edge (%d–%d) inserted.\n"</span>, u, v);
+}</pre>
+</div>
+<table class="ctable">
+  <tr><th>Operation</th><th>Complexity</th></tr>
+  <tr><td>Insert Edge</td><td class="good">O(1) — prepend to list</td></tr>
+</table>
+</section>
+
+<section class="section" id="delete-edge">
+<div class="section-header">
+  <div class="section-tag">Edge Operations · 3.2</div>
+  <h2>Delete Edge</h2>
+</div>
+<p>Removing an edge between <code>u</code> and <code>v</code> requires traversing the adjacency list to find and remove the node.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Delete Edge</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Helper: remove vertex 'target' from list starting at head */</span>
+<span class="kw">struct</span> <span class="ty">Node</span>* <span class="fn">deleteFromList</span>(<span class="kw">struct</span> <span class="ty">Node</span>* head, <span class="kw">int</span> target) {
+    <span class="kw">struct</span> <span class="ty">Node</span>* prev = NULL;
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = head;
+    <span class="kw">while</span> (curr != NULL) {
+        <span class="kw">if</span> (curr->vertex == target) {
+            <span class="kw">if</span> (prev == NULL) head = curr->next;
+            <span class="kw">else</span>             prev->next = curr->next;
+            <span class="fn">free</span>(curr);
+            <span class="kw">return</span> head;
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+    <span class="kw">return</span> head; <span class="cm">/* not found, unchanged */</span>
+}
+
+<span class="cm">/* Delete edge between u and v (undirected) */</span>
+<span class="kw">void</span> <span class="fn">deleteEdge</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> u, <span class="kw">int</span> v) {
+    g->adjList[u] = <span class="fn">deleteFromList</span>(g->adjList[u], v);
+    g->adjList[v] = <span class="fn">deleteFromList</span>(g->adjList[v], u);
+    <span class="fn">printf</span>(<span class="st">"Edge (%d–%d) deleted.\n"</span>, u, v);
+}</pre>
+</div>
+<table class="ctable">
+  <tr><th>Operation</th><th>Complexity</th></tr>
+  <tr><td>Delete Edge</td><td class="avg">O(E) worst case — must scan the list</td></tr>
+</table>
+</section>
+
+<section class="section" id="search-edge">
+<div class="section-header">
+  <div class="section-tag">Edge Operations · 3.3</div>
+  <h2>Search Edge</h2>
+</div>
+<p>Check if an edge exists between two vertices by scanning the adjacency list of one of them.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Search Edge</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns 1 if edge (u,v) exists, else 0 */</span>
+<span class="kw">int</span> <span class="fn">searchEdge</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> u, <span class="kw">int</span> v) {
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[u];
+    <span class="kw">while</span> (curr != NULL) {
+        <span class="kw">if</span> (curr->vertex == v) {
+            <span class="fn">printf</span>(<span class="st">"Edge (%d–%d) EXISTS.\n"</span>, u, v);
+            <span class="kw">return</span> <span class="nm">1</span>;
+        }
+        curr = curr->next;
+    }
+    <span class="fn">printf</span>(<span class="st">"Edge (%d–%d) does NOT exist.\n"</span>, u, v);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="count-edges">
+<div class="section-header">
+  <div class="section-tag">Edge Operations · 3.4</div>
+  <h2>Count Edges</h2>
+</div>
+<p>To count edges, sum up all adjacency list lengths. For an undirected graph, divide by 2 (each edge is counted twice).</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Count Edges</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Count total edges in undirected graph */</span>
+<span class="kw">int</span> <span class="fn">countEdges</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> total = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">while</span> (curr != NULL) {
+            total++;
+            curr = curr->next;
+        }
+    }
+    <span class="cm">/* Each undirected edge is counted twice */</span>
+    total = total / <span class="nm">2</span>;
+    <span class="fn">printf</span>(<span class="st">"Total edges: %d\n"</span>, total);
+    <span class="kw">return</span> total;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="display-edges">
+<div class="section-header">
+  <div class="section-tag">Edge Operations · 3.5</div>
+  <h2>Display Edges</h2>
+</div>
+<p>Print all edges. For undirected graphs, print each edge once (only when <code>i &lt; j</code> to avoid duplicates).</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Display All Edges</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Display all edges (each undirected edge shown once) */</span>
+<span class="kw">void</span> <span class="fn">displayEdges</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="fn">printf</span>(<span class="st">"All Edges:\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">while</span> (curr != NULL) {
+            <span class="kw">if</span> (i < curr->vertex) {  <span class="cm">/* avoid printing twice */</span>
+                <span class="fn">printf</span>(<span class="st">"  %s — %s\n"</span>,
+                    g->names[i], g->names[curr->vertex]);
+            }
+            curr = curr->next;
+        }
+    }
+}
+
+<span class="cm">/* Also useful: display full adjacency list */</span>
+<span class="kw">void</span> <span class="fn">displayAdjList</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="fn">printf</span>(<span class="st">"%s: "</span>, g->names[i]);
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">while</span> (curr) {
+            <span class="fn">printf</span>(<span class="st">"%s "</span>, g->names[curr->vertex]);
+            curr = curr->next;
+        }
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    }
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- TRAVERSAL OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="bfs">
+<div class="section-header">
+  <div class="section-tag">Traversal Operations · 4.1</div>
+  <h2>Breadth First Search (BFS)</h2>
+</div>
+<p>BFS explores the graph <span class="hl">level by level</span> — first all neighbors of the start node, then their neighbors, and so on. It uses a <span class="hl">queue</span> (FIFO). BFS finds the <em>shortest path</em> in unweighted graphs.</p>
+
+<div class="steps">
+  <div class="step-item"><div class="step-num">1</div><div class="step-text">Start at a source vertex. Mark it visited. Add it to the queue.</div></div>
+  <div class="step-item"><div class="step-num">2</div><div class="step-text">Dequeue a vertex. Process it (print/record).</div></div>
+  <div class="step-item"><div class="step-num">3</div><div class="step-text">For each unvisited neighbor: mark visited, enqueue it.</div></div>
+  <div class="step-item"><div class="step-num">4</div><div class="step-text">Repeat until queue is empty.</div></div>
+</div>
+
+<div class="analogy">
+  <div class="analogy-label">🌊 Analogy</div>
+  <p>Spreading a ripple in water: the wave expands uniformly in all directions, layer by layer. BFS is like this — it visits everything at distance 1 before distance 2.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">BFS — Step-by-Step Visualization</div>
+  <div class="viz-desc">Watch BFS explore the graph level by level</div>
+  <canvas id="bfsCanvas" height="280"></canvas>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#0d1117;border:2px solid #00d4ff"></div>Unvisited</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f59e0b"></div>In Queue</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#10b981"></div>Visited</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ef4444"></div>Current</div>
+  </div>
+  <div class="viz-controls">
+    <input class="inp" id="bfsStart" placeholder="Start: 0" style="width:90px">
+    <button class="btn" onclick="startBFS()">▶ Run BFS</button>
+    <button class="btn amber" onclick="stepBFS()">⏭ Step</button>
+    <button class="btn red" onclick="resetBFS()">Reset</button>
+  </div>
+  <div class="output" id="bfsOutput">Press "Run BFS" or "Step" to begin</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — BFS with Queue</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+
+<span class="cm">/* Simple queue for BFS */</span>
+<span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+<span class="kw">void</span> <span class="fn">enqueue</span>(<span class="kw">int</span> v) { queue[rear++] = v; }
+<span class="kw">int</span>  <span class="fn">dequeue</span>()      { <span class="kw">return</span> queue[front++]; }
+<span class="kw">int</span>  <span class="fn">isEmpty</span>()      { <span class="kw">return</span> front == rear; }
+
+<span class="cm">/* BFS from source vertex 'start' */</span>
+<span class="kw">void</span> <span class="fn">BFS</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};  <span class="cm">/* all unvisited at start */</span>
+    front = rear = <span class="nm">0</span>;        <span class="cm">/* reset queue */</span>
+
+    <span class="cm">/* Step 1: Visit start node */</span>
+    visited[start] = <span class="nm">1</span>;
+    <span class="fn">enqueue</span>(start);
+    <span class="fn">printf</span>(<span class="st">"BFS Order: "</span>);
+
+    <span class="kw">while</span> (!<span class="fn">isEmpty</span>()) {
+        <span class="kw">int</span> v = <span class="fn">dequeue</span>();     <span class="cm">/* Step 2: Dequeue */</span>
+        <span class="fn">printf</span>(<span class="st">"%s "</span>, g->names[v]);
+
+        <span class="cm">/* Step 3: Enqueue unvisited neighbors */</span>
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr != NULL) {
+            <span class="kw">if</span> (!visited[curr->vertex]) {
+                visited[curr->vertex] = <span class="nm">1</span>;
+                <span class="fn">enqueue</span>(curr->vertex);
+            }
+            curr = curr->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre>
+</div>
+<table class="ctable">
+  <tr><th>Complexity</th><th>Value</th></tr>
+  <tr><td>Time</td><td class="good">O(V + E)</td></tr>
+  <tr><td>Space (queue)</td><td class="avg">O(V)</td></tr>
+</table>
+</section>
+
+<section class="section" id="dfs">
+<div class="section-header">
+  <div class="section-tag">Traversal Operations · 4.2</div>
+  <h2>Depth First Search (DFS)</h2>
+</div>
+<p>DFS explores as <span class="hl">deep as possible</span> before backtracking. It uses a <span class="hl">stack</span> (explicit or call stack via recursion). DFS is great for cycle detection, path finding, and topological sort.</p>
+
+<div class="steps">
+  <div class="step-item"><div class="step-num">1</div><div class="step-text">Visit the current vertex. Mark it visited.</div></div>
+  <div class="step-item"><div class="step-num">2</div><div class="step-text">For each unvisited neighbor, recursively call DFS.</div></div>
+  <div class="step-item"><div class="step-num">3</div><div class="step-text">Backtrack when no unvisited neighbors remain.</div></div>
+</div>
+
+<div class="analogy">
+  <div class="analogy-label">🕳️ Analogy</div>
+  <p>Exploring a cave system: you always go as far down one tunnel as possible before turning back and trying another branch. You never miss anything, but you go deep first.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">DFS — Step-by-Step Visualization</div>
+  <div class="viz-desc">Watch DFS go deep before backtracking</div>
+  <canvas id="dfsCanvas" height="280"></canvas>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#0d1117;border:2px solid #00d4ff"></div>Unvisited</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ef4444"></div>Current</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#10b981"></div>Visited</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#7c3aed"></div>Stack</div>
+  </div>
+  <div class="viz-controls">
+    <input class="inp" id="dfsStart" placeholder="Start: 0" style="width:90px">
+    <button class="btn purple" onclick="startDFS()">▶ Run DFS</button>
+    <button class="btn amber" onclick="stepDFS()">⏭ Step</button>
+    <button class="btn red" onclick="resetDFS()">Reset</button>
+  </div>
+  <div class="output" id="dfsOutput">Press "Run DFS" or "Step" to begin</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Recursive DFS</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Recursive DFS helper */</span>
+<span class="kw">void</span> <span class="fn">DFSHelper</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> v, <span class="kw">int</span>* visited) {
+    visited[v] = <span class="nm">1</span>;
+    <span class="fn">printf</span>(<span class="st">"%s "</span>, g->names[v]);  <span class="cm">/* process vertex */</span>
+
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+    <span class="kw">while</span> (curr != NULL) {
+        <span class="kw">if</span> (!visited[curr->vertex]) {
+            <span class="fn">DFSHelper</span>(g, curr->vertex, visited);  <span class="cm">/* go deeper */</span>
+        }
+        curr = curr->next;
+    }
+    <span class="cm">/* implicit backtrack when function returns */</span>
+}
+
+<span class="cm">/* DFS entry point */</span>
+<span class="kw">void</span> <span class="fn">DFS</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="fn">printf</span>(<span class="st">"DFS Order: "</span>);
+    <span class="fn">DFSHelper</span>(g, start, visited);
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* ─── Iterative DFS using explicit stack ─── */</span>
+<span class="kw">void</span> <span class="fn">DFS_Iterative</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> stack[<span class="nm">100</span>], top = -<span class="nm">1</span>;
+
+    stack[++top] = start;  <span class="cm">/* push start */</span>
+
+    <span class="kw">while</span> (top >= <span class="nm">0</span>) {
+        <span class="kw">int</span> v = stack[top--];  <span class="cm">/* pop */</span>
+        <span class="kw">if</span> (visited[v]) <span class="kw">continue</span>;
+        visited[v] = <span class="nm">1</span>;
+        <span class="fn">printf</span>(<span class="st">"%s "</span>, g->names[v]);
+
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex])
+                stack[++top] = curr->vertex;
+            curr = curr->next;
+        }
+    }
+}</pre>
+</div>
+<table class="ctable">
+  <tr><th>Complexity</th><th>Value</th></tr>
+  <tr><td>Time</td><td class="good">O(V + E)</td></tr>
+  <tr><td>Space (stack)</td><td class="avg">O(V)</td></tr>
+</table>
+
+<h3>BFS vs DFS Comparison</h3>
+<table class="ctable">
+  <tr><th>Aspect</th><th>BFS</th><th>DFS</th></tr>
+  <tr><td>Data structure</td><td>Queue (FIFO)</td><td>Stack (LIFO) or Recursion</td></tr>
+  <tr><td>Explores</td><td>Level by level</td><td>Deep first</td></tr>
+  <tr><td>Shortest path</td><td class="good">Yes (unweighted)</td><td class="bad">No</td></tr>
+  <tr><td>Memory</td><td class="avg">More (stores level)</td><td class="good">Less (deep path)</td></tr>
+  <tr><td>Use cases</td><td>Shortest path, level-order</td><td>Cycle detect, topological sort</td></tr>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PATH OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="find-path">
+<div class="section-header">
+  <div class="section-tag">Path Operations · 5.1</div>
+  <h2>Find Path</h2>
+</div>
+<p>Find <em>any</em> path from source to destination using DFS. We track the parent of each vertex to reconstruct the path.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🗺️ Analogy</div>
+  <p>Finding any route from your home to a friend's house — not necessarily the fastest, just any working route.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Path Finder — Live Demo</div>
+  <div class="viz-desc">Find a path between two vertices</div>
+  <canvas id="pathCanvas" height="260"></canvas>
+  <div class="inp-row">
+    <div><div class="inp-label">From</div><input class="inp" id="pathFrom" placeholder="0" style="width:70px"></div>
+    <div><div class="inp-label">To</div><input class="inp" id="pathTo" placeholder="5" style="width:70px"></div>
+    <button class="btn" onclick="findPathDemo()" style="align-self:flex-end">Find Path</button>
+    <button class="btn amber" onclick="findShortestDemo()" style="align-self:flex-end">Shortest Path</button>
+    <button class="btn red" onclick="resetPathDemo()" style="align-self:flex-end">Reset</button>
+  </div>
+  <div class="output" id="pathOutput">Enter source and destination vertices</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Find Any Path (DFS)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* DFS-based path finder — stores path in pathArr[] */</span>
+<span class="kw">int</span> <span class="fn">findPathDFS</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> src, <span class="kw">int</span> dest,
+               <span class="kw">int</span>* visited, <span class="kw">int</span>* path, <span class="kw">int</span> pathIdx) {
+    visited[src] = <span class="nm">1</span>;
+    path[pathIdx] = src;
+
+    <span class="kw">if</span> (src == dest) {
+        <span class="fn">printf</span>(<span class="st">"Path: "</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i <= pathIdx; i++)
+            <span class="fn">printf</span>(<span class="st">"%d "</span>, path[i]);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+        <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* path found! */</span>
+    }
+
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[src];
+    <span class="kw">while</span> (curr) {
+        <span class="kw">if</span> (!visited[curr->vertex]) {
+            <span class="kw">if</span> (<span class="fn">findPathDFS</span>(g, curr->vertex, dest,
+                            visited, path, pathIdx+<span class="nm">1</span>))
+                <span class="kw">return</span> <span class="nm">1</span>;
+        }
+        curr = curr->next;
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* backtrack */</span>
+}</pre>
+</div>
+</section>
+
+<section class="section" id="shortest-path">
+<div class="section-header">
+  <div class="section-tag">Path Operations · 5.2</div>
+  <h2>Shortest Path</h2>
+</div>
+<p>In an unweighted graph, <span class="hl">BFS gives the shortest path</span> (minimum number of edges). We store the parent of each vertex and trace back from destination to source.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Shortest Path using BFS</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Find shortest path from src to dest using BFS */</span>
+<span class="kw">void</span> <span class="fn">shortestPath</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> parent[<span class="nm">100</span>];
+    <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++)
+        parent[i] = -<span class="nm">1</span>;  <span class="cm">/* -1 means no parent yet */</span>
+
+    visited[src] = <span class="nm">1</span>;
+    queue[rear++] = src;
+
+    <span class="kw">while</span> (front != rear) {
+        <span class="kw">int</span> v = queue[front++];
+        <span class="kw">if</span> (v == dest) <span class="kw">break</span>;  <span class="cm">/* destination reached */</span>
+
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex]) {
+                visited[curr->vertex] = <span class="nm">1</span>;
+                parent[curr->vertex] = v; <span class="cm">/* record parent */</span>
+                queue[rear++] = curr->vertex;
+            }
+            curr = curr->next;
+        }
+    }
+
+    <span class="cm">/* Trace back from dest to src using parent[] */</span>
+    <span class="kw">if</span> (!visited[dest]) {
+        <span class="fn">printf</span>(<span class="st">"No path from %d to %d\n"</span>, src, dest);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">int</span> path[<span class="nm">100</span>], pathLen = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> v = dest; v != -<span class="nm">1</span>; v = parent[v])
+        path[pathLen++] = v;
+    <span class="fn">printf</span>(<span class="st">"Shortest path (length=%d): "</span>, pathLen-<span class="nm">1</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = pathLen-<span class="nm">1</span>; i >= <span class="nm">0</span>; i--)
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, path[i]);
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre>
+</div>
+</section>
+
+<section class="section" id="all-paths">
+<div class="section-header">
+  <div class="section-tag">Path Operations · 5.3</div>
+  <h2>All Paths</h2>
+</div>
+<p>Find every possible path from source to destination using backtracking DFS. Mark a vertex visited when entering, unmark when backtracking.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — All Paths (Backtracking DFS)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Print all paths from src to dest */</span>
+<span class="kw">void</span> <span class="fn">allPaths</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> src, <span class="kw">int</span> dest,
+              <span class="kw">int</span>* visited, <span class="kw">int</span>* path, <span class="kw">int</span> pathIdx) {
+    visited[src] = <span class="nm">1</span>;
+    path[pathIdx] = src;
+
+    <span class="kw">if</span> (src == dest) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i <= pathIdx; i++)
+            <span class="fn">printf</span>(<span class="st">"%d "</span>, path[i]);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    } <span class="kw">else</span> {
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[src];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex])
+                <span class="fn">allPaths</span>(g, curr->vertex, dest,
+                          visited, path, pathIdx+<span class="nm">1</span>);
+            curr = curr->next;
+        }
+    }
+    <span class="cm">/* BACKTRACK: unmark so other paths can use this vertex */</span>
+    visited[src] = <span class="nm">0</span>;
+}</pre>
+</div>
+<div class="notice warn">⚠️ All-paths can be exponential O(V!) in the worst case. Only use on small graphs or with depth limits.</div>
+</section>
+
+<section class="section" id="reachability">
+<div class="section-header">
+  <div class="section-tag">Path Operations · 5.4</div>
+  <h2>Reachability Check</h2>
+</div>
+<p>Is vertex <code>dest</code> reachable from vertex <code>src</code>? Run BFS/DFS from <code>src</code> — if <code>dest</code> gets visited, it's reachable.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Reachability Check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns 1 if dest is reachable from src */</span>
+<span class="kw">int</span> <span class="fn">isReachable</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    visited[src] = <span class="nm">1</span>;
+    queue[rear++] = src;
+
+    <span class="kw">while</span> (front != rear) {
+        <span class="kw">int</span> v = queue[front++];
+        <span class="kw">if</span> (v == dest) { <span class="fn">printf</span>(<span class="st">"REACHABLE\n"</span>); <span class="kw">return</span> <span class="nm">1</span>; }
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex]) {
+                visited[curr->vertex] = <span class="nm">1</span>;
+                queue[rear++] = curr->vertex;
+            }
+            curr = curr->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"NOT reachable\n"</span>);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="path-length">
+<div class="section-header">
+  <div class="section-tag">Path Operations · 5.5</div>
+  <h2>Path Length Count</h2>
+</div>
+<p>Count the number of edges in the shortest path from source to destination. BFS naturally gives this as each level = 1 step.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Path Length (BFS Distance)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns shortest distance from src to dest (-1 if unreachable) */</span>
+<span class="kw">int</span> <span class="fn">pathLength</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> src, <span class="kw">int</span> dest) {
+    <span class="kw">int</span> dist[<span class="nm">100</span>], visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) dist[i] = -<span class="nm">1</span>;
+
+    dist[src] = <span class="nm">0</span>;  <span class="cm">/* distance from src to itself = 0 */</span>
+    visited[src] = <span class="nm">1</span>;
+    queue[rear++] = src;
+
+    <span class="kw">while</span> (front != rear) {
+        <span class="kw">int</span> v = queue[front++];
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex]) {
+                visited[curr->vertex] = <span class="nm">1</span>;
+                dist[curr->vertex] = dist[v] + <span class="nm">1</span>; <span class="cm">/* +1 edge */</span>
+                queue[rear++] = curr->vertex;
+            }
+            curr = curr->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"Distance from %d to %d: %d\n"</span>, src, dest, dist[dest]);
+    <span class="kw">return</span> dist[dest];
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CONNECTIVITY OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="check-connected">
+<div class="section-header">
+  <div class="section-tag">Connectivity Operations · 6.1</div>
+  <h2>Check Connected Graph</h2>
+</div>
+<p>A graph is <span class="hl">connected</span> if every vertex can reach every other vertex. Start BFS/DFS from vertex 0 — if all vertices get visited, the graph is connected.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🕸️ Analogy</div>
+  <p>A phone network is connected if you can call anyone from anyone, directly or through others. If some phones are isolated, the network is disconnected.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Connectivity Check — Live Demo</div>
+  <div class="viz-desc">Toggle edges to see connected vs disconnected graphs</div>
+  <canvas id="connCanvas" height="240"></canvas>
+  <div class="viz-controls">
+    <button class="btn" onclick="checkConnected()">Check Connected</button>
+    <button class="btn red" onclick="disconnectGraph()">Disconnect</button>
+    <button class="btn green" onclick="connectGraph()">Reconnect</button>
+  </div>
+  <div class="output" id="connOutput">Click "Check Connected" to verify</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Check Connected Graph</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns 1 if graph is connected, else 0 */</span>
+<span class="kw">int</span> <span class="fn">isConnected</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> visitCount = <span class="nm">0</span>;
+    <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    visited[<span class="nm">0</span>] = <span class="nm">1</span>;
+    queue[rear++] = <span class="nm">0</span>;  <span class="cm">/* start BFS from vertex 0 */</span>
+
+    <span class="kw">while</span> (front != rear) {
+        <span class="kw">int</span> v = queue[front++];
+        visitCount++;
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex]) {
+                visited[curr->vertex] = <span class="nm">1</span>;
+                queue[rear++] = curr->vertex;
+            }
+            curr = curr->next;
+        }
+    }
+    <span class="cm">/* If all vertices were visited, graph is connected */</span>
+    <span class="kw">if</span> (visitCount == g->numVertices) {
+        <span class="fn">printf</span>(<span class="st">"Graph IS connected.\n"</span>);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"Graph is NOT connected.\n"</span>);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="components">
+<div class="section-header">
+  <div class="section-tag">Connectivity Operations · 6.2</div>
+  <h2>Find Connected Components</h2>
+</div>
+<p>A <span class="hl">connected component</span> is a maximal set of vertices where every pair is connected. Run BFS/DFS from each unvisited vertex to find all components.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Find Connected Components</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Find and print all connected components */</span>
+<span class="kw">void</span> <span class="fn">findComponents</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> compNum = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">if</span> (!visited[i]) {
+            compNum++;
+            <span class="fn">printf</span>(<span class="st">"Component %d: "</span>, compNum);
+
+            <span class="cm">/* BFS from unvisited vertex i */</span>
+            <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+            visited[i] = <span class="nm">1</span>;
+            queue[rear++] = i;
+            <span class="kw">while</span> (front != rear) {
+                <span class="kw">int</span> v = queue[front++];
+                <span class="fn">printf</span>(<span class="st">"%d "</span>, v);
+                <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+                <span class="kw">while</span> (curr) {
+                    <span class="kw">if</span> (!visited[curr->vertex]) {
+                        visited[curr->vertex] = <span class="nm">1</span>;
+                        queue[rear++] = curr->vertex;
+                    }
+                    curr = curr->next;
+                }
+            }
+            <span class="fn">printf</span>(<span class="st">"\n"</span>);
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"Total components: %d\n"</span>, compNum);
+}</pre>
+</div>
+</section>
+
+<section class="section" id="isolated">
+<div class="section-header">
+  <div class="section-tag">Connectivity Operations · 6.3</div>
+  <h2>Detect Isolated Vertex</h2>
+</div>
+<p>An <span class="hl">isolated vertex</span> has degree 0 — no edges connect to it. Check if a vertex's adjacency list is empty.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Detect Isolated Vertices</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Print all isolated vertices (degree = 0) */</span>
+<span class="kw">void</span> <span class="fn">detectIsolated</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="fn">printf</span>(<span class="st">"Isolated vertices: "</span>);
+    <span class="kw">int</span> found = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">if</span> (g->adjList[i] == NULL) { <span class="cm">/* empty list = isolated */</span>
+            <span class="fn">printf</span>(<span class="st">"%d "</span>, i);
+            found = <span class="nm">1</span>;
+        }
+    }
+    <span class="kw">if</span> (!found) <span class="fn">printf</span>(<span class="st">"None"</span>);
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre>
+</div>
+</section>
+
+<section class="section" id="reachable">
+<div class="section-header">
+  <div class="section-tag">Connectivity Operations · 6.4</div>
+  <h2>Reachable Vertices</h2>
+</div>
+<p>List all vertices reachable from a given source vertex using BFS/DFS.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — All Reachable Vertices</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Print all vertices reachable from 'src' */</span>
+<span class="kw">void</span> <span class="fn">reachableVertices</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> src) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    visited[src] = <span class="nm">1</span>;
+    queue[rear++] = src;
+    <span class="fn">printf</span>(<span class="st">"Reachable from %d: "</span>, src);
+
+    <span class="kw">while</span> (front != rear) {
+        <span class="kw">int</span> v = queue[front++];
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, v);
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (!visited[curr->vertex]) {
+                visited[curr->vertex] = <span class="nm">1</span>;
+                queue[rear++] = curr->vertex;
+            }
+            curr = curr->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- CYCLE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="detect-cycle">
+<div class="section-header">
+  <div class="section-tag">Cycle Operations · 7.1</div>
+  <h2>Detect Cycle</h2>
+</div>
+<p>A <span class="hl">cycle</span> exists if we find a visited vertex that is not the parent of the current vertex during DFS. For undirected graphs, we track the parent to avoid false positives.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🔄 Analogy</div>
+  <p>Walking through a city: if you end up back where you started without retracing a road, there's a cycle. Cycles are important for detecting circular dependencies or infinite loops in networks.</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Cycle Detection — Live Demo</div>
+  <div class="viz-desc">Add edges to create or break cycles</div>
+  <canvas id="cycleCanvas" height="240"></canvas>
+  <div class="viz-controls">
+    <button class="btn" onclick="detectCycleDemo()">🔍 Detect Cycle</button>
+    <button class="btn green" onclick="addCycleEdge()">+ Cycle Edge</button>
+    <button class="btn red" onclick="resetCycleDemo()">Reset</button>
+  </div>
+  <div class="output" id="cycleOutput">Click "Detect Cycle" to check the graph</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Cycle Detection (DFS, Undirected)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* DFS helper — returns 1 if cycle found */</span>
+<span class="kw">int</span> <span class="fn">cycleHelper</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> v,
+                <span class="kw">int</span>* visited, <span class="kw">int</span> parent) {
+    visited[v] = <span class="nm">1</span>;
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+
+    <span class="kw">while</span> (curr) {
+        <span class="kw">int</span> u = curr->vertex;
+        <span class="kw">if</span> (!visited[u]) {
+            <span class="cm">/* Recurse on unvisited neighbor */</span>
+            <span class="kw">if</span> (<span class="fn">cycleHelper</span>(g, u, visited, v))
+                <span class="kw">return</span> <span class="nm">1</span>;
+        } <span class="kw">else if</span> (u != parent) {
+            <span class="cm">/* Visited AND not the parent → CYCLE! */</span>
+            <span class="kw">return</span> <span class="nm">1</span>;
+        }
+        curr = curr->next;
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="cm">/* Check if graph has a cycle */</span>
+<span class="kw">int</span> <span class="fn">hasCycle</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">if</span> (!visited[i]) {
+            <span class="kw">if</span> (<span class="fn">cycleHelper</span>(g, i, visited, -<span class="nm">1</span>)) {
+                <span class="fn">printf</span>(<span class="st">"Cycle DETECTED!\n"</span>);
+                <span class="kw">return</span> <span class="nm">1</span>;
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"No cycle found.\n"</span>);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="count-cycles">
+<div class="section-header">
+  <div class="section-tag">Cycle Operations · 7.2</div>
+  <h2>Count Cycles</h2>
+</div>
+<p>For an undirected graph, the number of independent cycles (cyclomatic complexity) = <code>E - V + C</code>, where C is the number of connected components.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Count Cycles (Formula)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Count cycles using formula: cycles = E - V + C */</span>
+<span class="kw">int</span> <span class="fn">countCycles</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> E = <span class="fn">countEdges</span>(g);   <span class="cm">/* count edges */</span>
+
+    <span class="cm">/* Count connected components using BFS */</span>
+    <span class="kw">int</span> visited[<span class="nm">100</span>] = {<span class="nm">0</span>};
+    <span class="kw">int</span> C = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < V; i++) {
+        <span class="kw">if</span> (!visited[i]) {
+            C++;
+            <span class="cm">/* BFS to mark all vertices in this component */</span>
+            <span class="kw">int</span> q[<span class="nm">100</span>], f = <span class="nm">0</span>, r = <span class="nm">0</span>;
+            visited[i] = <span class="nm">1</span>; q[r++] = i;
+            <span class="kw">while</span> (f != r) {
+                <span class="kw">int</span> v = q[f++];
+                <span class="kw">struct</span> <span class="ty">Node</span>* n = g->adjList[v];
+                <span class="kw">while</span> (n) { <span class="kw">if</span>(!visited[n->vertex]){visited[n->vertex]=<span class="nm">1</span>;q[r++]=n->vertex;} n=n->next;}
+            }
+        }
+    }
+    <span class="kw">int</span> cycles = E - V + C;
+    <span class="fn">printf</span>(<span class="st">"Cycles = E(%d) - V(%d) + C(%d) = %d\n"</span>, E, V, C, cycles);
+    <span class="kw">return</span> cycles;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="cyclic-check">
+<div class="section-header">
+  <div class="section-tag">Cycle Operations · 7.3</div>
+  <h2>Check Cyclic Graph</h2>
+</div>
+<p>A <span class="hl">cyclic graph</span> contains at least one cycle. An <span class="hl">acyclic graph</span> (like a tree) has no cycles. A tree with V vertices has exactly V-1 edges.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Is Graph Cyclic or Acyclic?</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* A graph with V vertices and V-1 edges that is connected is a tree (acyclic) */</span>
+<span class="kw">void</span> <span class="fn">checkCyclicGraph</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">if</span> (<span class="fn">hasCycle</span>(g))
+        <span class="fn">printf</span>(<span class="st">"The graph is CYCLIC.\n"</span>);
+    <span class="kw">else</span>
+        <span class="fn">printf</span>(<span class="st">"The graph is ACYCLIC (a forest/tree).\n"</span>);
+}
+
+<span class="cm">/* Quick check: tree has exactly V-1 edges and is connected */</span>
+<span class="kw">int</span> <span class="fn">isTree</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> E = <span class="fn">countEdges</span>(g);
+    <span class="kw">return</span> (E == g->numVertices - <span class="nm">1</span>) && <span class="fn">isConnected</span>(g);
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- DEGREE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="find-degree">
+<div class="section-header">
+  <div class="section-tag">Degree Operations · 8.1</div>
+  <h2>Find Degree of a Vertex</h2>
+</div>
+<p>The <span class="hl">degree</span> of a vertex = number of edges connected to it = length of its adjacency list.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🤝 Analogy</div>
+  <p>In a social network, your degree is your number of direct friends. A celebrity with 10 million followers has degree 10M!</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Degree Visualization</div>
+  <div class="viz-desc">See degree of each vertex displayed on the graph</div>
+  <canvas id="degreeCanvas" height="260"></canvas>
+  <div class="viz-controls">
+    <button class="btn" onclick="showDegrees()">Show All Degrees</button>
+    <button class="btn amber" onclick="highlightMaxDeg()">Highlight Max</button>
+    <button class="btn purple" onclick="highlightMinDeg()">Highlight Min</button>
+  </div>
+  <div class="output" id="degreeOutput">Click "Show All Degrees" to compute</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Degree Operations</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Degree of a specific vertex */</span>
+<span class="kw">int</span> <span class="fn">getDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> v) {
+    <span class="kw">int</span> count = <span class="nm">0</span>;
+    <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+    <span class="kw">while</span> (curr) { count++; curr = curr->next; }
+    <span class="fn">printf</span>(<span class="st">"Degree of vertex %d = %d\n"</span>, v, count);
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Maximum degree vertex */</span>
+<span class="kw">int</span> <span class="fn">maxDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> maxDeg = <span class="nm">0</span>, maxV = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">int</span> d = <span class="fn">getDegree</span>(g, i);
+        <span class="kw">if</span> (d > maxDeg) { maxDeg = d; maxV = i; }
+    }
+    <span class="fn">printf</span>(<span class="st">"Max degree: vertex %d with degree %d\n"</span>, maxV, maxDeg);
+    <span class="kw">return</span> maxV;
+}
+
+<span class="cm">/* Minimum degree vertex */</span>
+<span class="kw">int</span> <span class="fn">minDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> minDeg = <span class="nm">999</span>, minV = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">int</span> d = <span class="fn">getDegree</span>(g, i);
+        <span class="kw">if</span> (d < minDeg) { minDeg = d; minV = i; }
+    }
+    <span class="fn">printf</span>(<span class="st">"Min degree: vertex %d with degree %d\n"</span>, minV, minDeg);
+    <span class="kw">return</span> minV;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="max-degree">
+<div class="section-header">
+  <div class="section-tag">Degree Operations · 8.2</div>
+  <h2>Maximum &amp; Minimum Degree</h2>
+</div>
+<p>Scan all vertices, compute each degree, and track the max/min. This is O(V + E).</p>
+<div class="notice">💡 The <strong>Handshaking Lemma</strong>: The sum of all degrees in a graph = 2 × number of edges. Every edge contributes 1 to each endpoint's degree.</div>
+</section>
+
+<section class="section" id="avg-degree">
+<div class="section-header">
+  <div class="section-tag">Degree Operations · 8.3</div>
+  <h2>Average Degree</h2>
+</div>
+<p>Average degree = (2 × E) / V. Since sum of all degrees = 2E (Handshaking Lemma), dividing by V gives the average.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Average Degree</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Average degree = 2E / V */</span>
+<span class="kw">float</span> <span class="fn">averageDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> totalDeg = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">while</span> (curr) { totalDeg++; curr = curr->next; }
+    }
+    <span class="cm">/* totalDeg counts each edge twice (undirected), so it equals 2E */</span>
+    <span class="kw">float</span> avg = (<span class="kw">float</span>)totalDeg / g->numVertices;
+    <span class="fn">printf</span>(<span class="st">"Average degree: %.2f\n"</span>, avg);
+    <span class="kw">return</span> avg;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="degree-dist">
+<div class="section-header">
+  <div class="section-tag">Degree Operations · 8.4</div>
+  <h2>Degree Distribution</h2>
+</div>
+<p>Degree distribution shows how many vertices have each degree value. Useful for analyzing network structure (e.g., social networks follow a power-law distribution).</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Degree Distribution</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Print degree distribution: how many vertices have each degree */</span>
+<span class="kw">void</span> <span class="fn">degreeDistribution</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> dist[<span class="nm">100</span>] = {<span class="nm">0</span>};  <span class="cm">/* dist[d] = count of vertices with degree d */</span>
+    <span class="kw">int</span> maxDeg = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">int</span> deg = <span class="nm">0</span>;
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">while</span> (curr) { deg++; curr = curr->next; }
+        dist[deg]++;
+        <span class="kw">if</span> (deg > maxDeg) maxDeg = deg;
+    }
+
+    <span class="fn">printf</span>(<span class="st">"Degree Distribution:\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> d = <span class="nm">0</span>; d <= maxDeg; d++) {
+        <span class="kw">if</span> (dist[d] > <span class="nm">0</span>)
+            <span class="fn">printf</span>(<span class="st">"  Degree %d: %d vertices\n"</span>, d, dist[d]);
+    }
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- BIPARTITE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="bipartite">
+<div class="section-header">
+  <div class="section-tag">Bipartite Operations · 9.1</div>
+  <h2>Bipartite Check</h2>
+</div>
+<p>A graph is <span class="hl">bipartite</span> if its vertices can be split into two groups (sets) such that every edge connects a vertex from one group to the other — no edges within the same group. We verify this using 2-coloring with BFS.</p>
+
+<div class="analogy">
+  <div class="analogy-label">👫 Analogy</div>
+  <p>A dating app graph: users on one side, matches on the other. Every match (edge) goes between a user and a potential match — never between two users directly. That's a bipartite graph!</p>
+</div>
+
+<div class="viz-box">
+  <div class="viz-title">Bipartite Check — 2-Coloring Visualization</div>
+  <div class="viz-desc">BFS assigns colors — if two adjacent vertices get the same color, it's NOT bipartite</div>
+  <canvas id="bipartCanvas" height="260"></canvas>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#00d4ff"></div>Color A (Set 1)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f59e0b"></div>Color B (Set 2)</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#ef4444"></div>Conflict!</div>
+  </div>
+  <div class="viz-controls">
+    <button class="btn" onclick="checkBipartite()">Check Bipartite</button>
+    <button class="btn red" onclick="addBipartConflict()">Add Conflict Edge</button>
+    <button class="btn green" onclick="resetBipartite()">Reset</button>
+  </div>
+  <div class="output" id="bipartOutput">Click "Check Bipartite" to run 2-coloring</div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Bipartite Check (BFS 2-Coloring)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Check if graph is bipartite using 2-coloring */</span>
+<span class="kw">int</span> <span class="fn">isBipartite</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> color[<span class="nm">100</span>];
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) color[i] = -<span class="nm">1</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> start = <span class="nm">0</span>; start < g->numVertices; start++) {
+        <span class="kw">if</span> (color[start] != -<span class="nm">1</span>) <span class="kw">continue</span>;
+
+        <span class="cm">/* BFS with 2-coloring */</span>
+        <span class="kw">int</span> queue[<span class="nm">100</span>], front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+        color[start] = <span class="nm">0</span>;  <span class="cm">/* assign color 0 to start */</span>
+        queue[rear++] = start;
+
+        <span class="kw">while</span> (front != rear) {
+            <span class="kw">int</span> v = queue[front++];
+            <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+            <span class="kw">while</span> (curr) {
+                <span class="kw">int</span> u = curr->vertex;
+                <span class="kw">if</span> (color[u] == -<span class="nm">1</span>) {
+                    <span class="cm">/* Assign opposite color */</span>
+                    color[u] = <span class="nm">1</span> - color[v];
+                    queue[rear++] = u;
+                } <span class="kw">else if</span> (color[u] == color[v]) {
+                    <span class="cm">/* Same color on adjacent vertices → NOT bipartite */</span>
+                    <span class="fn">printf</span>(<span class="st">"NOT bipartite (conflict at %d–%d)\n"</span>,v,u);
+                    <span class="kw">return</span> <span class="nm">0</span>;
+                }
+                curr = curr->next;
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"Graph IS bipartite.\n"</span>);
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="coloring">
+<div class="section-header">
+  <div class="section-tag">Bipartite Operations · 9.2</div>
+  <h2>Graph Coloring Basics</h2>
+</div>
+<p><span class="hl">Graph coloring</span> assigns colors to vertices so that no two adjacent vertices share the same color. The minimum number of colors needed is the <span class="hl">chromatic number χ(G)</span>. Bipartite graphs have χ = 2 (if non-trivial).</p>
+
+<div class="cards">
+  <div class="card"><div class="card-icon">🟦</div><div class="card-title">1-colorable</div><div class="card-desc">Only possible for graphs with no edges (empty graph).</div></div>
+  <div class="card"><div class="card-icon">🟦🟨</div><div class="card-title">2-colorable</div><div class="card-desc">Bipartite graphs. No odd-length cycles.</div></div>
+  <div class="card"><div class="card-icon">🟦🟨🟥</div><div class="card-title">3-colorable</div><div class="card-desc">Planar graphs are always ≤4 colorable (Four Color Theorem).</div></div>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Greedy Graph Coloring</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Greedy coloring — assigns minimum colors (not always optimal) */</span>
+<span class="kw">void</span> <span class="fn">greedyColoring</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> color[<span class="nm">100</span>];
+    <span class="kw">int</span> available[<span class="nm">100</span>];
+
+    color[<span class="nm">0</span>] = <span class="nm">0</span>;  <span class="cm">/* assign color 0 to first vertex */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">1</span>; i < g->numVertices; i++) color[i] = -<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) available[i] = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> v = <span class="nm">1</span>; v < g->numVertices; v++) {
+        <span class="cm">/* Mark colors used by neighbors as unavailable */</span>
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (color[curr->vertex] != -<span class="nm">1</span>)
+                available[color[curr->vertex]] = <span class="nm">1</span>;
+            curr = curr->next;
+        }
+        <span class="cm">/* Find the first available color */</span>
+        <span class="kw">int</span> c;
+        <span class="kw">for</span> (c = <span class="nm">0</span>; c < g->numVertices; c++)
+            <span class="kw">if</span> (!available[c]) <span class="kw">break</span>;
+        color[v] = c;
+
+        <span class="cm">/* Reset available[] for next vertex */</span>
+        curr = g->adjList[v];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">if</span> (color[curr->vertex] != -<span class="nm">1</span>)
+                available[color[curr->vertex]] = <span class="nm">0</span>;
+            curr = curr->next;
+        }
+    }
+    <span class="cm">/* Print result */</span>
+    <span class="fn">printf</span>(<span class="st">"Vertex Colors:\n"</span>);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++)
+        <span class="fn">printf</span>(<span class="st">"  Vertex %d: Color %d\n"</span>, i, color[i]);
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- STRUCTURAL OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="size-order">
+<div class="section-header">
+  <div class="section-tag">Structural Operations · 10.1</div>
+  <h2>Graph Size &amp; Order</h2>
+</div>
+<p><span class="hl">Order</span> of a graph = number of vertices (V). <span class="hl">Size</span> of a graph = number of edges (E). These are the two most fundamental graph measurements.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Size and Order</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Order = number of vertices */</span>
+<span class="kw">int</span> <span class="fn">graphOrder</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="fn">printf</span>(<span class="st">"Order (vertices): %d\n"</span>, g->numVertices);
+    <span class="kw">return</span> g->numVertices;  <span class="cm">/* O(1) */</span>
+}
+
+<span class="cm">/* Size = number of edges */</span>
+<span class="kw">int</span> <span class="fn">graphSize</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> total = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="ty">Node</span>* c = g->adjList[i];
+        <span class="kw">while</span> (c) { total++; c = c->next; }
+    }
+    total /= <span class="nm">2</span>;  <span class="cm">/* undirected: each edge counted twice */</span>
+    <span class="fn">printf</span>(<span class="st">"Size (edges): %d\n"</span>, total);
+    <span class="kw">return</span> total;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="density">
+<div class="section-header">
+  <div class="section-tag">Structural Operations · 10.2</div>
+  <h2>Density Check — Sparse vs Dense</h2>
+</div>
+<p><span class="hl">Density</span> = actual edges / maximum possible edges. Maximum edges in an undirected graph = V×(V-1)/2. Density ranges from 0 (no edges) to 1 (complete graph).</p>
+
+<ul>
+  <li><span class="hl2">Sparse graph:</span> Density close to 0. Few edges. Adjacency list is efficient here.</li>
+  <li><span class="hl3">Dense graph:</span> Density close to 1. Many edges. Adjacency matrix may be better.</li>
+</ul>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Density Calculation</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Density = E / (V*(V-1)/2) for undirected graph */</span>
+<span class="kw">float</span> <span class="fn">density</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> E = <span class="fn">countEdges</span>(g);
+    <span class="kw">int</span> maxEdges = V * (V - <span class="nm">1</span>) / <span class="nm">2</span>;
+
+    <span class="kw">if</span> (maxEdges == <span class="nm">0</span>) { <span class="fn">printf</span>(<span class="st">"Empty graph!\n"</span>); <span class="kw">return</span> <span class="nm">0</span>; }
+
+    <span class="kw">float</span> d = (<span class="kw">float</span>)E / maxEdges;
+    <span class="fn">printf</span>(<span class="st">"Density: %.3f (%s)\n"</span>, d, d < <span class="nm">0.5</span> ? <span class="st">"Sparse"</span> : <span class="st">"Dense"</span>);
+    <span class="kw">return</span> d;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="complete-graph">
+<div class="section-header">
+  <div class="section-tag">Structural Operations · 10.3</div>
+  <h2>Complete Graph Check</h2>
+</div>
+<p>A <span class="hl">complete graph K<sub>n</sub></span> has every possible edge — every vertex connects to every other. It has V×(V-1)/2 edges and every vertex has degree V-1.</p>
+
+<div class="analogy">
+  <div class="analogy-label">🤝 Analogy</div>
+  <p>A fully connected conference room: everyone shakes hands with everyone else. If there are 5 people, that's 5×4/2 = 10 handshakes total.</p>
+</div>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Complete Graph Check</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns 1 if graph is complete (every vertex connected to all others) */</span>
+<span class="kw">int</span> <span class="fn">isComplete</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">int</span> V = g->numVertices;
+    <span class="kw">int</span> expectedEdges = V * (V - <span class="nm">1</span>) / <span class="nm">2</span>;
+    <span class="kw">int</span> E = <span class="fn">countEdges</span>(g);
+
+    <span class="kw">if</span> (E == expectedEdges) {
+        <span class="fn">printf</span>(<span class="st">"Graph is COMPLETE (K%d)\n"</span>, V);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"Graph is NOT complete (%d/%d edges)\n"</span>, E, expectedEdges);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- UTILITY OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<section class="section" id="is-empty">
+<div class="section-header">
+  <div class="section-tag">Utility Operations · 11.1</div>
+  <h2>Is Empty</h2>
+</div>
+<p>A graph is <span class="hl">empty</span> if it has zero vertices. This is a quick O(1) check.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Is Empty</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Returns 1 if graph has no vertices */</span>
+<span class="kw">int</span> <span class="fn">isEmpty</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">if</span> (g->numVertices == <span class="nm">0</span>) {
+        <span class="fn">printf</span>(<span class="st">"Graph is EMPTY.\n"</span>);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"Graph is NOT empty (%d vertices).\n"</span>, g->numVertices);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="clear-copy">
+<div class="section-header">
+  <div class="section-tag">Utility Operations · 11.2</div>
+  <h2>Clear Graph &amp; Copy Graph</h2>
+</div>
+<p><span class="hl">Clear:</span> Remove all edges and vertices, freeing memory. <span class="hl">Copy:</span> Create a deep copy with all adjacency lists duplicated.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Clear and Copy Graph</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Clear all edges and free memory */</span>
+<span class="kw">void</span> <span class="fn">clearGraph</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">struct</span> <span class="ty">Node</span>* temp = curr->next;
+            <span class="fn">free</span>(curr);
+            curr = temp;
+        }
+        g->adjList[i] = NULL;
+    }
+    g->numVertices = <span class="nm">0</span>;
+    <span class="fn">printf</span>(<span class="st">"Graph cleared.\n"</span>);
+}
+
+<span class="cm">/* Deep copy of a graph */</span>
+<span class="kw">struct</span> <span class="ty">Graph</span>* <span class="fn">copyGraph</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* src) {
+    <span class="kw">struct</span> <span class="ty">Graph</span>* dest = <span class="fn">createGraph</span>(src->numVertices);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < src->numVertices; i++) {
+        <span class="fn">strcpy</span>(dest->names[i], src->names[i]);
+        <span class="cm">/* Copy adjacency list in reverse to preserve order */</span>
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = src->adjList[i];
+        <span class="kw">while</span> (curr) {
+            <span class="kw">struct</span> <span class="ty">Node</span>* n = <span class="fn">newNode</span>(curr->vertex);
+            n->next = dest->adjList[i];
+            dest->adjList[i] = n;
+            curr = curr->next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"Graph copied successfully.\n"</span>);
+    <span class="kw">return</span> dest;
+}</pre>
+</div>
+</section>
+
+<section class="section" id="display-reset">
+<div class="section-header">
+  <div class="section-tag">Utility Operations · 11.3</div>
+  <h2>Display Graph &amp; Reset Visited Array</h2>
+</div>
+<p>Display the full adjacency list in a readable format. Reset the <code>visited[]</code> array to 0 before each traversal.</p>
+
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Display Graph + Reset Visited</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="cm">/* Display the complete adjacency list */</span>
+<span class="kw">void</span> <span class="fn">displayGraph</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g) {
+    <span class="fn">printf</span>(<span class="st">"\n=== Graph Adjacency List ===\n"</span>);
+    <span class="fn">printf</span>(<span class="st">"Vertices: %d\n\n"</span>, g->numVertices);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < g->numVertices; i++) {
+        <span class="fn">printf</span>(<span class="st">"[%d] %s: "</span>, i, g->names[i]);
+        <span class="kw">struct</span> <span class="ty">Node</span>* curr = g->adjList[i];
+        <span class="kw">if</span> (!curr) { <span class="fn">printf</span>(<span class="st">"(isolated)\n"</span>); <span class="kw">continue</span>; }
+        <span class="kw">while</span> (curr) {
+            <span class="fn">printf</span>(<span class="st">"%s"</span>, g->names[curr->vertex]);
+            <span class="kw">if</span> (curr->next) <span class="fn">printf</span>(<span class="st">" → "</span>);
+            curr = curr->next;
+        }
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    }
+    <span class="fn">printf</span>(<span class="st">"===========================\n"</span>);
+}
+
+<span class="cm">/* Reset visited array before a new traversal */</span>
+<span class="kw">void</span> <span class="fn">resetVisited</span>(<span class="kw">int</span>* visited, <span class="kw">int</span> V) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < V; i++)
+        visited[i] = <span class="nm">0</span>;
+}
+
+<span class="cm">/* Or use memset for efficiency */</span>
+<span class="kw">void</span> <span class="fn">resetVisitedFast</span>(<span class="kw">int</span>* visited, <span class="kw">int</span> V) {
+    <span class="fn">memset</span>(visited, <span class="nm">0</span>, V * <span class="kw">sizeof</span>(<span class="kw">int</span>));
+}</pre>
+</div>
+
+<h3>Complete Program Template</h3>
+<div class="code-wrap">
+  <div class="code-header"><span class="code-lang">C — Complete Working Example</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+  <pre><span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="kw">struct</span> <span class="ty">Node</span> { <span class="kw">int</span> vertex; <span class="kw">struct</span> <span class="ty">Node</span>* next; };
+<span class="kw">struct</span> <span class="ty">Graph</span> { <span class="kw">int</span> V; <span class="kw">struct</span> <span class="ty">Node</span>** list; };
+
+<span class="kw">struct</span> <span class="ty">Graph</span>* <span class="fn">create</span>(<span class="kw">int</span> V) {
+    <span class="kw">struct</span> <span class="ty">Graph</span>* g = <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Graph</span>));
+    g->V = V;
+    g->list = <span class="fn">malloc</span>(V * <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Node</span>*));
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i < V; i++) g->list[i] = NULL;
+    <span class="kw">return</span> g;
+}
+
+<span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">struct</span> <span class="ty">Graph</span>* g, <span class="kw">int</span> u, <span class="kw">int</span> v) {
+    <span class="kw">struct</span> <span class="ty">Node</span>* n = <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Node</span>));
+    n->vertex = v; n->next = g->list[u]; g->list[u] = n;
+    n = <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Node</span>));
+    n->vertex = u; n->next = g->list[v]; g->list[v] = n;
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="ty">Graph</span>* g = <span class="fn">create</span>(<span class="nm">5</span>);
+    <span class="fn">addEdge</span>(g, <span class="nm">0</span>, <span class="nm">1</span>); <span class="fn">addEdge</span>(g, <span class="nm">0</span>, <span class="nm">2</span>);
+    <span class="fn">addEdge</span>(g, <span class="nm">1</span>, <span class="nm">3</span>); <span class="fn">addEdge</span>(g, <span class="nm">2</span>, <span class="nm">4</span>);
+    <span class="fn">addEdge</span>(g, <span class="nm">3</span>, <span class="nm">4</span>);
+
+    <span class="cm">/* Now call any of the functions above! */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+</div>
+
+<div class="analogy" style="margin-top:30px">
+  <div class="analogy-label">🎓 Learning Summary</div>
+  <p>You've covered every operation in the unweighted graph adjacency list — from basic vertex/edge manipulation to advanced algorithms like cycle detection, bipartite checking, and graph coloring. Practice by building a complete graph program that combines all these operations!</p>
+</div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+// Active nav highlight on scroll
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  navItems.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + current);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CANVAS HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setupCanvas(id) {
+  const c = document.getElementById(id);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width * dpr || 700 * dpr;
+  c.height = parseInt(c.getAttribute('height')) * dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  c.style.height = c.getAttribute('height') + 'px';
+  return { c, ctx, w: c.width / dpr, h: parseInt(c.getAttribute('height')) };
+}
+
+function drawNode(ctx, x, y, label, fill='#1e3a5f', stroke='#00d4ff', textCol='#fff', r=22) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI*2);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = textCol;
+  ctx.font = `bold 13px 'JetBrains Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, y);
+}
+
+function drawEdge(ctx, x1, y1, x2, y2, col='#334155', w=2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = col;
+  ctx.lineWidth = w;
+  ctx.stroke();
+}
+
+function clearCanvas(ctx, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, w, h);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INTRO CANVAS — Interactive graph playground
+// ═══════════════════════════════════════════════════════════════
+let introNodes = [
+  {x:120,y:80,label:'A'},{x:280,y:60,label:'B'},
+  {x:420,y:90,label:'C'},{x:200,y:190,label:'D'},
+  {x:360,y:200,label:'E'}
+];
+let introEdges = [[0,1],[1,2],[0,3],[3,4],[1,4],[2,4]];
+let introDrag = null;
+let introSel = null;
+let introEdgeStart = null;
+
+function drawIntro() {
+  const {ctx,w,h} = setupCanvas('introCanvas');
+  clearCanvas(ctx, w, h);
+  // draw edges
+  introEdges.forEach(([a,b]) => {
+    drawEdge(ctx, introNodes[a].x, introNodes[a].y, introNodes[b].x, introNodes[b].y, '#1e3a5f', 2);
+  });
+  // draw nodes
+  introNodes.forEach((n,i) => {
+    const fill = i===introSel ? '#0f4c75' : i===introEdgeStart ? '#7c3aed' : '#1e3a5f';
+    const stroke = i===introSel ? '#00d4ff' : i===introEdgeStart ? '#a78bfa' : '#334155';
+    drawNode(ctx, n.x, n.y, n.label, fill, stroke);
+  });
+  // update adjacency list output
+  let out = introNodes.map((n,i) => {
+    const neighbors = introEdges.filter(([a,b])=>a===i||b===i)
+      .map(([a,b])=>introNodes[a===i?b:a].label);
+    return `${n.label}: [${neighbors.join(', ')||'∅'}]`;
+  }).join('  |  ');
+  document.getElementById('introOutput').textContent = 'Adj List → ' + out;
+}
+
+document.getElementById('introCanvas').addEventListener('mousedown', e => {
+  const rect = e.target.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  for (let i=0;i<introNodes.length;i++) {
+    const d = Math.hypot(introNodes[i].x-mx, introNodes[i].y-my);
+    if (d < 25) { introDrag = i; introSel = i; drawIntro(); return; }
+  }
+  introSel = null; drawIntro();
+});
+document.getElementById('introCanvas').addEventListener('mousemove', e => {
+  if (introDrag===null) return;
+  const rect = e.target.getBoundingClientRect();
+  introNodes[introDrag].x = e.clientX - rect.left;
+  introNodes[introDrag].y = e.clientY - rect.top;
+  drawIntro();
+});
+document.getElementById('introCanvas').addEventListener('mouseup', () => { introDrag = null; });
+
+function introAddNode() {
+  const labels = 'ABCDEFGHIJKLMNOPQRST';
+  const label = labels[introNodes.length % 20];
+  introNodes.push({x: 80 + Math.random()*400, y: 40 + Math.random()*200, label});
+  drawIntro();
+}
+function introAddEdge() {
+  if (introNodes.length < 2) return;
+  const a = Math.floor(Math.random()*introNodes.length);
+  let b = a;
+  while (b===a) b = Math.floor(Math.random()*introNodes.length);
+  if (!introEdges.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a)))
+    introEdges.push([a,b]);
+  drawIntro();
+}
+function introReset() {
+  introNodes = [{x:120,y:80,label:'A'},{x:280,y:60,label:'B'},{x:420,y:90,label:'C'},{x:200,y:190,label:'D'},{x:360,y:200,label:'E'}];
+  introEdges = [[0,1],[1,2],[0,3],[3,4],[1,4],[2,4]];
+  drawIntro();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REPRESENTATION CANVAS — Show memory layout
+// ═══════════════════════════════════════════════════════════════
+function drawReprCanvas() {
+  const {ctx,w,h} = setupCanvas('reprCanvas');
+  clearCanvas(ctx, w, h);
+  const nodes = ['A','B','C','D','E'];
+  const adj = [['B','D'],['A','C','E'],['B'],['A','E'],['B','D']];
+  const bx = 30, by = 30, bw = 60, bh = 35, gap = 10;
+  ctx.font = `11px 'JetBrains Mono', monospace`;
+  ctx.fillStyle = '#94a3b8';
+  ctx.fillText('Array Index', bx+5, by-10);
+  ctx.fillText('Adjacency List', bx + 120, by-10);
+
+  nodes.forEach((n, i) => {
+    const y = by + i*(bh+gap);
+    // Index box
+    ctx.strokeStyle = '#1e3a5f'; ctx.lineWidth = 1;
+    ctx.fillStyle = '#0f1e35';
+    ctx.fillRect(bx, y, bw, bh);
+    ctx.strokeRect(bx, y, bw, bh);
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = `bold 12px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`[${i}] ${n}`, bx+bw/2, y+bh/2+4);
+
+    // Arrow
+    ctx.beginPath(); ctx.moveTo(bx+bw, y+bh/2); ctx.lineTo(bx+bw+20, y+bh/2);
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx+bw+20, y+bh/2-4); ctx.lineTo(bx+bw+28, y+bh/2); ctx.lineTo(bx+bw+20, y+bh/2+4);
+    ctx.fillStyle = '#334155'; ctx.fill();
+
+    // List nodes
+    adj[i].forEach((nb, j) => {
+      const nx = bx + bw + 35 + j*90, ny = y;
+      ctx.fillStyle = '#0d1f35'; ctx.strokeStyle = '#1e3a5f';
+      ctx.fillRect(nx, ny, 55, bh); ctx.strokeRect(nx, ny, 55, bh);
+      ctx.fillStyle = '#10b981'; ctx.font = `bold 11px 'JetBrains Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(nb, nx+27, ny+bh/2+4);
+      // Divider
+      ctx.beginPath(); ctx.moveTo(nx+40, ny); ctx.lineTo(nx+40, ny+bh);
+      ctx.strokeStyle = '#1e3a5f'; ctx.stroke();
+      if (j < adj[i].length-1) {
+        ctx.beginPath(); ctx.moveTo(nx+55, ny+bh/2); ctx.lineTo(nx+65, ny+bh/2);
+        ctx.strokeStyle = '#334155'; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(nx+65, ny+bh/2-3); ctx.lineTo(nx+72, ny+bh/2); ctx.lineTo(nx+65, ny+bh/2+3);
+        ctx.fillStyle = '#334155'; ctx.fill();
+      } else {
+        ctx.fillStyle = '#64748b'; ctx.font = `10px 'JetBrains Mono',monospace`;
+        ctx.fillText('NULL', nx+48, ny+bh/2+4);
+      }
+    });
+    if (adj[i].length===0) {
+      ctx.fillStyle = '#64748b'; ctx.font = `10px 'JetBrains Mono',monospace`;
+      ctx.textAlign = 'left';
+      ctx.fillText('NULL', bx+bw+35, y+bh/2+4);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INSERT VERTEX DEMO
+// ═══════════════════════════════════════════════════════════════
+let ivNodes = ['A','B','C','D'];
+let ivEdges = [[0,1],[1,2],[2,3],[0,3]];
+
+function getCirclePos(i, n, cx, cy, r) {
+  const angle = (2*Math.PI*i/n) - Math.PI/2;
+  return { x: cx + r*Math.cos(angle), y: cy + r*Math.sin(angle) };
+}
+
+function drawVertexDemo(canvasId, nodes, edges, highlight=-1) {
+  const {ctx,w,h} = setupCanvas(canvasId);
+  clearCanvas(ctx,w,h);
+  const cx=w/2, cy=h/2, r=Math.min(w,h)*0.35;
+  edges.forEach(([a,b]) => {
+    const pa = getCirclePos(a, nodes.length, cx, cy, r);
+    const pb = getCirclePos(b, nodes.length, cx, cy, r);
+    drawEdge(ctx, pa.x, pa.y, pb.x, pb.y);
+  });
+  nodes.forEach((n,i) => {
+    const p = getCirclePos(i, nodes.length, cx, cy, r);
+    const fill = i===highlight ? '#1a4a1a' : '#1e3a5f';
+    const stroke = i===highlight ? '#10b981' : '#00d4ff';
+    drawNode(ctx, p.x, p.y, n, fill, stroke);
+  });
+}
+
+function insertVertex() {
+  const name = document.getElementById('insVName').value.trim() || 'X';
+  ivNodes.push(name);
+  drawVertexDemo('insVCanvas', ivNodes, ivEdges, ivNodes.length-1);
+  document.getElementById('insVOutput').textContent =
+    `Graph: ${ivNodes.length} vertices [${ivNodes.join(', ')}]  — New vertex "${name}" added at index ${ivNodes.length-1}`;
+  document.getElementById('insVName').value = '';
+}
+
+function resetVertexDemo() {
+  ivNodes = ['A','B','C','D'];
+  ivEdges = [[0,1],[1,2],[2,3],[0,3]];
+  drawVertexDemo('insVCanvas', ivNodes, ivEdges);
+  document.getElementById('insVOutput').textContent = 'Graph: 4 vertices [A, B, C, D]';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEARCH VERTEX DEMO
+// ═══════════════════════════════════════════════════════════════
+const svNodes = ['A','B','C','D','E'];
+const svEdges = [[0,1],[1,2],[2,3],[3,4],[0,4]];
+
+function searchVertex() {
+  const name = document.getElementById('searchVInput').value.trim().toUpperCase();
+  const idx = svNodes.indexOf(name);
+  const {ctx,w,h} = setupCanvas('searchVCanvas');
+  clearCanvas(ctx,w,h);
+  const cx=w/2, cy=h/2, r=Math.min(w,h)*0.35;
+  svEdges.forEach(([a,b]) => {
+    const pa = getCirclePos(a, svNodes.length, cx, cy, r);
+    const pb = getCirclePos(b, svNodes.length, cx, cy, r);
+    drawEdge(ctx, pa.x, pa.y, pb.x, pb.y);
+  });
+  svNodes.forEach((n,i) => {
+    const p = getCirclePos(i, svNodes.length, cx, cy, r);
+    const fill = i===idx ? '#1a4a1a' : '#1e3a5f';
+    const stroke = i===idx ? '#10b981' : '#00d4ff';
+    drawNode(ctx, p.x, p.y, n, fill, stroke);
+  });
+  document.getElementById('searchVOutput').textContent =
+    idx >= 0 ? `✅ Found "${name}" at index ${idx}` : `❌ Vertex "${name}" not found in graph`;
+}
+
+function initSearchCanvas() {
+  const {ctx,w,h} = setupCanvas('searchVCanvas');
+  clearCanvas(ctx,w,h);
+  const cx=w/2, cy=h/2, r=Math.min(w,h)*0.35;
+  svEdges.forEach(([a,b]) => {
+    const pa = getCirclePos(a, svNodes.length, cx, cy, r);
+    const pb = getCirclePos(b, svNodes.length, cx, cy, r);
+    drawEdge(ctx, pa.x, pa.y, pb.x, pb.y);
+  });
+  svNodes.forEach((n,i) => {
+    const p = getCirclePos(i, svNodes.length, cx, cy, r);
+    drawNode(ctx, p.x, p.y, n);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INSERT EDGE DEMO
+// ═══════════════════════════════════════════════════════════════
+let ieNodes = ['0','1','2','3','4'];
+let ieEdges = [];
+let ieAdj = [[],[],[],[],[]];
+
+function drawEdgeDemo() {
+  const {ctx,w,h} = setupCanvas('insECanvas');
+  clearCanvas(ctx,w,h);
+  const cx=w/2, cy=h/2, r=Math.min(w,h)*0.35;
+  ieEdges.forEach(([a,b]) => {
+    const pa = getCirclePos(a, ieNodes.length, cx, cy, r);
+    const pb = getCirclePos(b, ieNodes.length, cx, cy, r);
+    drawEdge(ctx, pa.x, pa.y, pb.x, pb.y, '#1e3a5f', 2);
+  });
+  ieNodes.forEach((n,i) => {
+    const p = getCirclePos(i, ieNodes.length, cx, cy, r);
+    drawNode(ctx, p.x, p.y, n);
+  });
+}
+
+function insertEdgeDemo() {
+  const u = parseInt(document.getElementById('insEFrom').value);
+  const v = parseInt(document.getElementById('insETo').value);
+  if (isNaN(u)||isNaN(v)||u<0||v<0||u>=5||v>=5||u===v) {
+    document.getElementById('insEOutput').textContent = '❌ Invalid input. Use 0–4 for both vertices.'; return;
+  }
+  if (!ieEdges.some(([a,b])=>(a===u&&b===v)||(a===v&&b===u))) {
+    ieEdges.push([u,v]);
+    ieAdj[u].push(v); ieAdj[v].push(u);
+  }
+  drawEdgeDemo();
+  const adjStr = ieAdj.map((n,i)=>`${i}:[${n.join(',')}]`).join('  ');
+  document.getElementById('insEOutput').textContent = `Edge (${u}–${v}) added | ${adjStr}`;
+}
+
+function resetEdgeDemo() {
+  ieEdges = []; ieAdj = [[],[],[],[],[]];
+  drawEdgeDemo();
+  document.getElementById('insEOutput').textContent = 'Add edges between vertices 0–4';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BFS VISUALIZATION
+// ═══════════════════════════════════════════════════════════════
+const BFS_NODES = [{x:200,y:70},{x:380,y:70},{x:110,y:180},{x:290,y:180},{x:450,y:180},{x:200,y:270},{x:380,y:270}];
+const BFS_EDGES = [[0,1],[0,2],[0,3],[1,3],[1,4],[2,5],[3,5],[3,6],[4,6]];
+let bfsState = null;
+let bfsInterval = null;
+
+function drawBFSGraph(colors, currentV=-1) {
+  const {ctx,w,h} = setupCanvas('bfsCanvas');
+  clearCanvas(ctx,w,h);
+  BFS_EDGES.forEach(([a,b]) => {
+    const pa = BFS_NODES[a], pb = BFS_NODES[b];
+    const col = (colors[a]===2 && colors[b]===2) ? '#10b981' : '#1e2d45';
+    drawEdge(ctx, pa.x, pa.y, pb.x, pb.y, col, col==='#10b981'?2:1.5);
+  });
+  BFS_NODES.forEach((n,i) => {
+    const c = colors[i];
+    let fill = '#0f1e35', stroke = '#334155';
+    if (i===currentV) { fill='#4a1515'; stroke='#ef4444'; }
+    else if (c===2) { fill='#0f3d2e'; stroke='#10b981'; }
+    else if (c===1) { fill='#3d2e00'; stroke='#f59e0b'; }
+    drawNode(ctx, n.x, n.y, String(i), fill, stroke);
+  });
+}
+
+function startBFS() {
+  clearInterval(bfsInterval);
+  const start = parseInt(document.getElementById('bfsStart').value) || 0;
+  const colors = new Array(BFS_NODES.length).fill(0);
+  const queue = [start];
+  const order = [];
+  colors[start] = 1;
+  let qi = 0;
+
+  bfsInterval = setInterval(() => {
+    if (qi >= queue.length) {
+      clearInterval(bfsInterval);
+      document.getElementById('bfsOutput').textContent = `BFS Order: ${order.join(' → ')} ✅`;
+      drawBFSGraph(colors, -1);
+      return;
+    }
+    const v = queue[qi++];
+    colors[v] = 2;
+    order.push(v);
+    BFS_EDGES.forEach(([a,b]) => {
+      const nb = a===v?b:b===v?a:-1;
+      if (nb>=0 && colors[nb]===0) { colors[nb]=1; queue.push(nb); }
+    });
+    drawBFSGraph(colors, v);
+    document.getElementById('bfsOutput').textContent = `Visiting: ${v} | Queue: [${queue.slice(qi).join(', ')}] | Visited: ${order.join('→')}`;
+  }, 700);
+}
+
+let bfsStepState = {colors:null, queue:[], qi:0, order:[]};
+function resetBFS() {
+  clearInterval(bfsInterval);
+  bfsStepState = {colors:null,queue:[],qi:0,order:[]};
+  drawBFSGraph(new Array(BFS_NODES.length).fill(0));
+  document.getElementById('bfsOutput').textContent = 'Press "Run BFS" or "Step" to begin';
+}
+
+function stepBFS() {
+  clearInterval(bfsInterval);
+  if (!bfsStepState.colors) {
+    const start = parseInt(document.getElementById('bfsStart').value)||0;
+    bfsStepState.colors = new Array(BFS_NODES.length).fill(0);
+    bfsStepState.colors[start]=1;
+    bfsStepState.queue=[start]; bfsStepState.qi=0; bfsStepState.order=[];
+  }
+  const {colors,queue,order} = bfsStepState;
+  let qi = bfsStepState.qi;
+  if (qi >= queue.length) { document.getElementById('bfsOutput').textContent=`BFS Complete: ${order.join('→')}`; return; }
+  const v = queue[qi++]; bfsStepState.qi = qi;
+  colors[v]=2; order.push(v);
+  BFS_EDGES.forEach(([a,b])=>{ const nb=a===v?b:b===v?a:-1; if(nb>=0&&colors[nb]===0){colors[nb]=1;queue.push(nb);} });
+  drawBFSGraph(colors, v);
+  document.getElementById('bfsOutput').textContent = `Step: Visit ${v} | Queue: [${queue.slice(qi).join(', ')}] | Order: ${order.join('→')}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DFS VISUALIZATION
+// ═══════════════════════════════════════════════════════════════
+let dfsState = {colors:null, stack:[], order:[], visited:null};
+let dfsInterval = null;
+const DFS_ADJ = [[1,2],[0,3,4],[0,5,6],[1],[1],[2],[2]];
+
+function drawDFSGraph(colors, currentV=-1) {
+  const {ctx,w,h} = setupCanvas('dfsCanvas');
+  clearCanvas(ctx,w,h);
+  BFS_EDGES.forEach(([a,b]) => {
+    drawEdge(ctx, BFS_NODES[a].x, BFS_NODES[a].y, BFS_NODES[b].x, BFS_NODES[b].y, '#1e2d45', 1.5);
+  });
+  BFS_NODES.forEach((n,i) => {
+    const c = colors[i];
+    let fill='#0f1e35', stroke='#334155';
+    if (i===currentV) {fill='#4a1515';stroke='#ef4444';}
+    else if (c===2) {fill='#0f3d2e';stroke='#10b981';}
+    else if (c===1) {fill='#2a1a4a';stroke='#7c3aed';}
+    drawNode(ctx, n.x, n.y, String(i), fill, stroke);
+  });
+}
+
+function startDFS() {
+  clearInterval(dfsInterval);
+  const start = parseInt(document.getElementById('dfsStart').value)||0;
+  const visited = new Array(BFS_NODES.length).fill(false);
+  const colors = new Array(BFS_NODES.length).fill(0);
+  const order = [];
+  const stack = [start];
+  colors[start]=1;
+
+  dfsInterval = setInterval(()=>{
+    if (!stack.length) {
+      clearInterval(dfsInterval);
+      document.getElementById('dfsOutput').textContent=`DFS Order: ${order.join('→')} ✅`;
+      drawDFSGraph(colors,-1);
+      return;
+    }
+    const v = stack.pop();
+    if (visited[v]) return;
+    visited[v]=true; colors[v]=2; order.push(v);
+    drawDFSGraph(colors, v);
+    DFS_ADJ[v].forEach(nb=>{ if(!visited[nb]){colors[nb]=1;stack.push(nb);} });
+    document.getElementById('dfsOutput').textContent=`Visit: ${v} | Stack: [${stack.join(',')}] | Order: ${order.join('→')}`;
+  }, 700);
+}
+
+function resetDFS() {
+  clearInterval(dfsInterval);
+  drawDFSGraph(new Array(BFS_NODES.length).fill(0));
+  document.getElementById('dfsOutput').textContent='Press "Run DFS" or "Step" to begin';
+  dfsState={colors:null,stack:[],order:[],visited:null};
+}
+
+function stepDFS() {
+  clearInterval(dfsInterval);
+  if (!dfsState.colors) {
+    const start = parseInt(document.getElementById('dfsStart').value)||0;
+    dfsState.colors = new Array(BFS_NODES.length).fill(0);
+    dfsState.visited = new Array(BFS_NODES.length).fill(false);
+    dfsState.colors[start]=1; dfsState.stack=[start]; dfsState.order=[];
+  }
+  const {colors,stack,order,visited}=dfsState;
+  while (stack.length) {
+    const v = stack.pop();
+    if (visited[v]) continue;
+    visited[v]=true; colors[v]=2; order.push(v);
+    DFS_ADJ[v].forEach(nb=>{ if(!visited[nb]){colors[nb]=1;stack.push(nb);} });
+    drawDFSGraph(colors, v);
+    document.getElementById('dfsOutput').textContent=`Step: Visit ${v} | Stack:[${stack.join(',')}] | Order:${order.join('→')}`;
+    return;
+  }
+  document.getElementById('dfsOutput').textContent=`DFS Complete: ${order.join('→')}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PATH DEMO
+// ═══════════════════════════════════════════════════════════════
+const PNS = [{x:80,y:130},{x:200,y:60},{x:350,y:60},{x:470,y:130},{x:350,y:200},{x:200,y:200}];
+const PES = [[0,1],[0,5],[1,2],[1,5],[2,3],[2,4],[3,4],[4,5]];
+const PADJ = [[1,5],[0,2,5],[1,3,4],[2,4],[2,3,5],[0,1,4]];
+
+function drawPathGraph(highlight=[], pathEdges=[]) {
+  const {ctx,w,h} = setupCanvas('pathCanvas');
+  clearCanvas(ctx,w,h);
+  PES.forEach(([a,b]) => {
+    const isPath = pathEdges.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+    drawEdge(ctx,PNS[a].x,PNS[a].y,PNS[b].x,PNS[b].y, isPath?'#10b981':'#1e2d45', isPath?3:1.5);
+  });
+  PNS.forEach((n,i) => {
+    const hi = highlight.indexOf(i);
+    let fill='#0f1e35', stroke='#334155';
+    if (hi===0){fill='#0f4c75';stroke='#00d4ff';}
+    else if (hi===highlight.length-1&&hi>0){fill='#4a1515';stroke='#ef4444';}
+    else if (hi>0){fill='#0f3d2e';stroke='#10b981';}
+    drawNode(ctx,n.x,n.y,String(i),fill,stroke);
+  });
+}
+
+function findPathDemo() {
+  const src=parseInt(document.getElementById('pathFrom').value)||0;
+  const dst=parseInt(document.getElementById('pathTo').value)||5;
+  const visited=new Array(6).fill(false);
+  const path=[];
+  function dfs(v){
+    visited[v]=true; path.push(v);
+    if(v===dst) return true;
+    for(const nb of PADJ[v]){ if(!visited[nb]&&dfs(nb)) return true; }
+    path.pop(); return false;
+  }
+  dfs(src);
+  const pe=[];
+  for(let i=0;i<path.length-1;i++) pe.push([path[i],path[i+1]]);
+  drawPathGraph(path, pe);
+  document.getElementById('pathOutput').textContent =
+    path[path.length-1]===dst ? `✅ Path found: ${path.join(' → ')} (length: ${path.length-1})` : '❌ No path found';
+}
+
+function findShortestDemo() {
+  const src=parseInt(document.getElementById('pathFrom').value)||0;
+  const dst=parseInt(document.getElementById('pathTo').value)||5;
+  const dist=new Array(6).fill(-1);
+  const par=new Array(6).fill(-1);
+  const q=[src]; dist[src]=0;
+  while(q.length){
+    const v=q.shift();
+    for(const nb of PADJ[v]){
+      if(dist[nb]===-1){dist[nb]=dist[v]+1;par[nb]=v;q.push(nb);}
+    }
+  }
+  const path=[]; let v=dst;
+  while(v!==-1){path.unshift(v);v=par[v];}
+  const pe=[];
+  for(let i=0;i<path.length-1;i++) pe.push([path[i],path[i+1]]);
+  drawPathGraph(path, pe);
+  document.getElementById('pathOutput').textContent =
+    dist[dst]>=0 ? `⚡ Shortest path: ${path.join(' → ')} (length: ${dist[dst]})` : '❌ Not reachable';
+}
+
+function resetPathDemo() { drawPathGraph([]); document.getElementById('pathOutput').textContent='Enter source and destination vertices'; }
+
+// ═══════════════════════════════════════════════════════════════
+// CONNECTIVITY DEMO
+// ═══════════════════════════════════════════════════════════════
+let connNodes = [{x:120,y:80},{x:260,y:50},{x:380,y:80},{x:190,y:190},{x:310,y:190},{x:500,y:130}];
+let connEdges = [[0,1],[1,2],[0,3],[3,4],[1,4],[2,4]];
+
+function drawConnGraph(highlight=[]) {
+  const {ctx,w,h} = setupCanvas('connCanvas');
+  clearCanvas(ctx,w,h);
+  connEdges.forEach(([a,b])=>drawEdge(ctx,connNodes[a].x,connNodes[a].y,connNodes[b].x,connNodes[b].y));
+  connNodes.forEach((n,i)=>{
+    const fill=highlight.includes(i)?'#0f3d2e':'#0f1e35';
+    const stroke=highlight.includes(i)?'#10b981':'#334155';
+    drawNode(ctx,n.x,n.y,String(i),fill,stroke);
+  });
+}
+
+function checkConnected() {
+  const V=connNodes.length;
+  const visited=new Array(V).fill(false);
+  const q=[0]; visited[0]=true; let cnt=1;
+  // Build adj from connEdges
+  const adj=Array.from({length:V},()=>[]);
+  connEdges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  while(q.length){const v=q.shift();for(const nb of adj[v]){if(!visited[nb]){visited[nb]=true;cnt++;q.push(nb);}}}
+  const all=[...Array(V).keys()];
+  drawConnGraph(visited.map((v,i)=>v?i:-1).filter(i=>i>=0));
+  document.getElementById('connOutput').textContent =
+    cnt===V ? `✅ Graph IS Connected — all ${V} vertices reachable from vertex 0` :
+              `❌ Graph is NOT Connected — only ${cnt}/${V} vertices reachable from vertex 0`;
+}
+
+function disconnectGraph() {
+  connEdges = [[0,1],[1,2],[0,3],[3,4]]; // vertex 5 isolated
+  drawConnGraph([]);
+  document.getElementById('connOutput').textContent = 'Vertex 5 is now isolated. Click "Check Connected"';
+}
+function connectGraph() {
+  connEdges = [[0,1],[1,2],[0,3],[3,4],[1,4],[2,4],[4,5]];
+  drawConnGraph([]);
+  document.getElementById('connOutput').textContent = 'Graph reconnected. Click "Check Connected"';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CYCLE DEMO
+// ═══════════════════════════════════════════════════════════════
+let cycleEdges = [[0,1],[1,2],[2,3],[3,4]];
+const cycleNodes = [{x:120,y:90},{x:240,y:60},{x:360,y:90},{x:420,y:200},{x:180,y:220}];
+
+function drawCycleGraph(highlight=[]) {
+  const {ctx,w,h} = setupCanvas('cycleCanvas');
+  clearCanvas(ctx,w,h);
+  cycleEdges.forEach(([a,b])=>{
+    const isHi=highlight.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+    drawEdge(ctx,cycleNodes[a].x,cycleNodes[a].y,cycleNodes[b].x,cycleNodes[b].y, isHi?'#ef4444':'#1e2d45', isHi?3:1.5);
+  });
+  cycleNodes.forEach((n,i)=>drawNode(ctx,n.x,n.y,String(i)));
+}
+
+function detectCycleDemo() {
+  const V=5;
+  const adj=Array.from({length:V},()=>[]);
+  cycleEdges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const visited=new Array(V).fill(false);
+  let cycleFound=false, cycleEdge=null;
+
+  function dfs(v, par) {
+    visited[v]=true;
+    for(const nb of adj[v]){
+      if(!visited[nb]){if(dfs(nb,v))return true;}
+      else if(nb!==par){cycleEdge=[v,nb]; return true;}
+    }
+    return false;
+  }
+  for(let i=0;i<V;i++){if(!visited[i]&&dfs(i,-1)){cycleFound=true;break;}}
+
+  if(cycleFound&&cycleEdge) drawCycleGraph([cycleEdge]);
+  else drawCycleGraph([]);
+  document.getElementById('cycleOutput').textContent =
+    cycleFound ? `🔄 Cycle DETECTED! Back edge found: (${cycleEdge[0]}–${cycleEdge[1]})` :
+                 `✅ No cycle found — this is an acyclic graph (tree/forest)`;
+}
+
+function addCycleEdge() {
+  if (!cycleEdges.some(([a,b])=>(a===0&&b===4)||(a===4&&b===0)))
+    cycleEdges.push([0,4]);
+  drawCycleGraph([]);
+  document.getElementById('cycleOutput').textContent='Edge 0–4 added. Click "Detect Cycle"';
+}
+function resetCycleDemo() {
+  cycleEdges=[[0,1],[1,2],[2,3],[3,4]];
+  drawCycleGraph([]);
+  document.getElementById('cycleOutput').textContent='Click "Detect Cycle" to check the graph';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DEGREE DEMO
+// ═══════════════════════════════════════════════════════════════
+const degNodes=[{x:200,y:80},{x:380,y:80},{x:120,y:200},{x:300,y:200},{x:460,y:200},{x:300,y:310}];
+const degEdges=[[0,1],[0,2],[0,3],[1,3],[1,4],[2,5],[3,5],[4,5]];
+
+function computeDeg() {
+  const deg=new Array(6).fill(0);
+  degEdges.forEach(([a,b])=>{deg[a]++;deg[b]++;});
+  return deg;
+}
+
+function drawDegGraph(highlight=-1, mode='none') {
+  const {ctx,w,h} = setupCanvas('degreeCanvas');
+  clearCanvas(ctx,w,h);
+  const deg=computeDeg();
+  degEdges.forEach(([a,b])=>drawEdge(ctx,degNodes[a].x,degNodes[a].y,degNodes[b].x,degNodes[b].y));
+  degNodes.forEach((n,i)=>{
+    const isMax=deg[i]===Math.max(...deg);
+    const isMin=deg[i]===Math.min(...deg);
+    let fill='#0f1e35', stroke='#334155';
+    if(mode==='max'&&isMax){fill='#3d2e00';stroke='#f59e0b';}
+    else if(mode==='min'&&isMin){fill='#0f3d2e';stroke='#10b981';}
+    drawNode(ctx,n.x,n.y,String(i),fill,stroke,undefined,24);
+    if(mode==='all'||mode==='max'||mode==='min'){
+      ctx.fillStyle='#94a3b8';
+      ctx.font=`10px 'JetBrains Mono',monospace`;
+      ctx.textAlign='center';
+      ctx.fillText(`d=${deg[i]}`,n.x,n.y+38);
+    }
+  });
+}
+
+function showDegrees() {
+  const deg=computeDeg();
+  drawDegGraph(-1,'all');
+  document.getElementById('degreeOutput').textContent =
+    `Degrees: ${deg.map((d,i)=>`v${i}=${d}`).join(', ')} | Sum=${deg.reduce((a,b)=>a+b,0)} = 2×${degEdges.length} edges`;
+}
+function highlightMaxDeg() {
+  const deg=computeDeg(); const max=Math.max(...deg); const idx=deg.indexOf(max);
+  drawDegGraph(-1,'max');
+  document.getElementById('degreeOutput').textContent=`Max degree: vertex ${idx} has degree ${max}`;
+}
+function highlightMinDeg() {
+  const deg=computeDeg(); const min=Math.min(...deg); const idx=deg.indexOf(min);
+  drawDegGraph(-1,'min');
+  document.getElementById('degreeOutput').textContent=`Min degree: vertex ${idx} has degree ${min}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BIPARTITE DEMO
+// ═══════════════════════════════════════════════════════════════
+let bipartEdges = [[0,3],[0,4],[1,3],[1,5],[2,4],[2,5]];
+const bipartNodes=[{x:120,y:80},{x:120,y:180},{x:120,y:280},{x:400,y:80},{x:400,y:180},{x:400,y:280}];
+
+function drawBipartGraph(colors=null, conflict=null) {
+  const {ctx,w,h} = setupCanvas('bipartCanvas');
+  clearCanvas(ctx,w,h);
+  // Labels
+  ctx.fillStyle='#334155'; ctx.font=`10px 'JetBrains Mono',monospace`;
+  ctx.textAlign='center'; ctx.fillText('Set A',120,40); ctx.fillText('Set B',400,40);
+
+  bipartEdges.forEach(([a,b])=>{
+    const isConflict=conflict&&((conflict[0]===a&&conflict[1]===b)||(conflict[0]===b&&conflict[1]===a));
+    drawEdge(ctx,bipartNodes[a].x,bipartNodes[a].y,bipartNodes[b].x,bipartNodes[b].y, isConflict?'#ef4444':'#1e2d45', isConflict?3:1.5);
+  });
+  bipartNodes.forEach((n,i)=>{
+    let fill='#0f1e35', stroke='#334155';
+    if(colors){
+      if(colors[i]===0){fill='#0f3a4a';stroke='#00d4ff';}
+      else if(colors[i]===1){fill='#3d2e00';stroke='#f59e0b';}
+      if(colors[i]===colors[bipartEdges.find(([a,b])=>(a===i||b===i)&&colors[a]===colors[b]&&colors[a]!==undefined&&colors[a]!==-1)?...(bipartEdges.find(([a,b])=>(a===i||b===i)&&colors[a]===colors[b])?.[0]===i?[bipartEdges.find(([a,b])=>(a===i||b===i)&&colors[a]===colors[b])?.[1]]:[bipartEdges.find(([a,b])=>(a===i||b===i)&&colors[a]===colors[b])?.[0]]):[]]){fill='#4a1515';stroke='#ef4444';}
+    }
+    drawNode(ctx,n.x,n.y,String(i),fill,stroke);
+  });
+}
+
+function checkBipartite() {
+  const V=6;
+  const adj=Array.from({length:V},()=>[]);
+  bipartEdges.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const color=new Array(V).fill(-1);
+  let isBipartite=true, conflict=null;
+  const q=[0]; color[0]=0;
+  while(q.length&&isBipartite){
+    const v=q.shift();
+    for(const nb of adj[v]){
+      if(color[nb]===-1){color[nb]=1-color[v];q.push(nb);}
+      else if(color[nb]===color[v]){isBipartite=false;conflict=[v,nb];break;}
+    }
+  }
+  drawBipartGraph(color, conflict);
+  document.getElementById('bipartOutput').textContent = isBipartite ?
+    '✅ Graph IS Bipartite — can be 2-colored (Set A: blue, Set B: amber)' :
+    `❌ NOT Bipartite — conflict at edge (${conflict[0]}–${conflict[1]}): same color on adjacent vertices`;
+}
+
+function addBipartConflict() {
+  if(!bipartEdges.some(([a,b])=>(a===0&&b===1)||(a===1&&b===0)))
+    bipartEdges.push([0,1]);
+  drawBipartGraph();
+  document.getElementById('bipartOutput').textContent='Conflict edge added (0–1, both in Set A). Click "Check Bipartite"';
+}
+function resetBipartite() {
+  bipartEdges=[[0,3],[0,4],[1,3],[1,5],[2,4],[2,5]];
+  drawBipartGraph();
+  document.getElementById('bipartOutput').textContent='Click "Check Bipartite" to run 2-coloring';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INITIALIZE ALL CANVASES ON LOAD
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  setTimeout(()=>{
+    drawIntro();
+    drawReprCanvas();
+    drawVertexDemo('insVCanvas', ivNodes, ivEdges);
+    initSearchCanvas();
+    drawEdgeDemo();
+    drawBFSGraph(new Array(BFS_NODES.length).fill(0));
+    drawDFSGraph(new Array(BFS_NODES.length).fill(0));
+    drawPathGraph([]);
+    drawConnGraph([]);
+    drawCycleGraph([]);
+    drawDegGraph();
+    drawBipartGraph();
+  }, 300);
+});
+
+window.addEventListener('resize', () => {
+  setTimeout(()=>{
+    drawIntro();
+    drawReprCanvas();
+    drawVertexDemo('insVCanvas', ivNodes, ivEdges);
+    initSearchCanvas();
+    drawEdgeDemo();
+    drawBFSGraph(new Array(BFS_NODES.length).fill(0));
+    drawDFSGraph(new Array(BFS_NODES.length).fill(0));
+    drawPathGraph([]);
+    drawConnGraph([]);
+    drawCycleGraph([]);
+    drawDegGraph();
+    drawBipartGraph();
+  }, 100);
+});
+</script>
+</body>
+</html>

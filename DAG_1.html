@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAG — Directed Acyclic Graph | Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090d;--s1:#0f1117;--s2:#161b24;--bd:#1e2535;--a1:#00e5a0;--a2:#ff6b6b;--a3:#7c83ff;--a4:#ffd166;--tx:#dde1ee;--dm:#6a7490;--mt:#2d3248;--hl:#00e5a018;--cbg:#0b0e15;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-thumb{background:var(--a1);border-radius:3px;}::-webkit-scrollbar-track{background:var(--bg);}
+
+/* HEADER */
+header{position:sticky;top:0;z-index:200;background:rgba(7,9,13,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);height:56px;display:flex;align-items:center;padding:0 1.5rem;gap:1.5rem;}
+.logo{font-family:'Space Mono',monospace;font-weight:700;color:var(--a1);font-size:1rem;white-space:nowrap;}
+.logo span{color:var(--dm);}
+.top-nav{display:flex;gap:2px;overflow-x:auto;flex:1;}
+.top-nav::-webkit-scrollbar{display:none;}
+.tnb{background:none;border:none;color:var(--dm);font-family:'Syne',sans-serif;font-size:.7rem;font-weight:700;padding:.35rem .7rem;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.tnb:hover,.tnb.act{background:var(--hl);color:var(--a1);}
+.pbar{position:fixed;top:56px;left:0;right:0;height:2px;background:var(--bd);z-index:199;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--a1),var(--a3));width:0;transition:width .2s;}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:240px 1fr;}
+.sb{position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;border-right:1px solid var(--bd);padding:1rem 0;}
+.sb::-webkit-scrollbar{display:none;}
+.sb-grp{margin-bottom:.5rem;}
+.sb-lbl{font-size:.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mt);padding:.6rem 1.25rem .25rem;}
+.sb-a{display:flex;align-items:center;gap:.5rem;padding:.4rem 1.25rem;color:var(--dm);font-size:.78rem;font-weight:600;cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
+.sb-a:hover,.sb-a.on{color:var(--a1);background:var(--hl);border-left-color:var(--a1);}
+.sb-a .d{width:5px;height:5px;border-radius:50%;background:var(--mt);flex-shrink:0;}
+.sb-a.on .d,.sb-a:hover .d{background:var(--a1);}
+
+/* MAIN */
+main{padding:2.5rem 2.5rem 6rem;max-width:960px;}
+section{margin-bottom:4.5rem;scroll-margin-top:72px;opacity:0;transform:translateY(16px);transition:opacity .4s,transform .4s;}
+section.vis{opacity:1;transform:none;}
+
+/* SECTION HEADER */
+.badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--hl);border:1px solid var(--a1);color:var(--a1);font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;padding:.2rem .65rem;border-radius:100px;letter-spacing:.8px;text-transform:uppercase;margin-bottom:.6rem;}
+h2.st{font-size:1.55rem;font-weight:800;margin-bottom:.4rem;}
+.sd{color:var(--dm);font-size:.9rem;line-height:1.7;max-width:700px;margin-bottom:1.25rem;}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:1.25rem;margin-bottom:1.25rem;}
+.ct{font-family:'Space Mono',monospace;font-size:.72rem;font-weight:700;color:var(--a1);margin-bottom:.9rem;display:flex;align-items:center;gap:.45rem;}
+.ct::before{content:'';width:3px;height:12px;background:var(--a1);border-radius:2px;flex-shrink:0;}
+
+/* THEORY */
+.tb{background:var(--s2);border-left:3px solid var(--a4);border-radius:0 7px 7px 0;padding:.9rem 1.1rem;margin-bottom:1rem;}
+.tb p{color:var(--dm);font-size:.87rem;line-height:1.75;}
+.tb strong{color:var(--a4);}
+
+/* ANALOGY */
+.an{background:linear-gradient(135deg,#12192a,#0f1420);border:1px solid var(--a3);border-left:4px solid var(--a3);border-radius:8px;padding:1rem 1.1rem;margin-top:1rem;}
+.an-lbl{font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;color:var(--a3);letter-spacing:.8px;margin-bottom:.4rem;text-transform:uppercase;}
+.an p{color:var(--dm);font-size:.87rem;line-height:1.7;}
+
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:1.25rem;flex-wrap:wrap;}
+.tab{background:none;border:none;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:600;color:var(--dm);padding:.5rem 1rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab.on{color:var(--a1);border-bottom-color:var(--a1);}
+.tc{display:none;}.tc.on{display:block;}
+
+/* CODE */
+.cb{background:var(--cbg);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:1rem;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:.5rem .9rem;border-bottom:1px solid var(--bd);background:#080b10;}
+.cl{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--a1);font-weight:700;letter-spacing:.8px;}
+.cd{display:flex;gap:4px;}.cd span{width:9px;height:9px;border-radius:50%;}
+.cd span:nth-child(1){background:#ff5f57;}.cd span:nth-child(2){background:#febc2e;}.cd span:nth-child(3){background:#28c840;}
+pre{padding:1.1rem;overflow-x:auto;font-family:'Fira Code',monospace;font-size:.8rem;line-height:1.7;}
+.kw{color:#ff79c6;}.fn{color:#50fa7b;}.ty{color:#8be9fd;}.nm{color:#bd93f9;}.st{color:#f1fa8c;}.cm{color:#565f89;font-style:italic;}.mc{color:#ff6b6b;}
+
+/* VIZ */
+.vz{background:var(--s2);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:1rem;}
+.vt{display:flex;align-items:center;gap:.6rem;padding:.65rem .9rem;border-bottom:1px solid var(--bd);background:var(--s1);flex-wrap:wrap;}
+.vn{font-family:'Space Mono',monospace;font-size:.67rem;color:var(--a1);font-weight:700;flex:1;min-width:80px;}
+canvas{display:block;width:100%;}
+.vlog{font-family:'Fira Code',monospace;font-size:.76rem;color:var(--a1);padding:.65rem .9rem;border-top:1px solid var(--bd);min-height:34px;background:var(--cbg);}
+
+/* BUTTONS */
+.btn{background:var(--hl);border:1px solid var(--a1);color:var(--a1);font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;padding:.3rem .8rem;border-radius:5px;cursor:pointer;transition:all .12s;white-space:nowrap;}
+.btn:hover{background:var(--a1);color:var(--bg);}
+.btn.r{border-color:var(--a2);color:var(--a2);background:#ff6b6b15;}
+.btn.r:hover{background:var(--a2);color:var(--bg);}
+.btn.p{border-color:var(--a3);color:var(--a3);background:#7c83ff15;}
+.btn.p:hover{background:var(--a3);color:var(--bg);}
+.btn.y{border-color:var(--a4);color:var(--a4);background:#ffd16615;}
+.btn.y:hover{background:var(--a4);color:var(--bg);}
+.inp{background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:'Fira Code',monospace;font-size:.78rem;padding:.3rem .6rem;border-radius:5px;width:52px;}
+.inp:focus{outline:none;border-color:var(--a1);}
+label{font-size:.74rem;color:var(--dm);font-weight:600;}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:.82rem;}
+.tbl th,.tbl td{padding:.5rem .8rem;border:1px solid var(--bd);text-align:left;}
+.tbl th{background:var(--s2);color:var(--a4);font-family:'Space Mono',monospace;font-size:.68rem;}
+.tbl td{background:var(--s1);color:var(--dm);}
+.tbl td:first-child{color:var(--tx);font-weight:600;}
+.tbl tr:hover td{background:var(--s2);}
+
+/* MATRIX TABLE */
+.mt{border-collapse:collapse;font-family:'Fira Code',monospace;font-size:.8rem;}
+.mt td,.mt th{width:32px;height:32px;text-align:center;border:1px solid var(--bd);}
+.mt th{background:var(--s2);color:var(--a1);font-size:.7rem;}
+.mt td{background:var(--s1);color:var(--tx);}
+.mt td.one{background:#00e5a018;color:var(--a1);font-weight:700;}
+.mt td.hl{background:#ffd16630;color:var(--a4);}
+
+/* STEPS */
+.steps{list-style:none;padding:0;counter-reset:s;}
+.steps li{counter-increment:s;display:flex;gap:.8rem;padding:.6rem 0;border-bottom:1px solid var(--bd);font-size:.85rem;color:var(--dm);line-height:1.6;align-items:flex-start;}
+.steps li::before{content:counter(s);min-width:26px;height:26px;background:var(--hl);border:1px solid var(--a1);color:var(--a1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.steps li:last-child{border-bottom:none;}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:.3rem;border-radius:100px;font-size:.76rem;font-weight:600;padding:.25rem .7rem;}
+.chip.g{background:var(--hl);border:1px solid var(--a1);color:var(--a1);}
+.chip.r{background:#ff6b6b15;border:1px solid var(--a2);color:var(--a2);}
+.chip.b{background:#7c83ff15;border:1px solid var(--a3);color:var(--a3);}
+.chip.y{background:#ffd16615;border:1px solid var(--a4);color:var(--a4);}
+.div{height:1px;background:var(--bd);margin:1.5rem 0;}
+
+@media(max-width:860px){.wrap{grid-template-columns:1fr;}.sb{display:none;}main{padding:1.5rem 1rem 5rem;}.g2,.g3{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">DAG<span>.learn</span></div>
+  <nav class="top-nav">
+    <button class="tnb act" onclick="go('s0')">Intro</button>
+    <button class="tnb" onclick="go('s1')">Representation</button>
+    <button class="tnb" onclick="go('s2')">Vertices</button>
+    <button class="tnb" onclick="go('s3')">Edges</button>
+    <button class="tnb" onclick="go('s4')">Traversal</button>
+    <button class="tnb" onclick="go('s5')">Paths</button>
+    <button class="tnb" onclick="go('s6')">Ordering</button>
+    <button class="tnb" onclick="go('s7')">Cycles</button>
+    <button class="tnb" onclick="go('s8')">Connectivity</button>
+    <button class="tnb" onclick="go('s9')">Degree</button>
+    <button class="tnb" onclick="go('s10')">Scheduling</button>
+    <button class="tnb" onclick="go('s11')">Advanced</button>
+    <button class="tnb" onclick="go('s12')">Visualization</button>
+  </nav>
+</header>
+<div class="pbar"><div class="pfill" id="pf"></div></div>
+
+<div class="wrap">
+<aside class="sb">
+  <div class="sb-grp"><div class="sb-lbl">Foundation</div>
+    <div class="sb-a on" onclick="go('s0')"><span class="d"></span>Introduction</div>
+    <div class="sb-a" onclick="go('s1')"><span class="d"></span>Adjacency Matrix</div>
+  </div>
+  <div class="sb-grp"><div class="sb-lbl">Core Ops</div>
+    <div class="sb-a" onclick="go('s2')"><span class="d"></span>Vertex Operations</div>
+    <div class="sb-a" onclick="go('s3')"><span class="d"></span>Edge Operations</div>
+  </div>
+  <div class="sb-grp"><div class="sb-lbl">Exploration</div>
+    <div class="sb-a" onclick="go('s4')"><span class="d"></span>Traversal BFS/DFS</div>
+    <div class="sb-a" onclick="go('s5')"><span class="d"></span>Path Operations</div>
+    <div class="sb-a" onclick="go('s6')"><span class="d"></span>Ordering / Topo Sort</div>
+  </div>
+  <div class="sb-grp"><div class="sb-lbl">Analysis</div>
+    <div class="sb-a" onclick="go('s7')"><span class="d"></span>Cycle Detection</div>
+    <div class="sb-a" onclick="go('s8')"><span class="d"></span>Connectivity</div>
+    <div class="sb-a" onclick="go('s9')"><span class="d"></span>Degree Analysis</div>
+  </div>
+  <div class="sb-grp"><div class="sb-lbl">Applications</div>
+    <div class="sb-a" onclick="go('s10')"><span class="d"></span>Scheduling & Deps</div>
+    <div class="sb-a" onclick="go('s11')"><span class="d"></span>Advanced Algorithms</div>
+    <div class="sb-a" onclick="go('s12')"><span class="d"></span>Visualization</div>
+  </div>
+</aside>
+
+<main>
+
+<!-- ══════════════════════════ S0: INTRO ══════════════════════════ -->
+<section id="s0">
+  <div class="badge">📐 Module 00</div>
+  <h2 class="st" style="font-size:2rem;background:linear-gradient(90deg,var(--a1),var(--a3));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Directed Acyclic Graphs</h2>
+  <p class="sd">A complete learning path — from adjacency matrix basics to advanced algorithms. Every topic has theory, interactive visualization, C code, and a real-life analogy.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem;">
+    <span class="chip g">✦ Adjacency Matrix</span><span class="chip b">✦ C Language</span><span class="chip y">✦ Interactive Viz</span><span class="chip r">✦ Beginner Friendly</span>
+  </div>
+
+  <div class="card">
+    <div class="ct">What is a DAG?</div>
+    <div class="tb"><p>A <strong>Directed Acyclic Graph (DAG)</strong> has two rules:<br>
+    1. Every edge has a <strong>direction</strong> — A→B means A points to B, not the other way around.<br>
+    2. <strong>No cycles</strong> — following edges, you can never return to where you started.</p></div>
+
+    <div class="vz">
+      <div class="vt"><span class="vn">INTRO — DAG OVERVIEW</span>
+        <button class="btn" onclick="introAnim()">▶ Animate</button>
+        <button class="btn r" onclick="introRst()">↺ Reset</button>
+      </div>
+      <canvas id="c0" height="240"></canvas>
+      <div class="vlog" id="l0">Click ▶ Animate to see how a DAG works!</div>
+    </div>
+
+    <div class="g3">
+      <div class="card" style="margin:0"><div class="ct">Directed</div><p style="color:var(--dm);font-size:.85rem;line-height:1.6">Edges have arrows. A→B ≠ B→A. Dependencies flow one way only.</p></div>
+      <div class="card" style="margin:0"><div class="ct">Acyclic</div><p style="color:var(--dm);font-size:.85rem;line-height:1.6">No loops. Starting at any node, following edges never brings you back.</p></div>
+      <div class="card" style="margin:0"><div class="ct">Graph</div><p style="color:var(--dm);font-size:.85rem;line-height:1.6">Vertices (nodes) connected by edges. The foundation of networks.</p></div>
+    </div>
+
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p>Think of a <strong>cooking recipe</strong>: boil water → add pasta → drain → serve. Each step depends on the previous one, but you never go backwards. That's a DAG — ordered tasks with no circular waiting!</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S1: REPRESENTATION ══════════════════════════ -->
+<section id="s1">
+  <div class="badge">📊 Module 01</div>
+  <h2 class="st">Directed Adjacency Matrix</h2>
+  <p class="sd">We store a DAG in a 2D array. <code style="color:var(--a1);font-family:'Fira Code',monospace">matrix[i][j] = 1</code> means a directed edge from vertex i to vertex j exists.</p>
+
+  <div class="card">
+    <div class="ct">Matrix Structure & Visualization</div>
+    <div class="tb"><p><strong>N×N matrix</strong> for N vertices. Row = "from", Column = "to".<br>
+    matrix[i][j]=1 → edge i→j exists. Diagonal always 0 (no self-loops in DAG).<br>
+    <strong>Space:</strong> O(V²) &nbsp;|&nbsp; <strong>Edge Lookup:</strong> O(1)</p></div>
+
+    <div class="vz">
+      <div class="vt"><span class="vn">ADJACENCY MATRIX SYNC VIEWER</span>
+        <button class="btn" onclick="matHL()">▶ Highlight Edges</button>
+        <button class="btn r" onclick="matRst()">↺ Reset</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:1rem;align-items:start;">
+        <canvas id="c1g" height="220" style="border-radius:6px;"></canvas>
+        <div id="matTbl" style="overflow-x:auto;"></div>
+      </div>
+      <div class="vlog" id="l1">Click "Highlight Edges" to see each edge traced in the matrix.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'t1a')">Theory</button>
+      <button class="tab" onclick="tab(this,'t1b')">C Code</button>
+      <button class="tab" onclick="tab(this,'t1c')">Weighted DAG</button>
+    </div>
+    <div class="tc on" id="t1a">
+      <table class="tbl"><thead><tr><th>Operation</th><th>Matrix Time</th><th>Note</th></tr></thead><tbody>
+        <tr><td>Check edge u→v</td><td>O(1)</td><td>Direct lookup matrix[u][v]</td></tr>
+        <tr><td>Add edge</td><td>O(1)</td><td>Set matrix[u][v]=1</td></tr>
+        <tr><td>Remove edge</td><td>O(1)</td><td>Set matrix[u][v]=0</td></tr>
+        <tr><td>All neighbors of v</td><td>O(V)</td><td>Scan row v</td></tr>
+        <tr><td>Storage</td><td>O(V²)</td><td>Always allocates V×V</td></tr>
+      </tbody></table>
+    </div>
+    <div class="tc" id="t1b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DAG STRUCT + INIT + PRINT</span></div>
+<pre><span class="mc">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+<span class="mc">#include</span> <span class="st">&lt;string.h&gt;</span>
+<span class="mc">#define</span> MAX 10
+
+<span class="cm">/* DAG using adjacency matrix */</span>
+<span class="kw">struct</span> <span class="ty">DAG</span> {
+    <span class="ty">int</span> matrix[MAX][MAX]; <span class="cm">/* 0 = no edge, 1 = edge */</span>
+    <span class="ty">int</span> V;               <span class="cm">/* number of vertices    */</span>
+};
+
+<span class="cm">/* Initialize: zero out the matrix */</span>
+<span class="ty">void</span> <span class="fn">initDAG</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) {
+    g->V = v;
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; MAX; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; MAX; j++)
+            g->matrix[i][j] = <span class="nm">0</span>;
+}
+
+<span class="cm">/* Print the adjacency matrix */</span>
+<span class="ty">void</span> <span class="fn">printMatrix</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> v = g->V;
+    <span class="fn">printf</span>(<span class="st">"   "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; v; i++) <span class="fn">printf</span>(<span class="st">"%2d "</span>, i);
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; v; i++) {
+        <span class="fn">printf</span>(<span class="st">"%2d "</span>, i);
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; v; j++)
+            <span class="fn">printf</span>(<span class="st">"%2d "</span>, g->matrix[i][j]);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    }
+}
+
+<span class="ty">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="ty">DAG</span> g;
+    <span class="fn">initDAG</span>(&g, <span class="nm">5</span>);
+    <span class="cm">/* Add edges: 0→1, 0→2, 1→3, 2→3, 3→4 */</span>
+    g.matrix[<span class="nm">0</span>][<span class="nm">1</span>] = <span class="nm">1</span>;  g.matrix[<span class="nm">0</span>][<span class="nm">2</span>] = <span class="nm">1</span>;
+    g.matrix[<span class="nm">1</span>][<span class="nm">3</span>] = <span class="nm">1</span>;  g.matrix[<span class="nm">2</span>][<span class="nm">3</span>] = <span class="nm">1</span>;
+    g.matrix[<span class="nm">3</span>][<span class="nm">4</span>] = <span class="nm">1</span>;
+    <span class="fn">printMatrix</span>(&g);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="t1c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — WEIGHTED DAG (weights in matrix)</span></div>
+<pre><span class="mc">#define</span> NO_EDGE -<span class="nm">1</span>   <span class="cm">/* -1 means no edge */</span>
+
+<span class="ty">void</span> <span class="fn">initWeighted</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) {
+    g->V = v;
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; v; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; v; j++)
+            g->matrix[i][j] = NO_EDGE;
+}
+
+<span class="cm">/* Add directed weighted edge u→v with weight w */</span>
+<span class="ty">void</span> <span class="fn">addWeightedEdge</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> u, <span class="ty">int</span> v, <span class="ty">int</span> w) {
+    g->matrix[u][v] = w;   <span class="cm">/* directed: only [u][v] */</span>
+    <span class="cm">/* matrix[v][u] remains NO_EDGE */</span>
+}</pre></div>
+    </div>
+
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p>A <strong>spreadsheet</strong> where rows = "from cities" and columns = "to cities". Enter the road distance where a one-way road exists, leave blank otherwise. That spreadsheet IS the adjacency matrix!</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S2: VERTEX OPS ══════════════════════════ -->
+<section id="s2">
+  <div class="badge">🔵 Module 02</div>
+  <h2 class="st">Vertex Operations</h2>
+  <p class="sd">Insert, Delete, Search, and Update vertices — the nodes of the graph.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">VERTEX OPERATIONS DEMO</span>
+        <label>ID:<input class="inp" id="vid" type="number" min="0" max="6" value="4"></label>
+        <button class="btn" onclick="vInsert()">+ Insert</button>
+        <button class="btn r" onclick="vDelete()">✕ Delete</button>
+        <button class="btn p" onclick="vSearch()">⌕ Search</button>
+        <button class="btn y" onclick="vReset()">↺ Reset</button>
+      </div>
+      <canvas id="c2" height="230"></canvas>
+      <div class="vlog" id="l2">Use the controls to perform vertex operations on the DAG.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'v2a')">Insert Vertex</button>
+      <button class="tab" onclick="tab(this,'v2b')">Delete Vertex</button>
+      <button class="tab" onclick="tab(this,'v2c')">Search Vertex</button>
+      <button class="tab" onclick="tab(this,'v2d')">Update Vertex</button>
+    </div>
+    <div class="tc on" id="v2a">
+      <div class="tb"><p><strong>Insert:</strong> Increment vertex count. The new row/column in the matrix is already 0 from initialization. No edges connect to the new vertex yet. Time: <strong>O(1)</strong>.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — INSERT VERTEX</span></div>
+<pre><span class="cm">/* Returns new vertex ID, or -1 if graph is full */</span>
+<span class="ty">int</span> <span class="fn">insertVertex</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="kw">if</span> (g->V >= MAX) {
+        <span class="fn">printf</span>(<span class="st">"Graph full! Cannot add vertex.\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="ty">int</span> newID = g->V;
+    <span class="cm">/* New row & column already 0 from initDAG() */</span>
+    g->V++;
+    <span class="fn">printf</span>(<span class="st">"Inserted vertex %d\n"</span>, newID);
+    <span class="kw">return</span> newID; <span class="cm">/* O(1) */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="v2b">
+      <div class="tb"><p><strong>Delete:</strong> Zero out the vertex's entire row AND column (removes all edges). Then shift remaining rows/columns. Time: <strong>O(V²)</strong>.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DELETE VERTEX</span></div>
+<pre><span class="ty">void</span> <span class="fn">deleteVertex</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) {
+    <span class="ty">int</span> n = g->V;
+    <span class="kw">if</span> (v &lt; <span class="nm">0</span> || v >= n) { <span class="fn">printf</span>(<span class="st">"Invalid!\n"</span>); <span class="kw">return</span>; }
+    <span class="cm">/* Remove row v (all outgoing edges) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; n; j++) g->matrix[v][j] = <span class="nm">0</span>;
+    <span class="cm">/* Remove col v (all incoming edges) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; n; i++) g->matrix[i][v] = <span class="nm">0</span>;
+    <span class="cm">/* Shift rows up */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = v; i &lt; n-<span class="nm">1</span>; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; n; j++)
+            g->matrix[i][j] = g->matrix[i+<span class="nm">1</span>][j];
+    <span class="cm">/* Shift cols left */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> j = v; j &lt; n-<span class="nm">1</span>; j++)
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; n-<span class="nm">1</span>; i++)
+            g->matrix[i][j] = g->matrix[i][j+<span class="nm">1</span>];
+    g->V--;
+    <span class="fn">printf</span>(<span class="st">"Deleted vertex %d, edges removed.\n"</span>, v);
+}</pre></div>
+    </div>
+    <div class="tc" id="v2c">
+      <div class="tb"><p><strong>Search:</strong> Check if vertex ID is in range [0, V). Instant O(1) check — just compare against vertex count.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — SEARCH VERTEX</span></div>
+<pre><span class="cm">/* Returns 1 if vertex exists, 0 otherwise */</span>
+<span class="ty">int</span> <span class="fn">searchVertex</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (v >= <span class="nm">0</span> && v &lt; g->V) {
+        <span class="fn">printf</span>(<span class="st">"Vertex %d EXISTS\n"</span>, v);
+        <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* O(1) */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"Vertex %d NOT FOUND\n"</span>, v);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="v2d">
+      <div class="tb"><p><strong>Update:</strong> Vertex data (label/value) lives in a separate array. Update that array. The matrix structure doesn't change. Time: <strong>O(1)</strong>.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — UPDATE VERTEX LABEL</span></div>
+<pre><span class="mc">#define</span> NLEN 20
+<span class="kw">struct</span> <span class="ty">DAG</span> {
+    <span class="ty">int</span>  matrix[MAX][MAX];
+    <span class="ty">int</span>  V;
+    <span class="ty">char</span> label[MAX][NLEN]; <span class="cm">/* vertex names */</span>
+    <span class="ty">int</span>  value[MAX];       <span class="cm">/* vertex data  */</span>
+};
+
+<span class="ty">void</span> <span class="fn">updateVertex</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v,
+                   <span class="ty">char</span> *name, <span class="ty">int</span> val) {
+    <span class="kw">if</span> (v &lt; <span class="nm">0</span> || v >= g->V) { <span class="fn">printf</span>(<span class="st">"Invalid!\n"</span>); <span class="kw">return</span>; }
+    <span class="fn">strncpy</span>(g->label[v], name, NLEN-<span class="nm">1</span>);
+    g->value[v] = val;
+    <span class="fn">printf</span>(<span class="st">"Vertex %d updated: %s=%d\n"</span>, v, name, val);
+}</pre></div>
+    </div>
+
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>Employees in a company:</strong> Insert = hire. Delete = person leaves (all project connections removed). Search = check if still employed. Update = change their role or name. The matrix is the "who reports to whom" chart.</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S3: EDGE OPS ══════════════════════════ -->
+<section id="s3">
+  <div class="badge">➡️ Module 03</div>
+  <h2 class="st">Edge Operations</h2>
+  <p class="sd">Insert, Delete, Search, Update edges — always enforcing the directed and acyclic properties.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">EDGE OPERATIONS DEMO (5 Vertices)</span>
+        <label>From:<input class="inp" id="ef" type="number" min="0" max="4" value="0"></label>
+        <label>To:<input class="inp" id="et" type="number" min="0" max="4" value="3"></label>
+        <label>W:<input class="inp" id="ew" type="number" value="1" min="1"></label>
+        <button class="btn" onclick="eInsert()">+ Insert</button>
+        <button class="btn r" onclick="eDelete()">✕ Delete</button>
+        <button class="btn p" onclick="eSearch()">⌕ Search</button>
+        <button class="btn y" onclick="eReset()">↺ Reset</button>
+      </div>
+      <canvas id="c3" height="230"></canvas>
+      <div class="vlog" id="l3">Enter From/To and click Insert. Cycle creation is automatically blocked!</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'e3a')">Insert Edge</button>
+      <button class="tab" onclick="tab(this,'e3b')">Delete Edge</button>
+      <button class="tab" onclick="tab(this,'e3c')">Search Edge</button>
+      <button class="tab" onclick="tab(this,'e3d')">Update Weight</button>
+      <button class="tab" onclick="tab(this,'e3e')">Validate Acyclic</button>
+    </div>
+    <div class="tc on" id="e3a">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — INSERT DIRECTED EDGE (safe, cycle check)</span></div>
+<pre><span class="cm">/* Check reachability from src to dest via DFS */</span>
+<span class="ty">int</span> <span class="fn">canReach</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src, <span class="ty">int</span> dest) {
+    <span class="kw">if</span> (src == dest) <span class="kw">return</span> <span class="nm">1</span>;
+    <span class="ty">int</span> vis[MAX] = {<span class="nm">0</span>}, stk[MAX], top = -<span class="nm">1</span>;
+    stk[++top] = src;
+    <span class="kw">while</span> (top >= <span class="nm">0</span>) {
+        <span class="ty">int</span> v = stk[top--];
+        <span class="kw">if</span> (vis[v]) <span class="kw">continue</span>;
+        vis[v] = <span class="nm">1</span>;
+        <span class="kw">if</span> (v == dest) <span class="kw">return</span> <span class="nm">1</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; g->V; j++)
+            <span class="kw">if</span> (g->matrix[v][j] && !vis[j])
+                stk[++top] = j;
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="cm">/* Safe insert: rejects if it would create cycle */</span>
+<span class="ty">int</span> <span class="fn">insertEdge</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> u, <span class="ty">int</span> v, <span class="ty">int</span> w) {
+    <span class="kw">if</span> (u == v) { <span class="fn">printf</span>(<span class="st">"No self-loops!\n"</span>); <span class="kw">return</span> <span class="nm">0</span>; }
+    <span class="kw">if</span> (<span class="fn">canReach</span>(g, v, u)) { <span class="cm">/* v already reaches u? */</span>
+        <span class="fn">printf</span>(<span class="st">"Cycle! Edge %d→%d rejected.\n"</span>, u, v);
+        <span class="kw">return</span> <span class="nm">0</span>;
+    }
+    g->matrix[u][v] = w; <span class="cm">/* Only [u][v], not [v][u] */</span>
+    <span class="fn">printf</span>(<span class="st">"Edge %d→%d (w=%d) added.\n"</span>, u, v, w);
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="e3b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DELETE EDGE</span></div>
+<pre><span class="ty">void</span> <span class="fn">deleteEdge</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> u, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (!g->matrix[u][v]) {
+        <span class="fn">printf</span>(<span class="st">"Edge %d→%d doesn't exist!\n"</span>, u, v);
+        <span class="kw">return</span>;
+    }
+    g->matrix[u][v] = <span class="nm">0</span>; <span class="cm">/* Just set to zero — O(1) */</span>
+    <span class="fn">printf</span>(<span class="st">"Edge %d→%d deleted.\n"</span>, u, v);
+}</pre></div>
+    </div>
+    <div class="tc" id="e3c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — SEARCH EDGE — O(1)!</span></div>
+<pre><span class="cm">/* Adjacency matrix gives O(1) edge lookup */</span>
+<span class="ty">int</span> <span class="fn">searchEdge</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> u, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (g->matrix[u][v] != <span class="nm">0</span>) {
+        <span class="fn">printf</span>(<span class="st">"Edge %d→%d EXISTS, weight=%d\n"</span>,
+               u, v, g->matrix[u][v]);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"Edge %d→%d does NOT exist\n"</span>, u, v);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="e3d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — UPDATE EDGE WEIGHT</span></div>
+<pre><span class="ty">void</span> <span class="fn">updateEdgeWeight</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g,
+                       <span class="ty">int</span> u, <span class="ty">int</span> v, <span class="ty">int</span> newW) {
+    <span class="kw">if</span> (!g->matrix[u][v]) {
+        <span class="fn">printf</span>(<span class="st">"Edge %d→%d doesn't exist!\n"</span>, u, v);
+        <span class="kw">return</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"Weight %d→%d: %d → %d\n"</span>,
+           u, v, g->matrix[u][v], newW);
+    g->matrix[u][v] = newW; <span class="cm">/* O(1) update */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="e3e">
+      <div class="tb"><p><strong>Validate Acyclic:</strong> DFS coloring — WHITE=unvisited, GRAY=in progress, BLACK=done. A back edge to a GRAY node = cycle found!</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — FULL ACYCLIC VALIDATION (DFS Coloring)</span></div>
+<pre><span class="mc">#define</span> WHITE <span class="nm">0</span>
+<span class="mc">#define</span> GRAY  <span class="nm">1</span>
+<span class="mc">#define</span> BLACK <span class="nm">2</span>
+
+<span class="ty">int</span> <span class="fn">dfsCheck</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v, <span class="ty">int</span> col[]) {
+    col[v] = GRAY;
+    <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; g->V; j++) {
+        <span class="kw">if</span> (!g->matrix[v][j]) <span class="kw">continue</span>;
+        <span class="kw">if</span> (col[j] == GRAY)  <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* CYCLE! */</span>
+        <span class="kw">if</span> (col[j] == WHITE && <span class="fn">dfsCheck</span>(g, j, col))
+            <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    col[v] = BLACK;
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="ty">int</span> <span class="fn">isValidDAG</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> col[MAX] = {WHITE};
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="kw">if</span> (col[i] == WHITE && <span class="fn">dfsCheck</span>(g, i, col))
+            <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* has cycle */</span>
+    <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* valid DAG */</span>
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>Project dependencies:</strong> "Task A must finish before Task B." Adding an edge = creating a dependency. The cycle check prevents deadlock: "A waits for B, B waits for A" — that's a cycle and must be rejected!</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S4: TRAVERSAL ══════════════════════════ -->
+<section id="s4">
+  <div class="badge">🔍 Module 04</div>
+  <h2 class="st">Traversal Operations</h2>
+  <p class="sd">BFS, DFS, Topological Traversal, and Dependency Traversal — four ways to visit every vertex systematically.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">TRAVERSAL VISUALIZER</span>
+        <button class="btn" onclick="runBFS()">▶ BFS</button>
+        <button class="btn p" onclick="runDFS()">▶ DFS</button>
+        <button class="btn y" onclick="runTopo()">▶ Topological</button>
+        <button class="btn r" onclick="rstTrav()">↺ Reset</button>
+      </div>
+      <canvas id="c4" height="240"></canvas>
+      <div class="vlog" id="l4">Choose a traversal method. Watch nodes get visited step by step!</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'tr4a')">BFS</button>
+      <button class="tab" onclick="tab(this,'tr4b')">DFS</button>
+      <button class="tab" onclick="tab(this,'tr4c')">Topological Traversal</button>
+      <button class="tab" onclick="tab(this,'tr4d')">Dependency Traversal</button>
+    </div>
+    <div class="tc on" id="tr4a">
+      <div class="tb"><p><strong>BFS (Breadth-First):</strong> Visit all neighbors at distance 1, then distance 2, etc. Uses a <strong>queue</strong>. Good for shortest unweighted paths.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — BFS ON DAG</span></div>
+<pre><span class="ty">void</span> <span class="fn">BFS</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> start) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>}, Q[MAX], f=<span class="nm">0</span>, r=<span class="nm">0</span>;
+    vis[start]=<span class="nm">1</span>; Q[r++]=start;
+    <span class="fn">printf</span>(<span class="st">"BFS: "</span>);
+    <span class="kw">while</span> (f &lt; r) {
+        <span class="ty">int</span> v = Q[f++];
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, v);
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+            <span class="kw">if</span> (g->matrix[v][j] && !vis[j]) {
+                vis[j]=<span class="nm">1</span>; Q[r++]=j;
+            }
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre></div>
+    </div>
+    <div class="tc" id="tr4b">
+      <div class="tb"><p><strong>DFS (Depth-First):</strong> Go as deep as possible before backtracking. Uses <strong>recursion</strong> (or a stack). Naturally explores dependency chains.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DFS ON DAG (Recursive)</span></div>
+<pre><span class="ty">void</span> <span class="fn">dfsUtil</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v, <span class="ty">int</span> vis[]) {
+    vis[v]=<span class="nm">1</span>;
+    <span class="fn">printf</span>(<span class="st">"%d "</span>, v);
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+        <span class="kw">if</span> (g->matrix[v][j] && !vis[j])
+            <span class="fn">dfsUtil</span>(g, j, vis);
+}
+
+<span class="ty">void</span> <span class="fn">DFS</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> start) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>};
+    <span class="fn">printf</span>(<span class="st">"DFS: "</span>);
+    <span class="fn">dfsUtil</span>(g, start, vis);
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre></div>
+    </div>
+    <div class="tc" id="tr4c">
+      <div class="tb"><p><strong>Topological Traversal:</strong> Visit a vertex only after ALL its predecessors are visited. Post-order DFS + stack. The stack pop gives topological order.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — TOPOLOGICAL TRAVERSAL (DFS Post-Order)</span></div>
+<pre><span class="ty">int</span> stk[MAX], top=-<span class="nm">1</span>;
+
+<span class="ty">void</span> <span class="fn">topoUtil</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v, <span class="ty">int</span> vis[]) {
+    vis[v]=<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+        <span class="kw">if</span> (g->matrix[v][j] && !vis[j])
+            <span class="fn">topoUtil</span>(g, j, vis);
+    stk[++top]=v; <span class="cm">/* push AFTER all descendants */</span>
+}
+
+<span class="ty">void</span> <span class="fn">topologicalTraversal</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>};  top=-<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="kw">if</span> (!vis[i]) <span class="fn">topoUtil</span>(g, i, vis);
+    <span class="fn">printf</span>(<span class="st">"Topological: "</span>);
+    <span class="kw">while</span> (top>=<span class="nm">0</span>) <span class="fn">printf</span>(<span class="st">"%d "</span>, stk[top--]);
+}</pre></div>
+    </div>
+    <div class="tc" id="tr4d">
+      <div class="tb"><p><strong>Dependency Traversal:</strong> Start from a target vertex, traverse <em>backwards</em> (follow incoming edges). Reveals all ancestors — everything that must complete before the target.</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DEPENDENCY TRAVERSAL (Reverse DFS)</span></div>
+<pre><span class="cm">/* Find all prerequisites (ancestors) of target */</span>
+<span class="ty">void</span> <span class="fn">depTraversal</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> target) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>}, stk[MAX], top=-<span class="nm">1</span>;
+    stk[++top]=target;
+    <span class="fn">printf</span>(<span class="st">"Deps of %d: "</span>, target);
+    <span class="kw">while</span> (top>=<span class="nm">0</span>) {
+        <span class="ty">int</span> v=stk[top--];
+        <span class="kw">if</span> (vis[v]) <span class="kw">continue</span>;
+        vis[v]=<span class="nm">1</span>;
+        <span class="kw">if</span> (v!=target) <span class="fn">printf</span>(<span class="st">"%d "</span>, v);
+        <span class="cm">/* Walk BACKWARDS: check who points TO v */</span>
+        <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+            <span class="kw">if</span> (g->matrix[i][v] && !vis[i])
+                stk[++top]=i;
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>BFS</strong>=broadcasting floor-by-floor in a building. <strong>DFS</strong>=exploring a maze, going deep before backtracking. <strong>Topological</strong>=following a study plan in prerequisite order. <strong>Dependency</strong>=finding all ingredients a dish needs by working backwards.</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S5: PATH OPS ══════════════════════════ -->
+<section id="s5">
+  <div class="badge">🗺️ Module 05</div>
+  <h2 class="st">Path Operations</h2>
+  <p class="sd">Find any path, the shortest, the longest, or all paths. DAGs allow O(V+E) shortest/longest path — much better than general graphs!</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">PATH FINDER — WEIGHTED DAG</span>
+        <label>From:<input class="inp" id="pf2" type="number" value="0" min="0" max="5"></label>
+        <label>To:<input class="inp" id="pt" type="number" value="5" min="0" max="5"></label>
+        <button class="btn" onclick="pathShortest()">Shortest</button>
+        <button class="btn y" onclick="pathLongest()">Longest</button>
+        <button class="btn p" onclick="pathAll()">All Paths</button>
+        <button class="btn r" onclick="pathRst()">↺</button>
+      </div>
+      <canvas id="c5" height="240"></canvas>
+      <div class="vlog" id="l5">Select source/dest and click Shortest, Longest, or All Paths.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'p5a')">Find Path</button>
+      <button class="tab" onclick="tab(this,'p5b')">Shortest Path</button>
+      <button class="tab" onclick="tab(this,'p5c')">Longest Path</button>
+      <button class="tab" onclick="tab(this,'p5d')">All Paths</button>
+      <button class="tab" onclick="tab(this,'p5e')">Dep Chain Analysis</button>
+    </div>
+    <div class="tc on" id="p5a">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — FIND PATH (existence check, DFS)</span></div>
+<pre><span class="ty">int</span> <span class="fn">findPath</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src, <span class="ty">int</span> dst,
+              <span class="ty">int</span> vis[]) {
+    <span class="kw">if</span> (src==dst) <span class="kw">return</span> <span class="nm">1</span>;
+    vis[src]=<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++) {
+        <span class="kw">if</span> (g->matrix[src][j] && !vis[j])
+            <span class="kw">if</span> (<span class="fn">findPath</span>(g,j,dst,vis)) <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* no path found */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="p5b">
+      <div class="tb"><p><strong>Shortest Path in DAG:</strong> Topological sort + edge relaxation (same idea as Bellman-Ford but O(V+E) because we use topological order). Works with <em>negative weights</em> too!</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — SHORTEST PATH IN DAG (Topo + Relax)</span></div>
+<pre><span class="mc">#define</span> INF 99999
+
+<span class="ty">void</span> <span class="fn">shortestPathDAG</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src) {
+    <span class="ty">int</span> dist[MAX], par[MAX], ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++) {
+        dist[i]=INF; par[i]=-<span class="nm">1</span>;
+    }
+    dist[src]=<span class="nm">0</span>;
+
+    <span class="fn">kahnOrder</span>(g, ord, &cnt); <span class="cm">/* topological order */</span>
+
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i];
+        <span class="kw">if</span> (dist[u]==INF) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; g->V; v++) {
+            <span class="kw">if</span> (!g->matrix[u][v]) <span class="kw">continue</span>;
+            <span class="ty">int</span> nd = dist[u] + g->matrix[u][v];
+            <span class="kw">if</span> (nd &lt; dist[v]) {   <span class="cm">/* RELAX (min) */</span>
+                dist[v]=nd; par[v]=u;
+            }
+        }
+    }
+    <span class="cm">/* dist[] now has shortest distances from src */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="p5c">
+      <div class="tb"><p><strong>Longest Path in DAG:</strong> Same algorithm, use <strong>max</strong> instead of min. Start with -∞. Critical for project scheduling — NP-Hard in general graphs, but O(V+E) in DAGs!</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — LONGEST PATH IN DAG (Topo + Max-Relax)</span></div>
+<pre><span class="mc">#define</span> NEGINF -<span class="nm">99999</span>
+
+<span class="ty">void</span> <span class="fn">longestPathDAG</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src) {
+    <span class="ty">int</span> dist[MAX], ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++) dist[i]=NEGINF;
+    dist[src]=<span class="nm">0</span>;
+
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i];
+        <span class="kw">if</span> (dist[u]==NEGINF) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; g->V; v++) {
+            <span class="kw">if</span> (!g->matrix[u][v]) <span class="kw">continue</span>;
+            <span class="ty">int</span> nd = dist[u] + g->matrix[u][v];
+            <span class="kw">if</span> (nd > dist[v])  <span class="cm">/* MAX relax! */</span>
+                dist[v]=nd;
+        }
+    }
+}</pre></div>
+    </div>
+    <div class="tc" id="p5d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — ALL PATHS (DFS + Backtracking)</span></div>
+<pre><span class="ty">int</span> path[MAX], pLen=<span class="nm">0</span>;
+
+<span class="ty">void</span> <span class="fn">allPaths</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src,
+               <span class="ty">int</span> dst, <span class="ty">int</span> vis[]) {
+    vis[src]=<span class="nm">1</span>; path[pLen++]=src;
+
+    <span class="kw">if</span> (src==dst) {
+        <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; pLen; i++)
+            <span class="fn">printf</span>(<span class="st">"%d%s"</span>,path[i],i&lt;pLen-<span class="nm">1</span>?<span class="st">"→"</span>:<span class="st">"\n"</span>);
+    } <span class="kw">else</span> {
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+            <span class="kw">if</span> (g->matrix[src][j] && !vis[j])
+                <span class="fn">allPaths</span>(g,j,dst,vis);
+    }
+    pLen--;  vis[src]=<span class="nm">0</span>; <span class="cm">/* BACKTRACK */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="p5e">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DEPENDENCY CHAIN ANALYSIS</span></div>
+<pre><span class="cm">/* Print full chain from source to target */</span>
+<span class="ty">void</span> <span class="fn">printChain</span>(<span class="ty">int</span> par[], <span class="ty">int</span> v) {
+    <span class="kw">if</span> (par[v]==-<span class="nm">1</span>) { <span class="fn">printf</span>(<span class="st">"%d"</span>,v); <span class="kw">return</span>; }
+    <span class="fn">printChain</span>(par, par[v]);
+    <span class="fn">printf</span>(<span class="st">"→%d"</span>, v);
+}
+<span class="cm">/* After running shortestPathDAG: */</span>
+<span class="cm">/* printChain(par, destination);   */</span></pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>GPS Navigation:</strong> Shortest = fastest route. Longest = scenic route (or critical project timeline). All Paths = every possible route. Dep Chain = "to reach airport: pack → drive to station → metro → bus → airport terminal".</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S6: ORDERING ══════════════════════════ -->
+<section id="s6">
+  <div class="badge">📋 Module 06</div>
+  <h2 class="st">Ordering Operations</h2>
+  <p class="sd">Topological Sort — arrange all vertices so every directed edge goes left→right. Two algorithms: DFS-based and Kahn's BFS-based.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">TOPOLOGICAL SORT VISUALIZER</span>
+        <button class="btn" onclick="topoSortDFS()">▶ DFS-Based</button>
+        <button class="btn y" onclick="topoSortKahn()">▶ Kahn's</button>
+        <button class="btn r" onclick="topoRst()">↺ Reset</button>
+      </div>
+      <canvas id="c6" height="240"></canvas>
+      <div class="vlog" id="l6">Click an algorithm to see topological ordering step by step.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'o6a')">DFS-Based Topo Sort</button>
+      <button class="tab" onclick="tab(this,'o6b')">Kahn's Algorithm</button>
+      <button class="tab" onclick="tab(this,'o6c')">Task Scheduling</button>
+      <button class="tab" onclick="tab(this,'o6d')">Dependency Resolution</button>
+    </div>
+    <div class="tc on" id="o6a">
+      <ol class="steps">
+        <li>Mark all vertices as unvisited (WHITE).</li>
+        <li>For each unvisited vertex, run DFS.</li>
+        <li>After ALL neighbors are visited, push current vertex to a stack.</li>
+        <li>Pop the entire stack — that's the topological order!</li>
+      </ol>
+<div class="cb" style="margin-top:.9rem"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DFS TOPOLOGICAL SORT</span></div>
+<pre><span class="ty">int</span> result[MAX], rTop=-<span class="nm">1</span>;
+
+<span class="ty">void</span> <span class="fn">topoSortUtil</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v,
+                   <span class="ty">int</span> vis[], <span class="ty">int</span> stk[], <span class="ty">int</span> *top) {
+    vis[v]=<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+        <span class="kw">if</span> (g->matrix[v][j] && !vis[j])
+            <span class="fn">topoSortUtil</span>(g,j,vis,stk,top);
+    stk[++(*top)]=v; <span class="cm">/* post-order push */</span>
+}
+
+<span class="ty">void</span> <span class="fn">topoSortDFS</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>}, stk[MAX], top=-<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="kw">if</span> (!vis[i]) <span class="fn">topoSortUtil</span>(g,i,vis,stk,&top);
+    <span class="fn">printf</span>(<span class="st">"DFS Topo: "</span>);
+    <span class="kw">while</span> (top>=<span class="nm">0</span>) <span class="fn">printf</span>(<span class="st">"%d "</span>, stk[top--]);
+}</pre></div>
+    </div>
+    <div class="tc" id="o6b">
+      <ol class="steps">
+        <li>Compute in-degree of every vertex.</li>
+        <li>Push all vertices with in-degree 0 into queue.</li>
+        <li>Dequeue vertex u → add to result.</li>
+        <li>For each neighbor v of u, decrement in-degree[v]. If it becomes 0, enqueue v.</li>
+        <li>If result size &lt; V → cycle exists. Else result = topological order.</li>
+      </ol>
+<div class="cb" style="margin-top:.9rem"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — KAHN'S ALGORITHM (BFS-based)</span></div>
+<pre><span class="ty">void</span> <span class="fn">kahnOrder</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> ord[], <span class="ty">int</span> *cnt) {
+    <span class="ty">int</span> n=g->V, inD[MAX]={<span class="nm">0</span>};
+    <span class="ty">int</span> Q[MAX], f=<span class="nm">0</span>, r=<span class="nm">0</span>;
+    *cnt=<span class="nm">0</span>;
+    <span class="cm">/* Step 1: compute in-degrees */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++)
+            <span class="kw">if</span> (g->matrix[i][j]) inD[j]++;
+    <span class="cm">/* Step 2: enqueue zero in-degree */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">if</span> (inD[i]==<span class="nm">0</span>) Q[r++]=i;
+    <span class="cm">/* Step 3: process */</span>
+    <span class="kw">while</span> (f &lt; r) {
+        <span class="ty">int</span> u=Q[f++];
+        ord[(*cnt)++]=u;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++) {
+            <span class="kw">if</span> (!g->matrix[u][v]) <span class="kw">continue</span>;
+            <span class="kw">if</span> (--inD[v]==<span class="nm">0</span>) Q[r++]=v;
+        }
+    }
+    <span class="kw">if</span> (*cnt != n) <span class="fn">printf</span>(<span class="st">"Cycle detected!\n"</span>);
+}</pre></div>
+    </div>
+    <div class="tc" id="o6c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — TASK SCHEDULING ORDER</span></div>
+<pre><span class="ty">char</span> tasks[MAX][<span class="nm">30</span>] = {
+    <span class="st">"Design UI"</span>, <span class="st">"Write API"</span>, <span class="st">"Setup DB"</span>,
+    <span class="st">"Frontend"</span>,  <span class="st">"Testing"</span>,   <span class="st">"Deploy"</span>
+};
+
+<span class="ty">void</span> <span class="fn">printSchedule</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="fn">printf</span>(<span class="st">"=== Task Schedule ===\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++)
+        <span class="fn">printf</span>(<span class="st">"Step %d: %s\n"</span>, i+<span class="nm">1</span>, tasks[ord[i]]);
+}</pre></div>
+    </div>
+    <div class="tc" id="o6d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — PACKAGE DEPENDENCY RESOLUTION (like npm/pip)</span></div>
+<pre><span class="ty">char</span> pkgs[MAX][<span class="nm">20</span>] = {
+    <span class="st">"libc"</span>,<span class="st">"openssl"</span>,<span class="st">"curl"</span>,<span class="st">"node"</span>,<span class="st">"npm"</span>,<span class="st">"react"</span>
+};
+<span class="cm">/* Edges: libc→openssl, openssl→curl, libc→node */</span>
+<span class="cm">/*        curl→npm, node→npm, npm→react          */</span>
+
+<span class="ty">void</span> <span class="fn">installPackages</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="fn">printf</span>(<span class="st">"Installing in order:\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++)
+        <span class="fn">printf</span>(<span class="st">"  [OK] installing %s\n"</span>, pkgs[ord[i]]);
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>Getting dressed in the morning:</strong> Topological sort gives the order — underwear before pants, socks before shoes. Kahn's starts from items with no prerequisites (underwear!) and works outward. Package managers (npm, pip, apt) do exactly this!</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S7: CYCLE OPS ══════════════════════════ -->
+<section id="s7">
+  <div class="badge">🔄 Module 07</div>
+  <h2 class="st">Cycle Operations</h2>
+  <p class="sd">The defining property of a DAG is <strong>no cycles</strong>. We must detect cycles, prevent their creation, and validate the DAG property.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">CYCLE DETECTOR (DFS Coloring)</span>
+        <button class="btn" onclick="cycleTestOk()">▶ Valid DAG</button>
+        <button class="btn r" onclick="cycleTestBad()">⚠ With Cycle</button>
+        <button class="btn y" onclick="cycleRst()">↺ Reset</button>
+      </div>
+      <canvas id="c7" height="230"></canvas>
+      <div class="vlog" id="l7">Test cycle detection on a valid DAG vs a graph with a cycle.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'cy7a')">Cycle Detection</button>
+      <button class="tab" onclick="tab(this,'cy7b')">Prevent Cycle</button>
+      <button class="tab" onclick="tab(this,'cy7c')">DAG Validation</button>
+    </div>
+    <div class="tc on" id="cy7a">
+      <div class="tb"><p><strong>DFS Coloring:</strong> WHITE=unvisited, GRAY=currently in DFS stack, BLACK=completely done. If we visit a GRAY node → back edge → <strong>cycle detected!</strong></p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — CYCLE DETECTION (DFS 3-Color)</span></div>
+<pre><span class="mc">#define</span> WHITE <span class="nm">0</span>
+<span class="mc">#define</span> GRAY  <span class="nm">1</span>   <span class="cm">/* currently in DFS stack */</span>
+<span class="mc">#define</span> BLACK <span class="nm">2</span>   <span class="cm">/* fully processed        */</span>
+
+<span class="ty">int</span> <span class="fn">detectCycle</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v, <span class="ty">int</span> col[]) {
+    col[v]=GRAY;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++) {
+        <span class="kw">if</span> (!g->matrix[v][j]) <span class="kw">continue</span>;
+        <span class="kw">if</span> (col[j]==GRAY) {
+            <span class="fn">printf</span>(<span class="st">"CYCLE: back edge %d→%d!\n"</span>,v,j);
+            <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* cycle found */</span>
+        }
+        <span class="kw">if</span> (col[j]==WHITE)
+            <span class="kw">if</span> (<span class="fn">detectCycle</span>(g,j,col)) <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    col[v]=BLACK;
+    <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* no cycle through v */</span>
+}
+
+<span class="ty">int</span> <span class="fn">hasCycle</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> col[MAX]={WHITE};
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="kw">if</span> (col[i]==WHITE && <span class="fn">detectCycle</span>(g,i,col))
+            <span class="kw">return</span> <span class="nm">1</span>;
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="cy7b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — PREVENT CYCLE ON EDGE INSERT</span></div>
+<pre><span class="cm">/* Before adding u→v, check if v can reach u */</span>
+<span class="cm">/* If yes, adding u→v closes a cycle → reject */</span>
+<span class="ty">int</span> <span class="fn">safeAddEdge</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> u, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (u==v) {
+        <span class="fn">printf</span>(<span class="st">"Self-loop rejected!\n"</span>);
+        <span class="kw">return</span> <span class="nm">0</span>;
+    }
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>};
+    <span class="kw">if</span> (<span class="fn">canReach</span>(g, v, u, vis)) {
+        <span class="fn">printf</span>(<span class="st">"Edge %d→%d creates cycle! Rejected.\n"</span>,u,v);
+        <span class="kw">return</span> <span class="nm">0</span>;
+    }
+    g->matrix[u][v]=<span class="nm">1</span>;
+    <span class="fn">printf</span>(<span class="st">"Edge %d→%d added safely.\n"</span>, u, v);
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="cy7c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — FULL DAG VALIDATION</span></div>
+<pre><span class="ty">int</span> <span class="fn">validateDAG</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> n=g->V;
+    <span class="cm">/* Check 1: no self-loops (diagonal = 0) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) {
+        <span class="kw">if</span> (g->matrix[i][i]) {
+            <span class="fn">printf</span>(<span class="st">"FAIL: self-loop at %d\n"</span>, i);
+            <span class="kw">return</span> <span class="nm">0</span>;
+        }
+    }
+    <span class="cm">/* Check 2: no cycles (Kahn's: if count&lt;V) */</span>
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="kw">if</span> (cnt != n) {
+        <span class="fn">printf</span>(<span class="st">"FAIL: cycle exists!\n"</span>);
+        <span class="kw">return</span> <span class="nm">0</span>;
+    }
+    <span class="fn">printf</span>(<span class="st">"VALID DAG!\n"</span>);
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>University course prerequisites:</strong> A cycle would mean "Course A requires B, B requires C, C requires A" — you could never enroll in any! The registrar's system uses cycle detection to prevent this deadlock situation.</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S8: CONNECTIVITY ══════════════════════════ -->
+<section id="s8">
+  <div class="badge">🔗 Module 08</div>
+  <h2 class="st">Connectivity Operations</h2>
+  <p class="sd">Reachability check, source node detection (in-degree=0), sink node detection (out-degree=0), and component analysis.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">CONNECTIVITY ANALYZER</span>
+        <button class="btn" onclick="connSources()">Sources</button>
+        <button class="btn r" onclick="connSinks()">Sinks</button>
+        <button class="btn p" onclick="connReach()">Reachability</button>
+        <button class="btn y" onclick="connRst()">↺ Reset</button>
+      </div>
+      <canvas id="c8" height="230"></canvas>
+      <div class="vlog" id="l8">Click Sources, Sinks, or Reachability to analyze the graph.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'cn8a')">Reachability Check</button>
+      <button class="tab" onclick="tab(this,'cn8b')">Source Nodes</button>
+      <button class="tab" onclick="tab(this,'cn8c')">Sink Nodes</button>
+      <button class="tab" onclick="tab(this,'cn8d')">Components Analysis</button>
+    </div>
+    <div class="tc on" id="cn8a">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — REACHABILITY + TRANSITIVE CLOSURE</span></div>
+<pre><span class="cm">/* Can src reach dest? DFS-based O(V+E) */</span>
+<span class="ty">int</span> <span class="fn">isReachable</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src, <span class="ty">int</span> dest) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>};
+    <span class="kw">return</span> <span class="fn">findPath</span>(g, src, dest, vis);
+}
+
+<span class="cm">/* Transitive closure: reach[i][j]=1 if i can reach j */</span>
+<span class="ty">void</span> <span class="fn">transitiveClosure</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g,
+                         <span class="ty">int</span> reach[MAX][MAX]) {
+    <span class="ty">int</span> n=g->V;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++)
+            reach[i][j]=g->matrix[i][j];
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) reach[i][i]=<span class="nm">1</span>;
+    <span class="cm">/* Floyd-Warshall transitive closure */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> k=<span class="nm">0</span>; k &lt; n; k++)
+      <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++)
+          <span class="kw">if</span> (reach[i][k] && reach[k][j])
+            reach[i][j]=<span class="nm">1</span>;
+}</pre></div>
+    </div>
+    <div class="tc" id="cn8b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DETECT SOURCE NODES (in-degree = 0)</span></div>
+<pre><span class="ty">void</span> <span class="fn">findSources</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> n=g->V;
+    <span class="fn">printf</span>(<span class="st">"Source nodes (in-degree=0): "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++) {
+        <span class="ty">int</span> inDeg=<span class="nm">0</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) inDeg+=g->matrix[i][j];
+        <span class="kw">if</span> (inDeg==<span class="nm">0</span>) <span class="fn">printf</span>(<span class="st">"%d "</span>, j);
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    <span class="cm">/* These nodes have no prerequisites */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="cn8c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DETECT SINK NODES (out-degree = 0)</span></div>
+<pre><span class="ty">void</span> <span class="fn">findSinks</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> n=g->V;
+    <span class="fn">printf</span>(<span class="st">"Sink nodes (out-degree=0): "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) {
+        <span class="ty">int</span> outDeg=<span class="nm">0</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++) outDeg+=g->matrix[i][j];
+        <span class="kw">if</span> (outDeg==<span class="nm">0</span>) <span class="fn">printf</span>(<span class="st">"%d "</span>, i);
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    <span class="cm">/* These nodes are final outputs/results */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="cn8d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — WEAKLY CONNECTED COMPONENTS</span></div>
+<pre><span class="cm">/* Ignore edge direction, find connected groups */</span>
+<span class="ty">void</span> <span class="fn">dfsComp</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v,
+              <span class="ty">int</span> vis[], <span class="ty">int</span> comp[], <span class="ty">int</span> id) {
+    vis[v]=<span class="nm">1</span>; comp[v]=id;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++) {
+        <span class="ty">int</span> connected = g->matrix[v][j] || g->matrix[j][v];
+        <span class="kw">if</span> (connected && !vis[j])
+            <span class="fn">dfsComp</span>(g,j,vis,comp,id);
+    }
+}
+<span class="ty">int</span> <span class="fn">countComponents</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>}, comp[MAX], id=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="kw">if</span> (!vis[i]) <span class="fn">dfsComp</span>(g,i,vis,comp,id++);
+    <span class="fn">printf</span>(<span class="st">"%d component(s)\n"</span>, id);
+    <span class="kw">return</span> id;
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>Company org chart:</strong> Sources=CEO/founders (nobody manages them). Sinks=entry-level with no reports. Reachability="can CEO's decisions reach this employee?" Components=independent business units with no cross-reporting.</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S9: DEGREE OPS ══════════════════════════ -->
+<section id="s9">
+  <div class="badge">📏 Module 09</div>
+  <h2 class="st">Degree Operations</h2>
+  <p class="sd">In-degree = edges pointing IN. Out-degree = edges going OUT. These reveal each vertex's role: source, sink, or internal node.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">DEGREE ANALYZER</span>
+        <button class="btn" onclick="degIn()">In-Degrees</button>
+        <button class="btn y" onclick="degOut()">Out-Degrees</button>
+        <button class="btn p" onclick="degAll()">Full Analysis</button>
+        <button class="btn r" onclick="degRst()">↺ Reset</button>
+      </div>
+      <canvas id="c9" height="230"></canvas>
+      <div class="vlog" id="l9">Click to analyze vertex degrees. Table shown on canvas.</div>
+    </div>
+
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — COMPLETE DEGREE ANALYSIS</span></div>
+<pre><span class="cm">/* In-degree of vertex v: count column v */</span>
+<span class="ty">int</span> <span class="fn">inDegree</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) {
+    <span class="ty">int</span> cnt=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++) cnt+=g->matrix[i][v];
+    <span class="kw">return</span> cnt; <span class="cm">/* O(V) */</span>
+}
+
+<span class="cm">/* Out-degree of vertex v: count row v */</span>
+<span class="ty">int</span> <span class="fn">outDegree</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) {
+    <span class="ty">int</span> cnt=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++) cnt+=g->matrix[v][j];
+    <span class="kw">return</span> cnt; <span class="cm">/* O(V) */</span>
+}
+
+<span class="ty">int</span> <span class="fn">isSource</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) { <span class="kw">return</span> <span class="fn">inDegree</span>(g,v)==<span class="nm">0</span>; }
+<span class="ty">int</span> <span class="fn">isSink</span>  (<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> v) { <span class="kw">return</span> <span class="fn">outDegree</span>(g,v)==<span class="nm">0</span>; }
+
+<span class="ty">void</span> <span class="fn">degreeAnalysis</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="fn">printf</span>(<span class="st">"%-6s %-8s %-9s %-8s\n"</span>,
+           <span class="st">"Vertex"</span>,<span class="st">"In-Deg"</span>,<span class="st">"Out-Deg"</span>,<span class="st">"Type"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; g->V; v++) {
+        <span class="ty">int</span> ind=<span class="fn">inDegree</span>(g,v), outd=<span class="fn">outDegree</span>(g,v);
+        <span class="ty">char</span> *t = ind==<span class="nm">0</span> ? <span class="st">"SOURCE"</span>
+                 : outd==<span class="nm">0</span> ? <span class="st">"SINK"</span> : <span class="st">"INNER"</span>;
+        <span class="fn">printf</span>(<span class="st">"%-6d %-8d %-9d %-8s\n"</span>,v,ind,outd,t);
+    }
+}</pre></div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>Academic citations:</strong> In-degree = how many papers cite yours (popularity). Out-degree = how many papers you reference (how much you depend on others). A source = a pioneering paper with no prior work. A sink = the very latest paper not yet cited by anyone.</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S10: SCHEDULING ══════════════════════════ -->
+<section id="s10">
+  <div class="badge">⚙️ Module 10</div>
+  <h2 class="st">Scheduling & Dependency Operations</h2>
+  <p class="sd">Real applications: course prerequisites, build systems, workflow scheduling, and Critical Path Analysis.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">WORKFLOW SCHEDULER — BUILD SYSTEM DEMO</span>
+        <button class="btn" onclick="schedRun()">▶ Run Schedule</button>
+        <button class="btn r" onclick="schedCPM()">Critical Path</button>
+        <button class="btn y" onclick="schedRst()">↺ Reset</button>
+      </div>
+      <canvas id="c10" height="250"></canvas>
+      <div class="vlog" id="l10">Simulating a 7-task software build system with dependencies.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'sc10a')">Course Prerequisites</button>
+      <button class="tab" onclick="tab(this,'sc10b')">Build System</button>
+      <button class="tab" onclick="tab(this,'sc10c')">Workflow Scheduling</button>
+      <button class="tab" onclick="tab(this,'sc10d')">Critical Path Analysis</button>
+    </div>
+    <div class="tc on" id="sc10a">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — COURSE PREREQUISITE RESOLUTION</span></div>
+<pre><span class="ty">char</span> courses[MAX][<span class="nm">30</span>] = {
+    <span class="st">"Math101"</span>,<span class="st">"CS101"</span>,<span class="st">"Math201"</span>,
+    <span class="st">"CS201"</span>,  <span class="st">"CS301"</span>,<span class="st">"CS401"</span>
+};
+
+<span class="cm">/* Can student enroll? Check all prereqs */</span>
+<span class="ty">int</span> <span class="fn">canEnroll</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> course,
+               <span class="ty">int</span> completed[]) {
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++) {
+        <span class="kw">if</span> (g->matrix[i][course] && !completed[i]) {
+            <span class="fn">printf</span>(<span class="st">"Missing: %s\n"</span>, courses[i]);
+            <span class="kw">return</span> <span class="nm">0</span>;
+        }
+    }
+    <span class="kw">return</span> <span class="nm">1</span>;
+}
+
+<span class="ty">void</span> <span class="fn">studyPlan</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="fn">printf</span>(<span class="st">"=== Study Plan ===\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++)
+        <span class="fn">printf</span>(<span class="st">"Sem %d: %s\n"</span>,i+<span class="nm">1</span>,courses[ord[i]]);
+}</pre></div>
+    </div>
+    <div class="tc" id="sc10b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — BUILD SYSTEM DEPENDENCY (like Make)</span></div>
+<pre><span class="ty">char</span> files[MAX][<span class="nm">20</span>]={
+    <span class="st">"utils.o"</span>,<span class="st">"math.o"</span>,<span class="st">"io.o"</span>,
+    <span class="st">"core.o"</span>, <span class="st">"app.o"</span>, <span class="st">"program"</span>
+};
+<span class="ty">int</span> dirty[MAX]={<span class="nm">0</span>}; <span class="cm">/* 1 = needs rebuild */</span>
+
+<span class="cm">/* Mark file and all dependents as dirty */</span>
+<span class="ty">void</span> <span class="fn">markDirty</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> changed) {
+    <span class="ty">int</span> Q[MAX],f=<span class="nm">0</span>,r=<span class="nm">0</span>;
+    dirty[changed]=<span class="nm">1</span>; Q[r++]=changed;
+    <span class="kw">while</span> (f &lt; r) {
+        <span class="ty">int</span> v=Q[f++];
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+            <span class="kw">if</span> (g->matrix[v][j] && !dirty[j])
+                { dirty[j]=<span class="nm">1</span>; Q[r++]=j; }
+    }
+}
+<span class="ty">void</span> <span class="fn">buildOrder</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++)
+        <span class="kw">if</span> (dirty[ord[i]])
+            <span class="fn">printf</span>(<span class="st">"Compiling: %s\n"</span>, files[ord[i]]);
+}</pre></div>
+    </div>
+    <div class="tc" id="sc10c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — PARALLEL WORKFLOW SCHEDULING (Wave levels)</span></div>
+<pre><span class="cm">/* Group tasks by level — same level runs in parallel */</span>
+<span class="ty">void</span> <span class="fn">parallelSchedule</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> n=g->V, inD[MAX]={<span class="nm">0</span>}, lv[MAX]={<span class="nm">0</span>};
+    <span class="ty">int</span> Q[MAX], f=<span class="nm">0</span>, r=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++)
+            <span class="kw">if</span> (g->matrix[i][j]) inD[j]++;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) <span class="kw">if</span> (!inD[i]) Q[r++]=i;
+    <span class="kw">while</span> (f &lt; r) {
+        <span class="ty">int</span> u=Q[f++];
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++) {
+            <span class="kw">if</span> (!g->matrix[u][v]) <span class="kw">continue</span>;
+            <span class="kw">if</span> (lv[u]+<span class="nm">1</span> > lv[v]) lv[v]=lv[u]+<span class="nm">1</span>;
+            <span class="kw">if</span> (!--inD[v]) Q[r++]=v;
+        }
+    }
+    <span class="cm">/* Tasks with same lv[] value run in parallel */</span>
+}</pre></div>
+    </div>
+    <div class="tc" id="sc10d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — CRITICAL PATH ANALYSIS (CPM)</span></div>
+<pre><span class="cm">/* Forward pass → Earliest Start (ES)           */</span>
+<span class="cm">/* Backward pass → Latest Start (LS)            */</span>
+<span class="cm">/* Slack = LS-ES. Slack==0 → Critical Path      */</span>
+<span class="ty">void</span> <span class="fn">criticalPathAnalysis</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> dur[]) {
+    <span class="ty">int</span> n=g->V, ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="ty">int</span> ES[MAX]={<span class="nm">0</span>}, LS[MAX], EF[MAX];
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="cm">/* Forward pass */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i]; EF[u]=ES[u]+dur[u];
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g->matrix[u][v] && EF[u]>ES[v]) ES[v]=EF[u];
+    }
+    <span class="ty">int</span> T=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) <span class="kw">if</span> (EF[i]>T) T=EF[i];
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) LS[i]=T-dur[i];
+    <span class="cm">/* Backward pass */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=cnt-<span class="nm">1</span>; i>=<span class="nm">0</span>; i--) {
+        <span class="ty">int</span> u=ord[i];
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g->matrix[u][v] && LS[v]-dur[u]&lt;LS[u])
+                LS[u]=LS[v]-dur[u];
+    }
+    <span class="fn">printf</span>(<span class="st">"Critical Path (slack=0): "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">if</span> (LS[i]-ES[i]==<span class="nm">0</span>) <span class="fn">printf</span>(<span class="st">"%d "</span>, i);
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>Building a house:</strong> You can't install electricity before walls are up. CPM tells you which chain of tasks (foundation→framing→roofing) determines minimum project time. Landscaping has slack — delay it without delaying handover. Construction managers use CPM daily!</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S11: ADVANCED ══════════════════════════ -->
+<section id="s11">
+  <div class="badge">🧠 Module 11</div>
+  <h2 class="st">Advanced Algorithms</h2>
+  <p class="sd">Dynamic Programming on DAG, complete Shortest/Longest path, Critical Path Method, and Project Planning with resource allocation.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">ADVANCED ALGORITHM DEMO (Weighted DAG)</span>
+        <button class="btn" onclick="advDP()">▶ Count Paths (DP)</button>
+        <button class="btn y" onclick="advCPM()">▶ Critical Path</button>
+        <button class="btn r" onclick="advRst()">↺ Reset</button>
+      </div>
+      <canvas id="c11" height="240"></canvas>
+      <div class="vlog" id="l11">DP processes nodes in topological order — each node's value depends only on predecessors already computed.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'ad11a')">DP on DAG</button>
+      <button class="tab" onclick="tab(this,'ad11b')">Shortest Path</button>
+      <button class="tab" onclick="tab(this,'ad11c')">Longest Path</button>
+      <button class="tab" onclick="tab(this,'ad11d')">CPM Full</button>
+      <button class="tab" onclick="tab(this,'ad11e')">Project Planning</button>
+    </div>
+    <div class="tc on" id="ad11a">
+      <div class="tb"><p><strong>DP on DAG:</strong> Process in topological order. Each node's result depends only on already-computed predecessors. This gives O(V+E) solutions to problems that would otherwise be exponential!</p></div>
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — COUNT PATHS FROM SOURCE (DP on DAG)</span></div>
+<pre><span class="ty">void</span> <span class="fn">countPaths</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src) {
+    <span class="ty">int</span> n=g->V, dp[MAX]={<span class="nm">0</span>};
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    dp[src]=<span class="nm">1</span>; <span class="cm">/* 1 way to reach source */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i];
+        <span class="kw">if</span> (!dp[u]) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g->matrix[u][v])
+                dp[v]+=dp[u]; <span class="cm">/* accumulate */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"Path counts from %d:\n"</span>,src);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="fn">printf</span>(<span class="st">"  to %d: %d\n"</span>, i, dp[i]);
+}</pre></div>
+    </div>
+    <div class="tc" id="ad11b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — SHORTEST PATH (Full, with path reconstruction)</span></div>
+<pre><span class="ty">void</span> <span class="fn">shortestFull</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src, <span class="ty">int</span> dst) {
+    <span class="ty">int</span> n=g->V, dist[MAX], par[MAX], ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) { dist[i]=INF; par[i]=-<span class="nm">1</span>; }
+    dist[src]=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i];
+        <span class="kw">if</span> (dist[u]==INF) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++) {
+            <span class="kw">if</span> (!g->matrix[u][v]) <span class="kw">continue</span>;
+            <span class="ty">int</span> nd=dist[u]+g->matrix[u][v];
+            <span class="kw">if</span> (nd &lt; dist[v]) { dist[v]=nd; par[v]=u; }
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"Dist %d→%d = %d  Path: "</span>,src,dst,dist[dst]);
+    <span class="fn">printChain</span>(par, dst); <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre></div>
+    </div>
+    <div class="tc" id="ad11c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — LONGEST PATH (Full)</span></div>
+<pre><span class="ty">void</span> <span class="fn">longestFull</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> src) {
+    <span class="ty">int</span> n=g->V, dist[MAX], ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) dist[i]=NEGINF;
+    dist[src]=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i];
+        <span class="kw">if</span> (dist[u]==NEGINF) <span class="kw">continue</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g->matrix[u][v]) {
+                <span class="ty">int</span> nd=dist[u]+g->matrix[u][v];
+                <span class="kw">if</span> (nd > dist[v]) dist[v]=nd; <span class="cm">/* MAX */</span>
+            }
+    }
+    <span class="ty">int</span> mx=NEGINF;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) <span class="kw">if</span> (dist[i]>mx) mx=dist[i];
+    <span class="fn">printf</span>(<span class="st">"Longest path length from %d = %d\n"</span>,src,mx);
+}</pre></div>
+    </div>
+    <div class="tc" id="ad11d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — FULL CPM (ES, EF, LS, LF, Slack, Critical)</span></div>
+<pre><span class="kw">struct</span> <span class="ty">Task</span> { <span class="ty">char</span> name[<span class="nm">20</span>]; <span class="ty">int</span> dur,ES,EF,LS,LF,slack,crit; };
+
+<span class="ty">void</span> <span class="fn">computeCPM</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="kw">struct</span> <span class="ty">Task</span> T[]) {
+    <span class="ty">int</span> n=g->V, ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) T[i].ES=<span class="nm">0</span>;
+    <span class="cm">/* Forward pass: compute ES and EF */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> u=ord[i]; T[u].EF=T[u].ES+T[u].dur;
+        <span class="kw">for</span> (<span class="ty">int</span> v=<span class="nm">0</span>; v &lt; n; v++)
+            <span class="kw">if</span> (g->matrix[u][v] && T[u].EF>T[v].ES)
+                T[v].ES=T[u].EF;
+    }
+    <span class="ty">int</span> end=<span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) <span class="kw">if</span> (T[i].EF>end) end=T[i].EF;
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) T[i].LF=end;
+    <span class="cm">/* Backward pass: compute LS and LF */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i=cnt-<span class="nm">1</span>; i>=<span class="nm">0</span>; i--) {
+        <span class="ty">int</span> u=ord[i]; T[u].LS=T[u].LF-T[u].dur;
+        <span class="kw">for</span> (<span class="ty">int</span> p=<span class="nm">0</span>; p &lt; n; p++)
+            <span class="kw">if</span> (g->matrix[p][u] && T[u].LS&lt;T[p].LF)
+                T[p].LF=T[u].LS;
+    }
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++) {
+        T[i].slack=T[i].LS-T[i].ES;
+        T[i].crit =(T[i].slack==<span class="nm">0</span>);
+    }
+}</pre></div>
+    </div>
+    <div class="tc" id="ad11e">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — PROJECT PLANNING REPORT</span></div>
+<pre><span class="ty">void</span> <span class="fn">projectReport</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="kw">struct</span> <span class="ty">Task</span> T[]) {
+    <span class="fn">computeCPM</span>(g, T);
+    <span class="fn">printf</span>(<span class="st">"\n╔══════════════════════════════════════╗\n"</span>);
+    <span class="fn">printf</span>(<span class="st">"║       PROJECT PLANNING REPORT        ║\n"</span>);
+    <span class="fn">printf</span>(<span class="st">"╠══════════════════════════════════════╣\n"</span>);
+    <span class="fn">printf</span>(<span class="st">"%-12s %3s %3s %3s %3s %5s %s\n"</span>,
+        <span class="st">"Task"</span>,<span class="st">"ES"</span>,<span class="st">"EF"</span>,<span class="st">"LS"</span>,<span class="st">"LF"</span>,<span class="st">"Slack"</span>,<span class="st">"Critical?"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="fn">printf</span>(<span class="st">"%-12s %3d %3d %3d %3d %5d %s\n"</span>,
+            T[i].name,T[i].ES,T[i].EF,
+            T[i].LS,T[i].LF,T[i].slack,
+            T[i].crit?<span class="st">"*** YES ***"</span>:<span class="st">"no"</span>);
+    <span class="fn">printf</span>(<span class="st">"╚══════════════════════════════════════╝\n"</span>);
+}</pre></div>
+    </div>
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p><strong>NASA mission planning:</strong> Forward pass = "earliest we can test rocket subsystem X". Backward pass = "latest we can start without delaying launch". Zero-slack tasks = the critical path — engine test slips → entire mission slips. Real engineers use CPM this way every day!</p></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ S12: VISUALIZATION ══════════════════════════ -->
+<section id="s12">
+  <div class="badge">🎨 Module 12</div>
+  <h2 class="st">Visualization & Reporting</h2>
+  <p class="sd">Display the DAG, print topological order, render dependency trees, and generate execution schedules — the complete output layer.</p>
+
+  <div class="card">
+    <div class="vz">
+      <div class="vt"><span class="vn">INTERACTIVE DAG BUILDER</span>
+        <label>From:<input class="inp" id="bf" type="number" min="0" max="6" value="0"></label>
+        <label>To:<input class="inp" id="bt" type="number" min="0" max="6" value="1"></label>
+        <button class="btn" onclick="bldAdd()">+ Edge</button>
+        <button class="btn r" onclick="bldRem()">- Edge</button>
+        <button class="btn p" onclick="bldTopo()">Topo Sort</button>
+        <button class="btn y" onclick="bldTree()">Dep Tree</button>
+        <button class="btn" style="border-color:var(--a2);color:var(--a2)" onclick="bldRst()">↺ Reset</button>
+      </div>
+      <canvas id="c12" height="250"></canvas>
+      <div class="vlog" id="l12">Build your own DAG! Add edges and run topological sort or dependency tree.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab on" onclick="tab(this,'vz12a')">Display DAG</button>
+      <button class="tab" onclick="tab(this,'vz12b')">Topo Order</button>
+      <button class="tab" onclick="tab(this,'vz12c')">Dependency Tree</button>
+      <button class="tab" onclick="tab(this,'vz12d')">Execution Schedule</button>
+    </div>
+    <div class="tc on" id="vz12a">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DISPLAY DAG (adjacency list + matrix)</span></div>
+<pre><span class="ty">void</span> <span class="fn">displayDAG</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> n=g->V;
+    <span class="fn">printf</span>(<span class="st">"DAG: %d vertices\n"</span>, n);
+    <span class="fn">printf</span>(<span class="st">"Edges:\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; n; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; n; j++)
+            <span class="kw">if</span> (g->matrix[i][j])
+                <span class="fn">printf</span>(<span class="st">"  %d → %d (w=%d)\n"</span>,
+                       i, j, g->matrix[i][j]);
+    <span class="fn">printf</span>(<span class="st">"Adjacency Matrix:\n"</span>);
+    <span class="fn">printMatrix</span>(g);
+}</pre></div>
+    </div>
+    <div class="tc" id="vz12b">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DISPLAY TOPOLOGICAL ORDER</span></div>
+<pre><span class="ty">void</span> <span class="fn">displayTopoOrder</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> ord[MAX], cnt=<span class="nm">0</span>;
+    <span class="fn">kahnOrder</span>(g, ord, &cnt);
+    <span class="fn">printf</span>(<span class="st">"\n=== Topological Order ===\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> v=ord[i];
+        <span class="fn">printf</span>(<span class="st">"[%2d] Vertex %d"</span>, i+<span class="nm">1</span>, v);
+        <span class="kw">if</span> (<span class="fn">isSource</span>(g,v)) <span class="fn">printf</span>(<span class="st">" ← SOURCE"</span>);
+        <span class="kw">if</span> (<span class="fn">isSink</span>  (g,v)) <span class="fn">printf</span>(<span class="st">" ← SINK"</span>);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+        <span class="kw">if</span> (i&lt;cnt-<span class="nm">1</span>) <span class="fn">printf</span>(<span class="st">"       ↓\n"</span>);
+    }
+}</pre></div>
+    </div>
+    <div class="tc" id="vz12c">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — DEPENDENCY TREE (ASCII art)</span></div>
+<pre><span class="ty">void</span> <span class="fn">printDepTree</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g, <span class="ty">int</span> root,
+                   <span class="ty">int</span> depth, <span class="ty">int</span> vis[]) {
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; depth; i++) <span class="fn">printf</span>(<span class="st">"  "</span>);
+    <span class="fn">printf</span>(<span class="st">"%s[%d]\n"</span>, depth?<span class="st">"└─"</span>:<span class="st">""</span>, root);
+    <span class="kw">if</span> (vis[root]) { <span class="fn">printf</span>(<span class="st">"(seen)\n"</span>); <span class="kw">return</span>; }
+    vis[root]=<span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> j=<span class="nm">0</span>; j &lt; g->V; j++)
+        <span class="kw">if</span> (g->matrix[root][j])
+            <span class="fn">printDepTree</span>(g, j, depth+<span class="nm">1</span>, vis);
+}
+<span class="ty">void</span> <span class="fn">dependencyTree</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g) {
+    <span class="ty">int</span> vis[MAX]={<span class="nm">0</span>};
+    <span class="fn">printf</span>(<span class="st">"=== Dependency Tree ===\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i=<span class="nm">0</span>; i &lt; g->V; i++)
+        <span class="kw">if</span> (<span class="fn">isSource</span>(g,i)) <span class="cm">/* start at roots */</span>
+            <span class="fn">printDepTree</span>(g, i, <span class="nm">0</span>, vis);
+}</pre></div>
+    </div>
+    <div class="tc" id="vz12d">
+<div class="cb"><div class="ch"><div class="cd"><span></span><span></span><span></span></div><span class="cl">C — EXECUTION SCHEDULE (parallel waves)</span></div>
+<pre><span class="ty">void</span> <span class="fn">executionSchedule</span>(<span class="kw">struct</span> <span class="ty">DAG</span> *g,<span class="ty">char</span> names[][<span class="nm">20</span>]){
+    <span class="ty">int</span> n=g->V, lv[MAX]={<span class="nm">0</span>}, inD[MAX]={<span class="nm">0</span>};
+    <span class="ty">int</span> Q[MAX],f=<span class="nm">0</span>,r=<span class="nm">0</span>, maxLv=<span class="nm">0</span>;
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="nm">0</span>;i&lt;n;i++) <span class="kw">for</span>(<span class="ty">int</span> j=<span class="nm">0</span>;j&lt;n;j++)
+        <span class="kw">if</span>(g->matrix[i][j]) inD[j]++;
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="nm">0</span>;i&lt;n;i++) <span class="kw">if</span>(!inD[i]) Q[r++]=i;
+    <span class="kw">while</span>(f&lt;r){<span class="ty">int</span> u=Q[f++];
+        <span class="kw">for</span>(<span class="ty">int</span> v=<span class="nm">0</span>;v&lt;n;v++) <span class="kw">if</span>(g->matrix[u][v]){
+            <span class="kw">if</span>(lv[u]+<span class="nm">1</span>>lv[v])lv[v]=lv[u]+<span class="nm">1</span>;
+            <span class="kw">if</span>(lv[v]>maxLv)maxLv=lv[v];
+            <span class="kw">if</span>(!--inD[v])Q[r++]=v;
+        }
+    }
+    <span class="fn">printf</span>(<span class="st">"=== Execution Schedule ===\n"</span>);
+    <span class="kw">for</span>(<span class="ty">int</span> l=<span class="nm">0</span>;l&lt;=maxLv;l++){
+        <span class="fn">printf</span>(<span class="st">"Wave %d (parallel): "</span>,l);
+        <span class="kw">for</span>(<span class="ty">int</span> i=<span class="nm">0</span>;i&lt;n;i++) <span class="kw">if</span>(lv[i]==l) <span class="fn">printf</span>(<span class="st">"%s "</span>,names[i]);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    }
+}</pre></div>
+    </div>
+
+    <div class="an"><div class="an-lbl">🌍 Real-Life Analogy</div>
+    <p>A <strong>CI/CD pipeline dashboard</strong> — shows build stages, which run in parallel, the execution order, and highlights the critical path in red. That's exactly what these functions produce. Tools like Jenkins, GitHub Actions, and GitLab CI all implement this internally!</p></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="card" style="border-color:var(--a1);background:linear-gradient(135deg,#0b1a13,#0f1117)">
+    <div class="ct">🎓 Complete DAG Mastery — All Modules Covered!</div>
+    <div class="tb" style="border-left-color:var(--a1)"><p>You've covered every topic: <strong>Adjacency Matrix Representation, Vertex & Edge Operations, BFS/DFS/Topological/Dependency Traversal, Find/Shortest/Longest/All Paths, Dependency Chain, DFS-based & Kahn's Topological Sort, Task Scheduling, Dependency Resolution, Cycle Detection & Prevention, DAG Validation, Reachability, Source/Sink/Component Detection, In/Out Degree Analysis, Course Prerequisites, Build Systems, Workflow Scheduling, Critical Path Analysis, DP on DAG, CPM, Project Planning, Display/Visualization/Reporting.</strong></p></div>
+    <table class="tbl" style="margin-top:.9rem">
+      <thead><tr><th>Module</th><th>Key Algorithm</th><th>Time (Matrix)</th></tr></thead>
+      <tbody>
+        <tr><td>Representation</td><td>Adjacency Matrix init</td><td>O(V²)</td></tr>
+        <tr><td>Vertex Ops</td><td>Insert/Delete/Search/Update</td><td>O(1) – O(V²)</td></tr>
+        <tr><td>Edge Ops</td><td>Insert with cycle check</td><td>O(V)</td></tr>
+        <tr><td>BFS / DFS</td><td>Queue / Recursion</td><td>O(V²)</td></tr>
+        <tr><td>Topo Sort</td><td>DFS Post-Order / Kahn's</td><td>O(V²)</td></tr>
+        <tr><td>Shortest Path</td><td>Topo + Relax (min)</td><td>O(V²)</td></tr>
+        <tr><td>Longest Path</td><td>Topo + Relax (max)</td><td>O(V²)</td></tr>
+        <tr><td>Cycle Detection</td><td>DFS 3-Coloring</td><td>O(V²)</td></tr>
+        <tr><td>CPM / Project</td><td>Forward + Backward pass</td><td>O(V²)</td></tr>
+        <tr><td>DP on DAG</td><td>Topo order accumulation</td><td>O(V²)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ═══════════════════ UTILITIES ═══════════════════
+function go(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+function tab(btn,id){
+  const p=btn.closest('.card')||btn.closest('section');
+  p.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  p.querySelectorAll('.tc').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(id).classList.add('on');
+}
+window.addEventListener('scroll',()=>{
+  const s=window.scrollY,h=document.body.scrollHeight-window.innerHeight;
+  document.getElementById('pf').style.width=(s/h*100)+'%';
+  document.querySelectorAll('section').forEach(sec=>{
+    const r=sec.getBoundingClientRect();
+    if(r.top<180&&r.bottom>180){
+      const id=sec.id;
+      document.querySelectorAll('.sb-a').forEach(a=>a.classList.remove('on'));
+      const a=document.querySelector(`.sb-a[onclick*="${id}"]`);
+      if(a)a.classList.add('on');
+    }
+  });
+});
+new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('vis');}),{threshold:.05})
+  .observe.bind(new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('vis');}),{threshold:.05}));
+// Scroll reveal
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis');}),{threshold:.04});
+document.querySelectorAll('section').forEach(s=>obs.observe(s));
+
+// ═══════════════════ CANVAS ENGINE ═══════════════════
+const C={bg:'#07090d',s1:'#0f1117',s2:'#161b24',bd:'#1e2535',
+  a1:'#00e5a0',a2:'#ff6b6b',a3:'#7c83ff',a4:'#ffd166',
+  tx:'#dde1ee',dm:'#6a7490',mt:'#2d3248'};
+
+function gc(id){
+  const cv=document.getElementById(id);
+  if(!cv)return null;
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.offsetWidth||700,h=parseInt(cv.getAttribute('height'))||240;
+  cv.width=w*dpr; cv.height=h*dpr;
+  const ctx=cv.getContext('2d');
+  ctx.scale(dpr,dpr);
+  cv.style.height=h+'px';
+  return{ctx,w,h};
+}
+function clr(ctx,w,h){ctx.fillStyle=C.s2;ctx.fillRect(0,0,w,h);}
+function node(ctx,x,y,lbl,col=C.a1,bg=C.s1,r=22){
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=bg;ctx.fill();
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=col;ctx.font=`bold 12px 'Fira Code',monospace`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,x,y);
+}
+function arrow(ctx,x1,y1,x2,y2,col=C.a1,lbl=''){
+  const ang=Math.atan2(y2-y1,x2-x1),r=22,hs=9;
+  const sx=x1+r*Math.cos(ang),sy=y1+r*Math.sin(ang);
+  const ex=x2-r*Math.cos(ang),ey=y2-r*Math.sin(ang);
+  ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-hs*Math.cos(ang-.4),ey-hs*Math.sin(ang-.4));
+  ctx.lineTo(ex-hs*Math.cos(ang+.4),ey-hs*Math.sin(ang+.4));
+  ctx.closePath();ctx.fillStyle=col;ctx.fill();
+  if(lbl){ctx.fillStyle=C.a4;ctx.font='10px Fira Code';ctx.textAlign='center';ctx.fillText(lbl,(sx+ex)/2-6,(sy+ey)/2-8);}
+}
+function log(id,msg,col=C.a1){const e=document.getElementById(id);if(e){e.style.color=col;e.textContent='▸ '+msg;}}
+
+// ═══════════════════ S0: INTRO ═══════════════════
+const iN=[{x:70,y:120},{x:190,y:55},{x:190,y:185},{x:340,y:55},{x:340,y:185},{x:480,y:120}];
+const iE=[[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]];
+let iT=null;
+function drawIntro(hl=[],vn=[]){
+  const g=gc('c0');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  iE.forEach(([a,b],i)=>arrow(ctx,iN[a].x,iN[a].y,iN[b].x,iN[b].y,hl.includes(i)?C.a4:C.bd));
+  iN.forEach((n,i)=>{
+    const col=vn.includes(i)?C.a4:C.a1,bg=vn.includes(i)?'#2a2010':C.s1;
+    node(ctx,n.x,n.y,`${i}`,col,bg);
+  });
+  ctx.fillStyle=C.dm;ctx.font='10px Syne';ctx.textAlign='center';
+  ctx.fillText('Source (in=0)',iN[0].x,iN[0].y+36);
+  ctx.fillText('Sink (out=0)',iN[5].x,iN[5].y+36);
+}
+function introAnim(){
+  clearTimeout(iT);let step=0;
+  const steps=[
+    {hl:[0],vn:[0,1],msg:'Edge 0→1: vertex 1 depends on 0'},
+    {hl:[1],vn:[0,1,2],msg:'Edge 0→2: vertex 2 also depends on 0'},
+    {hl:[2,3,4],vn:[0,1,2,3,4],msg:'All edges flow forward — never backward (acyclic!)'},
+    {hl:[5,6],vn:[0,1,2,3,4,5],msg:'All paths converge at vertex 5 — the SINK. Valid DAG!'},
+  ];
+  function next(){
+    if(step>=steps.length){drawIntro();log('l0','Animation done! Directed + No cycles = DAG.');return;}
+    const{hl,vn,msg}=steps[step++];drawIntro(hl,vn);log('l0',msg,C.a4);iT=setTimeout(next,1100);
+  }next();
+}
+function introRst(){clearTimeout(iT);drawIntro();log('l0','Click ▶ Animate to see how a DAG works!');}
+drawIntro();
+
+// ═══════════════════ S1: MATRIX ═══════════════════
+const mN=[{x:60,y:80},{x:180,y:35},{x:180,y:135},{x:300,y:80},{x:300,y:160},{x:400,y:80}];
+const mE=[[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]];
+let mT=null,mI=0;
+function buildMatTbl(){
+  const n=6,mat=Array.from({length:n},()=>Array(n).fill(0));
+  mE.forEach(([a,b])=>mat[a][b]=1);
+  let h='<table class="mt"><tr><th></th>';
+  for(let j=0;j<n;j++)h+=`<th>${j}</th>`;h+='</tr>';
+  for(let i=0;i<n;i++){h+=`<tr><th>${i}</th>`;for(let j=0;j<n;j++){const cl=mat[i][j]?'one':'';h+=`<td class="${cl}" id="mc${i}${j}">${mat[i][j]}</td>`;}h+='</tr>';}
+  h+='</table>';document.getElementById('matTbl').innerHTML=h;
+}
+function drawMat(he=-1){
+  const g=gc('c1g');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  mE.forEach(([a,b],i)=>arrow(ctx,mN[a].x,mN[a].y,mN[b].x,mN[b].y,i===he?C.a4:C.bd));
+  mN.forEach((n,i)=>{
+    const act=he>=0&&(mE[he]?.[0]===i||mE[he]?.[1]===i);
+    node(ctx,n.x,n.y,`${i}`,act?C.a4:C.a1,act?'#2a2010':C.s1,18);
+  });
+}
+function matHL(){
+  clearTimeout(mT);mI=0;
+  document.querySelectorAll('.mt td.hl').forEach(t=>t.classList.remove('hl'));
+  function step(){
+    if(mI>=mE.length){drawMat();log('l1','All edges highlighted in matrix!');return;}
+    const[a,b]=mE[mI];drawMat(mI);
+    document.querySelectorAll('.mt td.hl').forEach(t=>t.classList.remove('hl'));
+    const c=document.getElementById(`mc${a}${b}`);if(c)c.classList.add('hl');
+    log('l1',`Edge ${a}→${b}: matrix[${a}][${b}] = 1`,C.a4);
+    mI++;mT=setTimeout(step,650);
+  }step();
+}
+function matRst(){clearTimeout(mT);drawMat();document.querySelectorAll('.mt td.hl').forEach(t=>t.classList.remove('hl'));log('l1','Matrix reset.');}
+buildMatTbl();drawMat();
+
+// ═══════════════════ S2: VERTEX OPS ═══════════════════
+let vN=[{x:90,y:115},{x:220,y:55},{x:220,y:175},{x:360,y:115}],vE=[[0,1],[0,2],[1,3],[2,3]];
+function drawV(hl={}){
+  const g=gc('c2');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  vE.forEach(([a,b])=>{if(a<vN.length&&b<vN.length)arrow(ctx,vN[a].x,vN[a].y,vN[b].x,vN[b].y,C.a1);});
+  vN.forEach((n,i)=>{
+    const col=hl[i]||C.a1;const bg=col===C.a2?'#2a0f0f':col===C.a4?'#2a2010':C.s1;
+    node(ctx,n.x,n.y,`${i}`,col,bg);
+  });
+}
+function vInsert(){
+  if(vN.length>=7){log('l2','Graph full!',C.a2);return;}
+  const id=vN.length,a=id*(Math.PI*2/7),cx=370,cy=115,r=100;
+  vN.push({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});
+  drawV({[id]:C.a4});log('l2',`Vertex ${id} inserted! Total: ${vN.length} vertices.`,C.a4);
+}
+function vDelete(){
+  const id=parseInt(document.getElementById('vid').value);
+  if(id<0||id>=vN.length){log('l2','Invalid vertex!',C.a2);return;}
+  vE=vE.filter(([a,b])=>a!==id&&b!==id);
+  vN.splice(id,1);vN.forEach((n,i)=>{});
+  vE=vE.map(([a,b])=>[a>id?a-1:a,b>id?b-1:b]);
+  drawV();log('l2',`Vertex ${id} deleted. All edges removed.`,C.a2);
+}
+function vSearch(){
+  const id=parseInt(document.getElementById('vid').value);
+  if(id>=0&&id<vN.length){drawV({[id]:C.a4});log('l2',`Vertex ${id} FOUND! In-degree:${vE.filter(([a,b])=>b===id).length} Out-degree:${vE.filter(([a,b])=>a===id).length}`,C.a4);}
+  else{drawV();log('l2',`Vertex ${id} does NOT exist.`,C.a2);}
+}
+function vReset(){vN=[{x:90,y:115},{x:220,y:55},{x:220,y:175},{x:360,y:115}];vE=[[0,1],[0,2],[1,3],[2,3]];drawV();log('l2','Reset to initial state.');}
+drawV();
+
+// ═══════════════════ S3: EDGE OPS ═══════════════════
+let eM=Array.from({length:5},()=>Array(5).fill(0));
+const eN=[{x:70,y:115},{x:190,y:45},{x:190,y:185},{x:360,y:45},{x:360,y:185}];
+eM[0][1]=1;eM[0][2]=1;eM[1][3]=1;eM[2][4]=1;
+function canReachE(f,t){if(f===t)return true;let vis=Array(5).fill(false),stk=[f];
+  while(stk.length){let v=stk.pop();if(vis[v])continue;vis[v]=true;if(v===t)return true;for(let j=0;j<5;j++)if(eM[v][j]&&!vis[j])stk.push(j);}return false;}
+function drawE(he=null,hn=[]){
+  const g=gc('c3');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<5;i++)for(let j=0;j<5;j++){if(!eM[i][j])continue;
+    const isH=he&&he[0]===i&&he[1]===j;arrow(ctx,eN[i].x,eN[i].y,eN[j].x,eN[j].y,isH?C.a4:C.a1,eM[i][j]>1?eM[i][j]:'');}
+  eN.forEach((n,i)=>{const col=hn.includes(i)?C.a4:C.a1,bg=hn.includes(i)?'#2a2010':C.s1;node(ctx,n.x,n.y,`${i}`,col,bg);});
+}
+function eInsert(){
+  const u=parseInt(document.getElementById('ef').value),v=parseInt(document.getElementById('et').value),w=parseInt(document.getElementById('ew').value)||1;
+  if(u===v){log('l3','Self-loop not allowed!',C.a2);return;}
+  if(u<0||u>=5||v<0||v>=5){log('l3','Invalid vertex IDs (0-4)!',C.a2);return;}
+  if(canReachE(v,u)){log('l3',`CYCLE BLOCKED! Edge ${u}→${v} would create a cycle.`,C.a2);drawE(null,[u,v]);return;}
+  eM[u][v]=w;drawE([u,v],[u,v]);log('l3',`Edge ${u}→${v} (weight:${w}) inserted!`,C.a4);
+}
+function eDelete(){
+  const u=parseInt(document.getElementById('ef').value),v=parseInt(document.getElementById('et').value);
+  if(!eM[u][v]){log('l3',`Edge ${u}→${v} doesn't exist!`,C.a2);return;}
+  eM[u][v]=0;drawE();log('l3',`Edge ${u}→${v} deleted.`,C.a2);
+}
+function eSearch(){
+  const u=parseInt(document.getElementById('ef').value),v=parseInt(document.getElementById('et').value);
+  if(eM[u][v]){drawE([u,v],[u,v]);log('l3',`Edge ${u}→${v} EXISTS (weight:${eM[u][v]})`,C.a4);}
+  else{drawE();log('l3',`Edge ${u}→${v} does NOT exist.`,C.a2);}
+}
+function eReset(){eM=Array.from({length:5},()=>Array(5).fill(0));eM[0][1]=1;eM[0][2]=1;eM[1][3]=1;eM[2][4]=1;drawE();log('l3','Reset.');}
+drawE();
+
+// ═══════════════════ S4: TRAVERSAL ═══════════════════
+const tN=[{x:75,y:120},{x:200,y:50},{x:200,y:190},{x:350,y:50},{x:350,y:190},{x:490,y:120}];
+const tM=Array.from({length:6},()=>Array(6).fill(0));
+[[0,1],[0,2],[1,3],[1,4],[2,4],[3,5],[4,5]].forEach(([a,b])=>tM[a][b]=1);
+let trT=null;
+function drawTrav(vis=[],cur=-1,Q=[]){
+  const g=gc('c4');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(tM[i][j])arrow(ctx,tN[i].x,tN[i].y,tN[j].x,tN[j].y,C.bd);
+  tN.forEach((n,i)=>{
+    const isC=cur===i,isV=vis.includes(i),isQ=Q.includes(i);
+    const col=isC?C.a4:isV?C.a1:isQ?C.a3:C.dm;
+    const bg=isC?'#2a2010':isV?'#0d1f17':isQ?'#12122a':C.s1;
+    node(ctx,n.x,n.y,`${i}`,col,bg);
+  });
+  ctx.font='10px Syne';ctx.textAlign='left';
+  [{c:C.a4,l:'Current'},{c:C.a1,l:'Visited'},{c:C.a3,l:'Queue'},{c:C.dm,l:'Unvisited'}].forEach(({c,l},i)=>{
+    ctx.fillStyle=c;ctx.fillRect(8,h-26+0+i*0,9,9);
+    ctx.fillStyle=C.dm;
+  });
+  const lg=[{c:C.a4,l:'Current'},{c:C.a1,l:'Visited'},{c:C.a3,l:'In Queue'},{c:C.dm,l:'Unvisited'}];
+  lg.forEach(({c,l},i)=>{ctx.fillStyle=c;ctx.fillRect(8+i*90,h-18,9,9);ctx.fillStyle=C.dm;ctx.fillText(l,22+i*90,h-10);});
+}
+function runBFS(){
+  clearTimeout(trT);let vis=[],Q=[0],done=Array(6).fill(false);done[0]=true;
+  function step(){
+    if(!Q.length){log('l4',`BFS complete! Order: ${vis.join(' → ')}`);drawTrav(vis);return;}
+    const cur=Q.shift();vis.push(cur);drawTrav([...vis],cur,[...Q]);
+    log('l4',`BFS visiting: ${cur} | Visited: ${vis.join('→')}`,C.a4);
+    for(let j=0;j<6;j++)if(tM[cur][j]&&!done[j]){done[j]=true;Q.push(j);}
+    trT=setTimeout(step,600);
+  }step();
+}
+function runDFS(){
+  clearTimeout(trT);let seq=[],vv=Array(6).fill(false);
+  function dfs(v){if(vv[v])return;vv[v]=true;seq.push(v);for(let j=0;j<6;j++)if(tM[v][j]&&!vv[j])dfs(j);}
+  dfs(0);let i=0,vis=[];
+  function step(){
+    if(i>=seq.length){log('l4',`DFS complete! Order: ${seq.join(' → ')}`);drawTrav(seq);return;}
+    vis.push(seq[i]);drawTrav([...vis],seq[i]);log('l4',`DFS visiting: ${seq[i]} | Order: ${vis.join('→')}`,C.a4);i++;trT=setTimeout(step,600);
+  }step();
+}
+function runTopo(){
+  clearTimeout(trT);
+  let inD=Array(6).fill(0);for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(tM[i][j])inD[j]++;
+  let q=[],ord=[];for(let i=0;i<6;i++)if(!inD[i])q.push(i);
+  let vis=[],qi=0;const snapQ=[...q];
+  function step(){
+    if(!q.length){log('l4',`Topological order: ${ord.join(' → ')}`);drawTrav(ord);return;}
+    const u=q.shift();vis.push(u);ord.push(u);
+    drawTrav([...vis],u,[...q]);log('l4',`Topo: vertex ${u} (in-deg=0) → placed at position ${ord.length}`,C.a4);
+    for(let v=0;v<6;v++)if(tM[u][v]){inD[v]--;if(!inD[v])q.push(v);}
+    trT=setTimeout(step,700);
+  }step();
+}
+function rstTrav(){clearTimeout(trT);drawTrav();log('l4','Choose a traversal method.');}
+drawTrav();
+
+// ═══════════════════ S5: PATHS ═══════════════════
+const pN=[{x:65,y:120},{x:185,y:50},{x:185,y:190},{x:340,y:50},{x:340,y:190},{x:490,y:120}];
+const pM=Array.from({length:6},()=>Array(6).fill(0));
+[[0,1,2],[0,2,4],[1,3,1],[1,4,5],[2,3,7],[2,4,2],[3,5,3],[4,5,1]].forEach(([a,b,w])=>pM[a][b]=w);
+let pT=null;
+function topoP(){let inD=Array(6).fill(0);for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(pM[i][j])inD[j]++;let q=[],ord=[];for(let i=0;i<6;i++)if(!inD[i])q.push(i);while(q.length){let u=q.shift();ord.push(u);for(let v=0;v<6;v++)if(pM[u][v]&&!(--inD[v]))q.push(v);}return ord;}
+function drawPaths(pe=[],pn=[]){
+  const g=gc('c5');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++){if(!pM[i][j])continue;const isP=pe.some(([a,b])=>a===i&&b===j);arrow(ctx,pN[i].x,pN[i].y,pN[j].x,pN[j].y,isP?C.a4:C.bd,pM[i][j]);}
+  pN.forEach((n,i)=>{const isP=pn.includes(i);node(ctx,n.x,n.y,`${i}`,isP?C.a4:C.a1,isP?'#2a2010':C.s1);});
+}
+function pathShortest(){
+  const src=parseInt(document.getElementById('pf2').value)||0,dst=parseInt(document.getElementById('pt').value)||5;
+  const INF=99999,dist=Array(6).fill(INF),par=Array(6).fill(-1);dist[src]=0;
+  topoP().forEach(u=>{if(dist[u]===INF)return;for(let v=0;v<6;v++)if(pM[u][v]){const nd=dist[u]+pM[u][v];if(nd<dist[v]){dist[v]=nd;par[v]=u;}}});
+  if(dist[dst]===INF){log('l5',`No path ${src}→${dst}!`,C.a2);drawPaths();return;}
+  let path=[],v=dst;while(v!==-1){path.unshift(v);v=par[v];}
+  const pe=[];for(let i=0;i<path.length-1;i++)pe.push([path[i],path[i+1]]);
+  drawPaths(pe,path);log('l5',`Shortest ${src}→${dst}: [${path.join('→')}] Weight=${dist[dst]}`,C.a4);
+}
+function pathLongest(){
+  const src=parseInt(document.getElementById('pf2').value)||0,dst=parseInt(document.getElementById('pt').value)||5;
+  const NI=-99999,dist=Array(6).fill(NI),par=Array(6).fill(-1);dist[src]=0;
+  topoP().forEach(u=>{if(dist[u]===NI)return;for(let v=0;v<6;v++)if(pM[u][v]){const nd=dist[u]+pM[u][v];if(nd>dist[v]){dist[v]=nd;par[v]=u;}}});
+  if(dist[dst]===NI){log('l5','No path!',C.a2);return;}
+  let path=[],v=dst;while(v!==-1){path.unshift(v);v=par[v];}
+  const pe=[];for(let i=0;i<path.length-1;i++)pe.push([path[i],path[i+1]]);
+  drawPaths(pe,path);log('l5',`Longest ${src}→${dst}: [${path.join('→')}] Weight=${dist[dst]}`,C.a4);
+}
+function pathAll(){
+  clearTimeout(pT);
+  const src=parseInt(document.getElementById('pf2').value)||0,dst=parseInt(document.getElementById('pt').value)||5;
+  let all=[],cur=[],vis=Array(6).fill(false);
+  function dfs(v){vis[v]=true;cur.push(v);if(v===dst)all.push([...cur]);else for(let j=0;j<6;j++)if(pM[v][j]&&!vis[j])dfs(j);cur.pop();vis[v]=false;}
+  dfs(src);if(!all.length){log('l5','No paths!',C.a2);return;}
+  let i=0;function step(){
+    if(i>=all.length){log('l5',`Found ${all.length} path(s) from ${src} to ${dst}`);drawPaths();return;}
+    const p=all[i];const pe=[];for(let k=0;k<p.length-1;k++)pe.push([p[k],p[k+1]]);
+    drawPaths(pe,p);log('l5',`Path ${i+1}/${all.length}: ${p.join('→')}`,C.a3);i++;pT=setTimeout(step,850);
+  }step();
+}
+function pathRst(){clearTimeout(pT);drawPaths();log('l5','Select source/dest and choose an operation.');}
+drawPaths();
+
+// ═══════════════════ S6: TOPO SORT ═══════════════════
+const tsN=[{x:75,y:120},{x:200,y:50},{x:200,y:190},{x:360,y:50},{x:360,y:190},{x:490,y:120}];
+const tsM=Array.from({length:6},()=>Array(6).fill(0));
+[[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]].forEach(([a,b])=>tsM[a][b]=1);
+let tsT=null;
+function drawTopo(ord=[],step=-1){
+  const g=gc('c6');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(tsM[i][j])arrow(ctx,tsN[i].x,tsN[i].y,tsN[j].x,tsN[j].y,C.bd);
+  tsN.forEach((n,i)=>{
+    const pos=ord.indexOf(i),isCur=ord[step]===i,done=pos>=0&&pos<=step;
+    const col=isCur?C.a4:done?C.a1:C.dm;const bg=isCur?'#2a2010':done?'#0d1f17':C.s1;
+    node(ctx,n.x,n.y,`${i}`,col,bg);
+    if(done&&pos>=0){ctx.fillStyle=col;ctx.font='bold 10px Syne';ctx.textAlign='center';ctx.fillText(pos+1,n.x,n.y+34);}
+  });
+  if(ord.length&&step>=0){ctx.fillStyle=C.s1;ctx.fillRect(0,h-26,w,26);ctx.fillStyle=C.dm;ctx.font='11px Fira Code';ctx.textAlign='left';ctx.fillText('Order: '+ord.slice(0,step+1).join(' → '),10,h-10);}
+}
+function topoSortDFS(){
+  clearTimeout(tsT);let vis=Array(6).fill(false),res=[];
+  function dfs(v){if(vis[v])return;vis[v]=true;for(let j=0;j<6;j++)if(tsM[v][j]&&!vis[j])dfs(j);res.unshift(v);}
+  for(let i=0;i<6;i++)if(!vis[i])dfs(i);
+  let i=0;function step(){if(i>res.length){log('l6',`DFS Topo: ${res.join(' → ')}`);return;}drawTopo(res,i-1);if(i<res.length)log('l6',`DFS: placing ${res[i]} at position ${i+1}`,C.a4);i++;tsT=setTimeout(step,700);}step();
+}
+function topoSortKahn(){
+  clearTimeout(tsT);let inD=Array(6).fill(0);for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(tsM[i][j])inD[j]++;
+  let q=[],res=[];for(let i=0;i<6;i++)if(!inD[i])q.push(i);
+  const snaps=[];while(q.length){const u=q.shift();res.push(u);snaps.push({ord:[...res],cur:u,Q:[...q]});for(let v=0;v<6;v++)if(tsM[u][v]&&!(--inD[v]))q.push(v);}
+  let i=0;function step(){if(i>=snaps.length){log('l6',`Kahn's Order: ${res.join(' → ')}`);drawTopo(res,res.length-1);return;}const{ord,cur,Q}=snaps[i];drawTopo(res,i);log('l6',`Kahn's: dequeued ${cur} | Queue: [${Q.join(',')}]`,C.a4);i++;tsT=setTimeout(step,700);}step();
+}
+function topoRst(){clearTimeout(tsT);drawTopo();log('l6','Click an algorithm to visualize.');}
+drawTopo();
+
+// ═══════════════════ S7: CYCLES ═══════════════════
+const cyN=[{x:90,y:115},{x:230,y:50},{x:230,y:180},{x:390,y:50},{x:390,y:180},{x:520,y:115}];
+let cyM=Array.from({length:6},()=>Array(6).fill(0));
+let cyT=null;
+function drawCy(cols={},he=null){
+  const g=gc('c7');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++){if(!cyM[i][j])continue;const isH=he&&he[0]===i&&he[1]===j;arrow(ctx,cyN[i].x,cyN[i].y,cyN[j].x,cyN[j].y,isH?C.a2:C.bd);}
+  cyN.forEach((n,i)=>{const col=cols[i]||C.dm;const bg=col===C.a2?'#2a0f0f':col===C.a4?'#2a2010':col===C.a1?'#0d1f17':C.s1;node(ctx,n.x,n.y,`${i}`,col,bg);});
+}
+function cycleTestOk(){
+  clearTimeout(cyT);cyM=Array.from({length:6},()=>Array(6).fill(0));
+  [[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]].forEach(([a,b])=>cyM[a][b]=1);
+  let col=Array(6).fill(0),logs=[];
+  function dfs(v){col[v]=1;logs.push({c:[...col],msg:`Vertex ${v}: WHITE→GRAY (exploring)`});
+    for(let j=0;j<6;j++){if(!cyM[v][j])continue;if(col[j]===1){logs.push({c:[...col],msg:`Would find GRAY ${j} = cycle! (none here)`,he:[v,j]});}else if(!col[j])dfs(j);}
+    col[v]=2;logs.push({c:[...col],msg:`Vertex ${v}: GRAY→BLACK (done)`});}
+  dfs(0);
+  let i=0;function step(){
+    if(i>=logs.length){const cs={};col.forEach((c,k)=>cs[k]=c===2?C.a1:c===1?C.a4:C.dm);drawCy(cs);log('l7','✓ VALID DAG — No cycle! All nodes colored BLACK.',C.a1);return;}
+    const{c,msg,he}=logs[i];const cs={};c.forEach((cv,k)=>cs[k]=cv===2?C.a1:cv===1?C.a4:C.dm);drawCy(cs,he||null);log('l7',msg,C.a4);i++;cyT=setTimeout(step,450);
+  }step();
+}
+function cycleTestBad(){
+  clearTimeout(cyT);cyM=Array.from({length:6},()=>Array(6).fill(0));
+  [[0,1],[1,2],[2,3],[3,1],[3,4],[4,5]].forEach(([a,b])=>cyM[a][b]=1);
+  let col=Array(6).fill(0),found=null;
+  function dfs(v){if(found)return;col[v]=1;for(let j=0;j<6;j++){if(!cyM[v][j])continue;if(col[j]===1&&!found){found=[v,j];return;}if(!col[j])dfs(j);}col[v]=2;}
+  dfs(0);
+  const cs={};col.forEach((c,k)=>cs[k]=c===2?C.a1:c===1?C.a4:C.dm);
+  if(found){cs[found[0]]=C.a2;cs[found[1]]=C.a2;}
+  drawCy(cs,found);log('l7',`⚠ CYCLE DETECTED! Back edge ${found[0]}→${found[1]} (vertex ${found[1]} is GRAY — still in DFS stack!)`,C.a2);
+}
+function cycleRst(){clearTimeout(cyT);cyM=Array.from({length:6},()=>Array(6).fill(0));drawCy();log('l7','Test cycle detection above.');}
+drawCy();
+
+// ═══════════════════ S8: CONNECTIVITY ═══════════════════
+const cnN=[{x:75,y:115},{x:210,y:50},{x:210,y:180},{x:370,y:50},{x:370,y:180},{x:520,y:115}];
+const cnM=Array.from({length:6},()=>Array(6).fill(0));
+[[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]].forEach(([a,b])=>cnM[a][b]=1);
+function drawCn(cols={}){
+  const g=gc('c8');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(cnM[i][j])arrow(ctx,cnN[i].x,cnN[i].y,cnN[j].x,cnN[j].y,C.bd);
+  cnN.forEach((n,i)=>{const col=cols[i]||C.dm;const bg=col===C.a1?'#0d1f17':col===C.a2?'#2a0f0f':col===C.a4?'#2a2010':C.s1;node(ctx,n.x,n.y,`${i}`,col,bg);});
+}
+function connSources(){const cs={};for(let j=0;j<6;j++){let ind=0;for(let i=0;i<6;i++)ind+=cnM[i][j];cs[j]=ind===0?C.a1:C.dm;}drawCn(cs);const s=Object.keys(cs).filter(k=>cs[k]===C.a1).map(Number);log('l8',`Sources (in-degree=0): [${s.join(', ')}] — No prerequisites, start immediately!`,C.a1);}
+function connSinks(){const cs={};for(let i=0;i<6;i++){let outd=0;for(let j=0;j<6;j++)outd+=cnM[i][j];cs[i]=outd===0?C.a2:C.dm;}drawCn(cs);const s=Object.keys(cs).filter(k=>cs[k]===C.a2).map(Number);log('l8',`Sinks (out-degree=0): [${s.join(', ')}] — Final outputs, lead nowhere.`,C.a2);}
+function connReach(){let reach=cnM.map(r=>[...r]);for(let i=0;i<6;i++)reach[i][i]=1;for(let k=0;k<6;k++)for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(reach[i][k]&&reach[k][j])reach[i][j]=1;const cs={0:C.a4};for(let j=1;j<6;j++)cs[j]=reach[0][j]?C.a1:C.dm;drawCn(cs);log('l8',`Vertex 0 can reach: [${[1,2,3,4,5].filter(v=>reach[0][v]).join(', ')}] — Transitive closure computed!`,C.a4);}
+function connRst(){drawCn();log('l8','Click Sources, Sinks, or Reachability.');}
+drawCn();
+
+// ═══════════════════ S9: DEGREE ═══════════════════
+const dgN=[{x:75,y:115},{x:210,y:50},{x:210,y:180},{x:370,y:50},{x:370,y:180},{x:510,y:115}];
+const dgM=Array.from({length:6},()=>Array(6).fill(0));
+[[0,1],[0,2],[1,3],[1,4],[2,4],[3,5],[4,5]].forEach(([a,b])=>dgM[a][b]=1);
+function getDeg(){const ind=Array(6).fill(0),outd=Array(6).fill(0);for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(dgM[i][j]){outd[i]++;ind[j]++;}return{ind,outd};}
+function drawDeg(mode='all'){
+  const g=gc('c9');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  const{ind,outd}=getDeg();
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(dgM[i][j])arrow(ctx,dgN[i].x,dgN[i].y,dgN[j].x,dgN[j].y,C.bd);
+  dgN.forEach((n,i)=>{
+    const isSrc=ind[i]===0,isSink=outd[i]===0;
+    let col=mode==='in'?(ind[i]===0?C.a1:C.dm):mode==='out'?(outd[i]===0?C.a2:C.dm):(isSrc?C.a1:isSink?C.a2:C.a3);
+    const bg=col===C.a1?'#0d1f17':col===C.a2?'#2a0f0f':col===C.a3?'#12122a':C.s1;
+    const lbl=mode==='in'?`${i}(↓${ind[i]})`:mode==='out'?`${i}(↑${outd[i]})`:`${i}`;
+    node(ctx,n.x,n.y,lbl,col,bg,24);
+  });
+  // Table
+  const tx=w-175,ty=10;ctx.fillStyle=C.s1;ctx.fillRect(tx-4,ty-4,168,140);ctx.strokeStyle=C.bd;ctx.strokeRect(tx-4,ty-4,168,140);
+  ctx.font='10px Fira Code';ctx.fillStyle=C.a1;ctx.textAlign='left';ctx.fillText('V   In  Out  Role',tx,ty+10);
+  ctx.fillStyle=C.bd;ctx.fillRect(tx-4,ty+14,168,1);
+  for(let i=0;i<6;i++){const isSrc=ind[i]===0,isSink=outd[i]===0;const role=isSrc?'SOURCE':isSink?'SINK':'INNER';const col=isSrc?C.a1:isSink?C.a2:C.a3;ctx.fillStyle=col;ctx.fillText(`${i}   ${ind[i]}   ${outd[i]}   ${role}`,tx,ty+28+i*17);}
+}
+function degIn(){drawDeg('in');const{ind}=getDeg();log('l9',`In-degrees: [${ind.join(',')}] — Vertices with 0: ${ind.map((d,i)=>d===0?i:'').filter(v=>v!=='').join(',')} (Sources)`,C.a1);}
+function degOut(){drawDeg('out');const{outd}=getDeg();log('l9',`Out-degrees: [${outd.join(',')}] — Vertices with 0: ${outd.map((d,i)=>d===0?i:'').filter(v=>v!=='').join(',')} (Sinks)`,C.a2);}
+function degAll(){drawDeg('all');log('l9','GREEN=Source(in=0), RED=Sink(out=0), BLUE=Inner. See table →',C.a3);}
+function degRst(){drawDeg();log('l9','Click a button to analyze degrees.');}
+drawDeg('all');
+
+// ═══════════════════ S10: SCHEDULING ═══════════════════
+const scTsk=['Setup','Backend','Frontend','DB','API','Testing','Deploy'];
+const scN=[{x:55,y:125},{x:165,y:55},{x:165,y:195},{x:295,y:55},{x:295,y:195},{x:435,y:125},{x:560,y:125}];
+const scM=Array.from({length:7},()=>Array(7).fill(0));
+[[0,1],[0,2],[1,3],[1,4],[2,4],[3,5],[4,5],[5,6]].forEach(([a,b])=>scM[a][b]=1);
+const scDur=[1,3,4,2,3,2,1];let scT=null;
+function drawSched(active=[],crit=[]){
+  const g=gc('c10');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<7;i++)for(let j=0;j<7;j++){if(!scM[i][j])continue;const ic=crit.includes(i)&&crit.includes(j);arrow(ctx,scN[i].x,scN[i].y,scN[j].x,scN[j].y,ic?C.a2:C.bd);}
+  scN.forEach((n,i)=>{const isA=active.includes(i),isC=crit.includes(i);const col=isA?C.a4:isC?C.a2:C.a1;const bg=isA?'#2a2010':isC?'#2a0f0f':C.s1;node(ctx,n.x,n.y,scTsk[i].substring(0,3),col,bg,22);ctx.fillStyle=C.dm;ctx.font='9px Syne';ctx.textAlign='center';ctx.fillText(`d=${scDur[i]}`,n.x,n.y+36);});
+}
+function schedRun(){
+  clearTimeout(scT);let inD=Array(7).fill(0);for(let i=0;i<7;i++)for(let j=0;j<7;j++)if(scM[i][j])inD[j]++;
+  let q=[],waves=[];for(let i=0;i<7;i++)if(!inD[i])q.push(i);waves.push([...q]);
+  while(true){let nxt=[];const tmp=[...inD];for(const u of q)for(let v=0;v<7;v++)if(scM[u][v]){tmp[v]--;if(!tmp[v])nxt.push(v);}if(!nxt.length)break;waves.push(nxt);for(let i=0;i<7;i++)inD[i]=tmp[i];q=nxt;}
+  let wi=0;function step(){if(wi>=waves.length){const all=waves.flat();drawSched(all);log('l10',`Schedule complete! ${waves.length} parallel waves.`,C.a1);return;}drawSched(waves[wi]);log('l10',`Wave ${wi+1}: [${waves[wi].map(i=>scTsk[i]).join(', ')}] — running in parallel`,C.a4);wi++;scT=setTimeout(step,900);}step();
+}
+function schedCPM(){
+  clearTimeout(scT);let ES=Array(7).fill(0),par=Array(7).fill(-1);
+  let inD=Array(7).fill(0);for(let i=0;i<7;i++)for(let j=0;j<7;j++)if(scM[i][j])inD[j]++;
+  let q=[],ord=[];for(let i=0;i<7;i++)if(!inD[i])q.push(i);
+  while(q.length){const u=q.shift();ord.push(u);for(let v=0;v<7;v++)if(scM[u][v]){if(ES[u]+scDur[u]>ES[v]){ES[v]=ES[u]+scDur[u];par[v]=u;}if(!--inD[v])q.push(v);}}
+  let maxT=0,sink=0;for(let i=0;i<7;i++)if(ES[i]+scDur[i]>maxT){maxT=ES[i]+scDur[i];sink=i;}
+  let cp=[],v=sink;while(v!==-1){cp.unshift(v);v=par[v];}
+  drawSched([],cp);log('l10',`Critical Path: ${cp.map(i=>scTsk[i]).join('→')} | Duration: ${maxT} days`,C.a2);
+}
+function schedRst(){clearTimeout(scT);drawSched([],[0,1,3,5,6]);log('l10','Click Run Schedule or Critical Path.');}
+drawSched([],[0,1,3,5,6]);
+
+// ═══════════════════ S11: ADVANCED ═══════════════════
+const avN=[{x:75,y:120},{x:205,y:55},{x:205,y:185},{x:360,y:55},{x:360,y:185},{x:490,y:120}];
+const avM=Array.from({length:6},()=>Array(6).fill(0));
+[[0,1,3],[0,2,2],[1,3,4],[1,4,1],[2,4,3],[3,5,2],[4,5,5]].forEach(([a,b,w])=>avM[a][b]=w);
+let avT=null;
+function topoAv(){let inD=Array(6).fill(0);for(let i=0;i<6;i++)for(let j=0;j<6;j++)if(avM[i][j])inD[j]++;let q=[],ord=[];for(let i=0;i<6;i++)if(!inD[i])q.push(i);while(q.length){const u=q.shift();ord.push(u);for(let v=0;v<6;v++)if(avM[u][v]&&!(--inD[v]))q.push(v);}return ord;}
+function drawAv(vals={},cp=[]){
+  const g=gc('c11');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++){if(!avM[i][j])continue;const ic=cp.includes(i)&&cp.includes(j);arrow(ctx,avN[i].x,avN[i].y,avN[j].x,avN[j].y,ic?C.a2:C.bd,avM[i][j]);}
+  avN.forEach((n,i)=>{const isC=cp.includes(i);const col=vals[i]!==undefined?C.a4:isC?C.a2:C.dm;const bg=vals[i]!==undefined?'#2a2010':isC?'#2a0f0f':C.s1;node(ctx,n.x,n.y,vals[i]!==undefined?`${i}:${vals[i]}`:`${i}`,col,bg,26);});
+}
+function advDP(){
+  clearTimeout(avT);let dp=Array(6).fill(0);dp[0]=1;const ord=topoAv(),steps=[];
+  for(const u of ord){for(let v=0;v<6;v++)if(avM[u][v])dp[v]+=dp[u];steps.push({dp:[...dp],u});}
+  let i=0;function step(){
+    if(i>=steps.length){const v={};dp.forEach((d,k)=>v[k]=d);drawAv(v);log('l11',`DP done! Path counts from 0: [${dp.join(', ')}]`,C.a4);return;}
+    const{dp:d,u}=steps[i];const v={};d.forEach((dv,k)=>{if(dv>0)v[k]=dv;});drawAv(v);log('l11',`DP at vertex ${u}: count=${d[u]}, propagating...`,C.a4);i++;avT=setTimeout(step,700);
+  }step();
+}
+function advCPM(){
+  clearTimeout(avT);const dur=[1,3,2,2,3,1],ES=Array(6).fill(0),par=Array(6).fill(-1);const ord=topoAv();
+  for(const u of ord)for(let v=0;v<6;v++)if(avM[u][v]&&ES[u]+dur[u]>ES[v]){ES[v]=ES[u]+dur[u];par[v]=u;}
+  let mx=0,sink=0;for(let i=0;i<6;i++)if(ES[i]+dur[i]>mx){mx=ES[i]+dur[i];sink=i;}
+  let cp=[],v=sink;while(v!==-1){cp.unshift(v);v=par[v];}
+  drawAv({},cp);log('l11',`Critical Path: ${cp.join('→')} | Project Duration: ${mx} days`,C.a2);
+}
+function advRst(){clearTimeout(avT);drawAv();log('l11','Click DP or CPM to run algorithm.');}
+drawAv();
+
+// ═══════════════════ S12: BUILDER ═══════════════════
+let bN=[{x:80,y:125},{x:215,y:55},{x:215,y:195},{x:365,y:55},{x:365,y:195},{x:500,y:125},{x:600,y:60}];
+let bM=Array.from({length:7},()=>Array(7).fill(0));
+[[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]].forEach(([a,b])=>bM[a][b]=1);
+function drawBld(hl=[],cp=[]){
+  const g=gc('c12');if(!g)return;const{ctx,w,h}=g;clr(ctx,w,h);
+  for(let i=0;i<7;i++)for(let j=0;j<7;j++){if(!bM[i][j])continue;const ic=cp.includes(i)&&cp.includes(j);arrow(ctx,bN[i].x,bN[i].y,bN[j].x,bN[j].y,ic?C.a4:C.a1);}
+  bN.forEach((n,i)=>{const col=hl.includes(i)?C.a4:C.a1;const bg=hl.includes(i)?'#2a2010':C.s1;node(ctx,n.x,n.y,`${i}`,col,bg);});
+}
+function bldAdd(){
+  const f=parseInt(document.getElementById('bf').value),t=parseInt(document.getElementById('bt').value);
+  if(f===t||f<0||f>=7||t<0||t>=7){log('l12','Invalid edge (check IDs 0-6)',C.a2);return;}
+  let vis=Array(7).fill(false),stk=[f];while(stk.length){let v=stk.pop();if(vis[v])continue;vis[v]=true;if(v===t){log('l12',`CYCLE blocked: ${f}→${t}`,C.a2);drawBld([f,t]);return;}for(let j=0;j<7;j++)if(bM[v][j]&&!vis[j])stk.push(j);}
+  bM[f][t]=1;drawBld([f,t]);log('l12',`Edge ${f}→${t} added!`,C.a4);
+}
+function bldRem(){
+  const f=parseInt(document.getElementById('bf').value),t=parseInt(document.getElementById('bt').value);
+  if(!bM[f][t]){log('l12',`Edge ${f}→${t} doesn't exist!`,C.a2);return;}
+  bM[f][t]=0;drawBld();log('l12',`Edge ${f}→${t} removed.`,C.a2);
+}
+function bldTopo(){
+  let inD=Array(7).fill(0);for(let i=0;i<7;i++)for(let j=0;j<7;j++)if(bM[i][j])inD[j]++;
+  let q=[],ord=[];for(let i=0;i<7;i++)if(!inD[i])q.push(i);while(q.length){const u=q.shift();ord.push(u);for(let v=0;v<7;v++)if(bM[u][v]&&!(--inD[v]))q.push(v);}
+  if(ord.length<7){log('l12','Cycle detected! Not a valid DAG.',C.a2);return;}
+  drawBld(ord);log('l12',`Topological Order: ${ord.join(' → ')}`,C.a4);
+}
+function bldTree(){
+  let inD=Array(7).fill(0);for(let i=0;i<7;i++)for(let j=0;j<7;j++)if(bM[i][j])inD[j]++;
+  const sources=[];for(let i=0;i<7;i++)if(!inD[i])sources.push(i);
+  drawBld(sources);log('l12',`Dependency tree roots (sources): [${sources.join(', ')}] — starting points of the DAG.`,C.a3);
+}
+function bldRst(){bM=Array.from({length:7},()=>Array(7).fill(0));[[0,1],[0,2],[1,3],[2,3],[2,4],[3,5],[4,5]].forEach(([a,b])=>bM[a][b]=1);drawBld();log('l12','Build your own DAG! Add edges and run operations.');}
+drawBld();
+
+// ═══════════════════ RESIZE HANDLER ═══════════════════
+let resizeT;window.addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{
+  drawIntro();drawMat();buildMatTbl();drawV();drawE();drawTrav();drawPaths();drawTopo();drawCy();drawCn();drawDeg('all');drawSched([],[0,1,3,5,6]);drawAv();drawBld();
+},150);});
+</script>
+</body>
+</html>

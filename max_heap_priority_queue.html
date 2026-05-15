@@ -1,0 +1,2279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Max Heap Priority Queue — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c14;
+  --surface: #0f1724;
+  --surface2: #162033;
+  --border: #1e2d47;
+  --accent: #f59e0b;
+  --accent2: #06b6d4;
+  --accent3: #10b981;
+  --accent4: #f43f5e;
+  --text: #e2e8f0;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --code-bg: #0d1520;
+  --node-bg: #1e3a5f;
+  --node-border: #2563eb;
+  --node-root: #92400e;
+  --node-root-border: #f59e0b;
+  --sidebar-w: 280px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.sidebar-header {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--surface);
+  z-index: 10;
+}
+.sidebar-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+  display: block;
+}
+.sidebar-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+.nav-group-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  padding: 14px 18px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-dim);
+  border-left: 3px solid transparent;
+  transition: all 0.18s;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active {
+  background: rgba(245,158,11,0.08);
+  border-left-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.nav-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 22px;
+}
+
+/* ── MAIN ── */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 40px 48px;
+  max-width: 1100px;
+}
+
+/* ── HERO ── */
+.hero {
+  background: linear-gradient(135deg, #0f1e35 0%, #1a2e4a 50%, #0f2030 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 48px 48px 40px;
+  margin-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, #f59e0b, #fbbf24, #e2e8f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p { color: var(--text-dim); font-size: 15px; max-width: 600px; }
+.hero-stats {
+  display: flex; gap: 32px; margin-top: 28px;
+}
+.hero-stat { display: flex; flex-direction: column; }
+.hero-stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.hero-stat-label { font-size: 12px; color: var(--text-muted); }
+
+/* ── SECTION ── */
+.section {
+  margin-bottom: 56px;
+  scroll-margin-top: 24px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  padding: 3px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  min-width: 60px;
+  text-align: center;
+}
+.section h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+}
+.divider { width: 100%; height: 1px; background: var(--border); margin: 32px 0; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 20px;
+}
+.card-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.label-theory { color: var(--accent2); }
+.label-viz { color: var(--accent3); }
+.label-code { color: #a78bfa; }
+.label-analogy { color: var(--accent); }
+.label-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: currentColor; opacity: 0.6;
+}
+
+/* ── THEORY ── */
+.theory-text { color: var(--text-dim); line-height: 1.8; }
+.theory-text strong { color: var(--text); font-weight: 700; }
+
+.ops-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.op-chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.op-chip span { color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+.formula-box {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #a78bfa;
+  margin: 12px 0;
+}
+.formula-box .comment { color: var(--text-muted); }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.info-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.info-item-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+.info-item-val { font-size: 14px; color: var(--text); font-weight: 600; }
+
+/* ── CODE ── */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--border);
+}
+.code-lang {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots span {
+  width: 10px; height: 10px; border-radius: 50%;
+}
+.dot-r { background: #ef4444; }
+.dot-y { background: #f59e0b; }
+.dot-g { background: #22c55e; }
+pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #cbd5e1;
+}
+pre::-webkit-scrollbar { height: 4px; }
+pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.kw { color: #60a5fa; }
+.fn { color: #34d399; }
+.cm { color: #475569; font-style: italic; }
+.st { color: #fbbf24; }
+.nu { color: #f97316; }
+.ty { color: #a78bfa; }
+
+/* ── ANALOGY ── */
+.analogy-card {
+  background: linear-gradient(135deg, rgba(245,158,11,0.06), rgba(245,158,11,0.02));
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.analogy-icon { font-size: 32px; line-height: 1; flex-shrink: 0; }
+.analogy-title { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.analogy-text { color: var(--text-dim); font-size: 14px; line-height: 1.7; }
+
+/* ── VISUALIZER ── */
+.viz-container {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  position: relative;
+}
+canvas.heap-canvas {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border-radius: 6px;
+}
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.btn {
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-accent {
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.4);
+  color: var(--accent);
+}
+.btn-accent:hover { background: rgba(245,158,11,0.22); }
+.btn-cyan {
+  background: rgba(6,182,212,0.10);
+  border-color: rgba(6,182,212,0.35);
+  color: var(--accent2);
+}
+.btn-cyan:hover { background: rgba(6,182,212,0.2); }
+.btn-red {
+  background: rgba(244,63,94,0.10);
+  border-color: rgba(244,63,94,0.35);
+  color: var(--accent4);
+}
+.btn-red:hover { background: rgba(244,63,94,0.2); }
+.btn-green {
+  background: rgba(16,185,129,0.10);
+  border-color: rgba(16,185,129,0.35);
+  color: var(--accent3);
+}
+.btn-green:hover { background: rgba(16,185,129,0.2); }
+.viz-input {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-size: 13px;
+  width: 80px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+}
+.viz-input:focus { border-color: var(--accent); }
+.viz-log {
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent3);
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-height: 36px;
+  border: 1px solid var(--border);
+}
+.array-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+.array-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.array-val {
+  background: var(--node-bg);
+  border: 1px solid var(--node-border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  width: 40px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+.array-val.root-val {
+  background: var(--node-root);
+  border-color: var(--node-root-border);
+  color: var(--accent);
+}
+.array-idx {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.complexity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 10px;
+}
+.complexity-table th {
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+}
+.complexity-table td {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.complexity-table td:last-child {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent3);
+}
+.complexity-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.highlight-box {
+  background: rgba(6,182,212,0.06);
+  border-left: 3px solid var(--accent2);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 12px 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.warning-box {
+  background: rgba(244,63,94,0.06);
+  border-left: 3px solid var(--accent4);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin: 12px 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+.steps-list { list-style: none; margin-top: 8px; }
+.steps-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.steps-list li:last-child { border-bottom: none; }
+.step-num {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.tag { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.tag-o1 { background: rgba(16,185,129,0.15); color: var(--accent3); }
+.tag-olog { background: rgba(245,158,11,0.15); color: var(--accent); }
+.tag-on { background: rgba(244,63,94,0.15); color: var(--accent4); }
+
+@media (max-width: 900px) {
+  #sidebar { width: 220px; min-width: 220px; }
+  #main { margin-left: 220px; padding: 28px 24px; }
+  .hero h1 { font-size: 28px; }
+  .info-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 650px) {
+  #sidebar { display: none; }
+  #main { margin-left: 0; padding: 20px 16px; }
+}
+
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: var(--accent);
+  z-index: 999;
+  transition: width 0.2s;
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <span class="sidebar-title">Max Heap PQ</span>
+    <div class="sidebar-sub">Complete Learning Guide · C Language</div>
+  </div>
+
+  <div class="nav-group-label">Foundation</div>
+  <a class="nav-item active" href="#s0" onclick="setActive(this)"><span class="nav-num">00</span> Introduction</a>
+  <a class="nav-item" href="#s-concepts" onclick="setActive(this)"><span class="nav-num">★</span> Core Concepts</a>
+
+  <div class="nav-group-label">Operations</div>
+  <a class="nav-item" href="#s1" onclick="setActive(this)"><span class="nav-num">01</span> Create / Initialize</a>
+  <a class="nav-item" href="#s2" onclick="setActive(this)"><span class="nav-num">02</span> Insert Element</a>
+  <a class="nav-item" href="#s3" onclick="setActive(this)"><span class="nav-num">03</span> Extract Maximum</a>
+  <a class="nav-item" href="#s4" onclick="setActive(this)"><span class="nav-num">04</span> Peek Maximum</a>
+  <a class="nav-item" href="#s5" onclick="setActive(this)"><span class="nav-num">05</span> Heapify Up</a>
+  <a class="nav-item" href="#s6" onclick="setActive(this)"><span class="nav-num">06</span> Heapify Down</a>
+  <a class="nav-item" href="#s7" onclick="setActive(this)"><span class="nav-num">07</span> Build Max Heap</a>
+  <a class="nav-item" href="#s8" onclick="setActive(this)"><span class="nav-num">08</span> Increase Key</a>
+  <a class="nav-item" href="#s9" onclick="setActive(this)"><span class="nav-num">09</span> Decrease Key</a>
+  <a class="nav-item" href="#s10" onclick="setActive(this)"><span class="nav-num">10</span> Change Priority</a>
+  <a class="nav-item" href="#s11" onclick="setActive(this)"><span class="nav-num">11</span> Delete Element</a>
+  <a class="nav-item" href="#s12" onclick="setActive(this)"><span class="nav-num">12</span> Search Element</a>
+  <a class="nav-item" href="#s13" onclick="setActive(this)"><span class="nav-num">13</span> Merge Heaps</a>
+  <a class="nav-item" href="#s14" onclick="setActive(this)"><span class="nav-num">14</span> Check Empty</a>
+  <a class="nav-item" href="#s15" onclick="setActive(this)"><span class="nav-num">15</span> Check Full</a>
+  <a class="nav-item" href="#s16" onclick="setActive(this)"><span class="nav-num">16</span> Get Heap Size</a>
+  <a class="nav-item" href="#s17" onclick="setActive(this)"><span class="nav-num">17</span> Traverse Heap</a>
+  <a class="nav-item" href="#s18" onclick="setActive(this)"><span class="nav-num">18</span> Clear Heap</a>
+  <a class="nav-item" href="#s19" onclick="setActive(this)"><span class="nav-num">19</span> Validate Property</a>
+  <a class="nav-item" href="#s20" onclick="setActive(this)"><span class="nav-num">20</span> Priority Queue View</a>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- HERO -->
+  <section class="section" id="s0">
+    <div class="hero">
+      <div class="hero-badge">📚 Data Structures · Beginner → Advanced</div>
+      <h1>Max Heap Based<br>Priority Queue</h1>
+      <p>A complete, interactive guide to understanding, implementing, and mastering max binary heaps and priority queues — from first principles to every operation — in C.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="hero-stat-num">20</span><span class="hero-stat-label">Operations</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">C</span><span class="hero-stat-label">Language</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">O(log n)</span><span class="hero-stat-label">Insert / Extract</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">Live</span><span class="hero-stat-label">Visualizer</span></div>
+      </div>
+    </div>
+
+    <!-- What is a Priority Queue -->
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>What is a Priority Queue?</div>
+      <p class="theory-text">
+        A <strong>Priority Queue</strong> is a special data structure where every element has a <strong>priority</strong>, and elements are served based on their priority — not by the order they arrived (like a normal queue). The element with the <strong>highest priority is always dequeued first</strong>.<br><br>
+        A <strong>Max Binary Heap</strong> is the most efficient way to implement a priority queue. It is a <strong>complete binary tree</strong> stored in an array, where every parent node has a value <strong>greater than or equal to</strong> its children. This guarantees the maximum element is always at the root (index 0).
+      </p>
+      <div class="ops-list" style="margin-top:16px;">
+        <div class="op-chip">🔺 Always serves <span>highest first</span></div>
+        <div class="op-chip">🌳 Complete <span>binary tree</span></div>
+        <div class="op-chip">📦 Stored in <span>array</span></div>
+        <div class="op-chip">⚡ Insert: <span>O(log n)</span></div>
+        <div class="op-chip">⚡ Extract Max: <span>O(log n)</span></div>
+        <div class="op-chip">👁 Peek Max: <span>O(1)</span></div>
+      </div>
+    </div>
+
+    <div class="analogy-card">
+      <div class="analogy-icon">🏥</div>
+      <div>
+        <div class="analogy-title">Real-Life Analogy — Hospital Emergency Room</div>
+        <div class="analogy-text">Imagine an emergency room. Patients don't get treated in the order they arrived — they are treated by <strong>severity of condition (priority)</strong>. A patient with a heart attack (priority 100) gets served before a patient with a sprained ankle (priority 5), even if the ankle patient arrived first. The priority queue works exactly like this: highest priority always goes first.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CORE CONCEPTS -->
+  <section class="section" id="s-concepts">
+    <div class="section-header">
+      <span class="section-num">★ Core</span>
+      <h2>Core Concepts</h2>
+    </div>
+
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>1. Complete Binary Tree</div>
+      <p class="theory-text">
+        A <strong>complete binary tree</strong> is a binary tree where all levels are fully filled <em>except possibly the last level</em>, which is filled from <strong>left to right</strong>. This structure is critical because it allows the tree to be stored compactly in a flat array without wasting space.
+      </p>
+      <div class="highlight-box">Key Property: In a complete binary tree of <strong>n</strong> nodes, the height is always <strong>⌊log₂(n)⌋</strong>. This is why heap operations are O(log n).</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>2. Array Representation</div>
+      <p class="theory-text">A max heap is stored in a simple array (0-indexed). The root is at index 0. This mapping lets us navigate the tree using arithmetic — no pointers needed!</p>
+      <div class="formula-box">
+<span class="comment">/* Parent-Child Index Formulas (0-based indexing) */</span>
+Parent of node i   →  (i - 1) / 2
+Left child of i    →  2 * i + 1
+Right child of i   →  2 * i + 2
+
+<span class="comment">/* Example: node at index 3 */</span>
+Parent  = (3-1)/2 = 1
+Left    = 2*3+1   = 7
+Right   = 2*3+2   = 8
+      </div>
+      <div id="conceptViz">
+        <div class="card-label label-viz" style="margin-top:16px;"><span class="label-dot"></span>Interactive Array ↔ Tree Visualizer</div>
+        <div class="viz-container">
+          <canvas id="conceptCanvas" class="heap-canvas" height="240"></canvas>
+          <div class="array-display" id="conceptArray"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>3. Max Heap Property</div>
+      <p class="theory-text">For every node <strong>i</strong> in the heap:<br><code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">heap[parent(i)] ≥ heap[i]</code><br><br>This means every parent is greater than or equal to both its children. As a result, the <strong>maximum value is always at the root (index 0)</strong>.</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Root</div><div class="info-item-val">Always Maximum</div></div>
+        <div class="info-item"><div class="info-item-label">Leaves</div><div class="info-item-val">Smallest values (not sorted)</div></div>
+        <div class="info-item"><div class="info-item-label">Siblings</div><div class="info-item-val">No ordering guaranteed</div></div>
+        <div class="info-item"><div class="info-item-label">Tree height</div><div class="info-item-val">⌊log₂(n)⌋</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C: Heap Structure Definition</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Define maximum capacity of the heap */</span>
+<span class="kw">#define</span> MAX_SIZE <span class="nu">100</span>
+
+<span class="cm">/* Heap structure: holds array, current size, and capacity */</span>
+<span class="kw">typedef struct</span> {
+    <span class="ty">int</span> data[MAX_SIZE];  <span class="cm">/* array to store heap elements */</span>
+    <span class="ty">int</span> size;            <span class="cm">/* current number of elements */</span>
+    <span class="ty">int</span> capacity;        <span class="cm">/* maximum allowed elements */</span>
+} MaxHeap;
+
+<span class="cm">/* Helper macros for parent/child indexing */</span>
+<span class="kw">#define</span> PARENT(i)      (((i) - 1) / 2)
+<span class="kw">#define</span> LEFT_CHILD(i)  (2 * (i) + 1)
+<span class="kw">#define</span> RIGHT_CHILD(i) (2 * (i) + 2)</pre>
+      </div>
+    </div>
+
+    <table class="complexity-table">
+      <thead><tr><th>Operation</th><th>Best Case</th><th>Average Case</th><th>Worst Case</th></tr></thead>
+      <tbody>
+        <tr><td>Insert</td><td>O(1)</td><td>O(log n)</td><td>O(log n)</td></tr>
+        <tr><td>Extract Max</td><td>O(log n)</td><td>O(log n)</td><td>O(log n)</td></tr>
+        <tr><td>Peek Max</td><td>O(1)</td><td>O(1)</td><td>O(1)</td></tr>
+        <tr><td>Build Heap</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr><td>Search</td><td>O(1)</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr><td>Delete Specific</td><td>O(log n)</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr><td>Heapify Up/Down</td><td>O(1)</td><td>O(log n)</td><td>O(log n)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 1: CREATE -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <span class="section-num">OP 01</span>
+      <h2>Create / Initialize Max Heap</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">Initialization sets up an empty heap by defining the storage array, setting <strong>capacity</strong> (maximum elements allowed) and <strong>size = 0</strong> (no elements yet). Think of it as building an empty container before you store anything. No actual data is stored — just the structure is prepared.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Define the heap array with maximum capacity</li>
+        <li><span class="step-num">2</span>Set <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">capacity</code> to the maximum number of elements</li>
+        <li><span class="step-num">3</span>Set <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size = 0</code> — the heap starts empty</li>
+        <li><span class="step-num">4</span>Choose priority rule: larger value = higher priority (max heap)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Initialize Max Heap</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Initialize an empty max heap */</span>
+<span class="ty">void</span> <span class="fn">initHeap</span>(MaxHeap *h, <span class="ty">int</span> capacity) {
+    h->size     = <span class="nu">0</span>;          <span class="cm">/* no elements yet */</span>
+    h->capacity = capacity;    <span class="cm">/* set max limit */</span>
+    <span class="cm">/* data[] array already allocated in struct */</span>
+    printf(<span class="st">"Heap initialized. Capacity: %d\n"</span>, capacity);
+}
+
+<span class="cm">/* Usage in main */</span>
+<span class="ty">int</span> <span class="fn">main</span>() {
+    MaxHeap h;
+    <span class="fn">initHeap</span>(&h, MAX_SIZE);    <span class="cm">/* prepare empty heap */</span>
+    printf(<span class="st">"Heap ready! Size = %d\n"</span>, h.size);
+    <span class="kw">return</span> <span class="nu">0</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🗂️</div>
+      <div>
+        <div class="analogy-title">Analogy — Empty Filing Cabinet</div>
+        <div class="analogy-text">Creating a heap is like setting up a brand-new filing cabinet. You decide how many folders it can hold (capacity), and you start with zero files inside (size = 0). The cabinet is ready and waiting, but there's nothing in it yet.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 2: INSERT -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <span class="section-num">OP 02</span>
+      <h2>Insert Element</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">To insert a new element: place it at the <strong>last position</strong> of the array (to maintain the complete binary tree shape), then <strong>bubble it up</strong> (heapify-up) to its correct position. This is done by repeatedly comparing the new element with its parent and swapping if it is larger.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Check if heap is full (overflow check)</li>
+        <li><span class="step-num">2</span>Place new element at index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size</code> (last position)</li>
+        <li><span class="step-num">3</span>Increment <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size</code></li>
+        <li><span class="step-num">4</span>Perform heapify-up: compare with parent, swap if larger, repeat</li>
+      </ul>
+      <div class="highlight-box">Time Complexity: <span class="tag tag-olog">O(log n)</span> — in the worst case, the new element bubbles all the way from leaf to root.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-viz"><span class="label-dot"></span>Interactive Insert Visualizer</div>
+      <div class="viz-container">
+        <canvas id="insertCanvas" class="heap-canvas" height="260"></canvas>
+        <div class="array-display" id="insertArray"></div>
+        <div class="viz-controls">
+          <input type="number" class="viz-input" id="insertVal" placeholder="Value" min="1" max="99">
+          <button class="btn btn-accent" onclick="vizInsert()">⬆ Insert</button>
+          <button class="btn btn-red" onclick="vizExtract()">⬇ Extract Max</button>
+          <button class="btn btn-cyan" onclick="vizReset()">↺ Reset</button>
+        </div>
+        <div class="viz-log" id="insertLog">Enter a value and click Insert to begin...</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Insert Element</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Swap two integers */</span>
+<span class="ty">void</span> <span class="fn">swap</span>(<span class="ty">int</span> *a, <span class="ty">int</span> *b) {
+    <span class="ty">int</span> temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+<span class="cm">/* Insert a new element into the max heap */</span>
+<span class="ty">void</span> <span class="fn">insert</span>(MaxHeap *h, <span class="ty">int</span> value) {
+    <span class="cm">/* Step 1: Check for overflow */</span>
+    <span class="kw">if</span> (h->size >= h->capacity) {
+        printf(<span class="st">"Heap is FULL! Cannot insert %d\n"</span>, value);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 2: Place new element at last index */</span>
+    <span class="ty">int</span> i = h->size;
+    h->data[i] = value;
+
+    <span class="cm">/* Step 3: Increase size */</span>
+    h->size++;
+
+    <span class="cm">/* Step 4: Heapify-Up — bubble the element up */</span>
+    <span class="kw">while</span> (i > <span class="nu">0</span>) {
+        <span class="ty">int</span> parent = PARENT(i);        <span class="cm">/* (i-1)/2 */</span>
+        <span class="kw">if</span> (h->data[i] > h->data[parent]) {
+            <span class="fn">swap</span>(&h->data[i], &h->data[parent]);
+            i = parent;                 <span class="cm">/* move up */</span>
+        } <span class="kw">else</span> {
+            <span class="kw">break</span>;                      <span class="cm">/* heap property satisfied */</span>
+        }
+    }
+    printf(<span class="st">"Inserted: %d\n"</span>, value);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🎖️</div>
+      <div>
+        <div class="analogy-title">Analogy — New Recruit in Army Ranks</div>
+        <div class="analogy-text">When a new soldier joins, they start at the bottom. But if they outrank (have higher priority than) the officer above them, they trade places. They keep moving up until they find someone who outranks them — then they stop. The highest-ranking officer is always at the top.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 3: EXTRACT MAX -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <span class="section-num">OP 03</span>
+      <h2>Extract Maximum (Delete Highest Priority)</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">Extraction removes and returns the <strong>root element</strong> (the maximum). To maintain the complete binary tree shape, we replace the root with the <strong>last element</strong> in the array, remove the last slot, then <strong>heapify-down</strong> to restore the heap property.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Check if heap is empty (underflow)</li>
+        <li><span class="step-num">2</span>Store root value (this is the maximum)</li>
+        <li><span class="step-num">3</span>Copy last element to root position</li>
+        <li><span class="step-num">4</span>Decrease size by 1 (removes the last element)</li>
+        <li><span class="step-num">5</span>Heapify-down from root to restore max heap property</li>
+        <li><span class="step-num">6</span>Return the stored maximum value</li>
+      </ul>
+      <div class="highlight-box">Time Complexity: <span class="tag tag-olog">O(log n)</span> — heapify-down may traverse full height of tree.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Extract Maximum</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Forward declaration — defined in Section 06 */</span>
+<span class="ty">void</span> <span class="fn">heapifyDown</span>(MaxHeap *h, <span class="ty">int</span> i);
+
+<span class="cm">/* Extract (remove and return) the maximum element */</span>
+<span class="ty">int</span> <span class="fn">extractMax</span>(MaxHeap *h) {
+    <span class="cm">/* Step 1: Check underflow */</span>
+    <span class="kw">if</span> (h->size == <span class="nu">0</span>) {
+        printf(<span class="st">"Heap is EMPTY!\n"</span>);
+        <span class="kw">return</span> -<span class="nu">1</span>;
+    }
+
+    <span class="cm">/* Step 2: Save the maximum (root) */</span>
+    <span class="ty">int</span> maxVal = h->data[<span class="nu">0</span>];
+
+    <span class="cm">/* Step 3: Replace root with last element */</span>
+    h->data[<span class="nu">0</span>] = h->data[h->size - <span class="nu">1</span>];
+
+    <span class="cm">/* Step 4: Reduce size */</span>
+    h->size--;
+
+    <span class="cm">/* Step 5: Restore heap property from root down */</span>
+    <span class="kw">if</span> (h->size > <span class="nu">0</span>)
+        <span class="fn">heapifyDown</span>(h, <span class="nu">0</span>);
+
+    <span class="cm">/* Step 6: Return the maximum */</span>
+    printf(<span class="st">"Extracted max: %d\n"</span>, maxVal);
+    <span class="kw">return</span> maxVal;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">👑</div>
+      <div>
+        <div class="analogy-title">Analogy — Presidential Election</div>
+        <div class="analogy-text">When the current leader (root = max) steps down, the most recently added person is temporarily given leadership. But they then compete with those below them — whoever is stronger takes their place at the top, and this process cascades downward until the right leader is found again.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 4: PEEK -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <span class="section-num">OP 04</span>
+      <h2>Peek Maximum / Get Highest Priority</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Peek</strong> (or "Get Max") simply <em>reads</em> the root element without removing it. Since the max heap property guarantees the maximum is always at <strong>index 0</strong>, this operation is instant — O(1). No restructuring needed.</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Time Complexity</div><div class="info-item-val"><span class="tag tag-o1">O(1)</span></div></div>
+        <div class="info-item"><div class="info-item-label">Modifies Heap?</div><div class="info-item-val">No — read only</div></div>
+        <div class="info-item"><div class="info-item-label">Position</div><div class="info-item-val">Always index 0 (root)</div></div>
+        <div class="info-item"><div class="info-item-label">Precondition</div><div class="info-item-val">Heap must not be empty</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Peek Maximum</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Peek: return maximum without removing it */</span>
+<span class="ty">int</span> <span class="fn">peekMax</span>(MaxHeap *h) {
+    <span class="cm">/* Check empty heap */</span>
+    <span class="kw">if</span> (h->size == <span class="nu">0</span>) {
+        printf(<span class="st">"Heap is EMPTY! No maximum.\n"</span>);
+        <span class="kw">return</span> -<span class="nu">1</span>;
+    }
+
+    <span class="cm">/* Root is always the maximum in a max heap */</span>
+    printf(<span class="st">"Maximum value: %d\n"</span>, h->data[<span class="nu">0</span>]);
+    <span class="kw">return</span> h->data[<span class="nu">0</span>];
+    <span class="cm">/* Note: heap is NOT modified! */</span>
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🔭</div>
+      <div>
+        <div class="analogy-title">Analogy — Checking the Leaderboard</div>
+        <div class="analogy-text">Peek is like looking at the top of the leaderboard to see who's #1 — without actually removing them from the board. You're just reading the information, not changing anything. The #1 player stays on top.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 5: HEAPIFY UP -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <span class="section-num">OP 05</span>
+      <h2>Heapify Up (Bubble Up)</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Heapify Up</strong> restores the max heap property when an element at position <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code> might be <em>larger than its parent</em>. Starting at index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code>, we compare with the parent at <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">(i-1)/2</code>. If larger, we swap and move up. This repeats until we reach the root or the parent is ≥ current node.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Calculate parent index: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">parent = (i - 1) / 2</code></li>
+        <li><span class="step-num">2</span>Compare current node value with parent value</li>
+        <li><span class="step-num">3</span>If current &gt; parent → swap them</li>
+        <li><span class="step-num">4</span>Set <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i = parent</code> and go back to step 1</li>
+        <li><span class="step-num">5</span>Stop when <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i == 0</code> (reached root) or parent ≥ current</li>
+      </ul>
+      <div class="highlight-box">Used by: <strong>Insert</strong> and <strong>Increase Key</strong> operations.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Heapify Up</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Heapify Up: restore heap from index i upward */</span>
+<span class="ty">void</span> <span class="fn">heapifyUp</span>(MaxHeap *h, <span class="ty">int</span> i) {
+    <span class="cm">/* Continue while i is not the root */</span>
+    <span class="kw">while</span> (i > <span class="nu">0</span>) {
+        <span class="ty">int</span> parent = PARENT(i);   <span class="cm">/* parent = (i-1)/2 */</span>
+
+        <span class="cm">/* If current node is greater than parent, swap */</span>
+        <span class="kw">if</span> (h->data[i] > h->data[parent]) {
+            <span class="fn">swap</span>(&h->data[i], &h->data[parent]);
+            i = parent;           <span class="cm">/* move index up to parent */</span>
+        } <span class="kw">else</span> {
+            <span class="kw">break</span>;              <span class="cm">/* heap property satisfied, stop */</span>
+        }
+    }
+}
+
+<span class="cm">/* Recursive version (alternative approach) */</span>
+<span class="ty">void</span> <span class="fn">heapifyUpRecursive</span>(MaxHeap *h, <span class="ty">int</span> i) {
+    <span class="kw">if</span> (i == <span class="nu">0</span>) <span class="kw">return</span>;         <span class="cm">/* base case: reached root */</span>
+    <span class="ty">int</span> parent = PARENT(i);
+    <span class="kw">if</span> (h->data[i] > h->data[parent]) {
+        <span class="fn">swap</span>(&h->data[i], &h->data[parent]);
+        <span class="fn">heapifyUpRecursive</span>(h, parent);
+    }
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🚀</div>
+      <div>
+        <div class="analogy-title">Analogy — Floating Balloon</div>
+        <div class="analogy-text">Imagine you drop a helium balloon at the bottom of a tower of rooms. The balloon is lighter (higher priority) than the things above it, so it floats up past each floor, pushing down whatever it's lighter than, until it finds a floor where something lighter (higher priority) is already there — then it stops.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 6: HEAPIFY DOWN -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <span class="section-num">OP 06</span>
+      <h2>Heapify Down (Bubble Down)</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Heapify Down</strong> restores the max heap property when an element at position <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code> might be <em>smaller than its children</em>. We find the <strong>largest</strong> among the node and its left/right children, then swap with the largest child. This repeats downward until the node is the largest in its local group.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Calculate left child: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">left = 2*i + 1</code></li>
+        <li><span class="step-num">2</span>Calculate right child: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">right = 2*i + 2</code></li>
+        <li><span class="step-num">3</span>Find largest among <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">data[i]</code>, <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">data[left]</code>, <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">data[right]</code></li>
+        <li><span class="step-num">4</span>If largest ≠ i → swap and continue from that child's position</li>
+        <li><span class="step-num">5</span>Stop when current is largest or becomes a leaf</li>
+      </ul>
+      <div class="highlight-box">Used by: <strong>Extract Max</strong>, <strong>Decrease Key</strong>, <strong>Delete Specific Element</strong>, and <strong>Build Heap</strong>.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Heapify Down</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Heapify Down: restore heap from index i downward */</span>
+<span class="ty">void</span> <span class="fn">heapifyDown</span>(MaxHeap *h, <span class="ty">int</span> i) {
+    <span class="ty">int</span> largest = i;              <span class="cm">/* assume current is largest */</span>
+    <span class="ty">int</span> left    = LEFT_CHILD(i);  <span class="cm">/* 2*i + 1 */</span>
+    <span class="ty">int</span> right   = RIGHT_CHILD(i); <span class="cm">/* 2*i + 2 */</span>
+
+    <span class="cm">/* Check if left child exists and is larger */</span>
+    <span class="kw">if</span> (left < h->size && h->data[left] > h->data[largest])
+        largest = left;
+
+    <span class="cm">/* Check if right child exists and is larger */</span>
+    <span class="kw">if</span> (right < h->size && h->data[right] > h->data[largest])
+        largest = right;
+
+    <span class="cm">/* If a child is larger, swap and continue down */</span>
+    <span class="kw">if</span> (largest != i) {
+        <span class="fn">swap</span>(&h->data[i], &h->data[largest]);
+        <span class="fn">heapifyDown</span>(h, largest);  <span class="cm">/* recurse downward */</span>
+    }
+    <span class="cm">/* If largest == i, heap property is restored */</span>
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">💧</div>
+      <div>
+        <div class="analogy-title">Analogy — Heavy Stone Sinking</div>
+        <div class="analogy-text">Imagine a light pebble placed at the top of a pile of rocks. It's lighter than the rocks below it, so it keeps swapping with the heavier (lower priority) rock below it, sinking further and further down until it finds a spot where it's the heaviest among its neighbors.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 7: BUILD HEAP -->
+  <section class="section" id="s7">
+    <div class="section-header">
+      <span class="section-num">OP 07</span>
+      <h2>Build Max Heap</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Build Max Heap</strong> converts an arbitrary array into a valid max heap <em>efficiently</em>. Instead of inserting elements one by one (which takes O(n log n)), we start from the <strong>last non-leaf node</strong> (at index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">(n/2) - 1</code>) and call heapify-down on each node, moving toward the root. This achieves O(n) time.</p>
+      <div class="warning-box">Why not insert one by one? Inserting n elements individually takes <strong>O(n log n)</strong>. Building from bottom-up takes only <strong>O(n)</strong> — that's why Build Heap is important!</div>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Load all elements into the array (don't worry about order)</li>
+        <li><span class="step-num">2</span>Find last non-leaf node: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">start = (n/2) - 1</code></li>
+        <li><span class="step-num">3</span>Call heapify-down on every node from <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">start</code> down to 0</li>
+        <li><span class="step-num">4</span>After all heapify-down calls, array is a valid max heap</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-label label-viz"><span class="label-dot"></span>Build Heap Visualizer</div>
+      <div class="viz-container">
+        <canvas id="buildCanvas" class="heap-canvas" height="240"></canvas>
+        <div class="array-display" id="buildArray"></div>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="buildHeapViz()">⚙ Build Heap</button>
+          <button class="btn btn-cyan" onclick="buildReset()">↺ Random Array</button>
+        </div>
+        <div class="viz-log" id="buildLog">Click "Build Heap" to convert a random array into a max heap!</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Build Max Heap</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Build a max heap from an unsorted array */</span>
+<span class="ty">void</span> <span class="fn">buildMaxHeap</span>(MaxHeap *h, <span class="ty">int</span> arr[], <span class="ty">int</span> n) {
+    <span class="cm">/* Copy elements into heap array */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < n; i++)
+        h->data[i] = arr[i];
+    h->size = n;
+
+    <span class="cm">/* Start from last non-leaf node: (n/2) - 1 */</span>
+    <span class="cm">/* Leaf nodes don't need heapify (no children) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = (n / <span class="nu">2</span>) - <span class="nu">1</span>; i >= <span class="nu">0</span>; i--) {
+        <span class="fn">heapifyDown</span>(h, i);   <span class="cm">/* fix heap property */</span>
+    }
+    printf(<span class="st">"Max heap built from %d elements.\n"</span>, n);
+    printf(<span class="st">"Maximum element: %d\n"</span>, h->data[<span class="nu">0</span>]);
+}
+
+<span class="cm">/* Example usage */</span>
+<span class="ty">int</span> <span class="fn">main</span>() {
+    MaxHeap h;
+    <span class="fn">initHeap</span>(&h, MAX_SIZE);
+    <span class="ty">int</span> arr[] = {<span class="nu">3</span>, <span class="nu">1</span>, <span class="nu">6</span>, <span class="nu">5</span>, <span class="nu">2</span>, <span class="nu">4</span>};
+    <span class="ty">int</span> n = <span class="nu">6</span>;
+    <span class="fn">buildMaxHeap</span>(&h, arr, n);
+    <span class="cm">/* Result: [6, 5, 4, 1, 2, 3] — valid max heap */</span>
+    <span class="kw">return</span> <span class="nu">0</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🏗️</div>
+      <div>
+        <div class="analogy-title">Analogy — Reorganizing a Messy Bookshelf</div>
+        <div class="analogy-text">Imagine a messy bookshelf where you want the tallest books at top positions. Instead of removing all books and re-inserting (slow), you work from the middle shelf downward — at each shelf, you push the shorter book down and pull the taller one up. After going through every shelf once, the bookshelf is perfectly organized.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 8: INCREASE KEY -->
+  <section class="section" id="s8">
+    <div class="section-header">
+      <span class="section-num">OP 08</span>
+      <h2>Increase Key / Increase Priority</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Increase Key</strong> updates a node's value to a <em>larger</em> value, then restores heap order. Since increasing a value can only violate the heap property upward (the node might now be larger than its parent), we call <strong>heapify-up</strong> after the update.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Locate target node at index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code></li>
+        <li><span class="step-num">2</span>Verify new value &gt; old value (it must be an increase)</li>
+        <li><span class="step-num">3</span>Update <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">h->data[i] = newValue</code></li>
+        <li><span class="step-num">4</span>Call heapify-up from index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code></li>
+      </ul>
+      <div class="highlight-box">Time Complexity: <span class="tag tag-olog">O(log n)</span> — heapify-up can go up to root level.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Increase Key</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Increase the value of node at index i to newValue */</span>
+<span class="ty">void</span> <span class="fn">increaseKey</span>(MaxHeap *h, <span class="ty">int</span> i, <span class="ty">int</span> newValue) {
+    <span class="cm">/* Validate index */</span>
+    <span class="kw">if</span> (i < <span class="nu">0</span> || i >= h->size) {
+        printf(<span class="st">"Invalid index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* New value must be larger */</span>
+    <span class="kw">if</span> (newValue < h->data[i]) {
+        printf(<span class="st">"Error: New value is smaller. Use decreaseKey.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Update the value */</span>
+    printf(<span class="st">"Increasing data[%d] from %d to %d\n"</span>,
+           i, h->data[i], newValue);
+    h->data[i] = newValue;
+
+    <span class="cm">/* Bubble up since value increased */</span>
+    <span class="fn">heapifyUp</span>(h, i);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">📈</div>
+      <div>
+        <div class="analogy-title">Analogy — Employee Promotion</div>
+        <div class="analogy-text">An employee gets a promotion (increase key). Their new rank might be higher than their manager's rank, so they move up in the organizational chart, swapping with managers above them until they find a position where the manager above them still outranks them.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 9: DECREASE KEY -->
+  <section class="section" id="s9">
+    <div class="section-header">
+      <span class="section-num">OP 09</span>
+      <h2>Decrease Key</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Decrease Key</strong> reduces a node's value, then restores heap order. A decreased value might now be smaller than the node's children, so we call <strong>heapify-down</strong> after the update. This is the opposite of Increase Key.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Locate target node at index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code></li>
+        <li><span class="step-num">2</span>Verify new value &lt; old value (it must be a decrease)</li>
+        <li><span class="step-num">3</span>Update <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">h->data[i] = newValue</code></li>
+        <li><span class="step-num">4</span>Call heapify-down from index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code></li>
+      </ul>
+      <div class="highlight-box">Time Complexity: <span class="tag tag-olog">O(log n)</span></div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Decrease Key</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Decrease the value of node at index i to newValue */</span>
+<span class="ty">void</span> <span class="fn">decreaseKey</span>(MaxHeap *h, <span class="ty">int</span> i, <span class="ty">int</span> newValue) {
+    <span class="cm">/* Validate index */</span>
+    <span class="kw">if</span> (i < <span class="nu">0</span> || i >= h->size) {
+        printf(<span class="st">"Invalid index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* New value must be smaller */</span>
+    <span class="kw">if</span> (newValue > h->data[i]) {
+        printf(<span class="st">"Error: New value is larger. Use increaseKey.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Update the value */</span>
+    printf(<span class="st">"Decreasing data[%d] from %d to %d\n"</span>,
+           i, h->data[i], newValue);
+    h->data[i] = newValue;
+
+    <span class="cm">/* Bubble down since value decreased */</span>
+    <span class="fn">heapifyDown</span>(h, i);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">📉</div>
+      <div>
+        <div class="analogy-title">Analogy — Employee Demotion</div>
+        <div class="analogy-text">An employee is demoted (decrease key). Their new lower rank means some of their subordinates may now outrank them. Those subordinates bubble up past them, pushing the demoted employee downward in the chart until they settle at the right level.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 10: CHANGE PRIORITY -->
+  <section class="section" id="s10">
+    <div class="section-header">
+      <span class="section-num">OP 10</span>
+      <h2>Change Priority</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Change Priority</strong> is the general operation that handles both increases and decreases. It first searches for the target element, compares the old and new priority, then intelligently delegates to either <strong>increaseKey</strong> or <strong>decreaseKey</strong>.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Search for target element — get its index</li>
+        <li><span class="step-num">2</span>Compare old priority with new priority</li>
+        <li><span class="step-num">3</span>If new &gt; old → call increaseKey → heapify-up</li>
+        <li><span class="step-num">4</span>If new &lt; old → call decreaseKey → heapify-down</li>
+        <li><span class="step-num">5</span>If equal → no action needed</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Change Priority</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Search for a value and return its index (-1 if not found) */</span>
+<span class="ty">int</span> <span class="fn">searchIndex</span>(MaxHeap *h, <span class="ty">int</span> value) {
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < h->size; i++)
+        <span class="kw">if</span> (h->data[i] == value) <span class="kw">return</span> i;
+    <span class="kw">return</span> -<span class="nu">1</span>;  <span class="cm">/* not found */</span>
+}
+
+<span class="cm">/* Change priority of an element */</span>
+<span class="ty">void</span> <span class="fn">changePriority</span>(MaxHeap *h, <span class="ty">int</span> oldVal, <span class="ty">int</span> newVal) {
+    <span class="ty">int</span> idx = <span class="fn">searchIndex</span>(h, oldVal);
+    <span class="kw">if</span> (idx == -<span class="nu">1</span>) {
+        printf(<span class="st">"Element %d not found!\n"</span>, oldVal);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">if</span> (newVal > oldVal) {
+        <span class="fn">increaseKey</span>(h, idx, newVal);  <span class="cm">/* heapify-up */</span>
+    } <span class="kw">else if</span> (newVal < oldVal) {
+        <span class="fn">decreaseKey</span>(h, idx, newVal);  <span class="cm">/* heapify-down */</span>
+    } <span class="kw">else</span> {
+        printf(<span class="st">"Priority unchanged.\n"</span>);
+    }
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🔄</div>
+      <div>
+        <div class="analogy-title">Analogy — Hospital Priority Update</div>
+        <div class="analogy-text">A hospital patient's condition changes. If they get worse (higher priority), they move up in the treatment queue. If they improve (lower priority), they move down. The triage system re-evaluates and repositions them automatically.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 11: DELETE SPECIFIC -->
+  <section class="section" id="s11">
+    <div class="section-header">
+      <span class="section-num">OP 11</span>
+      <h2>Delete Specific Element</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">To delete any specific element (not just the max), we use a trick: <strong>increase its value to infinity</strong> (or a very large number) so it bubbles to the root, then call <strong>extractMax</strong>. Alternatively: replace the target with the last element, reduce size, then heapify-up or heapify-down as needed.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Locate target node at index <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">i</code></li>
+        <li><span class="step-num">2</span>Replace <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">h->data[i]</code> with last element <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">h->data[size-1]</code></li>
+        <li><span class="step-num">3</span>Reduce heap size by 1</li>
+        <li><span class="step-num">4</span>If replacement is larger than parent → heapify-up</li>
+        <li><span class="step-num">5</span>If replacement is smaller than a child → heapify-down</li>
+      </ul>
+      <div class="highlight-box">Time Complexity: O(n) for search + O(log n) for restructuring = <span class="tag tag-on">O(n)</span> overall.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Delete Specific Element</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Delete a specific value from the heap */</span>
+<span class="ty">void</span> <span class="fn">deleteElement</span>(MaxHeap *h, <span class="ty">int</span> value) {
+    <span class="cm">/* Step 1: Locate target */</span>
+    <span class="ty">int</span> i = <span class="fn">searchIndex</span>(h, value);
+    <span class="kw">if</span> (i == -<span class="nu">1</span>) {
+        printf(<span class="st">"Value %d not found!\n"</span>, value);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 2: Replace with last element */</span>
+    <span class="ty">int</span> lastVal = h->data[h->size - <span class="nu">1</span>];
+    h->data[i] = lastVal;
+
+    <span class="cm">/* Step 3: Reduce size */</span>
+    h->size--;
+
+    <span class="cm">/* Step 4 & 5: Restore heap property */</span>
+    <span class="kw">if</span> (h->size > <span class="nu">0</span>) {
+        <span class="cm">/* Check if we need to go up or down */</span>
+        <span class="ty">int</span> parent = PARENT(i);
+        <span class="kw">if</span> (i > <span class="nu">0</span> && h->data[i] > h->data[parent])
+            <span class="fn">heapifyUp</span>(h, i);
+        <span class="kw">else</span>
+            <span class="fn">heapifyDown</span>(h, i);
+    }
+    printf(<span class="st">"Deleted element: %d\n"</span>, value);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🪑</div>
+      <div>
+        <div class="analogy-title">Analogy — Removing a Seat at a Conference</div>
+        <div class="analogy-text">If someone in the middle of a priority seating arrangement leaves, the person from the last seat fills the gap. That person then shifts up or down depending on whether they outrank their neighbors — until the seating order is valid again.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 12: SEARCH -->
+  <section class="section" id="s12">
+    <div class="section-header">
+      <span class="section-num">OP 12</span>
+      <h2>Search Element</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Search</strong> finds the location (index) of an element in the heap. Since a max heap is <em>not fully sorted</em> — only the parent-child relationship is guaranteed — we cannot use binary search. We must do a <strong>linear scan</strong> through the array. There's no shortcut.</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Algorithm</div><div class="info-item-val">Linear scan</div></div>
+        <div class="info-item"><div class="info-item-label">Time Complexity</div><div class="info-item-val"><span class="tag tag-on">O(n)</span></div></div>
+        <div class="info-item"><div class="info-item-label">Returns</div><div class="info-item-val">Index of element, or -1</div></div>
+        <div class="info-item"><div class="info-item-label">Binary Search?</div><div class="info-item-val">❌ Not applicable</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Search Element</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Search for a value in the heap array */</span>
+<span class="ty">int</span> <span class="fn">searchElement</span>(MaxHeap *h, <span class="ty">int</span> target) {
+    <span class="cm">/* Linear scan through the heap array */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < h->size; i++) {
+        <span class="kw">if</span> (h->data[i] == target) {
+            printf(<span class="st">"Found %d at index %d\n"</span>, target, i);
+            <span class="kw">return</span> i;   <span class="cm">/* return index location */</span>
+        }
+    }
+    <span class="cm">/* Not found */</span>
+    printf(<span class="st">"Element %d NOT found in heap.\n"</span>, target);
+    <span class="kw">return</span> -<span class="nu">1</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🔍</div>
+      <div>
+        <div class="analogy-title">Analogy — Finding a Person in a Crowd</div>
+        <div class="analogy-text">The crowd is loosely ordered (tallest people tend to be toward the front), but you can't use that ordering to jump directly to someone — you still have to look at people one by one until you find who you're searching for.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 13: MERGE -->
+  <section class="section" id="s13">
+    <div class="section-header">
+      <span class="section-num">OP 13</span>
+      <h2>Merge Max Heaps</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Merge</strong> combines two max heaps into a single max heap. The simplest approach: combine both arrays into one, then call <strong>buildMaxHeap</strong> on the combined array. The result is a valid max heap containing all elements from both.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Check combined size doesn't exceed capacity</li>
+        <li><span class="step-num">2</span>Copy elements of heap2 into heap1's array (after heap1's elements)</li>
+        <li><span class="step-num">3</span>Update heap1's size to combined total</li>
+        <li><span class="step-num">4</span>Run buildMaxHeap (heapify-down from last non-leaf to root)</li>
+      </ul>
+      <div class="highlight-box">Time Complexity: <span class="tag tag-on">O(n)</span> using buildMaxHeap on the merged array.</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Merge Max Heaps</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Merge heap2 into heap1 (heap1 gets all elements) */</span>
+<span class="ty">void</span> <span class="fn">mergeHeaps</span>(MaxHeap *h1, MaxHeap *h2) {
+    <span class="cm">/* Check if combined fits in capacity */</span>
+    <span class="kw">if</span> (h1->size + h2->size > h1->capacity) {
+        printf(<span class="st">"Not enough capacity to merge!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Copy h2 elements into h1 after h1's existing elements */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < h2->size; i++) {
+        h1->data[h1->size + i] = h2->data[i];
+    }
+
+    <span class="cm">/* Update total size */</span>
+    h1->size = h1->size + h2->size;
+
+    <span class="cm">/* Rebuild heap from combined array — O(n) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = (h1->size / <span class="nu">2</span>) - <span class="nu">1</span>; i >= <span class="nu">0</span>; i--) {
+        <span class="fn">heapifyDown</span>(h1, i);
+    }
+    printf(<span class="st">"Merged! Total elements: %d\n"</span>, h1->size);
+    printf(<span class="st">"New max: %d\n"</span>, h1->data[<span class="nu">0</span>]);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🏢</div>
+      <div>
+        <div class="analogy-title">Analogy — Company Merger</div>
+        <div class="analogy-text">Two companies merge. All employees from both companies are now in one organization. The combined staff needs to be re-organized so that every manager still outranks their direct reports. The new org chart is built efficiently from the bottom up.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 14: CHECK EMPTY -->
+  <section class="section" id="s14">
+    <div class="section-header">
+      <span class="section-num">OP 14</span>
+      <h2>Check Empty</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">Checking if the heap is empty is a simple guard condition — if <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size == 0</code>, there are no elements. This check is used as a <strong>precondition</strong> before operations like Extract Max or Peek to prevent errors.</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Condition</div><div class="info-item-val"><code style="font-family:'JetBrains Mono',monospace;color:var(--accent);">size == 0</code></div></div>
+        <div class="info-item"><div class="info-item-label">Time Complexity</div><div class="info-item-val"><span class="tag tag-o1">O(1)</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Check Empty</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Returns 1 if heap is empty, 0 otherwise */</span>
+<span class="ty">int</span> <span class="fn">isEmpty</span>(MaxHeap *h) {
+    <span class="kw">return</span> (h->size == <span class="nu">0</span>);
+}
+
+<span class="cm">/* Usage example */</span>
+<span class="kw">if</span> (<span class="fn">isEmpty</span>(&h)) {
+    printf(<span class="st">"Heap is empty! Cannot extract.\n"</span>);
+} <span class="kw">else</span> {
+    <span class="ty">int</span> max = <span class="fn">extractMax</span>(&h);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">📭</div>
+      <div>
+        <div class="analogy-title">Analogy — Checking an Empty Mailbox</div>
+        <div class="analogy-text">Before you try to take out mail, you first check if the mailbox is empty. If it's empty, you don't even open it. This simple O(1) check prevents errors — you only attempt extraction when you know there's something inside.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 15: CHECK FULL -->
+  <section class="section" id="s15">
+    <div class="section-header">
+      <span class="section-num">OP 15</span>
+      <h2>Check Full</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">Checking if the heap is full prevents insertion overflow. If <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size == capacity</code>, no more elements can be added without expanding the array (which requires dynamic memory allocation in C).</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Condition</div><div class="info-item-val"><code style="font-family:'JetBrains Mono',monospace;color:var(--accent);">size == capacity</code></div></div>
+        <div class="info-item"><div class="info-item-label">Time Complexity</div><div class="info-item-val"><span class="tag tag-o1">O(1)</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Check Full</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Returns 1 if heap is full, 0 otherwise */</span>
+<span class="ty">int</span> <span class="fn">isFull</span>(MaxHeap *h) {
+    <span class="kw">return</span> (h->size == h->capacity);
+}
+
+<span class="cm">/* Usage example */</span>
+<span class="kw">if</span> (<span class="fn">isFull</span>(&h)) {
+    printf(<span class="st">"Heap is FULL! Cannot insert.\n"</span>);
+} <span class="kw">else</span> {
+    <span class="fn">insert</span>(&h, <span class="nu">42</span>);
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🧳</div>
+      <div>
+        <div class="analogy-title">Analogy — Full Suitcase</div>
+        <div class="analogy-text">Before packing more clothes, you check if your suitcase is full. If it's at capacity, you can't fit anything else without either removing something or getting a bigger suitcase. Check first, act second.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 16: GET SIZE -->
+  <section class="section" id="s16">
+    <div class="section-header">
+      <span class="section-num">OP 16</span>
+      <h2>Get Heap Size</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Get Size</strong> returns the current number of elements in the heap. Since <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size</code> is maintained as a running counter throughout all operations (incremented on insert, decremented on extract/delete), this is simply a read of that variable — O(1).</p>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Get Heap Size</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Return current number of elements in heap */</span>
+<span class="ty">int</span> <span class="fn">getSize</span>(MaxHeap *h) {
+    <span class="kw">return</span> h->size;
+}
+
+<span class="cm">/* Usage */</span>
+printf(<span class="st">"Heap has %d elements.\n"</span>, <span class="fn">getSize</span>(&h));
+printf(<span class="st">"Capacity used: %d / %d\n"</span>,
+       h->size, h->capacity);</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🔢</div>
+      <div>
+        <div class="analogy-title">Analogy — Counting People in a Queue</div>
+        <div class="analogy-text">A bouncer keeps a running count of people in the venue. Every time someone enters, count goes up; every time someone leaves, count goes down. To know how many people are inside, they just check that counter — no need to recount everyone.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 17: TRAVERSE -->
+  <section class="section" id="s17">
+    <div class="section-header">
+      <span class="section-num">OP 17</span>
+      <h2>Traverse Heap</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text">Since the heap is stored as an array, traversal is straightforward. A <strong>sequential array traversal</strong> (index 0 to size-1) naturally produces a <strong>level-order (BFS) traversal</strong> of the binary tree, because of how the array represents tree levels.</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Array index 0</div><div class="info-item-val">Level 0 — root</div></div>
+        <div class="info-item"><div class="info-item-label">Indices 1–2</div><div class="info-item-val">Level 1 — 2 nodes</div></div>
+        <div class="info-item"><div class="info-item-label">Indices 3–6</div><div class="info-item-val">Level 2 — 4 nodes</div></div>
+        <div class="info-item"><div class="info-item-label">Time Complexity</div><div class="info-item-val"><span class="tag tag-on">O(n)</span></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Traverse Heap</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Sequential (level-order) traversal — display all elements */</span>
+<span class="ty">void</span> <span class="fn">traverseHeap</span>(MaxHeap *h) {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>(h)) {
+        printf(<span class="st">"Heap is empty!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    printf(<span class="st">"Heap (Level-Order): "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < h->size; i++) {
+        printf(<span class="st">"%d "</span>, h->data[i]);
+    }
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* Display with tree-level separation */</span>
+<span class="ty">void</span> <span class="fn">traverseByLevel</span>(MaxHeap *h) {
+    <span class="ty">int</span> level = <span class="nu">0</span>, count = <span class="nu">1</span>, i = <span class="nu">0</span>;
+    printf(<span class="st">"Tree levels:\n"</span>);
+    <span class="kw">while</span> (i < h->size) {
+        printf(<span class="st">"Level %d: "</span>, level);
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nu">0</span>; j < count && i < h->size; j++, i++)
+            printf(<span class="st">"%d "</span>, h->data[i]);
+        printf(<span class="st">"\n"</span>);
+        level++;
+        count *= <span class="nu">2</span>;  <span class="cm">/* each level has 2x nodes */</span>
+    }
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">📋</div>
+      <div>
+        <div class="analogy-title">Analogy — Reading a Seating Chart Floor by Floor</div>
+        <div class="analogy-text">Reading the heap array level-by-level is like reading a theater seating chart row by row — row 0 has the VIP seat (root), row 1 has the next two seats, and so on. The array naturally encodes this row-by-row ordering.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 18: CLEAR -->
+  <section class="section" id="s18">
+    <div class="section-header">
+      <span class="section-num">OP 18</span>
+      <h2>Clear Heap</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Clear Heap</strong> resets the heap to an empty state. Since the heap size is tracked by the <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size</code> variable, simply setting <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">size = 0</code> effectively empties the heap. The old data in the array is ignored (overwritten by future inserts). Capacity remains unchanged.</p>
+      <div class="info-grid">
+        <div class="info-item"><div class="info-item-label">Action</div><div class="info-item-val">Set size = 0</div></div>
+        <div class="info-item"><div class="info-item-label">Time Complexity</div><div class="info-item-val"><span class="tag tag-o1">O(1)</span></div></div>
+        <div class="info-item"><div class="info-item-label">Memory freed?</div><div class="info-item-val">No (static array)</div></div>
+        <div class="info-item"><div class="info-item-label">Capacity preserved?</div><div class="info-item-val">Yes</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Clear Heap</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Clear all elements from the heap */</span>
+<span class="ty">void</span> <span class="fn">clearHeap</span>(MaxHeap *h) {
+    h->size = <span class="nu">0</span>;   <span class="cm">/* reset element count to zero */</span>
+    <span class="cm">/* capacity stays unchanged — heap is reusable */</span>
+    printf(<span class="st">"Heap cleared! Capacity: %d\n"</span>, h->capacity);
+}
+
+<span class="cm">/* Optional: zero-fill the array for security */</span>
+<span class="ty">void</span> <span class="fn">clearHeapSecure</span>(MaxHeap *h) {
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < h->size; i++)
+        h->data[i] = <span class="nu">0</span>;
+    h->size = <span class="nu">0</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🧹</div>
+      <div>
+        <div class="analogy-title">Analogy — Erasing a Whiteboard</div>
+        <div class="analogy-text">Clearing the heap is like erasing a whiteboard. The board (array memory) still exists and is still the same size — but all the content is gone and you can start fresh. It's instant (O(1)) because you don't erase letter by letter; you just declare it blank.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 19: VALIDATE -->
+  <section class="section" id="s19">
+    <div class="section-header">
+      <span class="section-num">OP 19</span>
+      <h2>Validate Max Heap Property</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Validation</strong> checks whether an array currently satisfies the max heap property — meaning every parent is greater than or equal to both its children. This is useful for <strong>debugging</strong> or <strong>testing</strong>. We scan all internal nodes (indices 0 to n/2-1) and verify each against their children.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Loop through all non-leaf nodes: index 0 to <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">(size/2)-1</code></li>
+        <li><span class="step-num">2</span>For each node, check left child: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">data[i] ≥ data[2i+1]</code></li>
+        <li><span class="step-num">3</span>Check right child if it exists: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">data[i] ≥ data[2i+2]</code></li>
+        <li><span class="step-num">4</span>If any violation found → return 0 (invalid)</li>
+        <li><span class="step-num">5</span>If all pass → return 1 (valid max heap)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Validate Max Heap</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Returns 1 if valid max heap, 0 if violated */</span>
+<span class="ty">int</span> <span class="fn">isValidMaxHeap</span>(MaxHeap *h) {
+    <span class="cm">/* Check all internal (non-leaf) nodes */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i < h->size / <span class="nu">2</span>; i++) {
+        <span class="ty">int</span> left  = LEFT_CHILD(i);   <span class="cm">/* 2*i + 1 */</span>
+        <span class="ty">int</span> right = RIGHT_CHILD(i);  <span class="cm">/* 2*i + 2 */</span>
+
+        <span class="cm">/* Parent must be >= left child */</span>
+        <span class="kw">if</span> (left < h->size &&
+            h->data[i] < h->data[left]) {
+            printf(<span class="st">"Violation at i=%d, left=%d\n"</span>, i, left);
+            <span class="kw">return</span> <span class="nu">0</span>;
+        }
+        <span class="cm">/* Parent must be >= right child */</span>
+        <span class="kw">if</span> (right < h->size &&
+            h->data[i] < h->data[right]) {
+            printf(<span class="st">"Violation at i=%d, right=%d\n"</span>, i, right);
+            <span class="kw">return</span> <span class="nu">0</span>;
+        }
+    }
+    printf(<span class="st">"Valid Max Heap!\n"</span>);
+    <span class="kw">return</span> <span class="nu">1</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">✅</div>
+      <div>
+        <div class="analogy-title">Analogy — Quality Control Inspection</div>
+        <div class="analogy-text">A factory inspector checks every supervisor-employee pair: is the supervisor's rank truly higher than their employees? If any pair fails the check, the organizational structure is invalid. Only when every pair passes does the inspector give the "all clear."</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 20: PRIORITY QUEUE VIEW -->
+  <section class="section" id="s20">
+    <div class="section-header">
+      <span class="section-num">OP 20</span>
+      <h2>Convert to Priority Queue View</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Theory</div>
+      <p class="theory-text"><strong>Priority Queue View</strong> displays elements ordered from highest priority to lowest — essentially simulating the order in which elements would be extracted if you kept calling Extract Max. This is done by repeatedly calling extractMax on a <em>copy</em> of the heap (to preserve the original), collecting results in order.</p>
+      <ul class="steps-list">
+        <li><span class="step-num">1</span>Create a copy of the current heap</li>
+        <li><span class="step-num">2</span>Repeatedly call extractMax on the copy</li>
+        <li><span class="step-num">3</span>Each extraction gives the next-highest element</li>
+        <li><span class="step-num">4</span>Collect and display results — highest to lowest</li>
+      </ul>
+      <div class="highlight-box">This is essentially <strong>Heap Sort</strong>! Heap sort uses exactly this technique to sort an array in O(n log n).</div>
+    </div>
+    <div class="card">
+      <div class="card-label label-viz"><span class="label-dot"></span>Priority Queue View — Heap Sort Visualizer</div>
+      <div class="viz-container">
+        <canvas id="pqCanvas" class="heap-canvas" height="220"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="pqViewExtract()">▶ Show Priority Order</button>
+          <button class="btn btn-cyan" onclick="pqReset()">↺ Reset</button>
+        </div>
+        <div id="pqOrder" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;"></div>
+        <div class="viz-log" id="pqLog">Click "Show Priority Order" to see elements from highest to lowest priority.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label label-code"><span class="label-dot"></span>C Code — Priority Queue View + Heap Sort</div>
+      <div class="code-block">
+        <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">C Language</span></div>
+        <pre><span class="cm">/* Display elements in priority order (highest → lowest) */</span>
+<span class="ty">void</span> <span class="fn">priorityQueueView</span>(MaxHeap *h) {
+    <span class="cm">/* Make a copy to avoid modifying original heap */</span>
+    MaxHeap copy = *h;  <span class="cm">/* copies struct (including array) */</span>
+
+    printf(<span class="st">"Priority Order (High → Low): "</span>);
+    <span class="kw">while</span> (!<span class="fn">isEmpty</span>(&copy)) {
+        printf(<span class="st">"%d "</span>, <span class="fn">extractMax</span>(&copy));
+    }
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* Heap Sort: sort array in ascending order using max heap */</span>
+<span class="ty">void</span> <span class="fn">heapSort</span>(<span class="ty">int</span> arr[], <span class="ty">int</span> n) {
+    MaxHeap h;
+    <span class="fn">initHeap</span>(&h, n);
+    <span class="fn">buildMaxHeap</span>(&h, arr, n);
+
+    <span class="cm">/* Extract max n times — fills arr in ascending order */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = n - <span class="nu">1</span>; i >= <span class="nu">0</span>; i--) {
+        arr[i] = <span class="fn">extractMax</span>(&h);
+    }
+}
+
+<span class="cm">/* Usage */</span>
+<span class="ty">int</span> <span class="fn">main</span>() {
+    MaxHeap h;
+    <span class="fn">initHeap</span>(&h, MAX_SIZE);
+    <span class="fn">insert</span>(&h, <span class="nu">30</span>);
+    <span class="fn">insert</span>(&h, <span class="nu">10</span>);
+    <span class="fn">insert</span>(&h, <span class="nu">50</span>);
+    <span class="fn">insert</span>(&h, <span class="nu">20</span>);
+    <span class="fn">priorityQueueView</span>(&h);
+    <span class="cm">/* Output: Priority Order: 50 30 20 10 */</span>
+    <span class="kw">return</span> <span class="nu">0</span>;
+}</pre>
+      </div>
+    </div>
+    <div class="analogy-card">
+      <div class="analogy-icon">🏆</div>
+      <div>
+        <div class="analogy-title">Analogy — Awards Ceremony</div>
+        <div class="analogy-text">At an awards ceremony, winners are announced from first place downward. The priority queue view is like that announcement — it picks the #1 winner first, then #2, then #3... until everyone has been called up. The original heap (the full list of participants) is preserved.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- COMPLETE PROGRAM -->
+  <section class="section" id="s-complete">
+    <div class="section-header">
+      <span class="section-num">★ Full</span>
+      <h2>Complete C Program</h2>
+    </div>
+    <div class="card">
+      <div class="card-label label-theory"><span class="label-dot"></span>Putting It All Together</div>
+      <p class="theory-text">Here is a complete, runnable C program that implements all operations of a max heap-based priority queue. Compile with: <code style="color:var(--accent);font-family:'JetBrains Mono',monospace;">gcc -o heap heap.c && ./heap</code></p>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><div class="code-dots"><span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span></div><span class="code-lang">Complete Program — heap.c</span></div>
+      <pre><span class="kw">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+
+<span class="kw">#define</span> MAX_SIZE <span class="nu">100</span>
+<span class="kw">#define</span> PARENT(i)      (((i) - 1) / 2)
+<span class="kw">#define</span> LEFT_CHILD(i)  (2 * (i) + 1)
+<span class="kw">#define</span> RIGHT_CHILD(i) (2 * (i) + 2)
+
+<span class="kw">typedef struct</span> { <span class="ty">int</span> data[MAX_SIZE]; <span class="ty">int</span> size, capacity; } MaxHeap;
+
+<span class="ty">void</span> <span class="fn">swap</span>(<span class="ty">int</span> *a, <span class="ty">int</span> *b) { <span class="ty">int</span> t=*a; *a=*b; *b=t; }
+<span class="ty">void</span> <span class="fn">initHeap</span>(MaxHeap *h,<span class="ty">int</span> cap) { h->size=<span class="nu">0</span>; h->capacity=cap; }
+<span class="ty">int</span>  <span class="fn">isEmpty</span>(MaxHeap *h) { <span class="kw">return</span> h->size==<span class="nu">0</span>; }
+<span class="ty">int</span>  <span class="fn">isFull</span>(MaxHeap *h) { <span class="kw">return</span> h->size==h->capacity; }
+<span class="ty">int</span>  <span class="fn">getSize</span>(MaxHeap *h) { <span class="kw">return</span> h->size; }
+<span class="ty">int</span>  <span class="fn">peekMax</span>(MaxHeap *h) { <span class="kw">return</span> <span class="fn">isEmpty</span>(h) ? -<span class="nu">1</span> : h->data[<span class="nu">0</span>]; }
+
+<span class="ty">void</span> <span class="fn">heapifyUp</span>(MaxHeap *h, <span class="ty">int</span> i) {
+    <span class="kw">while</span>(i><span class="nu">0</span>&&h->data[i]>h->data[PARENT(i)])
+        {<span class="fn">swap</span>(&h->data[i],&h->data[PARENT(i)]); i=PARENT(i);}
+}
+
+<span class="ty">void</span> <span class="fn">heapifyDown</span>(MaxHeap *h, <span class="ty">int</span> i) {
+    <span class="ty">int</span> lg=i, l=LEFT_CHILD(i), r=RIGHT_CHILD(i);
+    <span class="kw">if</span>(l<h->size&&h->data[l]>h->data[lg]) lg=l;
+    <span class="kw">if</span>(r<h->size&&h->data[r]>h->data[lg]) lg=r;
+    <span class="kw">if</span>(lg!=i){<span class="fn">swap</span>(&h->data[i],&h->data[lg]); <span class="fn">heapifyDown</span>(h,lg);}
+}
+
+<span class="ty">void</span> <span class="fn">insert</span>(MaxHeap *h, <span class="ty">int</span> v) {
+    <span class="kw">if</span>(<span class="fn">isFull</span>(h)){printf(<span class="st">"Full!\n"</span>);<span class="kw">return</span>;}
+    h->data[h->size++]=v;
+    <span class="fn">heapifyUp</span>(h,h->size-<span class="nu">1</span>);
+}
+
+<span class="ty">int</span> <span class="fn">extractMax</span>(MaxHeap *h) {
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>(h)){printf(<span class="st">"Empty!\n"</span>);<span class="kw">return</span>-<span class="nu">1</span>;}
+    <span class="ty">int</span> max=h->data[<span class="nu">0</span>];
+    h->data[<span class="nu">0</span>]=h->data[--h->size];
+    <span class="kw">if</span>(h->size><span class="nu">0</span>) <span class="fn">heapifyDown</span>(h,<span class="nu">0</span>);
+    <span class="kw">return</span> max;
+}
+
+<span class="ty">void</span> <span class="fn">buildMaxHeap</span>(MaxHeap *h, <span class="ty">int</span> arr[], <span class="ty">int</span> n) {
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="nu">0</span>;i<n;i++) h->data[i]=arr[i];
+    h->size=n;
+    <span class="kw">for</span>(<span class="ty">int</span> i=n/<span class="nu">2</span>-<span class="nu">1</span>;i>=<span class="nu">0</span>;i--) <span class="fn">heapifyDown</span>(h,i);
+}
+
+<span class="ty">void</span> <span class="fn">traverseHeap</span>(MaxHeap *h) {
+    printf(<span class="st">"Heap: "</span>);
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="nu">0</span>;i<h->size;i++) printf(<span class="st">"%d "</span>,h->data[i]);
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="ty">int</span> <span class="fn">main</span>() {
+    MaxHeap h;
+    <span class="fn">initHeap</span>(&h, MAX_SIZE);
+
+    <span class="cm">/* Insert elements */</span>
+    <span class="ty">int</span> arr[]={<span class="nu">15</span>,<span class="nu">10</span>,<span class="nu">8</span>,<span class="nu">5</span>,<span class="nu">3</span>,<span class="nu">12</span>,<span class="nu">20</span>};
+    <span class="fn">buildMaxHeap</span>(&h, arr, <span class="nu">7</span>);
+    <span class="fn">traverseHeap</span>(&h);
+
+    printf(<span class="st">"Max: %d\n"</span>, <span class="fn">peekMax</span>(&h));
+    printf(<span class="st">"Size: %d\n"</span>, <span class="fn">getSize</span>(&h));
+
+    <span class="fn">insert</span>(&h, <span class="nu">25</span>);
+    <span class="fn">traverseHeap</span>(&h);
+
+    printf(<span class="st">"Extract: %d\n"</span>, <span class="fn">extractMax</span>(&h));
+    <span class="fn">traverseHeap</span>(&h);
+
+    <span class="kw">return</span> <span class="nu">0</span>;
+}</pre>
+    </div>
+  </section>
+
+  <div style="height:60px;"></div>
+</main>
+
+<script>
+// ── NAVIGATION ──────────────────────────────────
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+}
+
+window.addEventListener('scroll', () => {
+  const el = document.getElementById('progressBar');
+  const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  el.style.width = pct + '%';
+
+  // Update active nav
+  document.querySelectorAll('.section').forEach(sec => {
+    const rect = sec.getBoundingClientRect();
+    if (rect.top <= 80 && rect.bottom >= 80) {
+      const id = sec.id;
+      document.querySelectorAll('.nav-item').forEach(nav => {
+        nav.classList.toggle('active', nav.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+});
+
+// ── HEAP DATA STRUCTURE ───────────────────────────
+class MaxHeap {
+  constructor() { this.data = []; }
+  get size() { return this.data.length; }
+  parent(i) { return Math.floor((i - 1) / 2); }
+  left(i) { return 2 * i + 1; }
+  right(i) { return 2 * i + 2; }
+  swap(i, j) { [this.data[i], this.data[j]] = [this.data[j], this.data[i]]; }
+
+  insert(v) {
+    this.data.push(v);
+    let i = this.data.length - 1;
+    while (i > 0) {
+      const p = this.parent(i);
+      if (this.data[i] > this.data[p]) { this.swap(i, p); i = p; }
+      else break;
+    }
+  }
+
+  heapifyDown(i) {
+    let largest = i;
+    const l = this.left(i), r = this.right(i);
+    if (l < this.size && this.data[l] > this.data[largest]) largest = l;
+    if (r < this.size && this.data[r] > this.data[largest]) largest = r;
+    if (largest !== i) { this.swap(i, largest); this.heapifyDown(largest); }
+  }
+
+  extractMax() {
+    if (this.size === 0) return null;
+    const max = this.data[0];
+    this.data[0] = this.data[this.size - 1];
+    this.data.pop();
+    if (this.size > 0) this.heapifyDown(0);
+    return max;
+  }
+
+  buildFrom(arr) {
+    this.data = [...arr];
+    for (let i = Math.floor(this.size / 2) - 1; i >= 0; i--) this.heapifyDown(i);
+  }
+
+  clone() { const h = new MaxHeap(); h.data = [...this.data]; return h; }
+}
+
+// ── CANVAS DRAWING ────────────────────────────────
+function drawHeap(canvas, heap, highlightIdx = -1, flashIdx = -1) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth;
+  canvas.width = W;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const data = heap.data;
+  const n = data.length;
+  if (n === 0) {
+    ctx.fillStyle = '#475569';
+    ctx.font = '14px Nunito, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Heap is empty', W / 2, H / 2);
+    return;
+  }
+
+  const levels = Math.floor(Math.log2(n)) + 1;
+  const nodeR = Math.min(22, (W / (Math.pow(2, levels - 1) * 2.2)));
+  const levelH = (H - 20) / levels;
+
+  function getPos(i) {
+    const level = Math.floor(Math.log2(i + 1));
+    const levelStart = Math.pow(2, level) - 1;
+    const posInLevel = i - levelStart;
+    const totalInLevel = Math.pow(2, level);
+    const x = W * (posInLevel + 0.5) / totalInLevel;
+    const y = 24 + level * levelH;
+    return { x, y };
+  }
+
+  // Draw edges
+  for (let i = 1; i < n; i++) {
+    const { x, y } = getPos(i);
+    const { x: px, y: py } = getPos(Math.floor((i - 1) / 2));
+    ctx.strokeStyle = '#1e3a5f';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (let i = 0; i < n; i++) {
+    const { x, y } = getPos(i);
+    const isRoot = i === 0;
+    const isHL = i === highlightIdx;
+    const isFlash = i === flashIdx;
+
+    ctx.beginPath();
+    ctx.arc(x, y, nodeR, 0, Math.PI * 2);
+
+    if (isFlash) {
+      ctx.fillStyle = '#f43f5e';
+      ctx.strokeStyle = '#fca5a5';
+    } else if (isHL) {
+      ctx.fillStyle = '#1d4ed8';
+      ctx.strokeStyle = '#60a5fa';
+    } else if (isRoot) {
+      ctx.fillStyle = '#92400e';
+      ctx.strokeStyle = '#f59e0b';
+    } else {
+      ctx.fillStyle = '#1e3a5f';
+      ctx.strokeStyle = '#2563eb';
+    }
+    ctx.lineWidth = 2;
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = isRoot ? '#fbbf24' : '#e2e8f0';
+    ctx.font = `bold ${nodeR > 16 ? 13 : 11}px JetBrains Mono, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(data[i], x, y);
+
+    // Index label
+    ctx.fillStyle = '#475569';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.fillText(`[${i}]`, x, y + nodeR + 9);
+  }
+}
+
+function drawArray(containerId, heap, rootColor = true) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  heap.data.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'array-cell';
+    const valDiv = document.createElement('div');
+    valDiv.className = 'array-val' + (i === 0 && rootColor ? ' root-val' : '');
+    valDiv.textContent = val;
+    const idxDiv = document.createElement('div');
+    idxDiv.className = 'array-idx';
+    idxDiv.textContent = `[${i}]`;
+    cell.appendChild(valDiv);
+    cell.appendChild(idxDiv);
+    container.appendChild(cell);
+  });
+}
+
+// ── CONCEPT VISUALIZER ─────────────────────────────
+const conceptHeap = new MaxHeap();
+[50, 30, 40, 10, 20, 35, 25].forEach(v => conceptHeap.insert(v));
+
+function initConceptViz() {
+  const canvas = document.getElementById('conceptCanvas');
+  if (!canvas) return;
+  canvas.height = 240;
+  drawHeap(canvas, conceptHeap);
+  drawArray('conceptArray', conceptHeap);
+}
+
+// ── INSERT VISUALIZER ─────────────────────────────
+const insertHeap = new MaxHeap();
+[45, 30, 25, 15, 20].forEach(v => insertHeap.insert(v));
+
+function initInsertViz() {
+  const canvas = document.getElementById('insertCanvas');
+  if (!canvas) return;
+  drawHeap(canvas, insertHeap);
+  drawArray('insertArray', insertHeap);
+}
+
+function setLog(id, msg, color = '#10b981') {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+function vizInsert() {
+  const input = document.getElementById('insertVal');
+  const v = parseInt(input.value);
+  if (isNaN(v) || v < 1 || v > 999) { setLog('insertLog', '⚠ Enter a valid number (1–999)', '#f59e0b'); return; }
+  if (insertHeap.size >= 15) { setLog('insertLog', '⚠ Heap full (demo limit 15). Extract or Reset.', '#f43f5e'); return; }
+  insertHeap.insert(v);
+  const canvas = document.getElementById('insertCanvas');
+  drawHeap(canvas, insertHeap, insertHeap.size - 1);
+  drawArray('insertArray', insertHeap);
+  setLog('insertLog', `✓ Inserted ${v}. Heap size: ${insertHeap.size}. Max: ${insertHeap.data[0]}`);
+  input.value = '';
+}
+
+function vizExtract() {
+  if (insertHeap.size === 0) { setLog('insertLog', '⚠ Heap is empty!', '#f43f5e'); return; }
+  const max = insertHeap.extractMax();
+  const canvas = document.getElementById('insertCanvas');
+  drawHeap(canvas, insertHeap, 0);
+  drawArray('insertArray', insertHeap);
+  setLog('insertLog', `✓ Extracted maximum: ${max}. Heap size: ${insertHeap.size}.`, '#f43f5e');
+}
+
+function vizReset() {
+  insertHeap.data = [];
+  [45, 30, 25, 15, 20].forEach(v => insertHeap.insert(v));
+  const canvas = document.getElementById('insertCanvas');
+  drawHeap(canvas, insertHeap);
+  drawArray('insertArray', insertHeap);
+  setLog('insertLog', '↺ Reset to default heap.', '#64748b');
+}
+
+// ── BUILD HEAP VISUALIZER ─────────────────────────
+let buildRawArr = [];
+const buildH = new MaxHeap();
+
+function randArr() {
+  buildRawArr = [];
+  for (let i = 0; i < 7; i++) buildRawArr.push(Math.floor(Math.random() * 90) + 5);
+  buildH.data = [...buildRawArr];
+  const canvas = document.getElementById('buildCanvas');
+  if (canvas) { drawHeap(canvas, buildH); drawArray('buildArray', buildH, false); }
+  setLog('buildLog', `Random array: [${buildRawArr.join(', ')}] — Not a valid max heap yet.`, '#64748b');
+}
+
+function buildReset() { randArr(); }
+
+function buildHeapViz() {
+  buildH.buildFrom(buildRawArr);
+  const canvas = document.getElementById('buildCanvas');
+  if (canvas) {
+    drawHeap(canvas, buildH);
+    drawArray('buildArray', buildH);
+  }
+  setLog('buildLog', `✓ Built! Array: [${buildH.data.join(', ')}] — Valid max heap. Root (max): ${buildH.data[0]}`);
+}
+
+// ── PQ VIEW VISUALIZER ──────────────────────────────
+const pqH = new MaxHeap();
+[55, 40, 30, 25, 35, 20, 15].forEach(v => pqH.insert(v));
+
+function initPqViz() {
+  const canvas = document.getElementById('pqCanvas');
+  if (!canvas) return;
+  drawHeap(canvas, pqH);
+}
+
+function pqReset() {
+  pqH.data = [];
+  [55, 40, 30, 25, 35, 20, 15].forEach(v => pqH.insert(v));
+  const canvas = document.getElementById('pqCanvas');
+  if (canvas) drawHeap(canvas, pqH);
+  document.getElementById('pqOrder').innerHTML = '';
+  setLog('pqLog', 'Click "Show Priority Order" to see elements from highest to lowest.', '#64748b');
+}
+
+function pqViewExtract() {
+  const copy = pqH.clone();
+  const order = [];
+  while (copy.size > 0) order.push(copy.extractMax());
+
+  const container = document.getElementById('pqOrder');
+  container.innerHTML = '';
+  order.forEach((v, i) => {
+    const chip = document.createElement('div');
+    chip.style.cssText = `
+      background:rgba(245,158,11,${0.25 - i*0.02});
+      border:1px solid rgba(245,158,11,0.35);
+      color:#fbbf24;
+      padding:6px 14px;
+      border-radius:20px;
+      font-family:'JetBrains Mono',monospace;
+      font-size:13px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      animation: fadeIn 0.3s ease ${i*0.08}s both;
+    `;
+    chip.innerHTML = `<span style="color:#475569;font-size:11px;">#${i+1}</span> ${v}`;
+    container.appendChild(chip);
+  });
+
+  setLog('pqLog', `✓ Priority order: ${order.join(' → ')}`, '#10b981');
+}
+
+// ── INIT ─────────────────────────────────────────
+function init() {
+  setTimeout(() => {
+    initConceptViz();
+    initInsertViz();
+    randArr();
+    initPqViz();
+  }, 200);
+}
+
+window.addEventListener('resize', () => {
+  initConceptViz();
+  const ic = document.getElementById('insertCanvas');
+  if (ic) drawHeap(ic, insertHeap);
+  const bc = document.getElementById('buildCanvas');
+  if (bc) drawHeap(bc, buildH);
+  const pc = document.getElementById('pqCanvas');
+  if (pc) drawHeap(pc, pqH);
+});
+
+document.addEventListener('DOMContentLoaded', init);
+
+// Input enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const iv = document.getElementById('insertVal');
+    if (document.activeElement === iv) vizInsert();
+  }
+});
+</script>
+
+<style>
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+</style>
+</body>
+</html>

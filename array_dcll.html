@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Array-Based Doubly Circular Linked List — Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c10;--bg2:#0f1117;--bg3:#151821;--bg4:#1c2030;
+  --border:#252a38;--border2:#2e3448;
+  --cyan:#00d4d8;--cyan2:#00b8bc;--cyan3:#007a7d;
+  --green:#39d98a;--red:#ff5c5c;--yellow:#ffd166;--purple:#a78bfa;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --code-bg:#0d1117;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;display:flex;min-height:100vh;overflow-x:hidden}
+
+/* SIDEBAR */
+#sidebar{width:270px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);position:fixed;top:0;left:0;overflow-y:auto;z-index:100;transition:.3s}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--cyan3);border-radius:4px}
+.sidebar-header{padding:20px 18px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:10}
+.sidebar-header h1{font-size:13px;font-weight:800;color:var(--cyan);letter-spacing:2px;text-transform:uppercase}
+.sidebar-header p{font-size:11px;color:var(--text3);margin-top:4px}
+.nav-section{padding:6px 0}
+.nav-cat{padding:8px 18px 4px;font-size:10px;font-weight:700;color:var(--text3);letter-spacing:2px;text-transform:uppercase}
+.nav-item{display:block;padding:7px 18px 7px 24px;font-size:12px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:.15s;text-decoration:none}
+.nav-item:hover,.nav-item.active{color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,212,216,.05)}
+.nav-parent{display:block;padding:8px 18px;font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;transition:.15s}
+.nav-parent:hover{color:var(--cyan)}
+.badge{display:inline-block;background:var(--cyan3);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:6px;font-weight:700}
+
+/* MAIN */
+#main{margin-left:270px;flex:1;padding:0 0 60px}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.topbar h2{font-size:14px;color:var(--text2)}.topbar span{color:var(--cyan);font-weight:700}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#0f1825 0%,#0a1520 40%,#0d1a2e 100%);border-bottom:1px solid var(--border);padding:52px 48px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 50%,rgba(0,212,216,.08),transparent)}
+.hero-tag{display:inline-block;background:rgba(0,212,216,.12);border:1px solid rgba(0,212,216,.3);color:var(--cyan);font-size:11px;letter-spacing:2px;padding:4px 12px;border-radius:20px;margin-bottom:16px;font-weight:700;text-transform:uppercase}
+.hero h1{font-size:38px;font-weight:800;line-height:1.15;margin-bottom:12px}
+.hero h1 em{font-style:normal;color:var(--cyan)}
+.hero p{font-size:15px;color:var(--text2);max-width:620px;line-height:1.7}
+.hero-stats{display:flex;gap:32px;margin-top:28px}
+.stat{display:flex;flex-direction:column}.stat strong{font-size:22px;font-weight:800;color:var(--cyan)}.stat span{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* SECTION */
+.section{padding:44px 48px;border-bottom:1px solid var(--border)}
+.section-title{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.section-num{width:32px;height:32px;background:var(--cyan);color:#000;font-weight:800;font-size:13px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-title h2{font-size:22px;font-weight:800}
+.section-desc{font-size:14px;color:var(--text2);margin-bottom:28px;margin-left:44px;line-height:1.7}
+
+/* TOPIC CARD */
+.topic-card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;margin-bottom:24px;overflow:hidden}
+.topic-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.topic-icon{width:28px;height:28px;background:rgba(0,212,216,.1);border:1px solid rgba(0,212,216,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.topic-header h3{font-size:16px;font-weight:700}
+.topic-body{padding:22px}
+.tabs{display:flex;gap:2px;margin-bottom:18px;background:var(--bg4);border-radius:10px;padding:3px}
+.tab{flex:1;padding:8px 10px;font-size:12px;font-weight:700;text-align:center;cursor:pointer;border-radius:8px;color:var(--text3);transition:.15s;letter-spacing:.5px;text-transform:uppercase}
+.tab.active{background:var(--bg2);color:var(--cyan);border:1px solid var(--border2)}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* THEORY */
+.theory{font-size:14px;color:var(--text2);line-height:1.8}
+.theory h4{font-size:13px;font-weight:700;color:var(--text);margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.theory ul{padding-left:18px;margin:6px 0}
+.theory li{margin-bottom:4px}
+.theory .note{background:rgba(0,212,216,.07);border-left:3px solid var(--cyan);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:13px}
+.theory .warn{background:rgba(255,209,102,.06);border-left:3px solid var(--yellow);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0;font-size:13px}
+.analogy{background:rgba(57,217,138,.06);border:1px solid rgba(57,217,138,.2);border-radius:10px;padding:14px 18px;font-size:13.5px;line-height:1.7;margin-top:10px}
+.analogy strong{color:var(--green)}
+
+/* CODE */
+.code-block{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7}
+.code-header{background:var(--bg4);padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.dot{width:10px;height:10px;border-radius:50%}
+.code-header span{font-size:11px;color:var(--text3);margin-left:auto;font-family:'JetBrains Mono',monospace}
+pre{padding:16px;overflow-x:auto;color:#cdd6f4}
+.kw{color:#cba6f7}.fn{color:#89b4fa}.cm{color:#6c7086;font-style:italic}.str{color:#a6e3a1}.num{color:#fab387}.ty{color:#89dceb}.pp{color:#f38ba8}
+
+/* VIZ */
+.viz-container{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:16px;min-height:140px;display:flex;flex-direction:column;gap:12px}
+.viz-label{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.viz-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.node{display:flex;flex-direction:column;align-items:center;gap:2px}
+.node-box{background:var(--bg3);border:1px solid var(--cyan3);border-radius:6px;padding:0;display:flex;height:48px;min-width:60px;overflow:hidden;position:relative}
+.node-box.head-node{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,216,.2)}
+.node-box.tail-node{border-color:var(--yellow);box-shadow:0 0 0 2px rgba(255,209,102,.2)}
+.node-box.highlight{border-color:var(--green);box-shadow:0 0 0 2px rgba(57,217,138,.2);animation:pulse .8s ease-in-out infinite alternate}
+.node-box.delete-node{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,92,92,.2)}
+.node-part{flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;border-right:1px solid var(--border)}
+.node-part:last-child{border-right:none}
+.node-part.prev{color:var(--purple);font-size:9px}
+.node-part.data{color:var(--cyan);font-size:13px}
+.node-part.next{color:var(--green);font-size:9px}
+.node-label{font-size:9px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.arr-right{color:var(--green);font-size:18px;line-height:1}
+.arr-left{color:var(--purple);font-size:18px;line-height:1}
+.arr-circ{color:var(--yellow);font-size:14px}
+.viz-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{padding:7px 14px;font-size:12px;font-weight:700;border:1px solid var(--border2);background:var(--bg4);color:var(--text);border-radius:8px;cursor:pointer;transition:.15s;font-family:'Syne',sans-serif;letter-spacing:.5px}
+.btn:hover{background:var(--cyan);color:#000;border-color:var(--cyan)}
+.btn.danger:hover{background:var(--red);border-color:var(--red)}
+.btn.warn:hover{background:var(--yellow);color:#000;border-color:var(--yellow)}
+input.viz-input{padding:7px 12px;font-size:12px;background:var(--bg4);border:1px solid var(--border2);color:var(--text);border-radius:8px;font-family:'JetBrains Mono',monospace;width:70px}
+.viz-msg{font-size:12px;font-family:'JetBrains Mono',monospace;padding:8px 12px;border-radius:8px;margin-top:8px;display:none}
+.viz-msg.ok{background:rgba(57,217,138,.1);color:var(--green);border:1px solid rgba(57,217,138,.25);display:block}
+.viz-msg.err{background:rgba(255,92,92,.1);color:var(--red);border:1px solid rgba(255,92,92,.25);display:block}
+.viz-msg.info{background:rgba(0,212,216,.1);color:var(--cyan);border:1px solid rgba(0,212,216,.25);display:block}
+
+@keyframes pulse{from{opacity:.7}to{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.topic-card{animation:slideIn .3s ease both}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.section{padding:28px 20px}.hero{padding:32px 20px}.hero h1{font-size:26px}#main{margin-left:0}.topbar{padding:14px 20px}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h1>DCLL Guide</h1>
+    <p>Array-Based Doubly Circular LL</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-cat">Foundation</div>
+    <a class="nav-item" href="#s1">1. Basic Operations</a>
+    <a class="nav-item" href="#s2">2. Insertion Operations</a>
+    <a class="nav-item" href="#s3">3. Deletion Operations</a>
+    <div class="nav-cat">Traversal & Search</div>
+    <a class="nav-item" href="#s4">4. Traversal Operations</a>
+    <a class="nav-item" href="#s5">5. Searching Operations</a>
+    <div class="nav-cat">Manipulation</div>
+    <a class="nav-item" href="#s6">6. Update Operations</a>
+    <a class="nav-item" href="#s7">7. Access Operations</a>
+    <a class="nav-item" href="#s8">8. Structural Operations</a>
+    <div class="nav-cat">Link & Circular</div>
+    <a class="nav-item" href="#s9">9. Link Management</a>
+    <a class="nav-item" href="#s10">10. Circular Management</a>
+    <div class="nav-cat">Advanced</div>
+    <a class="nav-item" href="#s11">11. Utility Operations</a>
+    <a class="nav-item" href="#s12">12. Sorting Operations</a>
+    <a class="nav-item" href="#s13">13. Recursive Operations</a>
+    <a class="nav-item" href="#s14">14. Iterative Operations</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <h2>Array-Based <span>Doubly Circular Linked List</span></h2>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">Complete Learning Dashboard</div>
+    <h1>Master the <em>Doubly Circular<br>Linked List</em> — Array Edition</h1>
+    <p>A comprehensive, beginner-to-advanced guide covering every operation with theory, interactive visualizations, C code, and real-life analogies.</p>
+    <div class="hero-stats">
+      <div class="stat"><strong>14</strong><span>Categories</span></div>
+      <div class="stat"><strong>46</strong><span>Operations</span></div>
+      <div class="stat"><strong>C</strong><span>Language</span></div>
+      <div class="stat"><strong>∞</strong><span>Circular</span></div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: BASIC OPERATIONS -->
+  <div class="section" id="s1">
+    <div class="section-title"><div class="section-num">1</div><h2>Basic Operations</h2></div>
+    <div class="section-desc">The foundation — understanding what an array-based doubly circular linked list is, how to set it up, and how to check its state.</div>
+
+    <!-- 1.1 Create List -->
+    <div class="topic-card" id="t1-1">
+      <div class="topic-header"><div class="topic-icon">🏗️</div><h3>1.1 Create List</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-1-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-1-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-1-1')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-1-1')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-1-1">
+          <div class="theory">
+            <p>An <strong>Array-Based Doubly Circular Linked List (DCLL)</strong> stores nodes in a fixed-size array. Each node has three parts:</p>
+            <ul>
+              <li><strong>PREV</strong> — index of the previous node</li>
+              <li><strong>DATA</strong> — the actual value stored</li>
+              <li><strong>NEXT</strong> — index of the next node</li>
+            </ul>
+            <h4>What makes it special?</h4>
+            <ul>
+              <li><strong>Doubly:</strong> You can move forward AND backward between nodes</li>
+              <li><strong>Circular:</strong> The last node's NEXT points back to the first node; first node's PREV points to the last</li>
+              <li><strong>Array-Based:</strong> All nodes live in a single fixed array — no dynamic memory (malloc)</li>
+            </ul>
+            <div class="note">💡 The list uses a <code>head</code> variable (index) to track where the list starts, and a <code>count</code> variable to track how many elements are in it.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-1-1">
+          <div class="viz-container">
+            <div class="viz-label">Structure of the Array (MAX=5)</div>
+            <div class="viz-row" id="create-viz">
+              <div style="font-size:13px;color:var(--text3);font-family:'JetBrains Mono',monospace;padding:20px 0">Click "Create List" to initialize the structure</div>
+            </div>
+            <div class="viz-controls">
+              <button class="btn" onclick="doCreateViz()">Create List</button>
+            </div>
+            <div id="create-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-1-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>create_list.c</span></div>
+            <pre><span class="pp">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+
+<span class="pp">#define</span> <span class="num">MAX</span> <span class="num">10</span>   <span class="cm">/* Maximum nodes the list can hold */</span>
+
+<span class="cm">/* Node structure stored in array */</span>
+<span class="kw">struct</span> <span class="ty">Node</span> {
+    <span class="kw">int</span> prev;   <span class="cm">/* index of previous node */</span>
+    <span class="kw">int</span> data;   <span class="cm">/* actual data value */</span>
+    <span class="kw">int</span> next;   <span class="cm">/* index of next node */</span>
+};
+
+<span class="cm">/* Global array and control variables */</span>
+<span class="kw">struct</span> <span class="ty">Node</span> list[MAX];
+<span class="kw">int</span> head = -<span class="num">1</span>;   <span class="cm">/* -1 means empty */</span>
+<span class="kw">int</span> count = <span class="num">0</span>;  <span class="cm">/* number of elements */</span>
+
+<span class="cm">/* Create: just declare the array above — nothing else needed! */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="fn">printf</span>(<span class="str">"Array-based DCLL created.\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"Capacity: %d nodes\n"</span>, MAX);
+    <span class="fn">printf</span>(<span class="str">"Head = %d (empty)\n"</span>, head);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-1-1">
+          <div class="analogy"><strong>🚂 Real-Life Analogy:</strong> Think of a train with a fixed number of seats (the array). The train is circular — the last car connects back to the first. Each seat has a tag pointing to the seat in front and behind. <em>"Creating the list"</em> is like building the empty train before any passengers board.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.2 Initialize -->
+    <div class="topic-card" id="t1-2">
+      <div class="topic-header"><div class="topic-icon">🔧</div><h3>1.2 Initialize List</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-1-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-1-2')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-1-2')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-1-2')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-1-2">
+          <div class="theory">
+            <p>Initialization sets all node fields to a sentinel value (usually -1 for pointers and 0 for data) so we know which slots are free.</p>
+            <h4>Steps:</h4>
+            <ul>
+              <li>Loop through all MAX positions in the array</li>
+              <li>Set each node's <code>prev = -1</code>, <code>data = 0</code>, <code>next = -1</code></li>
+              <li>Set <code>head = -1</code> and <code>count = 0</code></li>
+            </ul>
+            <div class="note">💡 <code>-1</code> is used as a NULL equivalent since we can't use pointers in an array-based list.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-1-2">
+          <div class="viz-container">
+            <div class="viz-label">Before vs After Initialization</div>
+            <div style="color:var(--text3);font-size:12px;margin-bottom:6px">Before: random/garbage values → After: all slots = [-1 | 0 | -1]</div>
+            <div class="viz-row" id="init-viz"></div>
+            <div class="viz-controls"><button class="btn" onclick="doInitViz()">Initialize</button></div>
+            <div id="init-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-1-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>init_list.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">initList</span>() {
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX; i++) {
+        list[i].prev = -<span class="num">1</span>;  <span class="cm">/* no prev node */</span>
+        list[i].data = <span class="num">0</span>;    <span class="cm">/* empty data */</span>
+        list[i].next = -<span class="num">1</span>;  <span class="cm">/* no next node */</span>
+    }
+    head  = -<span class="num">1</span>;  <span class="cm">/* list is empty */</span>
+    count = <span class="num">0</span>;   <span class="cm">/* zero elements */</span>
+    <span class="fn">printf</span>(<span class="str">"List initialized. All slots cleared.\n"</span>);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-1-2">
+          <div class="analogy"><strong>🧹 Real-Life Analogy:</strong> Initializing is like cleaning a whiteboard before writing. Each slot on the whiteboard is wiped clean so you can clearly see what's empty and what has data later.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.3 Check Empty -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">📭</div><h3>1.3 Check Empty</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-1-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-1-3')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-1-3')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-1-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-1-3">
+          <div class="theory">
+            <p>The list is <strong>empty</strong> if <code>head == -1</code> OR <code>count == 0</code>. This check is crucial before any deletion or traversal to prevent errors.</p>
+            <div class="note">✅ Always check isEmpty() before Delete, Peek, or Traversal operations!</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-1-3">
+          <div class="viz-container">
+            <div class="viz-label">Empty Check Demo</div>
+            <div id="empty-viz" style="font-size:13px;color:var(--text3);font-family:'JetBrains Mono',monospace">head = -1 → List is EMPTY</div>
+            <div class="viz-controls">
+              <button class="btn" onclick="checkEmptyViz(true)">Test Empty List</button>
+              <button class="btn" onclick="checkEmptyViz(false)">Test Non-Empty</button>
+            </div>
+            <div id="empty-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-1-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>check_empty.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">isEmpty</span>() {
+    <span class="kw">return</span> (head == -<span class="num">1</span>);  <span class="cm">/* 1 = empty, 0 = not empty */</span>
+}
+
+<span class="kw">void</span> <span class="fn">checkEmpty</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+        <span class="fn">printf</span>(<span class="str">"List is EMPTY.\n"</span>);
+    } <span class="kw">else</span> {
+        <span class="fn">printf</span>(<span class="str">"List has %d element(s).\n"</span>, count);
+    }
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-1-3">
+          <div class="analogy"><strong>📬 Real-Life Analogy:</strong> Checking if a mailbox is empty before trying to take out letters. If the mailbox flag (head) is down (-1), there's nothing inside.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.4 Check Full -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">📦</div><h3>1.4 Check Full</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-1-4')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-1-4')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-1-4')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-1-4')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-1-4">
+          <div class="theory">
+            <p>The list is <strong>full</strong> if <code>count == MAX</code>. Since we use a fixed array, we cannot add more nodes when all slots are occupied.</p>
+            <div class="warn">⚠️ Always check isFull() before any insertion to avoid overwriting data!</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-1-4">
+          <div class="viz-container">
+            <div class="viz-label">Full Check (MAX = 5)</div>
+            <div id="full-viz" class="viz-row"></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="checkFullViz()">Fill & Check</button>
+              <button class="btn danger" onclick="resetFullViz()">Reset</button>
+            </div>
+            <div id="full-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-1-4">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>check_full.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">isFull</span>() {
+    <span class="kw">return</span> (count == MAX);  <span class="cm">/* 1 = full, 0 = not full */</span>
+}
+
+<span class="kw">void</span> <span class="fn">checkFull</span>() {
+    <span class="kw">if</span> (<span class="fn">isFull</span>()) {
+        <span class="fn">printf</span>(<span class="str">"List is FULL! Cannot insert.\n"</span>);
+    } <span class="kw">else</span> {
+        <span class="fn">printf</span>(<span class="str">"Space available: %d slot(s).\n"</span>, MAX - count);
+    }
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-1-4">
+          <div class="analogy"><strong>🎡 Real-Life Analogy:</strong> Like a parking lot with a fixed number of spaces. When all spots are taken (count == MAX), a "FULL" sign lights up at the entrance and no new cars can enter.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: INSERTION -->
+  <div class="section" id="s2">
+    <div class="section-title"><div class="section-num">2</div><h2>Insertion Operations</h2></div>
+    <div class="section-desc">Adding nodes to the list at various positions while maintaining the doubly-linked and circular structure.</div>
+
+    <!-- 2.1 Insert at Front -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">⬅️</div><h3>2.1 Insert at Front</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-2-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-2-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-2-1')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-2-1')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-2-1">
+          <div class="theory">
+            <p>Inserting at the front means the new node becomes the new <code>head</code>. Steps:</p>
+            <ul>
+              <li>Find a free slot in the array</li>
+              <li>Store data in that slot</li>
+              <li>Set new node's NEXT = old head</li>
+              <li>Set old head's PREV = new node index</li>
+              <li>Find the tail (head's PREV before update) and connect it to new node</li>
+              <li>Set new node's PREV = tail index</li>
+              <li>Update head = new node index</li>
+            </ul>
+            <div class="note">💡 For the very first node, it points to itself: PREV = NEXT = its own index.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-2-1">
+          <div class="viz-container">
+            <div class="viz-label">Insert at Front</div>
+            <div class="viz-row" id="ins-front-viz" style="min-height:60px;align-items:center">
+              <span style="color:var(--text3);font-size:13px">List is empty — insert first!</span>
+            </div>
+            <div class="viz-controls">
+              <input class="viz-input" id="ins-front-val" type="number" placeholder="value" value="10">
+              <button class="btn" onclick="doInsFront()">Insert Front</button>
+              <button class="btn danger" onclick="resetInsFront()">Reset</button>
+            </div>
+            <div id="ins-front-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-2-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>insert_front.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">insertFront</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> i, newNode = -<span class="num">1</span>, tail;
+
+    <span class="kw">if</span> (<span class="fn">isFull</span>()) { <span class="fn">printf</span>(<span class="str">"List full!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cm">/* Step 1: Find a free slot */</span>
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX; i++) {
+        <span class="kw">if</span> (list[i].data == <span class="num">0</span> &amp;&amp; list[i].next == -<span class="num">1</span>) {
+            newNode = i; <span class="kw">break</span>;
+        }
+    }
+
+    list[newNode].data = val;
+
+    <span class="kw">if</span> (head == -<span class="num">1</span>) {         <span class="cm">/* Case 1: Empty list */</span>
+        list[newNode].prev = newNode; <span class="cm">/* points to itself */</span>
+        list[newNode].next = newNode;
+        head = newNode;
+    } <span class="kw">else</span> {                  <span class="cm">/* Case 2: Non-empty */</span>
+        tail = list[head].prev;
+        list[newNode].next = head;
+        list[newNode].prev = tail;
+        list[head].prev    = newNode;
+        list[tail].next    = newNode;
+        head = newNode;
+    }
+    count++;
+    <span class="fn">printf</span>(<span class="str">"Inserted %d at front.\n"</span>, val);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-2-1">
+          <div class="analogy"><strong>🎪 Real-Life Analogy:</strong> Like a person joining a circular conga line at the front. They grab the shoulder of the current front person and the last person grabs their shoulder — the circle is maintained!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.2 Insert at Rear -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">➡️</div><h3>2.2 Insert at Rear</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-2-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-2-2')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-2-2')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-2-2')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-2-2">
+          <div class="theory">
+            <p>Inserting at the rear adds the new node just before the head (since it's circular, rear → head). The key difference from front insertion: head does NOT change.</p>
+            <ul>
+              <li>Find free slot, store data</li>
+              <li>tail = list[head].prev (current last node)</li>
+              <li>newNode.prev = tail, newNode.next = head</li>
+              <li>tail.next = newNode, head.prev = newNode</li>
+              <li>head stays the same!</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-2-2">
+          <div class="viz-container">
+            <div class="viz-label">Insert at Rear</div>
+            <div class="viz-row" id="ins-rear-viz" style="min-height:60px;align-items:center">
+              <span style="color:var(--text3);font-size:13px">List is empty — insert first!</span>
+            </div>
+            <div class="viz-controls">
+              <input class="viz-input" id="ins-rear-val" type="number" placeholder="value" value="10">
+              <button class="btn" onclick="doInsRear()">Insert Rear</button>
+              <button class="btn danger" onclick="resetInsRear()">Reset</button>
+            </div>
+            <div id="ins-rear-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-2-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>insert_rear.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">insertRear</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> i, newNode = -<span class="num">1</span>, tail;
+
+    <span class="kw">if</span> (<span class="fn">isFull</span>()) { <span class="fn">printf</span>(<span class="str">"List full!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX; i++) {
+        <span class="kw">if</span> (list[i].data == <span class="num">0</span> &amp;&amp; list[i].next == -<span class="num">1</span>) {
+            newNode = i; <span class="kw">break</span>;
+        }
+    }
+    list[newNode].data = val;
+
+    <span class="kw">if</span> (head == -<span class="num">1</span>) {
+        list[newNode].prev = newNode;
+        list[newNode].next = newNode;
+        head = newNode;
+    } <span class="kw">else</span> {
+        tail = list[head].prev;  <span class="cm">/* find tail */</span>
+        list[newNode].next = head;
+        list[newNode].prev = tail;
+        list[tail].next   = newNode;
+        list[head].prev   = newNode;
+        <span class="cm">/* head does NOT change */</span>
+    }
+    count++;
+    <span class="fn">printf</span>(<span class="str">"Inserted %d at rear.\n"</span>, val);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-2-2">
+          <div class="analogy"><strong>🎢 Real-Life Analogy:</strong> Like joining a circular queue at the back. The last person in line holds your hand, and you hold the hand of the first person — the circle never breaks!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.3 Insert Before Position -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">↩️</div><h3>2.3 Insert Before Position</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-2-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-2-3')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-2-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-2-3">
+          <div class="theory">
+            <p>Insert a new node before the node at a given position (1-based). Traverse to position, then link the new node before it.</p>
+            <ul>
+              <li>If pos==1 → same as Insert at Front</li>
+              <li>Otherwise traverse to node at (pos-1)</li>
+              <li>newNode.next = current; newNode.prev = current.prev</li>
+              <li>current.prev.next = newNode; current.prev = newNode</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tab-content" id="code-2-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>insert_before.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">insertBefore</span>(<span class="kw">int</span> pos, <span class="kw">int</span> val) {
+    <span class="kw">int</span> i, newNode = -<span class="num">1</span>, curr, prevNode, step;
+
+    <span class="kw">if</span> (<span class="fn">isFull</span>() || <span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Error!\n"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos == <span class="num">1</span>) { <span class="fn">insertFront</span>(val); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos &lt; <span class="num">1</span> || pos &gt; count) { <span class="fn">printf</span>(<span class="str">"Invalid pos!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX; i++)
+        <span class="kw">if</span> (list[i].data == <span class="num">0</span> &amp;&amp; list[i].next == -<span class="num">1</span>) { newNode = i; <span class="kw">break</span>; }
+
+    list[newNode].data = val;
+
+    <span class="cm">/* Traverse to the node at 'pos' */</span>
+    curr = head;
+    <span class="kw">for</span> (step = <span class="num">1</span>; step &lt; pos; step++)
+        curr = list[curr].next;
+
+    prevNode = list[curr].prev;
+    list[newNode].next  = curr;
+    list[newNode].prev  = prevNode;
+    list[prevNode].next = newNode;
+    list[curr].prev     = newNode;
+    count++;
+    <span class="fn">printf</span>(<span class="str">"Inserted %d before position %d.\n"</span>, val, pos);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-2-3">
+          <div class="analogy"><strong>🎬 Real-Life Analogy:</strong> Like cutting in line before position 3. You tap person 3 on the shoulder, stand behind person 2 and in front of person 3, and everyone adjusts who they're holding hands with.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.4 Insert After Position -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">↪️</div><h3>2.4 Insert After Position</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-2-4')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-2-4')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-2-4')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-2-4">
+          <div class="theory">
+            <p>Insert a new node after the node at a given position. Similar to before, but links differently.</p>
+            <ul>
+              <li>Traverse to node at position <code>pos</code></li>
+              <li>newNode.prev = curr; newNode.next = curr.next</li>
+              <li>curr.next.prev = newNode; curr.next = newNode</li>
+              <li>If inserted after last node → same as Insert at Rear</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tab-content" id="code-2-4">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>insert_after.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">insertAfter</span>(<span class="kw">int</span> pos, <span class="kw">int</span> val) {
+    <span class="kw">int</span> i, newNode = -<span class="num">1</span>, curr, nextNode, step;
+
+    <span class="kw">if</span> (<span class="fn">isFull</span>() || <span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Error!\n"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos &lt; <span class="num">1</span> || pos &gt; count) { <span class="fn">printf</span>(<span class="str">"Invalid pos!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX; i++)
+        <span class="kw">if</span> (list[i].data == <span class="num">0</span> &amp;&amp; list[i].next == -<span class="num">1</span>) { newNode = i; <span class="kw">break</span>; }
+
+    list[newNode].data = val;
+    curr = head;
+    <span class="kw">for</span> (step = <span class="num">1</span>; step &lt; pos; step++)
+        curr = list[curr].next;
+
+    nextNode = list[curr].next;
+    list[newNode].prev  = curr;
+    list[newNode].next  = nextNode;
+    list[curr].next     = newNode;
+    list[nextNode].prev = newNode;
+    count++;
+    <span class="fn">printf</span>(<span class="str">"Inserted %d after position %d.\n"</span>, val, pos);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-2-4">
+          <div class="analogy"><strong>🚶 Real-Life Analogy:</strong> Like inserting yourself into a circular dance line after position 2. You stand right after person 2, take their right hand, and offer your left hand to person 3. The circle is complete again.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: DELETION -->
+  <div class="section" id="s3">
+    <div class="section-title"><div class="section-num">3</div><h2>Deletion Operations</h2></div>
+    <div class="section-desc">Removing nodes from the list while properly relinking the remaining nodes to preserve the doubly-circular structure.</div>
+
+    <div class="grid2">
+    <!-- 3.1 Delete Front -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🗑️</div><h3>3.1 Delete Front</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-3-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-3-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-3-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-3-1">
+          <div class="theory">
+            <p>Remove the node at head. Steps:</p>
+            <ul><li>If only 1 node: set head=-1</li><li>Else: tail = list[head].prev</li><li>new head = list[head].next</li><li>list[newHead].prev = tail; list[tail].next = newHead</li><li>Clear old head slot; head = newHead</li></ul>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-3-1">
+          <div class="viz-container" style="min-height:120px">
+            <div class="viz-label">Delete Front</div>
+            <div class="viz-row" id="del-front-viz" style="min-height:50px;align-items:center"><span style="color:var(--text3);font-size:12px">Add nodes first</span></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="delFrontAdd()">Add Node</button>
+              <button class="btn danger" onclick="delFrontDel()">Delete Front</button>
+            </div>
+            <div id="del-front-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-3-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>del_front.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">deleteFront</span>() {
+    <span class="kw">int</span> tail, newHead;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="fn">printf</span>(<span class="str">"Deleted: %d\n"</span>, list[head].data);
+
+    <span class="kw">if</span> (count == <span class="num">1</span>) {
+        list[head].data = <span class="num">0</span>;
+        list[head].prev = list[head].next = -<span class="num">1</span>;
+        head = -<span class="num">1</span>;
+    } <span class="kw">else</span> {
+        tail    = list[head].prev;
+        newHead = list[head].next;
+        list[newHead].prev = tail;
+        list[tail].next    = newHead;
+        list[head].data = <span class="num">0</span>;
+        list[head].prev = list[head].next = -<span class="num">1</span>;
+        head = newHead;
+    }
+    count--;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3.2 Delete Rear -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🗑️</div><h3>3.2 Delete Rear</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-3-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-3-2')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-3-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-3-2">
+          <div class="theory">
+            <p>Remove the tail node (the node just before head).</p>
+            <ul><li>tail = list[head].prev</li><li>newTail = list[tail].prev</li><li>list[newTail].next = head; list[head].prev = newTail</li><li>Clear tail slot; count--</li></ul>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-3-2">
+          <div class="viz-container" style="min-height:120px">
+            <div class="viz-label">Delete Rear</div>
+            <div class="viz-row" id="del-rear-viz" style="min-height:50px;align-items:center"><span style="color:var(--text3);font-size:12px">Add nodes first</span></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="delRearAdd()">Add Node</button>
+              <button class="btn danger" onclick="delRearDel()">Delete Rear</button>
+            </div>
+            <div id="del-rear-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-3-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>del_rear.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">deleteRear</span>() {
+    <span class="kw">int</span> tail, newTail;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+
+    tail = list[head].prev;
+    <span class="fn">printf</span>(<span class="str">"Deleted: %d\n"</span>, list[tail].data);
+
+    <span class="kw">if</span> (count == <span class="num">1</span>) {
+        list[head].data = <span class="num">0</span>;
+        list[head].prev = list[head].next = -<span class="num">1</span>;
+        head = -<span class="num">1</span>;
+    } <span class="kw">else</span> {
+        newTail = list[tail].prev;
+        list[newTail].next = head;
+        list[head].prev    = newTail;
+        list[tail].data = <span class="num">0</span>;
+        list[tail].prev = list[tail].next = -<span class="num">1</span>;
+    }
+    count--;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- 3.3 Delete by Value -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🎯</div><h3>3.3 Delete by Value</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-3-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-3-3')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-3-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-3-3">
+          <div class="theory">
+            <p>Search for a node containing a specific value and remove it. Since it's circular, traverse with a do-while loop starting from head.</p>
+            <ul>
+              <li>Traverse until we find the value or wrap back to head</li>
+              <li>If found at head → call deleteFront()</li>
+              <li>Else: prevNode.next = curr.next; curr.next.prev = prevNode</li>
+              <li>Clear the slot</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tab-content" id="code-3-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>del_value.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">deleteByValue</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> curr, prevNode, nextNode;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+
+    curr = head;
+    <span class="kw">do</span> {
+        <span class="kw">if</span> (list[curr].data == val) {
+            <span class="kw">if</span> (curr == head) { <span class="fn">deleteFront</span>(); <span class="kw">return</span>; }
+            prevNode = list[curr].prev;
+            nextNode = list[curr].next;
+            list[prevNode].next = nextNode;
+            list[nextNode].prev = prevNode;
+            list[curr].data = <span class="num">0</span>;
+            list[curr].prev = list[curr].next = -<span class="num">1</span>;
+            count--;
+            <span class="fn">printf</span>(<span class="str">"Deleted value: %d\n"</span>, val);
+            <span class="kw">return</span>;
+        }
+        curr = list[curr].next;
+    } <span class="kw">while</span> (curr != head);
+
+    <span class="fn">printf</span>(<span class="str">"Value %d not found.\n"</span>, val);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-3-3">
+          <div class="analogy"><strong>🔍 Real-Life Analogy:</strong> Like finding a specific person by name in a circular conga line, removing them, and having the people on either side join hands with each other to keep the line intact.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3.4 Delete Specific Position -->
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">📍</div><h3>3.4 Delete Specific Position</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-3-4')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-3-4')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-3-4')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-3-4">
+          <div class="theory">
+            <p>Remove the node at a specific 1-based position. Traverse to that position, then unlink and clear it.</p>
+            <ul><li>pos==1 → deleteFront(); pos==count → deleteRear()</li><li>Else traverse to that position and unlink</li></ul>
+          </div>
+        </div>
+        <div class="tab-content" id="code-3-4">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>del_pos.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">deletePosition</span>(<span class="kw">int</span> pos) {
+    <span class="kw">int</span> curr, prevNode, nextNode, step;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos &lt; <span class="num">1</span> || pos &gt; count) { <span class="fn">printf</span>(<span class="str">"Invalid!\n"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos == <span class="num">1</span>) { <span class="fn">deleteFront</span>(); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos == count) { <span class="fn">deleteRear</span>(); <span class="kw">return</span>; }
+
+    curr = head;
+    <span class="kw">for</span> (step = <span class="num">1</span>; step &lt; pos; step++)
+        curr = list[curr].next;
+
+    prevNode = list[curr].prev;
+    nextNode = list[curr].next;
+    list[prevNode].next = nextNode;
+    list[nextNode].prev = prevNode;
+    <span class="fn">printf</span>(<span class="str">"Deleted pos %d: %d\n"</span>, pos, list[curr].data);
+    list[curr].data = <span class="num">0</span>;
+    list[curr].prev = list[curr].next = -<span class="num">1</span>;
+    count--;
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-3-4">
+          <div class="analogy"><strong>🎭 Real-Life Analogy:</strong> Like removing seat number 3 from a circular arrangement. The person at seat 2 and seat 4 now sit next to each other, filling the gap.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: TRAVERSAL -->
+  <div class="section" id="s4">
+    <div class="section-title"><div class="section-num">4</div><h2>Traversal Operations</h2></div>
+    <div class="section-desc">Visiting every node in the list in different directions. Traversal is the backbone of most data structure operations.</div>
+
+    <!-- Interactive Traversal Viz -->
+    <div class="topic-card" style="margin-bottom:28px">
+      <div class="topic-header"><div class="topic-icon">🎮</div><h3>Interactive Traversal Demo</h3></div>
+      <div class="topic-body">
+        <div class="viz-container">
+          <div class="viz-label">Build a list then traverse it</div>
+          <div class="viz-row" id="trav-viz" style="min-height:60px;align-items:center"><span style="color:var(--text3);font-size:13px">List is empty</span></div>
+          <div id="trav-path" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cyan);min-height:20px;margin-top:8px"></div>
+          <div class="viz-controls">
+            <button class="btn" onclick="travAdd()">Add Node</button>
+            <button class="btn" onclick="doForwardTrav()">▶ Forward</button>
+            <button class="btn" onclick="doBackwardTrav()">◀ Backward</button>
+            <button class="btn warn" onclick="doCircularTrav()">↻ Circular (2x)</button>
+            <button class="btn danger" onclick="resetTrav()">Reset</button>
+          </div>
+          <div id="trav-msg" class="viz-msg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">▶️</div><h3>4.1 Forward Traversal</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-4-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-4-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-4-1">
+          <div class="theory"><p>Start at head, follow NEXT pointers. Stop when we reach head again (circular). Use a <code>do-while</code> loop since we visit head first.</p>
+          <div class="note">Order: HEAD → node2 → node3 → ... → tail → (back to HEAD)</div></div>
+        </div>
+        <div class="tab-content" id="code-4-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>forward_trav.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">forwardTraversal</span>() {
+    <span class="kw">int</span> curr;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+    curr = head;
+    <span class="fn">printf</span>(<span class="str">"Forward: "</span>);
+    <span class="kw">do</span> {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, list[curr].data);
+        curr = list[curr].next;
+    } <span class="kw">while</span> (curr != head);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">◀️</div><h3>4.2 Backward Traversal</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-4-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-4-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-4-2">
+          <div class="theory"><p>Start at tail (list[head].prev), follow PREV pointers back to head. This is only possible because of the <strong>doubly</strong> linkage.</p>
+          <div class="note">Order: TAIL → ... → node2 → HEAD</div></div>
+        </div>
+        <div class="tab-content" id="code-4-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>backward_trav.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">backwardTraversal</span>() {
+    <span class="kw">int</span> curr;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+    curr = list[head].prev; <span class="cm">/* start at tail */</span>
+    <span class="fn">printf</span>(<span class="str">"Backward: "</span>);
+    <span class="kw">do</span> {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, list[curr].data);
+        curr = list[curr].prev;
+    } <span class="kw">while</span> (curr != list[head].prev);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">↻</div><h3>4.3 Circular Traversal</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-4-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-4-3')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-4-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-4-3">
+          <div class="theory"><p>Continue traversing PAST the head back around — traverse the list for exactly <strong>N full rounds</strong>. Useful for round-robin scheduling, carousel display, etc.</p>
+          <div class="note">💡 Use a loop counter: stop after (count × rounds) steps, OR after a time limit.</div></div>
+        </div>
+        <div class="tab-content" id="code-4-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>circular_trav.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">circularTraversal</span>(<span class="kw">int</span> rounds) {
+    <span class="kw">int</span> curr, steps, total;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+    total = count * rounds;
+    curr = head;
+    <span class="fn">printf</span>(<span class="str">"Circular (%d rounds): "</span>, rounds);
+    <span class="kw">for</span> (steps = <span class="num">0</span>; steps &lt; total; steps++) {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, list[curr].data);
+        curr = list[curr].next; <span class="cm">/* wraps around */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-4-3">
+          <div class="analogy"><strong>🎠 Real-Life Analogy:</strong> Like a merry-go-round — it keeps going in circles. Circular traversal lets you go around the list as many times as needed, which is perfect for scheduling tasks in a loop (OS round-robin CPU scheduling).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: SEARCHING -->
+  <div class="section" id="s5">
+    <div class="section-title"><div class="section-num">5</div><h2>Searching Operations</h2></div>
+    <div class="section-desc">Finding elements in the list using different search strategies.</div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔍</div><h3>5.1 Circular Search</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-5-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-5-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-5-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-5-1">
+          <div class="theory"><p>Start at head, traverse using NEXT pointers in a do-while loop. Returns the position (1-based) if found, -1 if not. Searches the entire circular list once.</p></div>
+        </div>
+        <div class="tab-content" id="viz-5-1">
+          <div class="viz-container">
+            <div class="viz-label">Search Demo</div>
+            <div class="viz-row" id="search-viz" style="min-height:50px;align-items:center"><span style="color:var(--text3);font-size:12px">Add nodes first</span></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="searchAdd()">Add Node</button>
+              <input class="viz-input" id="search-val" type="number" placeholder="search" value="20">
+              <button class="btn warn" onclick="doSearch()">Search</button>
+              <button class="btn danger" onclick="resetSearch()">Reset</button>
+            </div>
+            <div id="search-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-5-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>circular_search.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">circularSearch</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> curr, pos = <span class="num">1</span>;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> -<span class="num">1</span>;
+    curr = head;
+    <span class="kw">do</span> {
+        <span class="kw">if</span> (list[curr].data == val) {
+            <span class="fn">printf</span>(<span class="str">"Found %d at position %d\n"</span>, val, pos);
+            <span class="kw">return</span> pos;
+        }
+        curr = list[curr].next;
+        pos++;
+    } <span class="kw">while</span> (curr != head);
+    <span class="fn">printf</span>(<span class="str">"%d not found.\n"</span>, val);
+    <span class="kw">return</span> -<span class="num">1</span>;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">➡️🔍</div><h3>5.2 Forward Search</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-5-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-5-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-5-2">
+          <div class="theory"><p>Search from head toward tail using NEXT pointers. Returns position on first match. Identical to circular search but stops at tail.</p></div>
+        </div>
+        <div class="tab-content" id="code-5-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>fwd_search.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">forwardSearch</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> curr = head, pos = <span class="num">1</span>;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> -<span class="num">1</span>;
+    <span class="kw">do</span> {
+        <span class="kw">if</span> (list[curr].data == val)
+            <span class="kw">return</span> pos;
+        curr = list[curr].next;
+        pos++;
+    } <span class="kw">while</span> (curr != head);
+    <span class="kw">return</span> -<span class="num">1</span>;  <span class="cm">/* not found */</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">⬅️🔍</div><h3>5.3 Backward Search</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-5-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-5-3')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-5-3">
+          <div class="theory"><p>Search from tail toward head using PREV pointers. Useful when the target is more likely near the end of the list.</p></div>
+        </div>
+        <div class="tab-content" id="code-5-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>bwd_search.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">backwardSearch</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> curr, pos;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> -<span class="num">1</span>;
+    curr = list[head].prev; <span class="cm">/* start at tail */</span>
+    pos  = count;
+    <span class="kw">do</span> {
+        <span class="kw">if</span> (list[curr].data == val) {
+            <span class="fn">printf</span>(<span class="str">"Found %d at pos %d\n"</span>, val, pos);
+            <span class="kw">return</span> pos;
+        }
+        curr = list[curr].prev;
+        pos--;
+    } <span class="kw">while</span> (curr != list[head].prev);
+    <span class="kw">return</span> -<span class="num">1</span>;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: UPDATE -->
+  <div class="section" id="s6">
+    <div class="section-title"><div class="section-num">6</div><h2>Update Operations</h2></div>
+    <div class="section-desc">Modifying the data within existing nodes without changing the structure of the list.</div>
+    <div class="grid2">
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">✏️</div><h3>6.1 Replace Value</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-6-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-6-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-6-1">
+          <div class="theory"><p>Find a node by its old value and replace it with a new value. Structure stays the same — only the data field changes.</p></div>
+        </div>
+        <div class="tab-content" id="code-6-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>replace.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">replaceValue</span>(<span class="kw">int</span> oldVal, <span class="kw">int</span> newVal) {
+    <span class="kw">int</span> curr = head;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+    <span class="kw">do</span> {
+        <span class="kw">if</span> (list[curr].data == oldVal) {
+            list[curr].data = newVal;
+            <span class="fn">printf</span>(<span class="str">"Replaced %d with %d\n"</span>,
+                   oldVal, newVal);
+            <span class="kw">return</span>;
+        }
+        curr = list[curr].next;
+    } <span class="kw">while</span> (curr != head);
+    <span class="fn">printf</span>(<span class="str">"%d not found.\n"</span>, oldVal);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔄</div><h3>6.2 Modify Data (by Position)</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-6-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-6-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-6-2">
+          <div class="theory"><p>Update the data at a specific position directly without searching by value. Traverse to position, then overwrite data field.</p></div>
+        </div>
+        <div class="tab-content" id="code-6-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>modify.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">modifyData</span>(<span class="kw">int</span> pos, <span class="kw">int</span> newVal) {
+    <span class="kw">int</span> curr = head, step;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>() || pos &lt; <span class="num">1</span> || pos &gt; count) {
+        <span class="fn">printf</span>(<span class="str">"Invalid!\n"</span>); <span class="kw">return</span>;
+    }
+    <span class="kw">for</span> (step = <span class="num">1</span>; step &lt; pos; step++)
+        curr = list[curr].next;
+    <span class="fn">printf</span>(<span class="str">"Changed pos %d: %d → %d\n"</span>,
+           pos, list[curr].data, newVal);
+    list[curr].data = newVal;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔀</div><h3>6.3 Swap Nodes</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-6-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-6-3')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-6-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-6-3">
+          <div class="theory"><p>Swap the <em>data</em> of two nodes at given positions. The simplest approach: traverse to both positions, swap their <code>.data</code> fields. No need to change PREV/NEXT links!</p>
+          <div class="note">💡 Swapping data is much simpler than swapping node positions in an array-based implementation.</div></div>
+        </div>
+        <div class="tab-content" id="code-6-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>swap.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">swapNodes</span>(<span class="kw">int</span> pos1, <span class="kw">int</span> pos2) {
+    <span class="kw">int</span> n1 = head, n2 = head, step, temp;
+    <span class="kw">if</span> (pos1 == pos2) <span class="kw">return</span>;
+    <span class="kw">if</span> (pos1&lt;<span class="num">1</span> || pos1&gt;count || pos2&lt;<span class="num">1</span> || pos2&gt;count) {
+        <span class="fn">printf</span>(<span class="str">"Invalid position!\n"</span>); <span class="kw">return</span>;
+    }
+    <span class="kw">for</span> (step=<span class="num">1</span>; step&lt;pos1; step++) n1=list[n1].next;
+    <span class="kw">for</span> (step=<span class="num">1</span>; step&lt;pos2; step++) n2=list[n2].next;
+    temp = list[n1].data;
+    list[n1].data = list[n2].data;
+    list[n2].data = temp;
+    <span class="fn">printf</span>(<span class="str">"Swapped pos %d and pos %d\n"</span>, pos1, pos2);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-6-3">
+          <div class="analogy"><strong>🎴 Real-Life Analogy:</strong> Like two students swapping name tags without moving their chairs. The seats (nodes) stay in place; only the names (data) change hands.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 7: ACCESS -->
+  <div class="section" id="s7">
+    <div class="section-title"><div class="section-num">7</div><h2>Access Operations</h2></div>
+    <div class="section-desc">Reading data from specific positions without modifying the list structure.</div>
+    <div class="grid2">
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">👀</div><h3>7.1 Peek Front</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-7-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-7-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-7-1">
+          <div class="theory"><p>Return the data at the front (head) without removing it. Simply access <code>list[head].data</code>.</p>
+          <div class="note">Always check isEmpty() before peeking!</div></div>
+        </div>
+        <div class="tab-content" id="code-7-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>peek.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">peekFront</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+        <span class="fn">printf</span>(<span class="str">"List is empty!\n"</span>);
+        <span class="kw">return</span> -<span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Front: %d\n"</span>, list[head].data);
+    <span class="kw">return</span> list[head].data;
+}
+
+<span class="kw">int</span> <span class="fn">peekRear</span>() {
+    <span class="kw">int</span> tail;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+        <span class="fn">printf</span>(<span class="str">"List is empty!\n"</span>);
+        <span class="kw">return</span> -<span class="num">1</span>;
+    }
+    tail = list[head].prev;
+    <span class="fn">printf</span>(<span class="str">"Rear: %d\n"</span>, list[tail].data);
+    <span class="kw">return</span> list[tail].data;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">📌</div><h3>7.3 Get Element by Position</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-7-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-7-3')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-7-3">
+          <div class="theory"><p>Traverse from head (count-1) times to reach position <code>pos</code> and return its data. Time complexity: O(n).</p></div>
+        </div>
+        <div class="tab-content" id="code-7-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>get_pos.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">getElement</span>(<span class="kw">int</span> pos) {
+    <span class="kw">int</span> curr = head, step;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>() || pos&lt;<span class="num">1</span> || pos&gt;count) {
+        <span class="fn">printf</span>(<span class="str">"Invalid!\n"</span>); <span class="kw">return</span> -<span class="num">1</span>;
+    }
+    <span class="kw">for</span> (step = <span class="num">1</span>; step &lt; pos; step++)
+        curr = list[curr].next;
+    <span class="fn">printf</span>(<span class="str">"Element at pos %d = %d\n"</span>,
+           pos, list[curr].data);
+    <span class="kw">return</span> list[curr].data;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SECTION 8: STRUCTURAL -->
+  <div class="section" id="s8">
+    <div class="section-title"><div class="section-num">8</div><h2>Structural Operations</h2></div>
+    <div class="section-desc">Operations that examine the structure and properties of the list itself.</div>
+    <div class="grid2">
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔢</div><h3>8.1 Count Elements</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-8-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-8-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-8-1">
+          <div class="theory"><p>Since we maintain a <code>count</code> variable, this is O(1). Alternatively, traverse and count manually — useful for validation.</p></div>
+        </div>
+        <div class="tab-content" id="code-8-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>count.c</span></div>
+            <pre><span class="cm">/* O(1) - using maintained counter */</span>
+<span class="kw">int</span> <span class="fn">countElements</span>() {
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* O(n) - manual count by traversal */</span>
+<span class="kw">int</span> <span class="fn">countManual</span>() {
+    <span class="kw">int</span> curr, c = <span class="num">0</span>;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> <span class="num">0</span>;
+    curr = head;
+    <span class="kw">do</span> {
+        c++;
+        curr = list[curr].next;
+    } <span class="kw">while</span> (curr != head);
+    <span class="kw">return</span> c;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">📏</div><h3>8.2 Find Size / 8.3 Detect Circular Wrap</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-8-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-8-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-8-2">
+          <div class="theory">
+            <p><strong>Find Size:</strong> Returns count (same as countElements). <br>
+            <strong>Detect Circular Wrap:</strong> Verifies the circular property: does list[tail].next == head? And does list[head].prev == tail?</p>
+            <div class="note">Use detectCircularWrap() as a sanity check after complex operations to ensure the circular structure is intact.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-8-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>structural.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">findSize</span>() {
+    <span class="kw">return</span> count;  <span class="cm">/* same as countElements */</span>
+}
+
+<span class="kw">int</span> <span class="fn">detectCircularWrap</span>() {
+    <span class="kw">int</span> tail;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+        <span class="fn">printf</span>(<span class="str">"Empty — no wrap to detect.\n"</span>);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    tail = list[head].prev;
+    <span class="kw">if</span> (list[tail].next == head &&
+        list[head].prev == tail) {
+        <span class="fn">printf</span>(<span class="str">"Circular wrap: INTACT ✓\n"</span>);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Circular wrap: BROKEN ✗\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SECTION 9: LINK MANAGEMENT -->
+  <div class="section" id="s9">
+    <div class="section-title"><div class="section-num">9</div><h2>Link Management Operations</h2></div>
+    <div class="section-desc">Managing the explicit circular connections between the head and tail of the list.</div>
+    <div class="grid2">
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔗</div><h3>9.1 Connect Tail to Head</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-9-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-9-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-9-1">
+          <div class="theory"><p>Ensures tail.next = head. Used to restore the circular forward link if it was broken during operations.</p></div>
+        </div>
+        <div class="tab-content" id="code-9-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>link_mgmt.c</span></div>
+            <pre><span class="cm">/* Connect tail's NEXT back to head */</span>
+<span class="kw">void</span> <span class="fn">connectTailToHead</span>() {
+    <span class="kw">int</span> tail;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+    tail = list[head].prev;
+    list[tail].next = head;
+    <span class="fn">printf</span>(<span class="str">"Tail[%d].next → Head[%d]\n"</span>,
+           tail, head);
+}
+
+<span class="cm">/* Connect head's PREV back to tail */</span>
+<span class="kw">void</span> <span class="fn">connectHeadToTail</span>() {
+    <span class="kw">int</span> tail;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+    tail = list[head].prev;
+    list[head].prev = tail;
+    <span class="fn">printf</span>(<span class="str">"Head[%d].prev → Tail[%d]\n"</span>,
+           head, tail);
+}
+
+<span class="cm">/* Restore both circular links */</span>
+<span class="kw">void</span> <span class="fn">restoreCircularLink</span>() {
+    <span class="fn">connectTailToHead</span>();
+    <span class="fn">connectHeadToTail</span>();
+    <span class="fn">printf</span>(<span class="str">"Circular links restored.\n"</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">⚡</div><h3>9.2 & 9.3 Connect Head→Tail & Restore</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-9-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'an-9-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-9-3">
+          <div class="theory">
+            <p><strong>Connect Head to Tail:</strong> Sets head.prev = tail index. Maintains the backward circular link.</p>
+            <p><strong>Restore Circular Link:</strong> Calls both connect functions. Used after batch operations, merge, or split that might break circular links.</p>
+            <div class="warn">⚠️ These are repair functions — called when you suspect a circular link is broken after complex operations.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="an-9-3">
+          <div class="analogy"><strong>🔧 Real-Life Analogy:</strong> Like reconnecting a broken ring. If someone accidentally unclips the necklace clasp (breaks the circular link), these functions snap it back shut.</div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SECTION 10: CIRCULAR MANAGEMENT -->
+  <div class="section" id="s10">
+    <div class="section-title"><div class="section-num">10</div><h2>Circular Management Operations</h2></div>
+    <div class="section-desc">Leveraging the circular property for index arithmetic — wrapping around boundaries cleanly.</div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔄</div><h3>10.1 Circular Increment / 10.2 Decrement / 10.3 Wrap-Around Detection</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-10-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-10-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-10-1')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-10-1')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-10-1">
+          <div class="theory">
+            <p><strong>Circular Increment:</strong> Move forward one step. When at tail, wrap to head.</p>
+            <p><strong>Circular Decrement:</strong> Move backward one step. When at head, wrap to tail.</p>
+            <p><strong>Wrap-Around Detection:</strong> Check if the next step crosses the boundary (tail→head or head→tail).</p>
+            <div class="note">💡 These are used in OS scheduling (round-robin), music players (loop), and game boards.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-10-1">
+          <div class="viz-container">
+            <div class="viz-label">Circular Navigation</div>
+            <div class="viz-row" id="circ-viz" style="justify-content:center;gap:8px"></div>
+            <div style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--yellow);min-height:20px;margin-top:8px" id="circ-ptr">▲ Current: —</div>
+            <div class="viz-controls">
+              <button class="btn" onclick="circNavNext()">Next ▶</button>
+              <button class="btn" onclick="circNavPrev()">◀ Prev</button>
+            </div>
+            <div id="circ-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-10-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>circular_mgmt.c</span></div>
+            <pre><span class="cm">/* Move current pointer forward (wraps around) */</span>
+<span class="kw">int</span> <span class="fn">circularIncrement</span>(<span class="kw">int</span> curr) {
+    <span class="kw">int</span> next = list[curr].next;
+    <span class="kw">if</span> (next == head)
+        <span class="fn">printf</span>(<span class="str">"Wrap-around: tail → head\n"</span>);
+    <span class="kw">return</span> next;
+}
+
+<span class="cm">/* Move current pointer backward (wraps around) */</span>
+<span class="kw">int</span> <span class="fn">circularDecrement</span>(<span class="kw">int</span> curr) {
+    <span class="kw">int</span> prev = list[curr].prev;
+    <span class="kw">if</span> (curr == head)
+        <span class="fn">printf</span>(<span class="str">"Wrap-around: head → tail\n"</span>);
+    <span class="kw">return</span> prev;
+}
+
+<span class="cm">/* Detect if the NEXT step will wrap around */</span>
+<span class="kw">int</span> <span class="fn">wrapAroundDetection</span>(<span class="kw">int</span> curr) {
+    <span class="kw">if</span> (list[curr].next == head) {
+        <span class="fn">printf</span>(<span class="str">"Next step wraps to HEAD.\n"</span>);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-10-1">
+          <div class="analogy"><strong>🕐 Real-Life Analogy:</strong> A clock — after 12, it wraps back to 1. After 1 going backward, it wraps to 12. Circular increment/decrement is exactly clock arithmetic applied to a list!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 11: UTILITY -->
+  <div class="section" id="s11">
+    <div class="section-title"><div class="section-num">11</div><h2>Utility Operations</h2></div>
+    <div class="section-desc">Helpful high-level operations for list management and manipulation.</div>
+    <div class="grid2">
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🧹</div><h3>11.1 Clear List</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-11-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-11-1')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-11-1">
+          <div class="theory"><p>Reset all nodes to initial state. Equivalent to calling initList() again. O(n) — visits every slot.</p></div>
+        </div>
+        <div class="tab-content" id="code-11-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>clear.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">clearList</span>() {
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX; i++) {
+        list[i].data = <span class="num">0</span>;
+        list[i].prev = -<span class="num">1</span>;
+        list[i].next = -<span class="num">1</span>;
+    }
+    head  = -<span class="num">1</span>;
+    count = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"List cleared.\n"</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">📋</div><h3>11.2 Clone List</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-11-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-11-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-11-2">
+          <div class="theory"><p>Create an exact copy of the list into a second array. Traverse the original and insert each value into the clone in order.</p></div>
+        </div>
+        <div class="tab-content" id="code-11-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>clone.c</span></div>
+            <pre"><span class="kw">struct</span> <span class="ty">Node</span> clone[MAX];
+<span class="kw">int</span> cloneHead = -<span class="num">1</span>, cloneCount = <span class="num">0</span>;
+
+<span class="kw">void</span> <span class="fn">cloneList</span>() {
+    <span class="kw">int</span> curr, i;
+    <span class="cm">/* Reset clone */</span>
+    <span class="kw">for</span> (i=<span class="num">0</span>;i&lt;MAX;i++){clone[i].data=<span class="num">0</span>;clone[i].prev=clone[i].next=-<span class="num">1</span>;}
+    cloneHead=-<span class="num">1</span>; cloneCount=<span class="num">0</span>;
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+
+    <span class="cm">/* Copy all values into clone (using insertRear logic) */</span>
+    curr = head;
+    <span class="kw">do</span> {
+        <span class="cm">/* simplified: copy data array-wise */</span>
+        clone[curr].data = list[curr].data;
+        clone[curr].prev = list[curr].prev;
+        clone[curr].next = list[curr].next;
+        curr = list[curr].next;
+    } <span class="kw">while</span> (curr != head);
+    cloneHead  = head;
+    cloneCount = count;
+    <span class="fn">printf</span>(<span class="str">"List cloned (%d nodes).\n"</span>, count);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔃</div><h3>11.3 Reverse List</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-11-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-11-3')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-11-3')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-11-3')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-11-3">
+          <div class="theory">
+            <p>Swap PREV and NEXT pointers for every node. After swapping, update head to the old tail.</p>
+            <h4>Algorithm:</h4>
+            <ul>
+              <li>Traverse all nodes</li>
+              <li>For each node: temp = node.prev; node.prev = node.next; node.next = temp</li>
+              <li>head = old tail = list[head].next (which is now the old prev after swap)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-11-3">
+          <div class="viz-container">
+            <div class="viz-label">Reverse List Demo</div>
+            <div class="viz-row" id="rev-viz" style="min-height:60px;align-items:center"><span style="color:var(--text3);font-size:12px">Add nodes first</span></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="revAdd()">Add Node</button>
+              <button class="btn warn" onclick="doReverse()">↩ Reverse</button>
+              <button class="btn danger" onclick="resetRev()">Reset</button>
+            </div>
+            <div id="rev-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-11-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>reverse.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">reverseList</span>() {
+    <span class="kw">int</span> curr, temp, oldTail;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>() || count == <span class="num">1</span>) <span class="kw">return</span>;
+
+    oldTail = list[head].prev; <span class="cm">/* save before swap */</span>
+    curr = head;
+    <span class="kw">do</span> {
+        <span class="cm">/* Swap prev and next for each node */</span>
+        temp         = list[curr].prev;
+        list[curr].prev = list[curr].next;
+        list[curr].next = temp;
+        curr = list[curr].prev; <span class="cm">/* move forward (was .next) */</span>
+    } <span class="kw">while</span> (curr != head);
+
+    head = oldTail; <span class="cm">/* old tail is new head */</span>
+    <span class="fn">printf</span>(<span class="str">"List reversed.\n"</span>);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-11-3">
+          <div class="analogy"><strong>🎬 Real-Life Analogy:</strong> Like reversing a train — the engine becomes the caboose and the caboose becomes the engine. Each car's "facing" direction flips, and what was behind is now in front.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 12: SORTING -->
+  <div class="section" id="s12">
+    <div class="section-title"><div class="section-num">12</div><h2>Sorting Operations</h2></div>
+    <div class="section-desc">Arranging nodes in order using classic sorting algorithms adapted for the circular doubly linked list structure. Since it's array-based, we swap <em>data values</em> (not pointers).</div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🫧</div><h3>12.1 Bubble Sort</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-12-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-12-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-12-1')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-12-1')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-12-1">
+          <div class="theory">
+            <p>Compare adjacent nodes and swap data if out of order. Repeat for (n-1) passes. Each pass "bubbles" the largest unsorted element to the tail.</p>
+            <p><strong>Time Complexity:</strong> O(n²) &nbsp;|&nbsp; <strong>Space:</strong> O(1)</p>
+            <div class="note">💡 Best for small lists or nearly-sorted data.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-12-1">
+          <div class="viz-container">
+            <div class="viz-label">Bubble Sort Visualization</div>
+            <div class="viz-row" id="bsort-viz" style="min-height:60px;align-items:center"><span style="color:var(--text3);font-size:12px">Add nodes then sort</span></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="bsortAdd()">Add Random</button>
+              <button class="btn warn" onclick="doBubbleSort()">Bubble Sort</button>
+              <button class="btn danger" onclick="resetBsort()">Reset</button>
+            </div>
+            <div id="bsort-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-12-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>bubble_sort.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">bubbleSort</span>() {
+    <span class="kw">int</span> i, j, curr, nextNode, temp;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>() || count == <span class="num">1</span>) <span class="kw">return</span>;
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; count - <span class="num">1</span>; i++) {
+        curr = head;
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; count - <span class="num">1</span> - i; j++) {
+            nextNode = list[curr].next;
+            <span class="kw">if</span> (list[curr].data &gt; list[nextNode].data) {
+                <span class="cm">/* Swap data, not pointers */</span>
+                temp = list[curr].data;
+                list[curr].data = list[nextNode].data;
+                list[nextNode].data = temp;
+            }
+            curr = list[curr].next;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Bubble sort complete.\n"</span>);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-12-1">
+          <div class="analogy"><strong>🫧 Real-Life Analogy:</strong> Like sorting people in a line by height — walk the line repeatedly and if two adjacent people are out of order, they swap places. Heaviest person "bubbles" to the back each round.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🎯</div><h3>12.2 Selection Sort</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-12-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-12-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-12-2">
+          <div class="theory">
+            <p>Find the minimum element in the unsorted portion and swap it to the front of that portion. Only n-1 swaps — fewer than bubble sort.</p>
+            <p><strong>Time:</strong> O(n²) &nbsp;|&nbsp; <strong>Swaps:</strong> O(n)</p>
+          </div>
+        </div>
+        <div class="tab-content" id="code-12-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>selection_sort.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">selectionSort</span>() {
+    <span class="kw">int</span> i, j, curr, minNode, scan, temp;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+    curr = head;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; count - <span class="num">1</span>; i++) {
+        minNode = curr;
+        scan = list[curr].next;
+        <span class="kw">for</span> (j = i+<span class="num">1</span>; j &lt; count; j++) {
+            <span class="kw">if</span> (list[scan].data &lt; list[minNode].data)
+                minNode = scan;
+            scan = list[scan].next;
+        }
+        <span class="kw">if</span> (minNode != curr) {
+            temp = list[curr].data;
+            list[curr].data = list[minNode].data;
+            list[minNode].data = temp;
+        }
+        curr = list[curr].next;
+    }
+    <span class="fn">printf</span>(<span class="str">"Selection sort done.\n"</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🃏</div><h3>12.3 Insertion Sort</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-12-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-12-3')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-12-3">
+          <div class="theory">
+            <p>Build the sorted list one element at a time. Take each element and insert it in its correct position among the already-sorted elements.</p>
+            <p><strong>Best case:</strong> O(n) for nearly sorted &nbsp;|&nbsp; <strong>Worst:</strong> O(n²)</p>
+          </div>
+        </div>
+        <div class="tab-content" id="code-12-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>insertion_sort.c</span></div>
+            <pre><span class="kw">void</span> <span class="fn">insertionSort</span>() {
+    <span class="kw">int</span> i, j, curr, prev, key;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+    curr = list[head].next; <span class="cm">/* start from 2nd */</span>
+    <span class="kw">for</span> (i = <span class="num">1</span>; i &lt; count; i++) {
+        key  = list[curr].data;
+        prev = list[curr].prev;
+        <span class="kw">while</span> (prev != list[head].prev &&
+               list[prev].data &gt; key) {
+            list[list[prev].next].data = list[prev].data;
+            prev = list[prev].prev;
+        }
+        list[list[prev].next].data = key;
+        curr = list[curr].next;
+    }
+    <span class="fn">printf</span>(<span class="str">"Insertion sort done.\n"</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SECTION 13: RECURSIVE -->
+  <div class="section" id="s13">
+    <div class="section-title"><div class="section-num">13</div><h2>Recursive Operations</h2></div>
+    <div class="section-desc">Using recursion — functions that call themselves — to traverse, search, and count. The key challenge in circular lists is preventing infinite recursion by passing a termination condition.</div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">♾️</div><h3>13.1 Recursive Traversal</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-13-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-13-1')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-13-1')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-13-1">
+          <div class="theory">
+            <p>Traverse recursively by calling the function with the next node. The base case is when we return to head — but since we'd call it first with head, we need a flag or a steps counter to know when to stop.</p>
+            <h4>Strategy: Pass original head as parameter</h4>
+            <ul>
+              <li>Call: recursiveTraverse(head, head)</li>
+              <li>Base case: curr == start AND we've already printed head once</li>
+            </ul>
+            <div class="warn">⚠️ Without a proper base case, circular recursion causes INFINITE calls and stack overflow!</div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-13-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>recursive_trav.c</span></div>
+            <pre><span class="cm">/* Helper: traverse n nodes starting from curr */</span>
+<span class="kw">void</span> <span class="fn">recursiveTravHelper</span>(<span class="kw">int</span> curr, <span class="kw">int</span> remaining) {
+    <span class="kw">if</span> (remaining == <span class="num">0</span>) <span class="kw">return</span>; <span class="cm">/* base case */</span>
+    <span class="fn">printf</span>(<span class="str">"%d "</span>, list[curr].data);
+    <span class="fn">recursiveTravHelper</span>(list[curr].next, remaining - <span class="num">1</span>);
+}
+
+<span class="kw">void</span> <span class="fn">recursiveTraversal</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="str">"Empty!\n"</span>); <span class="kw">return</span>; }
+    <span class="fn">printf</span>(<span class="str">"Recursive: "</span>);
+    <span class="fn">recursiveTravHelper</span>(head, count); <span class="cm">/* visit count nodes */</span>
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cm">/* Backward recursive traversal */</span>
+<span class="kw">void</span> <span class="fn">recursiveTravBackward</span>(<span class="kw">int</span> curr, <span class="kw">int</span> remaining) {
+    <span class="kw">if</span> (remaining == <span class="num">0</span>) <span class="kw">return</span>;
+    <span class="fn">printf</span>(<span class="str">"%d "</span>, list[curr].data);
+    <span class="fn">recursiveTravBackward</span>(list[curr].prev, remaining - <span class="num">1</span>);
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-13-1">
+          <div class="analogy"><strong>🪆 Real-Life Analogy:</strong> Like Russian nesting dolls — each doll opens to reveal a smaller one. Recursive traversal is each doll saying "print me, then open the next." The counter tells us when to stop so we don't keep opening forever.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔎</div><h3>13.2 Recursive Search</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-13-2')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-13-2')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-13-2">
+          <div class="theory"><p>Search for a value recursively. Each call checks the current node; if not found, recurse to next. Base case: remaining==0 means not found.</p></div>
+        </div>
+        <div class="tab-content" id="code-13-2">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>recursive_search.c</span></div>
+            <pre><span class="kw">int</span> <span class="fn">recursiveSearch</span>(<span class="kw">int</span> curr, <span class="kw">int</span> val,
+                          <span class="kw">int</span> remaining, <span class="kw">int</span> pos) {
+    <span class="kw">if</span> (remaining == <span class="num">0</span>) <span class="kw">return</span> -<span class="num">1</span>; <span class="cm">/* not found */</span>
+    <span class="kw">if</span> (list[curr].data == val) {
+        <span class="fn">printf</span>(<span class="str">"Found %d at pos %d\n"</span>, val, pos);
+        <span class="kw">return</span> pos;
+    }
+    <span class="kw">return</span> <span class="fn">recursiveSearch</span>(
+        list[curr].next, val, remaining-<span class="num">1</span>, pos+<span class="num">1</span>);
+}
+
+<span class="cm">/* Caller function */</span>
+<span class="kw">int</span> <span class="fn">searchRecursive</span>(<span class="kw">int</span> val) {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> -<span class="num">1</span>;
+    <span class="kw">return</span> <span class="fn">recursiveSearch</span>(head, val, count, <span class="num">1</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔢</div><h3>13.3 Recursive Count</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-13-3')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'code-13-3')">C Code</div>
+        </div>
+        <div class="tab-content active" id="th-13-3">
+          <div class="theory"><p>Count nodes recursively. Each call adds 1 and recurses. Base case: we've returned to head (tracked via the start index). Useful for verification without a counter variable.</p></div>
+        </div>
+        <div class="tab-content" id="code-13-3">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>recursive_count.c</span></div>
+            <pre"><span class="kw">int</span> <span class="fn">recursiveCount</span>(<span class="kw">int</span> curr, <span class="kw">int</span> start,
+                        <span class="kw">int</span> first) {
+    <span class="cm">/* first=1 means initial call */</span>
+    <span class="kw">if</span> (!first && curr == start) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> <span class="num">1</span> + <span class="fn">recursiveCount</span>(
+        list[curr].next, start, <span class="num">0</span>);
+}
+
+<span class="kw">int</span> <span class="fn">countRecursive</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> <span class="fn">recursiveCount</span>(head, head, <span class="num">1</span>);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- SECTION 14: ITERATIVE -->
+  <div class="section" id="s14">
+    <div class="section-title"><div class="section-num">14</div><h2>Iterative Operations</h2></div>
+    <div class="section-desc">Loop-based (non-recursive) alternatives — usually preferred for large lists since they avoid stack overflow risk.</div>
+
+    <div class="topic-card">
+      <div class="topic-header"><div class="topic-icon">🔁</div><h3>14.1 Iterative Traversal / 14.2 Iterative Search / 14.3 Circular Iteration</h3></div>
+      <div class="topic-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'th-14-1')">Theory</div>
+          <div class="tab" onclick="switchTab(this,'viz-14-1')">Visualize</div>
+          <div class="tab" onclick="switchTab(this,'code-14-1')">C Code</div>
+          <div class="tab" onclick="switchTab(this,'an-14-1')">Analogy</div>
+        </div>
+        <div class="tab-content active" id="th-14-1">
+          <div class="theory">
+            <p><strong>Iterative Traversal:</strong> A do-while loop starting from head, moving forward node by node, stopping when we return to head.</p>
+            <p><strong>Iterative Search:</strong> Same do-while, but checks each node's data against the target. Returns position or -1.</p>
+            <p><strong>Circular Iteration:</strong> Combines iteration with circular wrap to repeat for N rounds or until a condition is met — useful for simulation, scheduling, or game loops.</p>
+            <div class="note">💡 Iterative = no function call overhead, no stack overflow risk, easier to debug.</div>
+          </div>
+        </div>
+        <div class="tab-content" id="viz-14-1">
+          <div class="viz-container">
+            <div class="viz-label">Step-by-step Iterative Demo</div>
+            <div class="viz-row" id="iter-viz" style="min-height:60px;align-items:center"><span style="color:var(--text3);font-size:12px">Add nodes to begin</span></div>
+            <div id="iter-step" style="font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--yellow);margin-top:6px;min-height:18px"></div>
+            <div class="viz-controls">
+              <button class="btn" onclick="iterAdd()">Add Node</button>
+              <button class="btn" onclick="iterStep()">Step ▶</button>
+              <button class="btn warn" onclick="iterReset2()">Reset Pointer</button>
+              <button class="btn danger" onclick="resetIter()">Reset List</button>
+            </div>
+            <div id="iter-msg" class="viz-msg"></div>
+          </div>
+        </div>
+        <div class="tab-content" id="code-14-1">
+          <div class="code-block">
+            <div class="code-header"><div class="dot" style="background:#ff5c5c"></div><div class="dot" style="background:#ffd166"></div><div class="dot" style="background:#39d98a"></div><span>iterative_ops.c</span></div>
+            <pre><span class="cm">/* 14.1 Iterative Traversal */</span>
+<span class="kw">void</span> <span class="fn">iterativeTraversal</span>() {
+    <span class="kw">int</span> curr;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span>;
+    curr = head;
+    <span class="kw">do</span> {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, list[curr].data);
+        curr = list[curr].next;
+    } <span class="kw">while</span> (curr != head);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cm">/* 14.2 Iterative Search */</span>
+<span class="kw">int</span> <span class="fn">iterativeSearch</span>(<span class="kw">int</span> val) {
+    <span class="kw">int</span> curr = head, pos = <span class="num">1</span>;
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> -<span class="num">1</span>;
+    <span class="kw">do</span> {
+        <span class="kw">if</span> (list[curr].data == val) <span class="kw">return</span> pos;
+        curr = list[curr].next;
+        pos++;
+    } <span class="kw">while</span> (curr != head);
+    <span class="kw">return</span> -<span class="num">1</span>;
+}
+
+<span class="cm">/* 14.3 Circular Iteration — run N rounds */</span>
+<span class="kw">void</span> <span class="fn">circularIteration</span>(<span class="kw">int</span> rounds) {
+    <span class="kw">int</span> curr = head;
+    <span class="kw">int</span> total = count * rounds;
+    <span class="kw">int</span> step;
+    <span class="fn">printf</span>(<span class="str">"Circular (%d rounds):\n"</span>, rounds);
+    <span class="kw">for</span> (step = <span class="num">0</span>; step &lt; total; step++) {
+        <span class="fn">printf</span>(<span class="str">"  Step %d: node[%d]=%d\n"</span>,
+               step+<span class="num">1</span>, curr, list[curr].data);
+        curr = list[curr].next; <span class="cm">/* wraps at tail */</span>
+    }
+}</pre>
+          </div>
+        </div>
+        <div class="tab-content" id="an-14-1">
+          <div class="analogy"><strong>🏃 Real-Life Analogy:</strong> Iterative traversal is like a security guard doing rounds. They walk the entire circular building once (do-while stops at start). Circular iteration is the same guard doing 3 rounds — they keep going past the entrance until they've completed all rounds.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div class="topic-card" style="background:linear-gradient(135deg,#0f1825,#0d1a2e);border-color:rgba(0,212,216,.3)">
+      <div class="topic-header"><div class="topic-icon">🏆</div><h3>Complete Complexity Reference</h3></div>
+      <div class="topic-body">
+        <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;font-family:'JetBrains Mono',monospace">
+          <tr style="color:var(--cyan);border-bottom:1px solid var(--border2)">
+            <th style="padding:8px 10px;text-align:left">Operation</th>
+            <th style="padding:8px 10px;text-align:left">Time</th>
+            <th style="padding:8px 10px;text-align:left">Space</th>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Create / Init / Clear</td><td style="padding:7px 10px;color:var(--green)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Check Empty / Full</td><td style="padding:7px 10px;color:var(--green)">O(1)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Insert Front / Rear</td><td style="padding:7px 10px;color:var(--green)">O(1)*</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Insert Before / After Pos</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Delete Front / Rear</td><td style="padding:7px 10px;color:var(--green)">O(1)*</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Delete by Value / Position</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Search (all types)</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Traversal (all types)</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Peek Front / Rear</td><td style="padding:7px 10px;color:var(--green)">O(1)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Get Element by Position</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Reverse</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Clone</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--purple)">O(n)</td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px;color:var(--text)">Bubble / Selection Sort</td><td style="padding:7px 10px;color:var(--red)">O(n²)</td><td style="padding:7px 10px;color:var(--purple)">O(1)</td></tr>
+          <tr><td style="padding:7px 10px;color:var(--text)">Recursive (Traversal/Search/Count)</td><td style="padding:7px 10px;color:var(--yellow)">O(n)</td><td style="padding:7px 10px;color:var(--yellow)">O(n) stack</td></tr>
+        </table>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;font-family:'JetBrains Mono',monospace">* O(1) amortized if tail pointer cached (via head.prev in O(1))</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== UTILITY =====================
+function switchTab(btn, id) {
+  const body = btn.closest('.topic-body');
+  body.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  body.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'viz-msg ' + type;
+  setTimeout(() => { if(el) el.className='viz-msg'; }, 3500);
+}
+
+function makeNode(data, isHead, isTail, extraClass='') {
+  return `<div class="node">
+    <div class="node-box${isHead?' head-node':''}${isTail?' tail-node':''} ${extraClass}">
+      <div class="node-part prev">←</div>
+      <div class="node-part data">${data}</div>
+      <div class="node-part next">→</div>
+    </div>
+    <div class="node-label">${isHead?'HEAD':''}${isTail&&!isHead?'TAIL':''}</div>
+  </div>`;
+}
+
+function renderList(arr, vizId, highlightIdx=-1, deleteIdx=-1) {
+  const el = document.getElementById(vizId);
+  if (!el) return;
+  if (arr.length === 0) { el.innerHTML = '<span style="color:var(--text3);font-size:13px">List is empty</span>'; return; }
+  let html = '<span class="arr-circ" title="circular link">↻</span>';
+  arr.forEach((v, i) => {
+    let extra = '';
+    if (i === highlightIdx) extra = 'highlight';
+    if (i === deleteIdx) extra = 'delete-node';
+    html += makeNode(v, i===0, i===arr.length-1, extra);
+    if (i < arr.length-1) html += '<span class="arr-right">⇄</span>';
+  });
+  html += '<span class="arr-circ">↻</span>';
+  el.innerHTML = html;
+}
+
+// ===================== SECTION 1 VIZZES =====================
+let createDone = false;
+function doCreateViz() {
+  const el = document.getElementById('create-viz');
+  el.innerHTML = '';
+  const MAX = 5;
+  let html = '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  for (let i=0; i<MAX; i++) {
+    html += `<div style="background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center">
+      <div style="color:var(--text3)">slot[${i}]</div>
+      <div style="color:var(--purple);margin-top:4px">prev: -1</div>
+      <div style="color:var(--cyan);margin-top:2px">data: 0</div>
+      <div style="color:var(--green);margin-top:2px">next: -1</div>
+    </div>`;
+  }
+  html += '</div>';
+  html += '<div style="margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;color:var(--text2)">head = -1 &nbsp;|&nbsp; count = 0 &nbsp;|&nbsp; MAX = 5</div>';
+  el.innerHTML = html;
+  showMsg('create-msg','✓ Array-based DCLL created! All slots initialized.','ok');
+}
+
+let initDone = false;
+function doInitViz() {
+  const el = document.getElementById('init-viz');
+  let html = '<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  for (let i=0; i<4; i++) {
+    html += `<div style="background:var(--bg4);border:1px solid var(--cyan3);border-radius:8px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:10.5px;text-align:center;animation:pulse .6s ${i*0.1}s both">
+      <div style="color:var(--text3)">slot[${i}]</div>
+      <div style="color:var(--purple)">-1</div>
+      <div style="color:var(--cyan)">0</div>
+      <div style="color:var(--green)">-1</div>
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+  showMsg('init-msg','✓ All slots set to [-1 | 0 | -1]. head=-1, count=0','ok');
+}
+
+function checkEmptyViz(empty) {
+  const el = document.getElementById('empty-viz');
+  if (empty) {
+    el.innerHTML = '<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;color:var(--red)">head = -1 → isEmpty() returns 1 (TRUE)</span>';
+    showMsg('empty-msg','✓ List IS empty!','ok');
+  } else {
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:8px">${makeNode(42,true,true)}<span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);margin-left:8px">head = 0 → isEmpty() returns 0 (FALSE)</span></div>`;
+    showMsg('empty-msg','ℹ List is NOT empty — has 1 element','info');
+  }
+}
+
+let fullCount = 0;
+function checkFullViz() {
+  if (fullCount >= 5) { showMsg('full-msg','⚠ List is FULL! Cannot insert more.','err'); return; }
+  fullCount++;
+  let arr = [];
+  for(let i=0;i<fullCount;i++) arr.push(i*10+10);
+  renderList(arr,'full-viz');
+  if (fullCount === 5) showMsg('full-msg','🔴 count == MAX → isFull() = TRUE','err');
+  else showMsg('full-msg',`count=${fullCount}/${5} — Space available: ${5-fullCount}`,'ok');
+}
+function resetFullViz() { fullCount=0; document.getElementById('full-viz').innerHTML=''; document.getElementById('full-msg').className='viz-msg'; }
+
+// Insert Front Viz
+let insFrontArr = [];
+let insFrontC = 10;
+function doInsFront() {
+  const val = parseInt(document.getElementById('ins-front-val').value) || insFrontC;
+  if (insFrontArr.length >= 5) { showMsg('ins-front-msg','⚠ List full! (MAX=5)','err'); return; }
+  insFrontArr.unshift(val);
+  insFrontC += 10;
+  document.getElementById('ins-front-val').value = insFrontC;
+  renderList(insFrontArr,'ins-front-viz');
+  showMsg('ins-front-msg',`✓ Inserted ${val} at front. Head updated.`,'ok');
+}
+function resetInsFront() { insFrontArr=[]; insFrontC=10; renderList([],'ins-front-viz'); document.getElementById('ins-front-msg').className='viz-msg'; }
+
+// Insert Rear Viz
+let insRearArr = [];
+let insRearC = 10;
+function doInsRear() {
+  const val = parseInt(document.getElementById('ins-rear-val').value) || insRearC;
+  if (insRearArr.length >= 5) { showMsg('ins-rear-msg','⚠ List full! (MAX=5)','err'); return; }
+  insRearArr.push(val);
+  insRearC += 10;
+  document.getElementById('ins-rear-val').value = insRearC;
+  renderList(insRearArr,'ins-rear-viz');
+  showMsg('ins-rear-msg',`✓ Inserted ${val} at rear. Head unchanged.`,'ok');
+}
+function resetInsRear() { insRearArr=[]; insRearC=10; renderList([],'ins-rear-viz'); document.getElementById('ins-rear-msg').className='viz-msg'; }
+
+// Delete Front/Rear
+let delFrontArr = []; let delFrontC = 10;
+function delFrontAdd() { if(delFrontArr.length>=5){showMsg('del-front-msg','Full!','err');return;} delFrontArr.push(delFrontC); delFrontC+=10; renderList(delFrontArr,'del-front-viz'); showMsg('del-front-msg',`Added ${delFrontC-10}`,'ok'); }
+function delFrontDel() { if(!delFrontArr.length){showMsg('del-front-msg','Empty!','err');return;} const v=delFrontArr.shift(); renderList(delFrontArr,'del-front-viz'); showMsg('del-front-msg',`✓ Deleted front: ${v}`,'ok'); }
+
+let delRearArr=[]; let delRearC=10;
+function delRearAdd() { if(delRearArr.length>=5){showMsg('del-rear-msg','Full!','err');return;} delRearArr.push(delRearC); delRearC+=10; renderList(delRearArr,'del-rear-viz'); showMsg('del-rear-msg',`Added ${delRearC-10}`,'ok'); }
+function delRearDel() { if(!delRearArr.length){showMsg('del-rear-msg','Empty!','err');return;} const v=delRearArr.pop(); renderList(delRearArr,'del-rear-viz'); showMsg('del-rear-msg',`✓ Deleted rear: ${v}`,'ok'); }
+
+// Traversal
+let travArr=[]; let travC=10;
+function travAdd() { if(travArr.length>=6){showMsg('trav-msg','Full!','err');return;} travArr.push(travC); travC+=10; renderList(travArr,'trav-viz'); showMsg('trav-msg',`Added ${travC-10}`,'ok'); }
+function resetTrav() { travArr=[]; travC=10; renderList([],'trav-viz'); document.getElementById('trav-path').textContent=''; document.getElementById('trav-msg').className='viz-msg'; }
+function doForwardTrav() {
+  if(!travArr.length){showMsg('trav-msg','Empty!','err');return;}
+  document.getElementById('trav-path').textContent = 'Forward: ' + travArr.join(' → ') + ' → (back to ' + travArr[0] + ')';
+  showMsg('trav-msg','▶ Forward traversal complete','ok');
+  let i=0;
+  function step(){ renderList(travArr,'trav-viz',i); if(++i<travArr.length) setTimeout(step,400); else setTimeout(()=>renderList(travArr,'trav-viz'),600); }
+  step();
+}
+function doBackwardTrav() {
+  if(!travArr.length){showMsg('trav-msg','Empty!','err');return;}
+  const rev=[...travArr].reverse();
+  document.getElementById('trav-path').textContent = 'Backward: ' + rev.join(' → ');
+  showMsg('trav-msg','◀ Backward traversal complete','ok');
+  let i=travArr.length-1;
+  function step(){ renderList(travArr,'trav-viz',i); if(--i>=0) setTimeout(step,400); else setTimeout(()=>renderList(travArr,'trav-viz'),600); }
+  step();
+}
+function doCircularTrav() {
+  if(!travArr.length){showMsg('trav-msg','Empty!','err');return;}
+  const doubled=[...travArr,...travArr];
+  document.getElementById('trav-path').textContent = 'Circular×2: ' + doubled.join(' → ');
+  showMsg('trav-msg','↻ Circular traversal (2 rounds) complete','ok');
+}
+
+// Search
+let searchArr=[]; let searchC=10;
+function searchAdd() { if(searchArr.length>=5){showMsg('search-msg','Full!','err');return;} searchArr.push(searchC); searchC+=15; renderList(searchArr,'search-viz'); }
+function doSearch() {
+  const val=parseInt(document.getElementById('search-val').value);
+  if(!searchArr.length){showMsg('search-msg','Empty!','err');return;}
+  const idx=searchArr.indexOf(val);
+  if(idx===-1){ renderList(searchArr,'search-viz'); showMsg('search-msg',`✗ ${val} not found in list`,'err'); }
+  else { renderList(searchArr,'search-viz',idx); showMsg('search-msg',`✓ Found ${val} at position ${idx+1}`,'ok'); }
+}
+function resetSearch() { searchArr=[]; searchC=10; renderList([],'search-viz'); document.getElementById('search-msg').className='viz-msg'; }
+
+// Circular Nav (Section 10)
+const circData=[10,20,30,40,50];
+let circPtr=0;
+function initCircViz() {
+  const el=document.getElementById('circ-viz');
+  el.innerHTML=circData.map((v,i)=>`<div class="node"><div class="node-box${i===0?' head-node':''}" id="cn${i}"><div class="node-part prev">←</div><div class="node-part data">${v}</div><div class="node-part next">→</div></div></div>`).join('<span class="arr-circ">⇄</span>');
+  updateCircPtr();
+}
+function updateCircPtr() {
+  circData.forEach((_,i)=>{ const b=document.getElementById('cn'+i); if(b){b.className='node-box'+(i===0?' head-node':'');} });
+  const active=document.getElementById('cn'+circPtr);
+  if(active) active.className+=' highlight';
+  document.getElementById('circ-ptr').textContent=`▲ Current: node[${circPtr}] = ${circData[circPtr]}`;
+}
+function circNavNext() {
+  const prev=circPtr;
+  circPtr=(circPtr+1)%circData.length;
+  updateCircPtr();
+  if(circPtr===0) showMsg('circ-msg','↻ Wrapped around! tail → head','info');
+  else showMsg('circ-msg',`Moved forward: ${circData[prev]} → ${circData[circPtr]}`,'ok');
+}
+function circNavPrev() {
+  const prev=circPtr;
+  circPtr=(circPtr-1+circData.length)%circData.length;
+  updateCircPtr();
+  if(prev===0) showMsg('circ-msg','↻ Wrapped around! head → tail','info');
+  else showMsg('circ-msg',`Moved backward: ${circData[prev]} → ${circData[circPtr]}`,'ok');
+}
+
+// Reverse
+let revArr=[]; let revC=10;
+function revAdd() { if(revArr.length>=5){showMsg('rev-msg','Full!','err');return;} revArr.push(revC); revC+=10; renderList(revArr,'rev-viz'); }
+function doReverse() { if(!revArr.length){showMsg('rev-msg','Empty!','err');return;} revArr.reverse(); renderList(revArr,'rev-viz'); showMsg('rev-msg','↩ List reversed! Old tail is new head.','ok'); }
+function resetRev() { revArr=[]; revC=10; renderList([],'rev-viz'); document.getElementById('rev-msg').className='viz-msg'; }
+
+// Bubble Sort
+let bsortArr=[]; 
+function bsortAdd() { if(bsortArr.length>=6){showMsg('bsort-msg','Full!','err');return;} const v=Math.floor(Math.random()*90)+10; bsortArr.push(v); renderList(bsortArr,'bsort-viz'); }
+function doBubbleSort() {
+  if(!bsortArr.length){showMsg('bsort-msg','Empty!','err');return;}
+  const arr=[...bsortArr];
+  const steps=[];
+  for(let i=0;i<arr.length-1;i++) for(let j=0;j<arr.length-1-i;j++) if(arr[j]>arr[j+1]){ [arr[j],arr[j+1]]=[arr[j+1],arr[j]]; steps.push([...arr]); }
+  let s=0;
+  function animate(){ if(s>=steps.length){ bsortArr=[...arr]; renderList(bsortArr,'bsort-viz'); showMsg('bsort-msg','✓ Bubble sort complete!','ok'); return; } renderList(steps[s],'bsort-viz',steps[s].length-1-Math.floor(s/steps[s].length)); s++; setTimeout(animate,300); }
+  if(steps.length) animate(); else showMsg('bsort-msg','Already sorted!','info');
+}
+function resetBsort() { bsortArr=[]; renderList([],'bsort-viz'); document.getElementById('bsort-msg').className='viz-msg'; }
+
+// Iterative step viz
+let iterArr=[]; let iterC=10; let iterPtr=-1;
+function iterAdd() { if(iterArr.length>=5){showMsg('iter-msg','Full!','err');return;} iterArr.push(iterC); iterC+=10; iterPtr=-1; renderList(iterArr,'iter-viz'); }
+function iterStep() {
+  if(!iterArr.length){showMsg('iter-msg','Add nodes first!','err');return;}
+  iterPtr=(iterPtr+1)%iterArr.length;
+  renderList(iterArr,'iter-viz',iterPtr);
+  const wrapped=iterPtr===0&&iterArr.length>1;
+  document.getElementById('iter-step').textContent=`Step: visiting node[${iterPtr}] = ${iterArr[iterPtr]}${wrapped?' (wrap-around!)':''}`;
+  if(wrapped) showMsg('iter-msg','↻ Wrapped back to head — circular!','info');
+  else showMsg('iter-msg',`Visiting: ${iterArr[iterPtr]} at position ${iterPtr+1}`,'ok');
+}
+function iterReset2() { iterPtr=-1; renderList(iterArr,'iter-viz'); document.getElementById('iter-step').textContent=''; document.getElementById('iter-msg').className='viz-msg'; }
+function resetIter() { iterArr=[]; iterC=10; iterPtr=-1; renderList([],'iter-viz'); document.getElementById('iter-step').textContent=''; document.getElementById('iter-msg').className='viz-msg'; }
+
+// Active nav tracking
+const sections=document.querySelectorAll('.section');
+const navItems=document.querySelectorAll('.nav-item');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){const id=e.target.id; navItems.forEach(n=>{n.classList.toggle('active',n.getAttribute('href')==='#'+id);})}});
+},{threshold:0.3});
+sections.forEach(s=>observer.observe(s));
+
+// Init on load
+window.addEventListener('DOMContentLoaded', () => {
+  initCircViz();
+  // Pre-populate some vizzes with data
+  [10,20,30].forEach(v=>{ insFrontArr.unshift(v); insRearArr.push(v); travArr.push(v); searchArr.push(v*2); });
+  renderList(insFrontArr,'ins-front-viz');
+  renderList(insRearArr,'ins-rear-viz');
+  renderList(travArr,'trav-viz');
+  renderList(searchArr,'search-viz');
+  [10,20,30].forEach(v=>{ delFrontArr.push(v); delFrontC=40; delRearArr.push(v); delRearC=40; revArr.push(v); revC=40; bsortArr.push(Math.floor(Math.random()*90)+10); iterArr.push(v); iterC=40; });
+  renderList(delFrontArr,'del-front-viz');
+  renderList(delRearArr,'del-rear-viz');
+  renderList(revArr,'rev-viz');
+  renderList(bsortArr,'bsort-viz');
+  renderList(iterArr,'iter-viz');
+});
+</script>
+</body>
+</html>

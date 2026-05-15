@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Array-Based Deque — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #1e2330;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #22d3a0;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,12,16,.92);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    height: 54px; overflow-x: auto;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: .95rem;
+    color: var(--accent); white-space: nowrap;
+    letter-spacing: -.02em; margin-right: .5rem;
+  }
+  .nav-pill {
+    font-size: .72rem; font-weight: 600;
+    padding: .28rem .7rem; border-radius: 99px;
+    cursor: pointer; white-space: nowrap; transition: all .2s;
+    border: 1px solid var(--border);
+    color: var(--muted); background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: none;
+  }
+  .nav-pill:hover, .nav-pill.active { color: var(--accent); border-color: var(--accent); background: rgba(0,229,255,.06); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 5rem 1.5rem 3rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,229,255,.07) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(124,58,237,.06) 0%, transparent 60%);
+  }
+  .hero-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: .7rem;
+    border: 1px solid var(--border); border-radius: 99px;
+    padding: .3rem 1rem; color: var(--muted); margin-bottom: 1.5rem;
+    display: inline-block;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    letter-spacing: -.04em; line-height: 1;
+    margin-bottom: .75rem;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    color: var(--muted); font-size: 1.05rem; max-width: 520px;
+    margin: 0 auto 2rem; line-height: 1.7;
+  }
+  .hero-chips { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-bottom: 2.5rem; }
+  .chip {
+    font-size: .72rem; padding: .3rem .8rem; border-radius: 99px;
+    border: 1px solid var(--border); color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .chip.c { border-color: rgba(0,229,255,.3); color: var(--accent); background: rgba(0,229,255,.05); }
+  .chip.g { border-color: rgba(34,211,160,.3); color: var(--green); background: rgba(34,211,160,.05); }
+  .chip.p { border-color: rgba(251,191,36,.3); color: var(--yellow); background: rgba(251,191,36,.05); }
+
+  /* ── LIVE DEQUE VISUALIZER (HERO) ── */
+  .hero-viz {
+    width: 100%; max-width: 640px; margin: 0 auto;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem; position: relative;
+  }
+  .viz-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .7rem; color: var(--muted); margin-bottom: 1rem;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .viz-label span { color: var(--accent); }
+  .deque-track {
+    display: flex; align-items: center; gap: 3px;
+    overflow-x: auto; padding: .5rem 0; min-height: 72px;
+    scrollbar-width: none;
+  }
+  .deque-track::-webkit-scrollbar { display: none; }
+  .dq-cell {
+    min-width: 52px; height: 52px; border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: .95rem; font-weight: 700;
+    transition: all .3s; position: relative; flex-shrink: 0;
+  }
+  .dq-cell.empty {
+    border: 1.5px dashed var(--border); color: var(--border);
+    background: transparent;
+  }
+  .dq-cell.filled {
+    border: 1.5px solid var(--accent);
+    background: rgba(0,229,255,.08); color: var(--accent);
+    box-shadow: 0 0 12px rgba(0,229,255,.15);
+    animation: popIn .25s ease;
+  }
+  .dq-cell.front-cell { border-color: var(--green); background: rgba(34,211,160,.1); color: var(--green); box-shadow: 0 0 12px rgba(34,211,160,.15); }
+  .dq-cell.rear-cell  { border-color: var(--accent2); background: rgba(255,107,53,.1); color: var(--accent2); box-shadow: 0 0 12px rgba(255,107,53,.15); }
+  .cell-idx {
+    font-size: .55rem; color: var(--muted); position: absolute;
+    bottom: 2px; font-family: 'JetBrains Mono', monospace; font-weight: 400;
+  }
+  @keyframes popIn { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .dq-pointer {
+    text-align: center; font-size: .65rem; font-family: 'JetBrains Mono', monospace;
+    margin-top: .4rem; display: flex; justify-content: space-between;
+  }
+  .dq-pointer .fp { color: var(--green); }
+  .dq-pointer .rp { color: var(--accent2); }
+  .viz-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+  .viz-input {
+    flex: 1; min-width: 80px; background: var(--code-bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    padding: .45rem .8rem; font-size: .85rem; outline: none;
+    transition: border-color .2s;
+  }
+  .viz-input:focus { border-color: var(--accent); }
+  .viz-btn {
+    padding: .45rem 1rem; border-radius: 8px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 600;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .btn-front { background: rgba(34,211,160,.15); color: var(--green); border: 1px solid rgba(34,211,160,.3); }
+  .btn-front:hover { background: rgba(34,211,160,.25); }
+  .btn-rear  { background: rgba(255,107,53,.15); color: var(--accent2); border: 1px solid rgba(255,107,53,.3); }
+  .btn-rear:hover  { background: rgba(255,107,53,.25); }
+  .btn-del   { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+  .btn-del:hover   { background: rgba(248,113,113,.25); }
+  .btn-clear { background: rgba(100,116,139,.12); color: var(--muted); border: 1px solid var(--border); }
+  .btn-clear:hover { background: rgba(100,116,139,.2); }
+  .viz-status {
+    margin-top: .75rem; font-size: .75rem; font-family: 'JetBrains Mono', monospace;
+    color: var(--muted); min-height: 20px; transition: color .2s;
+  }
+  .viz-status.ok  { color: var(--green); }
+  .viz-status.err { color: var(--red); }
+
+  /* ── SECTION LAYOUT ── */
+  main { padding-top: 54px; }
+  .section {
+    max-width: 900px; margin: 0 auto;
+    padding: 4rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex; align-items: flex-start; gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: .7rem; padding: .35rem .7rem; border-radius: 8px;
+    min-width: 42px; text-align: center; flex-shrink: 0; margin-top: .2rem;
+  }
+  .num-blue  { background: rgba(0,229,255,.1);   color: var(--accent); border: 1px solid rgba(0,229,255,.2); }
+  .num-green { background: rgba(34,211,160,.1);  color: var(--green);  border: 1px solid rgba(34,211,160,.2); }
+  .num-orange{ background: rgba(255,107,53,.1);  color: var(--accent2);border: 1px solid rgba(255,107,53,.2); }
+  .num-purple{ background: rgba(124,58,237,.1);  color: #a78bfa;       border: 1px solid rgba(124,58,237,.2); }
+  .num-yellow{ background: rgba(251,191,36,.1);  color: var(--yellow); border: 1px solid rgba(251,191,36,.2); }
+  .num-red   { background: rgba(248,113,113,.1); color: var(--red);    border: 1px solid rgba(248,113,113,.2); }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: clamp(1.3rem, 3vw, 1.8rem); letter-spacing: -.02em;
+    line-height: 1.2;
+  }
+  .section-sub {
+    color: var(--muted); font-size: .85rem; margin-top: .3rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.4rem 1.5rem; margin-bottom: 1.2rem;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: .9rem; margin-bottom: .7rem;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .tag {
+    font-size: .65rem; padding: .2rem .55rem; border-radius: 99px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+  }
+  .tag-theory  { background: rgba(0,229,255,.1);   color: var(--accent); }
+  .tag-viz     { background: rgba(124,58,237,.1);  color: #a78bfa; }
+  .tag-code    { background: rgba(251,191,36,.1);  color: var(--yellow); }
+  .tag-analogy { background: rgba(34,211,160,.1);  color: var(--green); }
+  p { color: #94a3b8; line-height: 1.75; font-size: .9rem; }
+  p + p { margin-top: .6rem; }
+  strong { color: var(--text); }
+
+  /* ── CODE ── */
+  .code-block {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; margin-top: .5rem;
+  }
+  .code-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .6rem 1rem; border-bottom: 1px solid var(--border);
+    background: #0f1420;
+  }
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace; font-size: .65rem;
+    color: var(--yellow); font-weight: 600;
+  }
+  .copy-btn {
+    font-size: .65rem; color: var(--muted); background: none;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: .2rem .6rem; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all .2s;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+  pre {
+    padding: 1.2rem 1.2rem; overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+    line-height: 1.7; color: #c9d1d9; tab-size: 4;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .kw  { color: #ff79c6; }
+  .cm  { color: #6272a4; font-style: italic; }
+  .fn  { color: #50fa7b; }
+  .str { color: #f1fa8c; }
+  .num-c{ color: #bd93f9; }
+  .pp  { color: #ff79c6; }
+  .tp  { color: #8be9fd; }
+
+  /* ── MINI VISUALIZER ── */
+  .mini-viz {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.2rem;
+  }
+  .mini-track {
+    display: flex; align-items: center; gap: 4px;
+    overflow-x: auto; padding: .4rem 0;
+    scrollbar-width: none;
+  }
+  .mini-track::-webkit-scrollbar { display: none; }
+  .mc {
+    min-width: 46px; height: 46px; border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-family: 'JetBrains Mono', monospace;
+    font-size: .85rem; font-weight: 700; position: relative;
+    flex-shrink: 0; transition: all .3s;
+  }
+  .mc.emp { border: 1.5px dashed #1e2330; color: #1e2330; }
+  .mc.fil { border: 1.5px solid var(--accent); background: rgba(0,229,255,.08); color: var(--accent); }
+  .mc.hi  { border: 1.5px solid var(--yellow); background: rgba(251,191,36,.1); color: var(--yellow); animation: pulse .6s ease infinite alternate; }
+  .mc.fr  { border: 1.5px solid var(--green);  background: rgba(34,211,160,.1); color: var(--green); }
+  .mc.rr  { border: 1.5px solid var(--accent2);background: rgba(255,107,53,.1); color: var(--accent2); }
+  @keyframes pulse { to { box-shadow: 0 0 12px rgba(251,191,36,.4); } }
+  .mc .ci { font-size: .5rem; color: var(--muted); position: absolute; bottom: 2px; }
+  .mini-controls { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .9rem; }
+  .mbtn {
+    padding: .35rem .8rem; border-radius: 7px; border: none;
+    font-size: .75rem; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all .18s;
+  }
+  .mb-g { background: rgba(34,211,160,.12); color: var(--green); border: 1px solid rgba(34,211,160,.25); }
+  .mb-o { background: rgba(255,107,53,.12);  color: var(--accent2); border: 1px solid rgba(255,107,53,.25); }
+  .mb-r { background: rgba(248,113,113,.12); color: var(--red); border: 1px solid rgba(248,113,113,.25); }
+  .mb-b { background: rgba(0,229,255,.12);   color: var(--accent); border: 1px solid rgba(0,229,255,.25); }
+  .mb-y { background: rgba(251,191,36,.12);  color: var(--yellow); border: 1px solid rgba(251,191,36,.25); }
+  .mb-p { background: rgba(124,58,237,.12);  color: #a78bfa; border: 1px solid rgba(124,58,237,.25); }
+  .mbtn:hover { opacity: .8; transform: translateY(-1px); }
+  .mini-msg { font-size: .72rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-top: .6rem; min-height: 18px; }
+  .mini-msg.ok  { color: var(--green); }
+  .mini-msg.er  { color: var(--red); }
+  .mini-msg.inf { color: var(--yellow); }
+
+  /* ── POINTER TABLE ── */
+  .ptr-row {
+    display: flex; gap: .5rem; margin-top: .7rem; flex-wrap: wrap;
+  }
+  .ptr-chip {
+    font-family: 'JetBrains Mono', monospace; font-size: .7rem;
+    padding: .3rem .7rem; border-radius: 7px; border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* ── INFO GRID ── */
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: .8rem; }
+  .info-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem;
+  }
+  .info-item h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .85rem; margin-bottom: .3rem; }
+  .info-item p  { font-size: .78rem; }
+
+  /* ── STEP-BY-STEP ── */
+  .steps { counter-reset: step; }
+  .step {
+    display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start;
+  }
+  .step::before {
+    counter-increment: step;
+    content: counter(step);
+    min-width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,229,255,.1); color: var(--accent);
+    border: 1px solid rgba(0,229,255,.25);
+    font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: .1rem;
+  }
+  .step p { margin: 0; }
+
+  /* ── ALERT BOXES ── */
+  .alert {
+    border-radius: 10px; padding: .9rem 1.1rem; margin-bottom: 1rem;
+    font-size: .85rem; line-height: 1.6; display: flex; gap: .7rem; align-items: flex-start;
+  }
+  .alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: .05rem; }
+  .alert-warn { background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.2); color: #d4a017; }
+  .alert-info { background: rgba(0,229,255,.06);  border: 1px solid rgba(0,229,255,.15);  color: #67c5d0; }
+  .alert-good { background: rgba(34,211,160,.06); border: 1px solid rgba(34,211,160,.15); color: #22d3a0; }
+
+  /* ── COMPLEXITY TABLE ── */
+  .tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .tbl th {
+    text-align: left; padding: .55rem .9rem;
+    background: var(--surface2); color: var(--muted);
+    font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: .7rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .tbl td {
+    padding: .55rem .9rem; border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: #94a3b8;
+  }
+  .tbl tr:hover td { background: rgba(255,255,255,.02); }
+  .tbl td:first-child { color: var(--text); font-weight: 600; }
+  .tbl td.o1 { color: var(--green); }
+  .tbl td.on { color: var(--yellow); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center; padding: 3rem 1.5rem;
+    color: var(--muted); font-size: .78rem;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  footer span { color: var(--accent); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .section { padding: 3rem 1rem; }
+    .viz-controls { flex-direction: column; }
+    .mini-controls { gap: .3rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">⇐ ⇒ DEQUE</div>
+  <a class="nav-pill" href="#intro">Intro</a>
+  <a class="nav-pill" href="#s1">InsertFront</a>
+  <a class="nav-pill" href="#s2">InsertRear</a>
+  <a class="nav-pill" href="#s3">DelFront</a>
+  <a class="nav-pill" href="#s4">DelRear</a>
+  <a class="nav-pill" href="#s5">Peek</a>
+  <a class="nav-pill" href="#s7">isEmpty</a>
+  <a class="nav-pill" href="#s8">isFull</a>
+  <a class="nav-pill" href="#s9">Size</a>
+  <a class="nav-pill" href="#s10">Traverse</a>
+  <a class="nav-pill" href="#s11">Clear</a>
+  <a class="nav-pill" href="#s12">Search</a>
+  <a class="nav-pill" href="#s13">Update</a>
+  <a class="nav-pill" href="#s14">Reverse</a>
+  <a class="nav-pill" href="#complexity">Complexity</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="intro">
+  <div class="hero-bg"></div>
+  <div class="hero-badge">Data Structures · C Language · Beginner → Advanced</div>
+  <h1>Array-Based<br><span>Deque</span></h1>
+  <p>A Double-Ended Queue (Deque) lets you insert and delete elements from <strong>both ends</strong>. Learn every operation, visualized live, with clean C code.</p>
+  <div class="hero-chips">
+    <span class="chip c">C Language</span>
+    <span class="chip g">14 Operations</span>
+    <span class="chip p">Live Visualizer</span>
+    <span class="chip">Array Implementation</span>
+    <span class="chip">Beginner Friendly</span>
+  </div>
+  <!-- Live Demo Visualizer -->
+  <div class="hero-viz">
+    <div class="viz-label">
+      <span>🟢 FRONT</span>
+      <span style="color:var(--muted)">LIVE DEQUE PLAYGROUND</span>
+      <span style="color:var(--accent2)">REAR 🟠</span>
+    </div>
+    <div class="deque-track" id="heroTrack"></div>
+    <div class="dq-pointer" id="heroPtr">
+      <span class="fp">front = -1</span>
+      <span style="color:var(--muted)">size = 0 / 8</span>
+      <span class="rp">rear = -1</span>
+    </div>
+    <div class="viz-controls" style="margin-top:1rem">
+      <input class="viz-input" id="heroInput" type="number" placeholder="value" style="max-width:90px">
+      <button class="viz-btn btn-front" onclick="heroOp('if')">+ Front</button>
+      <button class="viz-btn btn-rear"  onclick="heroOp('ir')">+ Rear</button>
+      <button class="viz-btn btn-del"   onclick="heroOp('df')">Del Front</button>
+      <button class="viz-btn btn-del"   onclick="heroOp('dr')">Del Rear</button>
+      <button class="viz-btn btn-clear" onclick="heroOp('cl')">Clear</button>
+    </div>
+    <div class="viz-status" id="heroStatus">Try inserting elements at front or rear →</div>
+  </div>
+</section>
+
+<main>
+
+<!-- ─────────────────────────── SECTION 1 ─────────────────────────── -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num num-blue">01</div>
+    <div>
+      <div class="section-title">Insert Front <span style="color:var(--green)">/ Enqueue Front</span></div>
+      <div class="section-sub">Add an element at the front (left) end of the deque</div>
+    </div>
+  </div>
+
+  <!-- Theory -->
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Insert Front Works</div>
+    <p>In an array-based deque we keep two pointers: <strong>front</strong> and <strong>rear</strong>, both starting at <strong>−1</strong>. When we insert at the front:</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p><strong>Overflow check</strong> — if the deque is already full (<code>size == MAX</code>), we cannot insert. Print error and return.</p></div>
+      <div class="step"><p><strong>First element case</strong> — if <code>front == -1</code> (deque is empty), set both <code>front = 0</code> and <code>rear = 0</code>, then store the value.</p></div>
+      <div class="step"><p><strong>Wrap-around</strong> — if <code>front == 0</code>, moving further left wraps to <code>MAX-1</code> (circular array). Otherwise, simply do <code>front = front - 1</code>.</p></div>
+      <div class="step"><p>Store the new value at <code>arr[front]</code>. The element now occupies the leftmost slot.</p></div>
+    </div>
+    <div class="alert alert-info" style="margin-top:1rem">
+      <span class="alert-icon">💡</span>
+      <span>We use a <strong>circular array</strong> so the front can wrap around without wasting space. This is optional for a simple linear deque but essential for efficient circular deques.</span>
+    </div>
+  </div>
+
+  <!-- Visualizer -->
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Insert Front — Step by Step</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="if-track"></div>
+      <div class="ptr-row" id="if-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-g" onclick="miniInsertFront('if')">Insert Front</button>
+        <button class="mbtn mb-r" onclick="miniReset('if')">Reset</button>
+      </div>
+      <div class="mini-msg" id="if-msg">Click "Insert Front" to watch the front pointer move.</div>
+    </div>
+  </div>
+
+  <!-- Code -->
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Insert Front Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="pp">#define</span> MAX <span class="num-c">8</span>
+
+<span class="tp">int</span> arr[MAX];
+<span class="tp">int</span> front = -<span class="num-c">1</span>, rear = -<span class="num-c">1</span>;
+
+<span class="cm">/* Insert element at front of deque */</span>
+<span class="tp">void</span> <span class="fn">insertFront</span>(<span class="tp">int</span> value) {
+    <span class="cm">/* Step 1: Check overflow */</span>
+    <span class="kw">if</span> ((front == <span class="num-c">0</span> && rear == MAX - <span class="num-c">1</span>) ||
+        (front == rear + <span class="num-c">1</span>)) {
+        printf(<span class="str">"Overflow! Deque is full.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 2: First element */</span>
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        front = <span class="num-c">0</span>;
+        rear  = <span class="num-c">0</span>;
+    }
+    <span class="cm">/* Step 3: Wrap around to end of array */</span>
+    <span class="kw">else if</span> (front == <span class="num-c">0</span>) {
+        front = MAX - <span class="num-c">1</span>;
+    }
+    <span class="cm">/* Step 4: Normal case - move front left */</span>
+    <span class="kw">else</span> {
+        front = front - <span class="num-c">1</span>;
+    }
+
+    arr[front] = value;   <span class="cm">/* Store value */</span>
+    printf(<span class="str">"Inserted %d at front. front=%d\n"</span>, value, front);
+}</pre>
+    </div>
+  </div>
+
+  <!-- Analogy -->
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🎟️ Imagine a <strong>cinema ticket queue</strong>. Normally people join at the back. But a VIP guest is allowed to walk straight to the <strong>front of the line</strong>. That's exactly Insert Front — adding a new person at the very beginning of the queue without disturbing anyone else.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 2 ─────────────────────────── -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num num-orange">02</div>
+    <div>
+      <div class="section-title">Insert Rear <span style="color:var(--accent2)">/ Enqueue Rear</span></div>
+      <div class="section-sub">Add an element at the rear (right) end of the deque</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Insert Rear Works</div>
+    <p>Insert Rear is the most familiar operation — it works exactly like a regular queue's enqueue. The <strong>rear</strong> pointer moves forward (right) before placing the element.</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p><strong>Overflow check</strong> — stop if full.</p></div>
+      <div class="step"><p><strong>First element</strong> — if <code>front == -1</code>, set <code>front = 0</code> and <code>rear = 0</code>, then store.</p></div>
+      <div class="step"><p><strong>Wrap-around</strong> — if <code>rear == MAX-1</code> (at the last index), wrap to 0. Otherwise do <code>rear = rear + 1</code>.</p></div>
+      <div class="step"><p>Store the value at <code>arr[rear]</code>.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Insert Rear — Step by Step</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="ir-track"></div>
+      <div class="ptr-row" id="ir-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('ir')">Insert Rear</button>
+        <button class="mbtn mb-r" onclick="miniReset('ir')">Reset</button>
+      </div>
+      <div class="mini-msg" id="ir-msg">Click "Insert Rear" to watch the rear pointer move.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Insert Rear Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="tp">void</span> <span class="fn">insertRear</span>(<span class="tp">int</span> value) {
+    <span class="cm">/* Step 1: Check overflow */</span>
+    <span class="kw">if</span> ((front == <span class="num-c">0</span> && rear == MAX - <span class="num-c">1</span>) ||
+        (front == rear + <span class="num-c">1</span>)) {
+        printf(<span class="str">"Overflow! Deque is full.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 2: First element ever */</span>
+    <span class="kw">if</span> (rear == -<span class="num-c">1</span>) {
+        front = <span class="num-c">0</span>;
+        rear  = <span class="num-c">0</span>;
+    }
+    <span class="cm">/* Step 3: Wrap around to start of array */</span>
+    <span class="kw">else if</span> (rear == MAX - <span class="num-c">1</span>) {
+        rear = <span class="num-c">0</span>;
+    }
+    <span class="cm">/* Step 4: Normal case - move rear right */</span>
+    <span class="kw">else</span> {
+        rear = rear + <span class="num-c">1</span>;
+    }
+
+    arr[rear] = value;
+    printf(<span class="str">"Inserted %d at rear. rear=%d\n"</span>, value, rear);
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🚌 Think of a <strong>bus stop queue</strong>. Every new passenger who arrives joins at the <strong>back of the line</strong>. This is Insert Rear — the natural way elements are added in a queue. First come, first served.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 3 ─────────────────────────── -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num num-green">03</div>
+    <div>
+      <div class="section-title">Delete Front <span style="color:var(--green)">/ Dequeue Front</span></div>
+      <div class="section-sub">Remove the element from the front (left) end</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Delete Front Works</div>
+    <p>Removing from the front means taking the first element and advancing the front pointer forward.</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p><strong>Underflow check</strong> — if <code>front == -1</code> the deque is empty; nothing to remove. Print error.</p></div>
+      <div class="step"><p>Save <code>arr[front]</code> in a temporary variable so you can return/print it.</p></div>
+      <div class="step"><p><strong>Only one element?</strong> If <code>front == rear</code>, reset both to <code>-1</code>. Deque becomes empty.</p></div>
+      <div class="step"><p><strong>Wrap-around</strong> — if <code>front == MAX-1</code>, wrap to <code>0</code>. Otherwise do <code>front = front + 1</code>.</p></div>
+    </div>
+    <div class="alert alert-warn" style="margin-top:1rem">
+      <span class="alert-icon">⚠️</span>
+      <span><strong>Underflow</strong> is the opposite of overflow. Attempting to delete from an empty deque is a logic error that must always be checked first.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Delete Front — Watch the front pointer advance</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="df-track"></div>
+      <div class="ptr-row" id="df-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('df')">Add Element</button>
+        <button class="mbtn mb-r" onclick="miniDeleteFront('df')">Delete Front</button>
+        <button class="mbtn mb-p" onclick="miniReset('df')">Reset</button>
+      </div>
+      <div class="mini-msg" id="df-msg">Add elements, then delete from front.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Delete Front Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="tp">int</span> <span class="fn">deleteFront</span>() {
+    <span class="cm">/* Step 1: Underflow check */</span>
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        printf(<span class="str">"Underflow! Deque is empty.\n"</span>);
+        <span class="kw">return</span> -<span class="num-c">1</span>;
+    }
+
+    <span class="tp">int</span> removed = arr[front];  <span class="cm">/* Save value */</span>
+
+    <span class="cm">/* Step 2: Only one element left */</span>
+    <span class="kw">if</span> (front == rear) {
+        front = -<span class="num-c">1</span>;
+        rear  = -<span class="num-c">1</span>;
+    }
+    <span class="cm">/* Step 3: Wrap around */</span>
+    <span class="kw">else if</span> (front == MAX - <span class="num-c">1</span>) {
+        front = <span class="num-c">0</span>;
+    }
+    <span class="cm">/* Step 4: Move front right */</span>
+    <span class="kw">else</span> {
+        front = front + <span class="num-c">1</span>;
+    }
+
+    printf(<span class="str">"Removed %d from front.\n"</span>, removed);
+    <span class="kw">return</span> removed;
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🎠 Picture a <strong>roller-coaster ride queue</strong>. When the ride is ready, the person at the <strong>very front</strong> of the line gets on. They leave the queue; everyone behind them stays. That's Delete Front — serving (removing) the element that has been waiting the longest.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 4 ─────────────────────────── -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num num-orange">04</div>
+    <div>
+      <div class="section-title">Delete Rear <span style="color:var(--accent2)">/ Dequeue Rear</span></div>
+      <div class="section-sub">Remove the element from the rear (right) end</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Delete Rear Works</div>
+    <p>Delete Rear is a unique ability that a normal queue does NOT have. It removes the <strong>most recently added</strong> element from the back.</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p><strong>Underflow check</strong> — if empty (<code>front == -1</code>), print error and return.</p></div>
+      <div class="step"><p>Save <code>arr[rear]</code> to return it.</p></div>
+      <div class="step"><p><strong>Only one element?</strong> Reset both pointers to <code>-1</code>.</p></div>
+      <div class="step"><p><strong>Wrap-around</strong> — if <code>rear == 0</code>, wrap to <code>MAX-1</code>. Otherwise <code>rear = rear - 1</code>.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Delete Rear — Watch the rear pointer shrink</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="dr-track"></div>
+      <div class="ptr-row" id="dr-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-g" onclick="miniInsertFront('dr')">Add Front</button>
+        <button class="mbtn mb-r" onclick="miniDeleteRear('dr')">Delete Rear</button>
+        <button class="mbtn mb-p" onclick="miniReset('dr')">Reset</button>
+      </div>
+      <div class="mini-msg" id="dr-msg">Add elements, then delete from rear.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Delete Rear Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="tp">int</span> <span class="fn">deleteRear</span>() {
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        printf(<span class="str">"Underflow! Deque is empty.\n"</span>);
+        <span class="kw">return</span> -<span class="num-c">1</span>;
+    }
+
+    <span class="tp">int</span> removed = arr[rear];
+
+    <span class="kw">if</span> (front == rear) {      <span class="cm">/* Last element */</span>
+        front = -<span class="num-c">1</span>;
+        rear  = -<span class="num-c">1</span>;
+    }
+    <span class="kw">else if</span> (rear == <span class="num-c">0</span>) {   <span class="cm">/* Wrap around */</span>
+        rear = MAX - <span class="num-c">1</span>;
+    }
+    <span class="kw">else</span> {                    <span class="cm">/* Move rear left */</span>
+        rear = rear - <span class="num-c">1</span>;
+    }
+
+    printf(<span class="str">"Removed %d from rear.\n"</span>, removed);
+    <span class="kw">return</span> removed;
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🃏 Think of a <strong>deck of playing cards</strong>. A dealer can draw a card from the <strong>bottom of the deck</strong> (rear) just as easily as from the top. Delete Rear is like drawing from the bottom — it's a unique power not found in ordinary queues.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 5 & 6 ─────────────────────────── -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num num-blue">05–06</div>
+    <div>
+      <div class="section-title">Get Front & Get Rear <span style="color:var(--accent)">/ Peek</span></div>
+      <div class="section-sub">View elements without removing them</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> Peek Operations Explained</div>
+    <p><strong>Get Front (Peek Front)</strong> — looks at <code>arr[front]</code> and returns the value. The <strong>front pointer does not change</strong>. The element stays in the deque.</p>
+    <p><strong>Get Rear (Peek Rear)</strong> — same idea but for <code>arr[rear]</code>. Returns the last element without removing it.</p>
+    <div class="alert alert-good" style="margin-top:.8rem">
+      <span class="alert-icon">✅</span>
+      <span>Peek operations are always <strong>O(1)</strong>. They never modify the deque; they only read it. Always check for underflow (empty deque) before peeking.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Peek — Highlight without removing</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="pk-track"></div>
+      <div class="ptr-row" id="pk-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-g" onclick="miniInsertFront('pk')">Add Front</button>
+        <button class="mbtn mb-o" onclick="miniInsertRear('pk')">Add Rear</button>
+        <button class="mbtn mb-b" onclick="miniPeekFront('pk')">Peek Front</button>
+        <button class="mbtn mb-y" onclick="miniPeekRear('pk')">Peek Rear</button>
+        <button class="mbtn mb-r" onclick="miniReset('pk')">Reset</button>
+      </div>
+      <div class="mini-msg" id="pk-msg">Add elements, then peek front or rear.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Peek Front & Peek Rear</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* View front element — NO deletion */</span>
+<span class="tp">int</span> <span class="fn">getFront</span>() {
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        printf(<span class="str">"Deque is empty.\n"</span>);
+        <span class="kw">return</span> -<span class="num-c">1</span>;
+    }
+    printf(<span class="str">"Front element: %d\n"</span>, arr[front]);
+    <span class="kw">return</span> arr[front];   <span class="cm">/* No pointer change! */</span>
+}
+
+<span class="cm">/* View rear element — NO deletion */</span>
+<span class="tp">int</span> <span class="fn">getRear</span>() {
+    <span class="kw">if</span> (rear == -<span class="num-c">1</span>) {
+        printf(<span class="str">"Deque is empty.\n"</span>);
+        <span class="kw">return</span> -<span class="num-c">1</span>;
+    }
+    printf(<span class="str">"Rear element: %d\n"</span>, arr[rear]);
+    <span class="kw">return</span> arr[rear];    <span class="cm">/* No pointer change! */</span>
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>📦 Imagine a <strong>conveyor belt in a factory</strong>. A quality inspector can look at the item at the <strong>start</strong> or <strong>end</strong> of the belt to check it — without actually taking it off the belt. That's exactly what Peek does: observe without disturbing.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 7 ─────────────────────────── -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num num-purple">07</div>
+    <div>
+      <div class="section-title">isEmpty <span style="color:#a78bfa">()</span></div>
+      <div class="section-sub">Check if the deque contains zero elements</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How isEmpty Works</div>
+    <p>The rule is simple: when both <code>front</code> and <code>rear</code> are <code>-1</code>, the deque holds no elements and is considered <strong>empty</strong>. This is the initial state.</p>
+    <p>Other operations (Delete, Peek) must always call <code>isEmpty()</code> first before doing anything. It is the <strong>guard condition</strong> that prevents underflow errors.</p>
+    <div class="info-grid" style="margin-top:1rem">
+      <div class="info-item"><h4 style="color:var(--green)">Returns TRUE when</h4><p>front == -1 (and rear == -1). No elements present.</p></div>
+      <div class="info-item"><h4 style="color:var(--red)">Returns FALSE when</h4><p>front ≥ 0. At least one element exists.</p></div>
+      <div class="info-item"><h4 style="color:var(--accent)">Time Complexity</h4><p>O(1) — just a single comparison.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> isEmpty — Live Status</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="ie-track"></div>
+      <div class="ptr-row" id="ie-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('ie')">Add Element</button>
+        <button class="mbtn mb-r" onclick="miniDeleteFront('ie')">Remove Element</button>
+        <button class="mbtn mb-b" onclick="miniIsEmpty('ie')">isEmpty()?</button>
+        <button class="mbtn mb-p" onclick="miniReset('ie')">Reset</button>
+      </div>
+      <div class="mini-msg" id="ie-msg">Try adding then removing all elements.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> isEmpty Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* Returns 1 (true) if deque is empty, 0 (false) otherwise */</span>
+<span class="tp">int</span> <span class="fn">isEmpty</span>() {
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        <span class="kw">return</span> <span class="num-c">1</span>;   <span class="cm">/* empty */</span>
+    }
+    <span class="kw">return</span> <span class="num-c">0</span>;       <span class="cm">/* not empty */</span>
+}
+
+<span class="cm">/* Usage example */</span>
+<span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+    printf(<span class="str">"Deque is empty!\n"</span>);
+} <span class="kw">else</span> {
+    printf(<span class="str">"Deque has elements.\n"</span>);
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🏧 An <strong>ATM machine</strong> checks whether it has any cash left before dispensing money. If the cash drawer is empty, it displays "Out of Service." The <code>isEmpty()</code> function is that same check — it prevents your program from trying to access non-existent data.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 8 ─────────────────────────── -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num num-yellow">08</div>
+    <div>
+      <div class="section-title">isFull <span style="color:var(--yellow)">()</span></div>
+      <div class="section-sub">Check if the deque has reached its maximum capacity</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How isFull Works</div>
+    <p>An array-based deque has a fixed size <strong>MAX</strong>. When the number of elements equals MAX, no more insertions are possible. There are two conditions that indicate fullness in a circular array:</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p><strong>Front is 0 AND rear is MAX-1</strong> — the deque occupies the entire array from left to right with no wrap-around.</p></div>
+      <div class="step"><p><strong>Front = rear + 1</strong> — the deque has wrapped around and the front pointer is just one ahead of rear, meaning no gap exists.</p></div>
+    </div>
+    <div class="alert alert-warn" style="margin-top:1rem">
+      <span class="alert-icon">⚠️</span>
+      <span>Always call <code>isFull()</code> inside Insert functions <strong>before</strong> modifying any pointers. Inserting into a full array causes an <strong>overflow</strong> and overwrites existing data.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> isFull — Fill the deque to capacity</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="if2-track"></div>
+      <div class="ptr-row" id="if2-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('if2')">Add Element</button>
+        <button class="mbtn mb-y" onclick="miniIsFull('if2')">isFull()?</button>
+        <button class="mbtn mb-r" onclick="miniDeleteFront('if2')">Remove</button>
+        <button class="mbtn mb-p" onclick="miniReset('if2')">Reset</button>
+      </div>
+      <div class="mini-msg" id="if2-msg">Fill all 6 slots, then check isFull.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> isFull Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* Returns 1 (true) if deque is full, 0 (false) otherwise */</span>
+<span class="tp">int</span> <span class="fn">isFull</span>() {
+    <span class="cm">/* Condition 1: normal full (front=0, rear=MAX-1) */</span>
+    <span class="kw">if</span> (front == <span class="num-c">0</span> && rear == MAX - <span class="num-c">1</span>) {
+        <span class="kw">return</span> <span class="num-c">1</span>;
+    }
+    <span class="cm">/* Condition 2: circular full (front = rear + 1) */</span>
+    <span class="kw">if</span> (front == rear + <span class="num-c">1</span>) {
+        <span class="kw">return</span> <span class="num-c">1</span>;
+    }
+    <span class="kw">return</span> <span class="num-c">0</span>;   <span class="cm">/* not full */</span>
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🛗 An <strong>elevator</strong> has a maximum weight or person limit. Before anyone can step in, the sensor checks if the elevator is already at capacity. If full, it refuses entry and beeps. <code>isFull()</code> is that capacity sensor — it prevents overfilling the deque.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 9 ─────────────────────────── -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num num-green">09</div>
+    <div>
+      <div class="section-title">Size <span style="color:var(--green)">/ Count</span></div>
+      <div class="section-sub">Find the total number of elements currently in the deque</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> Calculating Size</div>
+    <p>The size calculation depends on where front and rear sit relative to each other:</p>
+    <div class="info-grid" style="margin-top:.8rem">
+      <div class="info-item"><h4 style="color:var(--red)">Empty Deque</h4><p>front == -1 → size = 0</p></div>
+      <div class="info-item"><h4 style="color:var(--accent)">Normal (rear ≥ front)</h4><p>size = rear − front + 1</p></div>
+      <div class="info-item"><h4 style="color:var(--yellow)">Wrapped Around (rear &lt; front)</h4><p>size = MAX − front + rear + 1</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Size — Count elements dynamically</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="sz-track"></div>
+      <div class="ptr-row" id="sz-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-g" onclick="miniInsertFront('sz')">Add Front</button>
+        <button class="mbtn mb-o" onclick="miniInsertRear('sz')">Add Rear</button>
+        <button class="mbtn mb-r" onclick="miniDeleteFront('sz')">Remove</button>
+        <button class="mbtn mb-b" onclick="miniSize('sz')">Size()?</button>
+        <button class="mbtn mb-p" onclick="miniReset('sz')">Reset</button>
+      </div>
+      <div class="mini-msg" id="sz-msg">Add and remove elements, then check size.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Size Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="tp">int</span> <span class="fn">size</span>() {
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        <span class="kw">return</span> <span class="num-c">0</span>;   <span class="cm">/* empty */</span>
+    }
+
+    <span class="cm">/* Normal case: rear is to the right of front */</span>
+    <span class="kw">if</span> (rear >= front) {
+        <span class="kw">return</span> rear - front + <span class="num-c">1</span>;
+    }
+
+    <span class="cm">/* Wrapped-around case */</span>
+    <span class="kw">return</span> MAX - front + rear + <span class="num-c">1</span>;
+}
+
+<span class="cm">/* Print size */</span>
+printf(<span class="str">"Current size: %d\n"</span>, <span class="fn">size</span>());</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🧺 Imagine counting items in a <strong>shopping basket</strong>. You don't need to remove them — just count them in place. <code>size()</code> tells you exactly how many items (elements) are in your basket (deque) at any moment, without disturbing their order.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 10 ─────────────────────────── -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num num-blue">10</div>
+    <div>
+      <div class="section-title">Traverse <span style="color:var(--accent)">/ Display</span></div>
+      <div class="section-sub">Print all elements from front to rear</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Traverse Works</div>
+    <p>Traverse visits every element from <strong>front</strong> to <strong>rear</strong> in order, printing each one. The tricky part is handling the circular wrap-around properly:</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p>If empty (<code>front == -1</code>), print "Empty deque" and return.</p></div>
+      <div class="step"><p>Start a loop at index <code>i = front</code>.</p></div>
+      <div class="step"><p>Print <code>arr[i]</code>, then move <code>i = (i + 1) % MAX</code>. The modulo handles the wrap-around automatically.</p></div>
+      <div class="step"><p>Stop when <code>i == rear</code>. Print <code>arr[rear]</code> last.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Traverse — Watch each cell light up in order</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="tv-track"></div>
+      <div class="ptr-row" id="tv-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('tv')">Add Element</button>
+        <button class="mbtn mb-b" onclick="miniTraverse('tv')">▶ Traverse</button>
+        <button class="mbtn mb-p" onclick="miniReset('tv')">Reset</button>
+      </div>
+      <div class="mini-msg" id="tv-msg">Add elements then click Traverse to animate.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Traverse / Display Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="tp">void</span> <span class="fn">display</span>() {
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        printf(<span class="str">"Deque is empty.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    printf(<span class="str">"Deque [ FRONT -> REAR ]: "</span>);
+
+    <span class="tp">int</span> i = front;
+    <span class="kw">while</span> (<span class="num-c">1</span>) {
+        printf(<span class="str">"%d "</span>, arr[i]);
+
+        <span class="kw">if</span> (i == rear) <span class="kw">break</span>;        <span class="cm">/* reached the end */</span>
+
+        i = (i + <span class="num-c">1</span>) % MAX;           <span class="cm">/* move forward, wrap if needed */</span>
+    }
+
+    printf(<span class="str">"\n"</span>);
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>📖 Like reading a <strong>book from the first page to the last</strong>. You visit every page in order without tearing any out. Traverse simply "reads" every element from front to rear and shows its value — perfect for debugging or displaying state.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 11 ─────────────────────────── -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num num-red">11</div>
+    <div>
+      <div class="section-title">Clear <span style="color:var(--red)">/ Reset</span></div>
+      <div class="section-sub">Remove all elements and reset the deque to initial state</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Clear Works</div>
+    <p>Clear resets the deque to an empty state instantly. There is <strong>no need to physically erase</strong> array values — simply resetting <code>front</code> and <code>rear</code> to <code>-1</code> logically empties the deque. Any old data will be overwritten on the next insertion.</p>
+    <div class="info-grid" style="margin-top:1rem">
+      <div class="info-item"><h4 style="color:var(--accent)">After Clear</h4><p>front = -1, rear = -1. Deque appears empty to all other operations.</p></div>
+      <div class="info-item"><h4 style="color:var(--green)">Time Complexity</h4><p>O(1) — just two assignments. Very fast regardless of how full the deque was.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Clear — Instant reset</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="cl-track"></div>
+      <div class="ptr-row" id="cl-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('cl')">Add Element</button>
+        <button class="mbtn mb-r" onclick="miniClear('cl')">🗑 Clear All</button>
+      </div>
+      <div class="mini-msg" id="cl-msg">Fill the deque, then hit Clear.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Clear Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* Clears all elements — O(1) operation */</span>
+<span class="tp">void</span> <span class="fn">clearDeque</span>() {
+    front = -<span class="num-c">1</span>;
+    rear  = -<span class="num-c">1</span>;
+    printf(<span class="str">"Deque cleared. front=%d, rear=%d\n"</span>, front, rear);
+}
+
+<span class="cm">/* Optional: also zero-out the array (for security) */</span>
+<span class="tp">void</span> <span class="fn">clearDequeSecure</span>() {
+    <span class="tp">int</span> i;
+    <span class="kw">for</span> (i = <span class="num-c">0</span>; i < MAX; i++) {
+        arr[i] = <span class="num-c">0</span>;
+    }
+    front = -<span class="num-c">1</span>;
+    rear  = -<span class="num-c">1</span>;
+    printf(<span class="str">"Deque securely cleared.\n"</span>);
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🧽 Imagine a <strong>whiteboard</strong> filled with notes. Instead of erasing each word one by one, you pick up the eraser and wipe the entire board in one sweep. <code>clear()</code> is that one sweep — it discards everything instantly and gives you a fresh start.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 12 ─────────────────────────── -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num num-purple">12</div>
+    <div>
+      <div class="section-title">Search <span style="color:#a78bfa">()</span></div>
+      <div class="section-sub">Find a specific element and report its position</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Search Works</div>
+    <p>Search scans through the deque from <strong>front to rear</strong>, comparing each element with the target value. It uses the same circular traversal pattern as Display.</p>
+    <p>Since elements are not sorted, we must use <strong>Linear Search</strong> — O(n) worst case. For each position, if <code>arr[i] == target</code>, we report it found and return its index.</p>
+    <div class="alert alert-info" style="margin-top:.8rem">
+      <span class="alert-icon">💡</span>
+      <span>Search returns the <strong>position from front</strong> (0-indexed), not the raw array index. This is more intuitive: position 0 = front, position 1 = one after front, etc.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Search — Watch cells light up during scan</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="sr-track"></div>
+      <div class="ptr-row" id="sr-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('sr')">Add Element</button>
+        <input id="sr-inp" type="number" placeholder="search val" style="width:80px;padding:.3rem .5rem;border-radius:6px;border:1px solid var(--border);background:var(--code-bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.75rem;outline:none">
+        <button class="mbtn mb-b" onclick="miniSearch('sr')">🔍 Search</button>
+        <button class="mbtn mb-p" onclick="miniReset('sr')">Reset</button>
+      </div>
+      <div class="mini-msg" id="sr-msg">Add elements (auto-numbered), then search for a value.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Search Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* Search for a value. Returns position from front (0-based)
+   or -1 if not found. */</span>
+<span class="tp">int</span> <span class="fn">search</span>(<span class="tp">int</span> target) {
+    <span class="kw">if</span> (front == -<span class="num-c">1</span>) {
+        printf(<span class="str">"Deque is empty.\n"</span>);
+        <span class="kw">return</span> -<span class="num-c">1</span>;
+    }
+
+    <span class="tp">int</span> i = front, pos = <span class="num-c">0</span>;
+
+    <span class="kw">while</span> (<span class="num-c">1</span>) {
+        <span class="kw">if</span> (arr[i] == target) {
+            printf(<span class="str">"Found %d at position %d\n"</span>, target, pos);
+            <span class="kw">return</span> pos;
+        }
+        <span class="kw">if</span> (i == rear) <span class="kw">break</span>;      <span class="cm">/* end of deque */</span>
+        i = (i + <span class="num-c">1</span>) % MAX;
+        pos++;
+    }
+
+    printf(<span class="str">"%d not found in deque.\n"</span>, target);
+    <span class="kw">return</span> -<span class="num-c">1</span>;
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🕵️ Like looking for a specific item in a <strong>line of people</strong>. You start from the front and check each person one by one until you find who you're looking for (or reach the end). That's linear search — simple, reliable, and complete.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 13 ─────────────────────────── -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num num-yellow">13</div>
+    <div>
+      <div class="section-title">Update <span style="color:var(--yellow)">/ Modify</span></div>
+      <div class="section-sub">Change the value at a specific position in the deque</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Update Works</div>
+    <p>Update finds the element at a given <strong>position from the front</strong> (0-indexed) and replaces its value. No elements are added or removed — only the value changes.</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p>Check if deque is empty. If so, print error.</p></div>
+      <div class="step"><p>Validate the position. If <code>pos &lt; 0</code> or <code>pos &gt;= size()</code>, it's out of range — print error.</p></div>
+      <div class="step"><p>Calculate the actual array index: <code>actual = (front + pos) % MAX</code>. This handles wrap-around correctly.</p></div>
+      <div class="step"><p>Assign <code>arr[actual] = newValue</code>. Done!</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Update — Modify a specific cell</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="up-track"></div>
+      <div class="ptr-row" id="up-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('up')">Add Element</button>
+        <input id="up-pos" type="number" placeholder="pos" style="width:55px;padding:.3rem .4rem;border-radius:6px;border:1px solid var(--border);background:var(--code-bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.75rem;outline:none">
+        <input id="up-val" type="number" placeholder="new val" style="width:70px;padding:.3rem .4rem;border-radius:6px;border:1px solid var(--border);background:var(--code-bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.75rem;outline:none">
+        <button class="mbtn mb-y" onclick="miniUpdate('up')">✏️ Update</button>
+        <button class="mbtn mb-p" onclick="miniReset('up')">Reset</button>
+      </div>
+      <div class="mini-msg" id="up-msg">Add elements, enter position & new value, then Update.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Update Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* Update element at position 'pos' from front (0-indexed) */</span>
+<span class="tp">void</span> <span class="fn">update</span>(<span class="tp">int</span> pos, <span class="tp">int</span> newValue) {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+        printf(<span class="str">"Deque is empty.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="kw">if</span> (pos < <span class="num-c">0</span> || pos >= <span class="fn">size</span>()) {
+        printf(<span class="str">"Invalid position %d.\n"</span>, pos);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Calculate actual index with wrap-around */</span>
+    <span class="tp">int</span> actualIndex = (front + pos) % MAX;
+
+    printf(<span class="str">"Updated arr[%d]: %d -> %d\n"</span>,
+           actualIndex, arr[actualIndex], newValue);
+
+    arr[actualIndex] = newValue;
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>✍️ Like a teacher who has a <strong>seating chart</strong>. They know student "position 2 from the front" and they can update that student's grade directly. The student stays in their seat; only their grade (value) changes. Update does exactly this — targeted in-place modification.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── SECTION 14 ─────────────────────────── -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num num-purple">14</div>
+    <div>
+      <div class="section-title">Reverse Deque</div>
+      <div class="section-sub">Reverse the order of all elements in place</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">THEORY</span> How Reverse Works</div>
+    <p>Reversing a deque means the front element becomes the rear and vice versa. We use the <strong>two-pointer technique</strong>: one pointer starts at front, one at rear, and they swap elements while moving toward the center.</p>
+    <div class="steps" style="margin-top:.8rem">
+      <div class="step"><p>Set <code>left = front</code>, <code>right = rear</code>.</p></div>
+      <div class="step"><p>While <code>left != right</code> and they haven't crossed: swap <code>arr[left]</code> and <code>arr[right]</code>.</p></div>
+      <div class="step"><p>Move <code>left = (left + 1) % MAX</code> and <code>right = (right - 1 + MAX) % MAX</code>.</p></div>
+      <div class="step"><p>Continue until both pointers meet in the middle. The deque is now reversed — front and rear pointers themselves do NOT change.</p></div>
+    </div>
+    <div class="alert alert-good" style="margin-top:.8rem">
+      <span class="alert-icon">✅</span>
+      <span>The front and rear pointers stay the same! Only the <em>values inside</em> the array slots are swapped. The deque's structure is preserved.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-viz">VISUALIZER</span> Reverse — Watch the swap animation</div>
+    <div class="mini-viz">
+      <div class="mini-track" id="rv-track"></div>
+      <div class="ptr-row" id="rv-ptr"></div>
+      <div class="mini-controls">
+        <button class="mbtn mb-o" onclick="miniInsertRear('rv')">Add Element</button>
+        <button class="mbtn mb-p" onclick="miniReverse('rv')">⟺ Reverse</button>
+        <button class="mbtn mb-r" onclick="miniReset('rv')">Reset</button>
+      </div>
+      <div class="mini-msg" id="rv-msg">Add elements, then click Reverse to watch them swap.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-code">C CODE</span> Reverse Deque Function</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* Helper: swap two integers */</span>
+<span class="tp">void</span> <span class="fn">swapInt</span>(<span class="tp">int</span> *a, <span class="tp">int</span> *b) {
+    <span class="tp">int</span> temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+<span class="cm">/* Reverse the deque in-place using two pointers */</span>
+<span class="tp">void</span> <span class="fn">reverseDeque</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) {
+        printf(<span class="str">"Deque is empty.\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="tp">int</span> left  = front;
+    <span class="tp">int</span> right = rear;
+    <span class="tp">int</span> count = <span class="fn">size</span>() / <span class="num-c">2</span>;   <span class="cm">/* only need half */</span>
+    <span class="tp">int</span> i;
+
+    <span class="kw">for</span> (i = <span class="num-c">0</span>; i < count; i++) {
+        <span class="fn">swapInt</span>(&arr[left], &arr[right]);
+
+        left  = (left  + <span class="num-c">1</span>)       % MAX;
+        right = (right - <span class="num-c">1</span> + MAX) % MAX;
+    }
+
+    printf(<span class="str">"Deque reversed.\n"</span>);
+    <span class="fn">display</span>();
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-analogy">ANALOGY</span> Real-Life Example</div>
+    <p>🪞 Imagine a <strong>line of dancers</strong> facing a mirror. To reverse the line: the first and last dancer swap places, then the second and second-to-last swap, and so on — until everyone is in reversed order. No one leaves the dance floor; they just swap positions. That's Reverse Deque with the two-pointer technique.</p>
+  </div>
+</section>
+
+<!-- ─────────────────────────── COMPLEXITY TABLE ─────────────────────────── -->
+<section class="section" id="complexity">
+  <div class="section-header">
+    <div class="section-num num-blue">⚡</div>
+    <div>
+      <div class="section-title">Time & Space Complexity</div>
+      <div class="section-sub">Big-O analysis of all 14 deque operations</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="tag tag-theory">REFERENCE</span> All Operations at a Glance</div>
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Operation</th>
+            <th>Time Complexity</th>
+            <th>Space</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Insert Front</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Direct pointer update</td></tr>
+          <tr><td>Insert Rear</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Direct pointer update</td></tr>
+          <tr><td>Delete Front</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Direct pointer update</td></tr>
+          <tr><td>Delete Rear</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Direct pointer update</td></tr>
+          <tr><td>Get Front (Peek)</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>No modification</td></tr>
+          <tr><td>Get Rear (Peek)</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>No modification</td></tr>
+          <tr><td>isEmpty()</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Single comparison</td></tr>
+          <tr><td>isFull()</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Two comparisons</td></tr>
+          <tr><td>Size / Count</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Formula-based</td></tr>
+          <tr><td>Traverse / Display</td><td class="on">O(n)</td><td class="o1">O(1)</td><td>Visits every element</td></tr>
+          <tr><td>Clear</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Just reset pointers</td></tr>
+          <tr><td>Search</td><td class="on">O(n)</td><td class="o1">O(1)</td><td>Linear scan</td></tr>
+          <tr><td>Update / Modify</td><td class="o1">O(1)</td><td class="o1">O(1)</td><td>Index formula + assign</td></tr>
+          <tr><td>Reverse</td><td class="on">O(n)</td><td class="o1">O(1)</td><td>Two-pointer swap</td></tr>
+          <tr><td><strong>Space (array)</strong></td><td>—</td><td class="on">O(n)</td><td>Fixed MAX size allocation</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title"><span class="tag tag-theory">SUMMARY</span> Key Takeaways</div>
+    <div class="info-grid">
+      <div class="info-item">
+        <h4 style="color:var(--green)">9 O(1) Operations</h4>
+        <p>Insert, Delete, Peek, isEmpty, isFull, Size, Clear, and Update are all constant time — the fastest possible.</p>
+      </div>
+      <div class="info-item">
+        <h4 style="color:var(--yellow)">3 O(n) Operations</h4>
+        <p>Traverse, Search, and Reverse must visit multiple elements. Their time grows linearly with deque size.</p>
+      </div>
+      <div class="info-item">
+        <h4 style="color:var(--accent)">O(1) Extra Space</h4>
+        <p>All operations use only a constant amount of extra variables — no extra arrays needed (Reverse is in-place).</p>
+      </div>
+      <div class="info-item">
+        <h4 style="color:var(--accent2)">Fixed Capacity</h4>
+        <p>Array-based deque cannot grow dynamically. For variable size, use a linked-list based deque.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full complete C program -->
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title"><span class="tag tag-code">COMPLETE PROGRAM</span> Full Array-Based Deque in C</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C · Complete Program</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="pp">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="pp">#define</span> MAX <span class="num-c">8</span>
+
+<span class="tp">int</span> arr[MAX];
+<span class="tp">int</span> front = -<span class="num-c">1</span>, rear = -<span class="num-c">1</span>;
+
+<span class="tp">int</span>  <span class="fn">isEmpty</span>()  { <span class="kw">return</span> front == -<span class="num-c">1</span>; }
+<span class="tp">int</span>  <span class="fn">isFull</span>()   { <span class="kw">return</span> (front==<span class="num-c">0</span>&&rear==MAX-<span class="num-c">1</span>)||(front==rear+<span class="num-c">1</span>); }
+<span class="tp">int</span>  <span class="fn">size</span>()     {
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>()) <span class="kw">return</span> <span class="num-c">0</span>;
+    <span class="kw">return</span> rear>=front ? rear-front+<span class="num-c">1</span> : MAX-front+rear+<span class="num-c">1</span>;
+}
+
+<span class="tp">void</span> <span class="fn">insertFront</span>(<span class="tp">int</span> v) {
+    <span class="kw">if</span>(<span class="fn">isFull</span>()){ puts(<span class="str">"Overflow!"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span>(front==-<span class="num-c">1</span>){ front=rear=<span class="num-c">0</span>; }
+    <span class="kw">else if</span>(front==<span class="num-c">0</span>) front=MAX-<span class="num-c">1</span>;
+    <span class="kw">else</span> front--;
+    arr[front]=v;
+}
+<span class="tp">void</span> <span class="fn">insertRear</span>(<span class="tp">int</span> v) {
+    <span class="kw">if</span>(<span class="fn">isFull</span>()){ puts(<span class="str">"Overflow!"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span>(rear==-<span class="num-c">1</span>){ front=rear=<span class="num-c">0</span>; }
+    <span class="kw">else if</span>(rear==MAX-<span class="num-c">1</span>) rear=<span class="num-c">0</span>;
+    <span class="kw">else</span> rear++;
+    arr[rear]=v;
+}
+<span class="tp">int</span> <span class="fn">deleteFront</span>() {
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>()){ puts(<span class="str">"Underflow!"</span>); <span class="kw">return</span> -<span class="num-c">1</span>; }
+    <span class="tp">int</span> v=arr[front];
+    <span class="kw">if</span>(front==rear){ front=rear=-<span class="num-c">1</span>; }
+    <span class="kw">else if</span>(front==MAX-<span class="num-c">1</span>) front=<span class="num-c">0</span>;
+    <span class="kw">else</span> front++;
+    <span class="kw">return</span> v;
+}
+<span class="tp">int</span> <span class="fn">deleteRear</span>() {
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>()){ puts(<span class="str">"Underflow!"</span>); <span class="kw">return</span> -<span class="num-c">1</span>; }
+    <span class="tp">int</span> v=arr[rear];
+    <span class="kw">if</span>(front==rear){ front=rear=-<span class="num-c">1</span>; }
+    <span class="kw">else if</span>(rear==<span class="num-c">0</span>) rear=MAX-<span class="num-c">1</span>;
+    <span class="kw">else</span> rear--;
+    <span class="kw">return</span> v;
+}
+<span class="tp">int</span>  <span class="fn">getFront</span>()  { <span class="kw">return</span> <span class="fn">isEmpty</span>() ? -<span class="num-c">1</span> : arr[front]; }
+<span class="tp">int</span>  <span class="fn">getRear</span>()   { <span class="kw">return</span> <span class="fn">isEmpty</span>() ? -<span class="num-c">1</span> : arr[rear]; }
+<span class="tp">void</span> <span class="fn">clearDeque</span>(){ front=rear=-<span class="num-c">1</span>; }
+
+<span class="tp">void</span> <span class="fn">display</span>() {
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>()){ puts(<span class="str">"Empty"</span>); <span class="kw">return</span>; }
+    <span class="tp">int</span> i=front;
+    printf(<span class="str">"[ "</span>);
+    <span class="kw">while</span>(<span class="num-c">1</span>){ printf(<span class="str">"%d "</span>,arr[i]); <span class="kw">if</span>(i==rear)<span class="kw">break</span>; i=(i+<span class="num-c">1</span>)%MAX; }
+    printf(<span class="str">"]\n"</span>);
+}
+<span class="tp">int</span> <span class="fn">search</span>(<span class="tp">int</span> t) {
+    <span class="kw">if</span>(<span class="fn">isEmpty</span>()) <span class="kw">return</span> -<span class="num-c">1</span>;
+    <span class="tp">int</span> i=front,p=<span class="num-c">0</span>;
+    <span class="kw">while</span>(<span class="num-c">1</span>){ <span class="kw">if</span>(arr[i]==t)<span class="kw">return</span> p; <span class="kw">if</span>(i==rear)<span class="kw">break</span>; i=(i+<span class="num-c">1</span>)%MAX; p++; }
+    <span class="kw">return</span> -<span class="num-c">1</span>;
+}
+<span class="tp">void</span> <span class="fn">update</span>(<span class="tp">int</span> pos, <span class="tp">int</span> v) {
+    <span class="kw">if</span>(pos&lt;<span class="num-c">0</span>||pos>=<span class="fn">size</span>()){ puts(<span class="str">"Invalid pos"</span>); <span class="kw">return</span>; }
+    arr[(front+pos)%MAX]=v;
+}
+<span class="tp">void</span> <span class="fn">reverseDeque</span>() {
+    <span class="tp">int</span> l=front,r=rear,c=<span class="fn">size</span>()/<span class="num-c">2</span>,i,t;
+    <span class="kw">for</span>(i=<span class="num-c">0</span>;i&lt;c;i++){
+        t=arr[l]; arr[l]=arr[r]; arr[r]=t;
+        l=(l+<span class="num-c">1</span>)%MAX; r=(r-<span class="num-c">1</span>+MAX)%MAX;
+    }
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="fn">insertRear</span>(<span class="num-c">10</span>); <span class="fn">insertRear</span>(<span class="num-c">20</span>); <span class="fn">insertRear</span>(<span class="num-c">30</span>);
+    <span class="fn">insertFront</span>(<span class="num-c">5</span>);
+    <span class="fn">display</span>();       <span class="cm">/* [ 5 10 20 30 ] */</span>
+    printf(<span class="str">"Front: %d\n"</span>, <span class="fn">getFront</span>());
+    printf(<span class="str">"Rear:  %d\n"</span>, <span class="fn">getRear</span>());
+    printf(<span class="str">"Size:  %d\n"</span>, <span class="fn">size</span>());
+    <span class="fn">reverseDeque</span>();
+    <span class="fn">display</span>();       <span class="cm">/* [ 30 20 10 5 ] */</span>
+    <span class="kw">return</span> <span class="num-c">0</span>;
+}</pre>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>Array-Based Deque · Complete Learning Dashboard · Built for <span>C Programmers</span></p>
+  <p style="margin-top:.4rem;font-size:.65rem">14 Operations · Live Visualizations · Beginner to Advanced</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  SHARED STATE FOR EACH MINI VISUALIZER
+// ═══════════════════════════════════════════════════════
+const MMAX = 6;
+const states = {};
+
+function getState(id) {
+  if (!states[id]) {
+    states[id] = { arr: Array(MMAX).fill(null), front: -1, rear: -1, counter: 10 };
+  }
+  return states[id];
+}
+
+function calcSize(s) {
+  if (s.front === -1) return 0;
+  return s.rear >= s.front ? s.rear - s.front + 1 : MMAX - s.front + s.rear + 1;
+}
+
+function renderMini(id, highlight = -1) {
+  const s = getState(id);
+  const track = document.getElementById(id + '-track');
+  const ptr   = document.getElementById(id + '-ptr');
+  if (!track) return;
+  track.innerHTML = '';
+  for (let i = 0; i < MMAX; i++) {
+    const c = document.createElement('div');
+    c.className = 'mc';
+    const idx = document.createElement('span');
+    idx.className = 'ci'; idx.textContent = i;
+    if (s.arr[i] !== null) {
+      if (i === s.front && i === s.rear) c.classList.add('fr');
+      else if (i === s.front) c.classList.add('fr');
+      else if (i === s.rear)  c.classList.add('rr');
+      else c.classList.add('fil');
+      c.textContent = s.arr[i];
+      if (i === highlight) { c.classList.remove('fil','fr','rr'); c.classList.add('hi'); }
+    } else {
+      c.classList.add('emp'); c.textContent = '·';
+    }
+    c.appendChild(idx); track.appendChild(c);
+  }
+  if (ptr) {
+    ptr.innerHTML = `
+      <span class="ptr-chip" style="color:var(--green)">front=${s.front}</span>
+      <span class="ptr-chip" style="color:var(--accent2)">rear=${s.rear}</span>
+      <span class="ptr-chip">size=${calcSize(s)}</span>
+    `;
+  }
+}
+
+function setMsg(id, msg, cls='') {
+  const el = document.getElementById(id + '-msg');
+  if (el) { el.textContent = msg; el.className = 'mini-msg ' + cls; }
+}
+
+// ── Insert Front ──
+function miniInsertFront(id) {
+  const s = getState(id);
+  if ((s.front === 0 && s.rear === MMAX - 1) || (s.front === s.rear + 1)) {
+    setMsg(id, '⛔ Overflow! Deque is full.', 'er'); return;
+  }
+  const v = s.counter; s.counter += 10;
+  if (s.front === -1) { s.front = 0; s.rear = 0; }
+  else if (s.front === 0) s.front = MMAX - 1;
+  else s.front--;
+  s.arr[s.front] = v;
+  renderMini(id, s.front);
+  setMsg(id, `✅ Inserted ${v} at front. front=${s.front}`, 'ok');
+}
+
+// ── Insert Rear ──
+function miniInsertRear(id) {
+  const s = getState(id);
+  if ((s.front === 0 && s.rear === MMAX - 1) || (s.front === s.rear + 1)) {
+    setMsg(id, '⛔ Overflow! Deque is full.', 'er'); return;
+  }
+  const v = s.counter; s.counter += 10;
+  if (s.rear === -1) { s.front = 0; s.rear = 0; }
+  else if (s.rear === MMAX - 1) s.rear = 0;
+  else s.rear++;
+  s.arr[s.rear] = v;
+  renderMini(id, s.rear);
+  setMsg(id, `✅ Inserted ${v} at rear. rear=${s.rear}`, 'ok');
+}
+
+// ── Delete Front ──
+function miniDeleteFront(id) {
+  const s = getState(id);
+  if (s.front === -1) { setMsg(id, '⛔ Underflow! Deque is empty.', 'er'); return; }
+  const v = s.arr[s.front];
+  s.arr[s.front] = null;
+  if (s.front === s.rear) { s.front = -1; s.rear = -1; }
+  else if (s.front === MMAX - 1) s.front = 0;
+  else s.front++;
+  renderMini(id);
+  setMsg(id, `🗑 Removed ${v} from front.`, 'ok');
+}
+
+// ── Delete Rear ──
+function miniDeleteRear(id) {
+  const s = getState(id);
+  if (s.front === -1) { setMsg(id, '⛔ Underflow! Deque is empty.', 'er'); return; }
+  const v = s.arr[s.rear];
+  s.arr[s.rear] = null;
+  if (s.front === s.rear) { s.front = -1; s.rear = -1; }
+  else if (s.rear === 0) s.rear = MMAX - 1;
+  else s.rear--;
+  renderMini(id);
+  setMsg(id, `🗑 Removed ${v} from rear.`, 'ok');
+}
+
+// ── Peek Front ──
+function miniPeekFront(id) {
+  const s = getState(id);
+  if (s.front === -1) { setMsg(id, '⛔ Deque is empty.', 'er'); return; }
+  renderMini(id, s.front);
+  setMsg(id, `👁 Front element: ${s.arr[s.front]} (NOT removed)`, 'inf');
+}
+
+// ── Peek Rear ──
+function miniPeekRear(id) {
+  const s = getState(id);
+  if (s.rear === -1) { setMsg(id, '⛔ Deque is empty.', 'er'); return; }
+  renderMini(id, s.rear);
+  setMsg(id, `👁 Rear element: ${s.arr[s.rear]} (NOT removed)`, 'inf');
+}
+
+// ── isEmpty ──
+function miniIsEmpty(id) {
+  const s = getState(id);
+  const empty = s.front === -1;
+  renderMini(id);
+  setMsg(id, empty ? '✅ isEmpty() → TRUE. Deque is empty!' : '❌ isEmpty() → FALSE. Deque has elements.', empty ? 'ok' : 'er');
+}
+
+// ── isFull ──
+function miniIsFull(id) {
+  const s = getState(id);
+  const full = (s.front === 0 && s.rear === MMAX - 1) || (s.front === s.rear + 1);
+  renderMini(id);
+  setMsg(id, full ? '✅ isFull() → TRUE. Deque is full!' : `❌ isFull() → FALSE. ${MMAX - calcSize(s)} slot(s) free.`, full ? 'ok' : 'er');
+}
+
+// ── Size ──
+function miniSize(id) {
+  const s = getState(id);
+  const sz = calcSize(s);
+  renderMini(id);
+  setMsg(id, `📏 size() = ${sz} element(s) in deque.`, 'inf');
+}
+
+// ── Clear ──
+function miniClear(id) {
+  const s = getState(id);
+  s.arr = Array(MMAX).fill(null);
+  s.front = -1; s.rear = -1;
+  renderMini(id);
+  setMsg(id, '🗑 Deque cleared! front=-1, rear=-1', 'ok');
+}
+
+// ── Traverse ──
+function miniTraverse(id) {
+  const s = getState(id);
+  if (s.front === -1) { setMsg(id, '⛔ Deque is empty.', 'er'); return; }
+  const order = [];
+  let i = s.front;
+  while (true) { order.push(i); if (i === s.rear) break; i = (i + 1) % MMAX; }
+  let step = 0;
+  setMsg(id, '▶ Traversing...', 'inf');
+  function doStep() {
+    if (step >= order.length) {
+      renderMini(id);
+      setMsg(id, `✅ Traversal: [${order.map(x => s.arr[x]).join(', ')}]`, 'ok');
+      return;
+    }
+    renderMini(id, order[step]);
+    step++;
+    setTimeout(doStep, 400);
+  }
+  doStep();
+}
+
+// ── Search ──
+function miniSearch(id) {
+  const s = getState(id);
+  const inp = document.getElementById('sr-inp');
+  if (!inp || inp.value === '') { setMsg(id, '⚠️ Enter a value to search.', 'er'); return; }
+  const target = parseInt(inp.value);
+  if (s.front === -1) { setMsg(id, '⛔ Deque is empty.', 'er'); return; }
+  const order = [];
+  let i = s.front;
+  while (true) { order.push(i); if (i === s.rear) break; i = (i + 1) % MMAX; }
+  let step = 0;
+  function doStep() {
+    if (step >= order.length) {
+      renderMini(id);
+      setMsg(id, `❌ ${target} not found in deque.`, 'er');
+      return;
+    }
+    renderMini(id, order[step]);
+    if (s.arr[order[step]] === target) {
+      setMsg(id, `✅ Found ${target} at position ${step} from front (index ${order[step]})`, 'ok');
+      return;
+    }
+    step++;
+    setTimeout(doStep, 380);
+  }
+  doStep();
+}
+
+// ── Update ──
+function miniUpdate(id) {
+  const s = getState(id);
+  const posEl = document.getElementById('up-pos');
+  const valEl = document.getElementById('up-val');
+  if (!posEl || !valEl) return;
+  const pos = parseInt(posEl.value);
+  const val = parseInt(valEl.value);
+  if (isNaN(pos) || isNaN(val)) { setMsg(id, '⚠️ Enter both position and new value.', 'er'); return; }
+  const sz = calcSize(s);
+  if (s.front === -1 || pos < 0 || pos >= sz) {
+    setMsg(id, `⛔ Invalid position ${pos}. Valid: 0 to ${sz-1}`, 'er'); return;
+  }
+  const actual = (s.front + pos) % MMAX;
+  const old = s.arr[actual];
+  s.arr[actual] = val;
+  renderMini(id, actual);
+  setMsg(id, `✏️ Position ${pos} updated: ${old} → ${val} (index ${actual})`, 'ok');
+}
+
+// ── Reverse ──
+function miniReverse(id) {
+  const s = getState(id);
+  if (s.front === -1) { setMsg(id, '⛔ Deque is empty.', 'er'); return; }
+  const sz = calcSize(s);
+  if (sz <= 1) { setMsg(id, '⚠️ Need at least 2 elements to reverse.', 'inf'); return; }
+  const pairs = [];
+  let l = s.front, r = s.rear;
+  for (let k = 0; k < Math.floor(sz / 2); k++) {
+    pairs.push([l, r]);
+    l = (l + 1) % MMAX;
+    r = (r - 1 + MMAX) % MMAX;
+  }
+  let step = 0;
+  function doSwap() {
+    if (step >= pairs.length) {
+      renderMini(id);
+      setMsg(id, '⟺ Reverse complete!', 'ok');
+      return;
+    }
+    const [li, ri] = pairs[step];
+    const t = s.arr[li]; s.arr[li] = s.arr[ri]; s.arr[ri] = t;
+    renderMini(id, li);
+    setTimeout(() => { renderMini(id, ri); step++; setTimeout(doSwap, 350); }, 300);
+  }
+  doSwap();
+}
+
+// ── Reset ──
+function miniReset(id) {
+  states[id] = { arr: Array(MMAX).fill(null), front: -1, rear: -1, counter: 10 };
+  renderMini(id);
+  setMsg(id, '🔄 Reset complete.', '');
+}
+
+// ═══════════════════════════════════════════════════════
+//  HERO VISUALIZER
+// ═══════════════════════════════════════════════════════
+const HMAX = 8;
+const HS = { arr: Array(HMAX).fill(null), front: -1, rear: -1 };
+let heroCounter = 5;
+
+function renderHero() {
+  const track = document.getElementById('heroTrack');
+  const ptr   = document.getElementById('heroPtr');
+  if (!track) return;
+  track.innerHTML = '';
+  for (let i = 0; i < HMAX; i++) {
+    const c = document.createElement('div');
+    c.className = 'dq-cell';
+    const idx = document.createElement('span');
+    idx.className = 'cell-idx'; idx.textContent = i;
+    if (HS.arr[i] !== null) {
+      if (i === HS.front && i === HS.rear) c.classList.add('filled','front-cell');
+      else if (i === HS.front) c.classList.add('filled','front-cell');
+      else if (i === HS.rear)  c.classList.add('filled','rear-cell');
+      else c.classList.add('filled');
+      c.textContent = HS.arr[i];
+    } else {
+      c.classList.add('empty'); c.textContent = '·';
+    }
+    c.appendChild(idx); track.appendChild(c);
+  }
+  const sz = HS.front === -1 ? 0 : (HS.rear >= HS.front ? HS.rear - HS.front + 1 : HMAX - HS.front + HS.rear + 1);
+  ptr.innerHTML = `<span class="fp">front = ${HS.front}</span><span style="color:var(--muted)">size = ${sz} / ${HMAX}</span><span class="rp">rear = ${HS.rear}</span>`;
+}
+
+function heroOp(op) {
+  const inp = document.getElementById('heroInput');
+  const stat = document.getElementById('heroStatus');
+  let v = parseInt(inp.value);
+  if (isNaN(v) && (op === 'if' || op === 'ir')) v = heroCounter;
+
+  const isFull = (HS.front === 0 && HS.rear === HMAX - 1) || (HS.front === HS.rear + 1);
+  const isEmpty = HS.front === -1;
+
+  if (op === 'if') {
+    if (isFull) { stat.textContent = '⛔ Overflow! Deque is full.'; stat.className = 'viz-status err'; return; }
+    if (HS.front === -1) { HS.front = 0; HS.rear = 0; }
+    else if (HS.front === 0) HS.front = HMAX - 1;
+    else HS.front--;
+    HS.arr[HS.front] = v; heroCounter += 7;
+    stat.textContent = `✅ Inserted ${v} at front (index ${HS.front})`; stat.className = 'viz-status ok';
+  } else if (op === 'ir') {
+    if (isFull) { stat.textContent = '⛔ Overflow! Deque is full.'; stat.className = 'viz-status err'; return; }
+    if (HS.rear === -1) { HS.front = 0; HS.rear = 0; }
+    else if (HS.rear === HMAX - 1) HS.rear = 0;
+    else HS.rear++;
+    HS.arr[HS.rear] = v; heroCounter += 7;
+    stat.textContent = `✅ Inserted ${v} at rear (index ${HS.rear})`; stat.className = 'viz-status ok';
+  } else if (op === 'df') {
+    if (isEmpty) { stat.textContent = '⛔ Underflow! Deque is empty.'; stat.className = 'viz-status err'; return; }
+    const rv = HS.arr[HS.front]; HS.arr[HS.front] = null;
+    if (HS.front === HS.rear) { HS.front = -1; HS.rear = -1; }
+    else if (HS.front === HMAX - 1) HS.front = 0;
+    else HS.front++;
+    stat.textContent = `🗑 Deleted ${rv} from front.`; stat.className = 'viz-status ok';
+  } else if (op === 'dr') {
+    if (isEmpty) { stat.textContent = '⛔ Underflow! Deque is empty.'; stat.className = 'viz-status err'; return; }
+    const rv = HS.arr[HS.rear]; HS.arr[HS.rear] = null;
+    if (HS.front === HS.rear) { HS.front = -1; HS.rear = -1; }
+    else if (HS.rear === 0) HS.rear = HMAX - 1;
+    else HS.rear--;
+    stat.textContent = `🗑 Deleted ${rv} from rear.`; stat.className = 'viz-status ok';
+  } else if (op === 'cl') {
+    HS.arr = Array(HMAX).fill(null); HS.front = -1; HS.rear = -1;
+    stat.textContent = '🗑 Deque cleared!'; stat.className = 'viz-status ok';
+  }
+  inp.value = '';
+  renderHero();
+}
+
+// ═══════════════════════════════════════════════════════
+//  COPY CODE
+// ═══════════════════════════════════════════════════════
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1800);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT ALL MINI VISUALIZERS
+// ═══════════════════════════════════════════════════════
+const miniIds = ['if','ir','df','dr','pk','ie','if2','sz','tv','cl','sr','up','rv'];
+window.addEventListener('DOMContentLoaded', () => {
+  renderHero();
+  miniIds.forEach(id => renderMini(id));
+});
+
+// ── Nav active highlight on scroll ──
+const sections = document.querySelectorAll('section[id]');
+const pills = document.querySelectorAll('.nav-pill');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+  pills.forEach(p => {
+    p.classList.toggle('active', p.getAttribute('href') === '#' + current);
+  });
+}, { passive: true });
+</script>
+</body>
+</html>

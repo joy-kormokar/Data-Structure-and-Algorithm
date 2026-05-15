@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connected Graph — Adjacency Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Literata:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --node-color: #00d4ff;
+    --edge-color: #334155;
+    --visited: #7c3aed;
+    --highlight: #ff6b35;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Literata', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.7;
+    display: flex;
+  }
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: 270px;
+    min-height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0;
+    overflow-y: auto;
+    z-index: 100;
+    padding-bottom: 40px;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+  .sidebar-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    line-height: 1.3;
+  }
+  .sidebar-header p {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-group { margin: 8px 0; }
+  .nav-group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 10px 20px 4px;
+  }
+  .nav-item {
+    display: block;
+    padding: 7px 20px 7px 28px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .nav-item:hover { color: var(--accent); background: rgba(0,212,255,0.04); border-left-color: var(--accent); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,255,0.08); }
+  /* ── MAIN ── */
+  #main {
+    margin-left: 270px;
+    flex: 1;
+    min-height: 100vh;
+    padding: 0 40px 80px;
+    max-width: calc(100vw - 270px);
+  }
+  /* ── HERO ── */
+  .hero {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 60px;
+  }
+  .hero-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 600px;
+    line-height: 1.8;
+  }
+  .badge-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .badge-blue { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.07); }
+  .badge-orange { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.07); }
+  .badge-purple { border-color: var(--accent3); color: #a78bfa; background: rgba(124,58,237,0.07); }
+  /* ── SECTIONS ── */
+  .section {
+    margin-bottom: 80px;
+    scroll-margin-top: 30px;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 8px;
+  }
+  .section > h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(22px, 3vw, 32px);
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+  .section > .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 32px;
+  }
+  /* ── TOPIC CARD ── */
+  .topic-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 36px;
+    transition: border-color 0.3s;
+  }
+  .topic-card:hover { border-color: rgba(0,212,255,0.3); }
+  .topic-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .topic-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-blue { background: rgba(0,212,255,0.12); }
+  .icon-orange { background: rgba(255,107,53,0.12); }
+  .icon-purple { background: rgba(124,58,237,0.12); }
+  .icon-green { background: rgba(16,185,129,0.12); }
+  .icon-yellow { background: rgba(245,158,11,0.12); }
+  .topic-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    flex: 1;
+  }
+  .topic-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    background: var(--surface2);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .topic-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .topic-body { grid-template-columns: 1fr; } }
+  .topic-body.full { grid-template-columns: 1fr; }
+  /* ── THEORY BOX ── */
+  .theory-box h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .theory-box p { color: var(--text-dim); font-size: 14.5px; line-height: 1.75; margin-bottom: 10px; }
+  .analogy-box {
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 14px;
+  }
+  .analogy-box .analogy-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--yellow);
+    margin-bottom: 6px;
+  }
+  .analogy-box p { color: var(--text-dim); font-size: 13.5px; margin: 0; }
+  /* ── CODE BOX ── */
+  .code-box h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+  .code-wrap {
+    background: #070d1a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: auto;
+    max-height: 340px;
+  }
+  pre {
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #cdd6f4;
+    white-space: pre;
+  }
+  .kw { color: #cba6f7; }
+  .fn { color: #89b4fa; }
+  .str { color: #a6e3a1; }
+  .num { color: #fab387; }
+  .cmt { color: #585b70; font-style: italic; }
+  .ty { color: #89dceb; }
+  /* ── VIZ ── */
+  .viz-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .viz-box h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent3);
+    margin-bottom: 12px;
+  }
+  canvas { display: block; border-radius: 6px; background: #070d1a; }
+  /* ── MATRIX VIZ ── */
+  .matrix-grid {
+    display: inline-grid;
+    gap: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .matrix-cell {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    font-weight: 700;
+    transition: all 0.3s;
+  }
+  .matrix-cell.header { background: var(--border); color: var(--accent); font-size: 11px; }
+  .matrix-cell.zero { background: rgba(100,116,139,0.12); color: var(--text-muted); }
+  .matrix-cell.one { background: rgba(0,212,255,0.18); color: var(--accent); }
+  .matrix-cell.highlight { background: rgba(255,107,53,0.3); color: var(--accent2); transform: scale(1.1); }
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 700;
+  }
+  .btn-blue { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+  .btn-blue:hover { background: rgba(0,212,255,0.18); }
+  .btn-orange { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.08); }
+  .btn-orange:hover { background: rgba(255,107,53,0.18); }
+  .btn-green { border-color: var(--green); color: var(--green); background: rgba(16,185,129,0.08); }
+  .btn-green:hover { background: rgba(16,185,129,0.18); }
+  .btn-purple { border-color: var(--accent3); color: #a78bfa; background: rgba(124,58,237,0.08); }
+  .btn-purple:hover { background: rgba(124,58,237,0.18); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  /* ── INPUT ROW ── */
+  .input-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .inp {
+    background: #070d1a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 6px;
+    width: 60px;
+    outline: none;
+  }
+  .inp:focus { border-color: var(--accent); }
+  /* ── RESULT LOG ── */
+  .log-box {
+    background: #070d1a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--green);
+    min-height: 40px;
+    margin-top: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    line-height: 1.8;
+  }
+  .log-box .log-err { color: var(--red); }
+  .log-box .log-warn { color: var(--yellow); }
+  .log-box .log-info { color: var(--accent); }
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+  /* ── PROGRESS BAR ── */
+  .progress-bar-wrap { background: var(--border); border-radius: 4px; height: 6px; margin-top: 6px; }
+  .progress-bar { height: 100%; border-radius: 4px; background: var(--accent); transition: width 0.5s; }
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  th { background: var(--surface2); color: var(--accent); padding: 10px 14px; text-align: left; font-size: 11px; letter-spacing: 1px; }
+  td { padding: 9px 14px; color: var(--text-dim); border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(0,212,255,0.03); }
+  /* ── STEPS ── */
+  .step-list { list-style: none; counter-reset: steps; }
+  .step-list li {
+    counter-increment: steps;
+    padding: 8px 8px 8px 40px;
+    position: relative;
+    color: var(--text-dim);
+    font-size: 14px;
+    border-left: 1px solid var(--border);
+    margin-left: 16px;
+    margin-bottom: 4px;
+  }
+  .step-list li::before {
+    content: counter(steps);
+    position: absolute;
+    left: -16px; top: 8px;
+    width: 28px; height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  /* ── COMPLEXITY ── */
+  .complexity-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .complexity-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .complexity-chip span { color: var(--accent2); font-weight: 700; }
+  /* Scroll to top */
+  #scrolltop {
+    position: fixed;
+    bottom: 30px; right: 30px;
+    width: 42px; height: 42px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 18px;
+    transition: all 0.2s;
+    z-index: 200;
+  }
+  #scrolltop:hover { color: var(--accent); border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h1>Connected Graph<br>Adjacency Matrix</h1>
+    <p>// C Language · Beginner→Advanced</p>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Introduction</div>
+    <a class="nav-item active" onclick="scrollTo('s-intro')">What is a Graph?</a>
+    <a class="nav-item" onclick="scrollTo('s-repr')">Adjacency Matrix</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Vertex Operations</div>
+    <a class="nav-item" onclick="scrollTo('s-vertex')">Insert · Delete · Search</a>
+    <a class="nav-item" onclick="scrollTo('s-vertex-ud')">Update · Count · Display</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Edge Operations</div>
+    <a class="nav-item" onclick="scrollTo('s-edge')">Insert · Delete · Search</a>
+    <a class="nav-item" onclick="scrollTo('s-edge-ud')">Update · Count · Display</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Traversal</div>
+    <a class="nav-item" onclick="scrollTo('s-bfs')">BFS — Breadth First</a>
+    <a class="nav-item" onclick="scrollTo('s-dfs')">DFS — Depth First</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Connectivity</div>
+    <a class="nav-item" onclick="scrollTo('s-conn')">Check Connected Graph</a>
+    <a class="nav-item" onclick="scrollTo('s-strong')">Strong / Weak Connectivity</a>
+    <a class="nav-item" onclick="scrollTo('s-comp')">Components · Isolated · Restore</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Path Operations</div>
+    <a class="nav-item" onclick="scrollTo('s-path')">Find Path · Shortest Path</a>
+    <a class="nav-item" onclick="scrollTo('s-allpath')">All Paths · Reachability</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Cycle Operations</div>
+    <a class="nav-item" onclick="scrollTo('s-cycle')">Detect · Count · Remove</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Degree Operations</div>
+    <a class="nav-item" onclick="scrollTo('s-degree')">In/Out/Max/Min Degree</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Structural</div>
+    <a class="nav-item" onclick="scrollTo('s-struct')">Size · Order · Density</a>
+    <a class="nav-item" onclick="scrollTo('s-struct2')">Complete Graph · Tree Check</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Advanced Algorithms</div>
+    <a class="nav-item" onclick="scrollTo('s-mst')">MST · Kruskal · Prim</a>
+    <a class="nav-item" onclick="scrollTo('s-scc')">SCC · Graph Coloring</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-label">Utility Operations</div>
+    <a class="nav-item" onclick="scrollTo('s-util')">Empty · Clear · Copy · Reset</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero" id="s-intro">
+    <div class="hero-tag">// Data Structure · Graph Theory</div>
+    <h1>Connected <span>Graph</span><br>Adjacency Matrix</h1>
+    <p>A complete beginner-to-advanced guide covering every graph operation — with interactive visualizations, C code examples, and real-world analogies.</p>
+    <div class="badge-row">
+      <span class="badge badge-blue">C Language</span>
+      <span class="badge badge-orange">Interactive Visualizations</span>
+      <span class="badge badge-purple">Beginner Friendly</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. WHAT IS A GRAPH                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-label">// 01 · Introduction</div>
+    <h2>What is a Connected Graph?</h2>
+    <p class="subtitle">graph theory foundations</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🔗</div>
+        <div class="topic-title">Graph Fundamentals</div>
+        <span class="topic-tag">THEORY</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>A <strong style="color:#fff">graph</strong> is a collection of <strong style="color:var(--accent)">vertices</strong> (nodes) and <strong style="color:var(--accent2)">edges</strong> (connections between nodes).</p>
+          <p>A graph is called <strong style="color:var(--green)">connected</strong> if there is a path between every pair of vertices — no vertex is isolated from the rest.</p>
+          <p>Key terminology:</p>
+          <ul style="color:var(--text-dim);font-size:14px;padding-left:20px;line-height:2">
+            <li><strong style="color:#fff">Vertex (Node)</strong> — a single point/entity in the graph</li>
+            <li><strong style="color:#fff">Edge</strong> — a link between two vertices</li>
+            <li><strong style="color:#fff">Adjacent</strong> — two vertices connected by an edge</li>
+            <li><strong style="color:#fff">Degree</strong> — number of edges at a vertex</li>
+            <li><strong style="color:#fff">Path</strong> — sequence of vertices connected by edges</li>
+            <li><strong style="color:#fff">Directed</strong> — edges have a direction (A→B ≠ B→A)</li>
+            <li><strong style="color:#fff">Undirected</strong> — edges go both ways (A–B = B–A)</li>
+          </ul>
+          <div class="analogy-box">
+            <div class="analogy-label">Real-life Analogy</div>
+            <p>Think of a city road network. Each <strong>intersection</strong> is a vertex, each <strong>road</strong> is an edge. A connected graph means you can drive from any intersection to any other — no dead-end isolated islands.</p>
+          </div>
+        </div>
+        <div>
+          <div class="viz-box">
+            <h4>Interactive Graph</h4>
+            <canvas id="introCanvas" width="340" height="260"></canvas>
+            <div class="btn-row">
+              <button class="btn btn-blue" onclick="animateIntroGraph()">Animate</button>
+              <button class="btn btn-orange" onclick="resetIntroGraph()">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. ADJACENCY MATRIX                           -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-repr">
+    <div class="section-label">// 02 · Representation</div>
+    <h2>Adjacency Matrix</h2>
+    <p class="subtitle">how we store a graph in memory</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🗃️</div>
+        <div class="topic-title">Adjacency Matrix Representation</div>
+        <span class="topic-tag">FUNDAMENTAL</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>An <strong style="color:#fff">adjacency matrix</strong> is a 2D array of size <strong style="color:var(--accent)">V × V</strong>, where V is the number of vertices.</p>
+          <p><code style="color:var(--accent2);background:var(--surface2);padding:2px 6px;border-radius:3px">matrix[i][j] = 1</code> means there is an edge from vertex <em>i</em> to vertex <em>j</em>. Otherwise it's <strong>0</strong>.</p>
+          <p>For <strong>undirected graphs</strong>, the matrix is always symmetric: if <code style="color:var(--accent2);background:var(--surface2);padding:2px 6px;border-radius:3px">matrix[i][j] = 1</code> then <code style="color:var(--accent2);background:var(--surface2);padding:2px 6px;border-radius:3px">matrix[j][i] = 1</code>.</p>
+          <p>For <strong>weighted graphs</strong>, store the weight instead of 1.</p>
+          <div class="complexity-row">
+            <div class="complexity-chip">Space: <span>O(V²)</span></div>
+            <div class="complexity-chip">Edge check: <span>O(1)</span></div>
+            <div class="complexity-chip">Add vertex: <span>O(V²)</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Real-life Analogy</div>
+            <p>Imagine a contact table where rows and columns are people. A "1" means those two people are friends. A "0" means they're not connected. This friendship table is exactly an adjacency matrix!</p>
+          </div>
+        </div>
+        <div>
+          <div class="viz-box">
+            <h4>Live Matrix Builder</h4>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-family:'JetBrains Mono',monospace">Click cells to toggle edges</p>
+            <div id="matrixDisplay" style="overflow-x:auto;padding:8px 0"></div>
+            <div class="btn-row">
+              <button class="btn btn-blue" onclick="buildMatrix()">Rebuild (4 nodes)</button>
+              <button class="btn btn-orange" onclick="clearMatrix()">Clear</button>
+            </div>
+          </div>
+          <div class="code-wrap" style="margin-top:16px">
+<pre><span class="cmt">/* Adjacency Matrix in C */</span>
+<span class="kw">#define</span> <span class="num">MAX</span> <span class="num">10</span>
+
+<span class="kw">struct</span> <span class="ty">Graph</span> {
+    <span class="ty">int</span> vertices;
+    <span class="ty">int</span> adj[MAX][MAX];
+};
+
+<span class="cmt">/* Initialize empty graph */</span>
+<span class="ty">void</span> <span class="fn">initGraph</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g, <span class="ty">int</span> v) {
+    g->vertices = v;
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt; v; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="num">0</span>; j &lt; v; j++)
+            g->adj[i][j] = <span class="num">0</span>;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. VERTEX OPERATIONS                          -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-vertex">
+    <div class="section-label">// 03 · Vertex Operations</div>
+    <h2>Vertex Operations</h2>
+    <p class="subtitle">insert · delete · search · update · count · display</p>
+
+    <!-- INSERT VERTEX -->
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-green">➕</div>
+        <div class="topic-title">Insert Vertex</div>
+        <span class="topic-tag">VERTEX OP</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>Adding a new vertex expands the graph. In an adjacency matrix, we increase the vertex count and initialize all new row/column cells to <strong style="color:var(--accent)">0</strong> (no edges yet).</p>
+          <p>The new vertex starts isolated — it has no connections until edges are inserted.</p>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Adding a new person to a contact list. They exist in the table but have no friends yet — all their row and column entries are 0.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code</h4>
+          <div class="code-wrap">
+<pre><span class="cmt">/* Insert a new vertex */</span>
+<span class="ty">int</span> <span class="fn">insertVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g) {
+    <span class="kw">if</span> (g->vertices >= MAX) {
+        <span class="fn">printf</span>(<span class="str">"Graph full!\n"</span>);
+        <span class="kw">return</span> <span class="num">-1</span>;
+    }
+    <span class="ty">int</span> v = g->vertices; <span class="cmt">/* new vertex index */</span>
+    g->vertices++;
+
+    <span class="cmt">/* Initialize new row and column to 0 */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt; g->vertices; i++) {
+        g->adj[v][i] = <span class="num">0</span>;
+        g->adj[i][v] = <span class="num">0</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex %d inserted.\n"</span>, v);
+    <span class="kw">return</span> v;
+}</pre>
+          </div>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V)</span></div>
+            <div class="complexity-chip">Space: <span>O(1)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE VERTEX -->
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-orange">🗑️</div>
+        <div class="topic-title">Delete Vertex</div>
+        <span class="topic-tag">VERTEX OP</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>Deleting a vertex removes it and all its edges. In an adjacency matrix, we shift all rows and columns after the deleted vertex one step left/up to fill the gap.</p>
+          <ol class="step-list">
+            <li>Remove the row of the deleted vertex</li>
+            <li>Remove the column of the deleted vertex</li>
+            <li>Shift remaining rows/columns up/left</li>
+            <li>Decrement vertex count</li>
+          </ol>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Removing a person from the contact table. Every row and column entry for that person disappears, and the table shrinks.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code</h4>
+          <div class="code-wrap">
+<pre><span class="ty">void</span> <span class="fn">deleteVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (v >= g->vertices) {
+        <span class="fn">printf</span>(<span class="str">"Invalid vertex!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="cmt">/* Shift rows up */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = v; i &lt; g->vertices - <span class="num">1</span>; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="num">0</span>; j &lt; g->vertices; j++)
+            g->adj[i][j] = g->adj[i+<span class="num">1</span>][j];
+
+    <span class="cmt">/* Shift columns left */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt; g->vertices - <span class="num">1</span>; i++)
+        <span class="kw">for</span> (<span class="ty">int</span> j = v; j &lt; g->vertices - <span class="num">1</span>; j++)
+            g->adj[i][j] = g->adj[i][j+<span class="num">1</span>];
+
+    g->vertices--;
+    <span class="fn">printf</span>(<span class="str">"Vertex %d deleted.\n"</span>, v);
+}</pre>
+          </div>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V²)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH VERTEX -->
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🔍</div>
+        <div class="topic-title">Search Vertex</div>
+        <span class="topic-tag">VERTEX OP</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>Searching for a vertex checks whether a given vertex index exists in the graph. Since vertices are indexed 0 to V-1, a simple range check suffices.</p>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Looking up if "Person 3" exists in your contact table. If the table has 5 people (0–4), then Person 3 exists. Person 7 does not.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code</h4>
+          <div class="code-wrap">
+<pre><span class="ty">int</span> <span class="fn">searchVertex</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (v >= <span class="num">0</span> && v &lt; g->vertices) {
+        <span class="fn">printf</span>(<span class="str">"Vertex %d found.\n"</span>, v);
+        <span class="kw">return</span> <span class="num">1</span>; <span class="cmt">/* found */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex %d not found.\n"</span>, v);
+    <span class="kw">return</span> <span class="num">0</span>; <span class="cmt">/* not found */</span>
+}</pre>
+          </div>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(1)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s-vertex-ud">
+    <!-- UPDATE / COUNT / DISPLAY VERTICES -->
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-purple">✏️</div>
+        <div class="topic-title">Update Vertex / Count Vertices / Display Vertices</div>
+        <span class="topic-tag">VERTEX OP</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent3)">Update Vertex</h4>
+              <p>Renaming or relabeling a vertex. Since we use index-based matrices, "update" usually means updating a label array (not the matrix itself).</p>
+            </div>
+            <div class="code-wrap" style="margin-top:12px">
+<pre><span class="cmt">/* Label array for vertices */</span>
+<span class="ty">char</span> labels[MAX][<span class="num">20</span>];
+
+<span class="ty">void</span> <span class="fn">updateVertex</span>(
+    <span class="ty">int</span> v,
+    <span class="ty">char</span> *newLabel)
+{
+    <span class="fn">strcpy</span>(labels[v], newLabel);
+    <span class="fn">printf</span>(<span class="str">"Updated v%d\n"</span>, v);
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Count Vertices</h4>
+              <p>Returns the total number of vertices currently in the graph. Directly accessible as <code style="color:var(--accent2)">g.vertices</code>.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:12px">
+<pre><span class="ty">int</span> <span class="fn">countVertices</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+    <span class="fn">printf</span>(
+      <span class="str">"Total: %d\n"</span>,
+      g->vertices);
+    <span class="kw">return</span> g->vertices;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--yellow)">Display Vertices</h4>
+              <p>Prints all vertex indices (and optional labels) in the graph.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:12px">
+<pre><span class="ty">void</span> <span class="fn">displayVertices</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+    <span class="fn">printf</span>(<span class="str">"Vertices:\n"</span>);
+    <span class="kw">for</span>(<span class="ty">int</span> i = <span class="num">0</span>;
+        i &lt; g->vertices; i++)
+        <span class="fn">printf</span>(<span class="str">"  V%d\n"</span>, i);
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="analogy-box" style="margin-top:16px">
+          <div class="analogy-label">Real-life Analogy</div>
+          <p>Counting and listing members of a club (Count/Display), or renaming a member when they change their name (Update).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. EDGE OPERATIONS                            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-edge">
+    <div class="section-label">// 04 · Edge Operations</div>
+    <h2>Edge Operations</h2>
+    <p class="subtitle">insert · delete · search</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-green">⚡</div>
+        <div class="topic-title">Insert Edge</div>
+        <span class="topic-tag">EDGE OP</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>To add an edge between vertices <strong style="color:var(--accent)">u</strong> and <strong style="color:var(--accent2)">v</strong>:</p>
+          <ul class="step-list" style="margin-top:8px">
+            <li>Set <code style="color:var(--accent)">matrix[u][v] = 1</code></li>
+            <li>For undirected graphs, also set <code style="color:var(--accent)">matrix[v][u] = 1</code></li>
+          </ul>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>When two people become friends, put a "1" in both their row-column cells of the friendship table.</p>
+          </div>
+        </div>
+        <div>
+          <div class="viz-box">
+            <h4>Try It Live</h4>
+            <div class="input-row">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted)">From:</span>
+              <input class="inp" id="edgeFrom" type="number" value="0" min="0" max="3">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted)">To:</span>
+              <input class="inp" id="edgeTo" type="number" value="1" min="0" max="3">
+              <button class="btn btn-green" onclick="insertEdge()">Insert</button>
+              <button class="btn btn-orange" onclick="deleteEdge()">Delete</button>
+            </div>
+            <div id="edgeMatrixDisplay" style="margin-top:12px;overflow-x:auto"></div>
+            <div id="edgeLog" class="log-box">Ready — try inserting an edge.</div>
+          </div>
+          <div class="code-wrap" style="margin-top:16px">
+<pre><span class="cmt">/* Insert undirected edge */</span>
+<span class="ty">void</span> <span class="fn">insertEdge</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+                <span class="ty">int</span> u, <span class="ty">int</span> v)
+{
+    <span class="kw">if</span> (u >= g->vertices ||
+        v >= g->vertices) {
+        <span class="fn">printf</span>(<span class="str">"Invalid!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    g->adj[u][v] = <span class="num">1</span>;
+    g->adj[v][u] = <span class="num">1</span>; <span class="cmt">/* undirected */</span>
+    <span class="fn">printf</span>(<span class="str">"Edge %d-%d added.\n"</span>,u,v);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH EDGE -->
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🔎</div>
+        <div class="topic-title">Search Edge</div>
+        <span class="topic-tag">EDGE OP</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>Checking if an edge exists between vertices u and v is one of the <strong style="color:var(--green)">biggest advantages</strong> of adjacency matrices — it's an instant O(1) lookup!</p>
+          <p>Just check: <code style="color:var(--accent)">matrix[u][v] == 1</code></p>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Looking up if Alice and Bob are friends in the table. Jump directly to row "Alice", column "Bob" — if it's 1, they're connected. Instant!</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code</h4>
+          <div class="code-wrap">
+<pre><span class="ty">int</span> <span class="fn">searchEdge</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+               <span class="ty">int</span> u, <span class="ty">int</span> v)
+{
+    <span class="kw">if</span> (u >= g->vertices ||
+        v >= g->vertices) {
+        <span class="fn">printf</span>(<span class="str">"Invalid vertex!\n"</span>);
+        <span class="kw">return</span> <span class="num">-1</span>;
+    }
+    <span class="kw">if</span> (g->adj[u][v] == <span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Edge %d-%d EXISTS\n"</span>,u,v);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Edge %d-%d NOT found\n"</span>,u,v);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+<span class="cmt">/* Time complexity: O(1) — fastest! */</span></pre>
+          </div>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(1)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s-edge-ud">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-yellow">🔧</div>
+        <div class="topic-title">Update Edge / Count Edges / Display Edges</div>
+        <span class="topic-tag">EDGE OP</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent)">Update Edge</h4>
+              <p>For weighted graphs, updating an edge means changing its weight value in the matrix cell.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">void</span> <span class="fn">updateEdge</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> u, <span class="ty">int</span> v,
+    <span class="ty">int</span> weight)
+{
+    g->adj[u][v] = weight;
+    g->adj[v][u] = weight;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Count Edges</h4>
+              <p>Count all 1s in the upper triangle of the matrix (for undirected), or the entire matrix (for directed).</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">int</span> <span class="fn">countEdges</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+    <span class="ty">int</span> count = <span class="num">0</span>;
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+      <span class="kw">for</span>(<span class="ty">int</span> j=i+<span class="num">1</span>;j&lt;g->vertices;j++)
+        <span class="kw">if</span>(g->adj[i][j])
+          count++;
+    <span class="kw">return</span> count;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--yellow)">Display Edges</h4>
+              <p>Print all existing edges by scanning the upper triangle of the adjacency matrix.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">void</span> <span class="fn">displayEdges</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+   <span class="kw">for</span>(<span class="ty">int</span> j=i+<span class="num">1</span>;j&lt;g->vertices;j++)
+    <span class="kw">if</span>(g->adj[i][j])
+     <span class="fn">printf</span>(<span class="str">"%d -- %d\n"</span>,i,j);
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. TRAVERSAL — BFS                            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-bfs">
+    <div class="section-label">// 05 · Traversal</div>
+    <h2>Breadth First Search (BFS)</h2>
+    <p class="subtitle">queue initialization · visit node · mark visited · traverse adjacent</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🌊</div>
+        <div class="topic-title">BFS — Breadth First Search</div>
+        <span class="topic-tag">TRAVERSAL</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>BFS explores the graph <strong style="color:var(--accent)">level by level</strong> — first visiting all neighbors of the starting vertex, then their neighbors, and so on.</p>
+          <p>It uses a <strong style="color:var(--accent2)">Queue</strong> (FIFO) to keep track of which vertices to visit next.</p>
+          <ol class="step-list">
+            <li>Enqueue the start vertex, mark as visited</li>
+            <li>Dequeue a vertex, process it</li>
+            <li>Enqueue all unvisited neighbors of that vertex</li>
+            <li>Repeat until queue is empty</li>
+          </ol>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V²)</span></div>
+            <div class="complexity-chip">Space: <span>O(V)</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Spreading news in a social network. You tell your friends (level 1), they tell their friends (level 2), and so on — rippling outward like waves on water.</p>
+          </div>
+        </div>
+        <div>
+          <div class="viz-box">
+            <h4>BFS Animation</h4>
+            <canvas id="bfsCanvas" width="340" height="230"></canvas>
+            <div class="btn-row">
+              <button class="btn btn-blue" onclick="startBFS()">▶ Run BFS</button>
+              <button class="btn btn-orange" onclick="resetBFS()">↺ Reset</button>
+            </div>
+            <div id="bfsLog" class="log-box">Press ▶ Run BFS to start from vertex 0.</div>
+          </div>
+          <div class="code-wrap" style="margin-top:16px">
+<pre><span class="kw">#define</span> <span class="num">MAX</span> <span class="num">10</span>
+<span class="ty">int</span> queue[MAX], front = <span class="num">-1</span>, rear = <span class="num">-1</span>;
+<span class="ty">int</span> visited[MAX];
+
+<span class="ty">void</span> <span class="fn">BFS</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g, <span class="ty">int</span> start) {
+    <span class="cmt">/* Init visited array */</span>
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+        visited[i] = <span class="num">0</span>;
+
+    <span class="cmt">/* Enqueue start vertex */</span>
+    queue[++rear] = start;
+    visited[start] = <span class="num">1</span>;
+
+    <span class="kw">while</span>(front != rear) {
+        <span class="ty">int</span> v = queue[++front]; <span class="cmt">/* dequeue */</span>
+        <span class="fn">printf</span>(<span class="str">"Visited: %d\n"</span>, v);
+
+        <span class="cmt">/* Enqueue unvisited neighbors */</span>
+        <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++) {
+            <span class="kw">if</span>(g->adj[v][j]==<span class="num">1</span> &&
+               !visited[j]) {
+                queue[++rear] = j;
+                visited[j] = <span class="num">1</span>;
+            }
+        }
+    }
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. TRAVERSAL — DFS                            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-dfs">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-purple">🔬</div>
+        <div class="topic-title">DFS — Depth First Search (Recursive + Stack)</div>
+        <span class="topic-tag">TRAVERSAL</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>DFS explores the graph by going <strong style="color:var(--accent)">as deep as possible</strong> along each branch before backtracking.</p>
+          <p>Two implementations:</p>
+          <ul style="color:var(--text-dim);font-size:14px;padding-left:20px;line-height:2">
+            <li><strong style="color:#fff">Recursive DFS</strong> — uses the call stack for backtracking (simpler code)</li>
+            <li><strong style="color:#fff">Stack-based DFS</strong> — uses an explicit stack (avoids stack overflow on large graphs)</li>
+          </ul>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V²)</span></div>
+            <div class="complexity-chip">Space: <span>O(V)</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Exploring a maze: go as far down one path as possible. When you hit a dead end, backtrack and try another path. You explore one "tunnel" fully before starting another.</p>
+          </div>
+        </div>
+        <div>
+          <div class="viz-box">
+            <h4>DFS Animation</h4>
+            <canvas id="dfsCanvas" width="340" height="230"></canvas>
+            <div class="btn-row">
+              <button class="btn btn-purple" onclick="startDFS()">▶ Run DFS</button>
+              <button class="btn btn-orange" onclick="resetDFS()">↺ Reset</button>
+            </div>
+            <div id="dfsLog" class="log-box">Press ▶ Run DFS to start from vertex 0.</div>
+          </div>
+          <div class="code-wrap" style="margin-top:16px">
+<pre><span class="ty">int</span> visited[MAX];
+
+<span class="cmt">/* Recursive DFS */</span>
+<span class="ty">void</span> <span class="fn">DFS_recursive</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+                    <span class="ty">int</span> v)
+{
+    visited[v] = <span class="num">1</span>;
+    <span class="fn">printf</span>(<span class="str">"Visited: %d\n"</span>, v);
+
+    <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++) {
+        <span class="kw">if</span>(g->adj[v][j]==<span class="num">1</span> &&
+           !visited[j])
+            <span class="fn">DFS_recursive</span>(g, j);
+    }
+}
+
+<span class="cmt">/* Stack-based DFS */</span>
+<span class="ty">void</span> <span class="fn">DFS_stack</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+               <span class="ty">int</span> start)
+{
+    <span class="ty">int</span> stack[MAX], top = <span class="num">-1</span>;
+    stack[++top] = start;
+    visited[start] = <span class="num">1</span>;
+
+    <span class="kw">while</span>(top >= <span class="num">0</span>) {
+        <span class="ty">int</span> v = stack[top--]; <span class="cmt">/* pop */</span>
+        <span class="fn">printf</span>(<span class="str">"Visited: %d\n"</span>, v);
+
+        <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+            <span class="kw">if</span>(g->adj[v][j] &&
+               !visited[j]) {
+                stack[++top] = j;
+                visited[j] = <span class="num">1</span>;
+            }
+    }
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. CONNECTIVITY                               -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-conn">
+    <div class="section-label">// 06 · Connectivity Operations</div>
+    <h2>Connectivity Operations</h2>
+    <p class="subtitle">connected check · strong · weak · reachable · validation</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-green">🔗</div>
+        <div class="topic-title">Check Connected Graph</div>
+        <span class="topic-tag">CONNECTIVITY</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>A graph is <strong style="color:var(--green)">connected</strong> if starting a BFS or DFS from any vertex visits <strong>all vertices</strong>.</p>
+          <p>Algorithm: Run DFS from vertex 0. If the visited count equals total vertices → connected. Otherwise → disconnected.</p>
+          <ol class="step-list">
+            <li>Initialize visited array to all 0</li>
+            <li>Run DFS from vertex 0</li>
+            <li>Count visited vertices</li>
+            <li>If count == total vertices → connected</li>
+          </ol>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Can you travel from any city to every other city in a road network? If yes, the network is connected. If some cities are unreachable, it's disconnected.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code</h4>
+          <div class="code-wrap">
+<pre><span class="ty">void</span> <span class="fn">dfsHelper</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+               <span class="ty">int</span> v,<span class="ty">int</span> *vis) {
+    vis[v] = <span class="num">1</span>;
+    <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+        <span class="kw">if</span>(g->adj[v][j] && !vis[j])
+            <span class="fn">dfsHelper</span>(g,j,vis);
+}
+
+<span class="ty">int</span> <span class="fn">isConnected</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g) {
+    <span class="ty">int</span> vis[MAX] = {<span class="num">0</span>};
+    <span class="fn">dfsHelper</span>(g, <span class="num">0</span>, vis);
+
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+        <span class="kw">if</span>(!vis[i]) {
+            <span class="fn">printf</span>(<span class="str">"DISCONNECTED\n"</span>);
+            <span class="kw">return</span> <span class="num">0</span>;
+        }
+    <span class="fn">printf</span>(<span class="str">"CONNECTED\n"</span>);
+    <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+          </div>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V²)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s-strong">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-orange">💪</div>
+        <div class="topic-title">Strong Connectivity · Weak Connectivity · Find Reachable Vertices</div>
+        <span class="topic-tag">CONNECTIVITY</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent2)">Strong Connectivity</h4>
+              <p>A <strong>directed</strong> graph is <strong>strongly connected</strong> if there is a path from every vertex to every other vertex.</p>
+              <p>Algorithm: Run DFS from any vertex in original graph, then run DFS on the transposed (reversed) graph. If both cover all vertices → strongly connected.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="cmt">/* Transpose the matrix */</span>
+<span class="ty">void</span> <span class="fn">transpose</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> t[MAX][MAX])
+{
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+   <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+    t[i][j] = g->adj[j][i];
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent)">Weak Connectivity</h4>
+              <p>A directed graph is <strong>weakly connected</strong> if treating all directed edges as undirected makes the graph connected.</p>
+              <p>Weaker condition: you don't need bidirectional paths, just an underlying connected structure.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="cmt">/* Check weak: symmetrize
+   then check connectivity */</span>
+<span class="ty">int</span> <span class="fn">isWeaklyConnected</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> sym[MAX][MAX];
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+   <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+    sym[i][j]=g->adj[i][j]
+             |g->adj[j][i];
+  <span class="cmt">/* run DFS on sym matrix */</span>
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Find Reachable Vertices</h4>
+              <p>From a given source vertex, find all vertices that can be reached by following edges. Uses BFS or DFS and collects all visited vertices.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">void</span> <span class="fn">findReachable</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> src)
+{
+  <span class="ty">int</span> vis[MAX]={<span class="num">0</span>};
+  <span class="fn">dfsHelper</span>(g,src,vis);
+  <span class="fn">printf</span>(<span class="str">"Reachable from %d:\n"</span>,src);
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+    <span class="kw">if</span>(vis[i])
+      <span class="fn">printf</span>(<span class="str">"  %d\n"</span>,i);
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="analogy-box" style="margin-top:16px">
+          <div class="analogy-label">Analogy</div>
+          <p><strong>Strong:</strong> A city network where you can drive in both directions — from A to B AND from B to A. <strong>Weak:</strong> You can reach everywhere if you ignore one-way streets. <strong>Reachable:</strong> From your home, which places can you visit today?</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s-comp">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-purple">🧩</div>
+        <div class="topic-title">Count Connected Components · Detect Isolated Vertex · Connectivity Restoration</div>
+        <span class="topic-tag">CONNECTIVITY</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent3)">Count Connected Components</h4>
+              <p>A <strong>component</strong> is a maximal connected subgraph. Run DFS from every unvisited vertex — each DFS call that starts fresh discovers one new component.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">int</span> <span class="fn">countComponents</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> vis[MAX]={<span class="num">0</span>},cnt=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+    <span class="kw">if</span>(!vis[i]) {
+      <span class="fn">dfsHelper</span>(g,i,vis);
+      cnt++;
+    }
+  <span class="fn">printf</span>(<span class="str">"Components: %d\n"</span>,cnt);
+  <span class="kw">return</span> cnt;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--red)">Detect Isolated Vertex</h4>
+              <p>An <strong>isolated vertex</strong> has no edges — its entire row in the adjacency matrix is all zeros. Check by summing the row.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">int</span> <span class="fn">isIsolated</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> v)
+{
+  <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+    <span class="kw">if</span>(g->adj[v][j])
+      <span class="kw">return</span> <span class="num">0</span>; <span class="cmt">/* has edge */</span>
+  <span class="fn">printf</span>(<span class="str">"V%d is isolated\n"</span>,v);
+  <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Connectivity Restoration</h4>
+              <p>If the graph is disconnected, restore connectivity by adding minimum edges to connect isolated components — finding the "bridge" vertices between components.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="cmt">/* Connect components by adding
+   edges between their first 
+   vertices */</span>
+<span class="ty">void</span> <span class="fn">restoreConn</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> vis[MAX]={<span class="num">0</span>},last=<span class="num">-1</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+    <span class="kw">if</span>(!vis[i]) {
+      <span class="fn">dfsHelper</span>(g,i,vis);
+      <span class="kw">if</span>(last>=<span class="num">0</span>)
+        <span class="fn">insertEdge</span>(g,last,i);
+      last=i;
+    }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 8. PATH OPERATIONS                            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-path">
+    <div class="section-label">// 07 · Path Operations</div>
+    <h2>Path Operations</h2>
+    <p class="subtitle">find path · shortest path · all paths · reachability · path length</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🛤️</div>
+        <div class="topic-title">Find Path · Shortest Path (BFS)</div>
+        <span class="topic-tag">PATH</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p><strong style="color:#fff">Find Path</strong>: Check if any path exists between source and destination using DFS. Track the path using a parent array.</p>
+          <p><strong style="color:#fff">Shortest Path</strong>: In an unweighted graph, BFS naturally finds the shortest path because it explores level by level. Level = distance from source.</p>
+          <ol class="step-list">
+            <li>Run BFS from source</li>
+            <li>Track parent of each visited vertex</li>
+            <li>When destination is found, trace back via parent array</li>
+            <li>Print path in reverse</li>
+          </ol>
+          <div class="complexity-row">
+            <div class="complexity-chip">Find Path: <span>O(V²)</span></div>
+            <div class="complexity-chip">Shortest (BFS): <span>O(V²)</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>GPS navigation: Find Path = "Can I get to the airport?" Shortest Path = "What is the quickest route to the airport with fewest turns?"</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code — Shortest Path with BFS</h4>
+          <div class="code-wrap">
+<pre><span class="ty">void</span> <span class="fn">shortestPath</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+                   <span class="ty">int</span> src, <span class="ty">int</span> dest)
+{
+    <span class="ty">int</span> vis[MAX]={<span class="num">0</span>};
+    <span class="ty">int</span> parent[MAX], dist[MAX];
+    <span class="ty">int</span> queue[MAX], front=<span class="num">-1</span>, rear=<span class="num">-1</span>;
+
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+        parent[i]=<span class="num">-1</span>, dist[i]=<span class="num">-1</span>;
+
+    queue[++rear]=src;
+    vis[src]=<span class="num">1</span>; dist[src]=<span class="num">0</span>;
+
+    <span class="kw">while</span>(front!=rear) {
+        <span class="ty">int</span> v=queue[++front];
+        <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+            <span class="kw">if</span>(g->adj[v][j]&&!vis[j]) {
+                queue[++rear]=j;
+                vis[j]=<span class="num">1</span>;
+                parent[j]=v;
+                dist[j]=dist[v]+<span class="num">1</span>;
+            }
+    }
+    <span class="cmt">/* Trace back path */</span>
+    <span class="kw">if</span>(dist[dest]==-<span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"No path!\n"</span>); <span class="kw">return</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Dist: %d\n"</span>,dist[dest]);
+    <span class="ty">int</span> path[MAX], idx=<span class="num">0</span>, cur=dest;
+    <span class="kw">while</span>(cur!=-<span class="num">1</span>)
+        path[idx++]=cur, cur=parent[cur];
+    <span class="kw">for</span>(<span class="ty">int</span> k=idx-<span class="num">1</span>;k>=<span class="num">0</span>;k--)
+        <span class="fn">printf</span>(<span class="str">"%d "</span>,path[k]);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s-allpath">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-orange">🗺️</div>
+        <div class="topic-title">All Paths · Reachability Check · Path Length Count</div>
+        <span class="topic-tag">PATH</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent)">All Paths</h4>
+              <p>Find every possible path between source and destination using recursive DFS with backtracking. Mark a vertex visited before recursing, unmark after returning.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">int</span> path[MAX], idx=<span class="num">0</span>;
+
+<span class="ty">void</span> <span class="fn">allPaths</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> v,<span class="ty">int</span> dest,
+    <span class="ty">int</span> *vis)
+{
+  vis[v]=<span class="num">1</span>;
+  path[idx++]=v;
+  <span class="kw">if</span>(v==dest) {
+    <span class="kw">for</span>(<span class="ty">int</span> k=<span class="num">0</span>;k&lt;idx;k++)
+      <span class="fn">printf</span>(<span class="str">"%d "</span>,path[k]);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+  } <span class="kw">else</span>
+    <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+      <span class="kw">if</span>(g->adj[v][j]&&!vis[j])
+        <span class="fn">allPaths</span>(g,j,dest,vis);
+  idx--; vis[v]=<span class="num">0</span>; <span class="cmt">/* backtrack */</span>
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Reachability Check</h4>
+              <p>Determine if destination is reachable from source. Simple DFS — if destination is visited, it's reachable.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="ty">int</span> <span class="fn">isReachable</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> src,<span class="ty">int</span> dest)
+{
+  <span class="ty">int</span> vis[MAX]={<span class="num">0</span>};
+  <span class="fn">dfsHelper</span>(g,src,vis);
+  <span class="kw">if</span>(vis[dest]) {
+    <span class="fn">printf</span>(<span class="str">"Reachable!\n"</span>);
+    <span class="kw">return</span> <span class="num">1</span>;
+  }
+  <span class="fn">printf</span>(<span class="str">"Not reachable\n"</span>);
+  <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--yellow)">Path Length Count</h4>
+              <p>Count the number of edges in a path. In BFS-based shortest path, the dist[] array directly gives path lengths from source to every vertex.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:10px">
+<pre><span class="cmt">/* Path length = number of
+   edges in the path.
+   For shortest path, dist[]
+   from BFS gives this directly */</span>
+<span class="ty">int</span> <span class="fn">pathLength</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> src,<span class="ty">int</span> dest)
+{
+  <span class="cmt">/* run BFS, return dist[dest] */</span>
+  <span class="kw">return</span> dist[dest];
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="analogy-box" style="margin-top:16px">
+          <div class="analogy-label">Analogy</div>
+          <p><strong>All Paths:</strong> Every possible route from your home to the airport. <strong>Reachability:</strong> Can I even get there? <strong>Path Length:</strong> How many traffic lights (edges) do I pass through?</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 9. CYCLE OPERATIONS                           -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-cycle">
+    <div class="section-label">// 08 · Cycle Operations</div>
+    <h2>Cycle Operations</h2>
+    <p class="subtitle">detect · count · check · remove</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-orange">🔄</div>
+        <div class="topic-title">Detect Cycle · Count Cycles · Check Cyclic Structure · Remove Cycle</div>
+        <span class="topic-tag">CYCLE</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <div>
+            <div class="theory-box">
+              <h4>Detect Cycle</h4>
+              <p>A cycle exists if during DFS we encounter an already-visited vertex that isn't the parent (for undirected) or a back edge (for directed).</p>
+              <p>For undirected graphs: Use DFS, pass the parent. If a neighbor is visited and not the parent → cycle detected.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:12px">
+<pre><span class="cmt">/* Detect cycle - undirected */</span>
+<span class="ty">int</span> <span class="fn">hasCycleDFS</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+               <span class="ty">int</span> v,<span class="ty">int</span> parent,
+               <span class="ty">int</span> *vis)
+{
+  vis[v] = <span class="num">1</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++) {
+    <span class="kw">if</span>(g->adj[v][j]) {
+      <span class="kw">if</span>(!vis[j]) {
+        <span class="kw">if</span>(<span class="fn">hasCycleDFS</span>(g,j,v,vis))
+          <span class="kw">return</span> <span class="num">1</span>;
+      } <span class="kw">else</span> <span class="kw">if</span>(j != parent)
+          <span class="kw">return</span> <span class="num">1</span>; <span class="cmt">/* cycle! */</span>
+    }
+  }
+  <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="ty">int</span> <span class="fn">detectCycle</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g) {
+  <span class="ty">int</span> vis[MAX]={<span class="num">0</span>};
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+    <span class="kw">if</span>(!vis[i])
+      <span class="kw">if</span>(<span class="fn">hasCycleDFS</span>(g,i,-<span class="num">1</span>,vis))
+        { <span class="fn">printf</span>(<span class="str">"Cycle found!\n"</span>);
+          <span class="kw">return</span> <span class="num">1</span>; }
+  <span class="fn">printf</span>(<span class="str">"No cycle.\n"</span>);
+  <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4>Remove Cycle / Count Cycles</h4>
+              <p><strong>Remove Cycle:</strong> Find the back edge causing the cycle and delete it. This makes the graph a tree (acyclic).</p>
+              <p><strong>Count Cycles:</strong> Complex — uses the formula: Cycles = Edges - Vertices + Connected_Components (for undirected simple graphs).</p>
+              <p>Formula: <code style="color:var(--accent);background:var(--surface2);padding:2px 8px;border-radius:3px">C = E - V + CC</code></p>
+            </div>
+            <div class="code-wrap" style="margin-top:12px">
+<pre><span class="cmt">/* Count independent cycles
+   using: C = E - V + CC
+   (Circuit Rank / Cyclomatic) */</span>
+<span class="ty">int</span> <span class="fn">countCycles</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> E = <span class="fn">countEdges</span>(g);
+  <span class="ty">int</span> V = g->vertices;
+  <span class="ty">int</span> CC = <span class="fn">countComponents</span>(g);
+  <span class="ty">int</span> cycles = E - V + CC;
+  <span class="fn">printf</span>(<span class="str">"Independent cycles: %d\n"</span>,
+         cycles);
+  <span class="kw">return</span> cycles;
+}
+
+<span class="cmt">/* Remove cycle: delete the 
+   back-edge found during DFS */</span>
+<span class="ty">void</span> <span class="fn">removeCycleEdge</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g,
+    <span class="ty">int</span> u, <span class="ty">int</span> v)
+{
+  g->adj[u][v] = <span class="num">0</span>;
+  g->adj[v][u] = <span class="num">0</span>;
+}</pre>
+            </div>
+            <div class="analogy-box" style="margin-top:12px">
+              <div class="analogy-label">Analogy</div>
+              <p>A cycle is like a roundabout on a road network — you can loop endlessly. Removing a cycle edge breaks the loop and turns it into a dead-end road instead.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 10. DEGREE OPERATIONS                         -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-degree">
+    <div class="section-label">// 09 · Degree Operations</div>
+    <h2>Degree Operations</h2>
+    <p class="subtitle">find degree · in-degree · out-degree · max · min</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-yellow">📊</div>
+        <div class="topic-title">Find Degree · In-Degree · Out-Degree · Maximum · Minimum</div>
+        <span class="topic-tag">DEGREE</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>The <strong style="color:#fff">degree</strong> of a vertex is the number of edges connected to it.</p>
+          <ul style="color:var(--text-dim);font-size:14px;padding-left:20px;line-height:2.2">
+            <li><strong style="color:var(--accent)">Degree (undirected)</strong> — sum of row (or column) in matrix</li>
+            <li><strong style="color:var(--green)">In-degree (directed)</strong> — sum of the <em>column</em> (edges coming in)</li>
+            <li><strong style="color:var(--accent2)">Out-degree (directed)</strong> — sum of the <em>row</em> (edges going out)</li>
+            <li><strong style="color:var(--yellow)">Max degree</strong> — vertex with the most connections</li>
+            <li><strong style="color:var(--accent3)">Min degree</strong> — vertex with the fewest connections</li>
+          </ul>
+          <div class="complexity-row">
+            <div class="complexity-chip">Single degree: <span>O(V)</span></div>
+            <div class="complexity-chip">Max/Min: <span>O(V²)</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>In a social network: <strong>degree</strong> = number of friends. <strong>In-degree</strong> = how many people follow you. <strong>Out-degree</strong> = how many people you follow. <strong>Max degree</strong> = the most popular person.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code</h4>
+          <div class="code-wrap">
+<pre><span class="cmt">/* Degree for undirected graph */</span>
+<span class="ty">int</span> <span class="fn">getDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+              <span class="ty">int</span> v)
+{
+  <span class="ty">int</span> deg=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+    deg += g->adj[v][j];
+  <span class="kw">return</span> deg;
+}
+
+<span class="cmt">/* In-degree (directed) */</span>
+<span class="ty">int</span> <span class="fn">inDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+             <span class="ty">int</span> v) {
+  <span class="ty">int</span> deg=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++)
+    deg += g->adj[i][v];
+  <span class="kw">return</span> deg;
+}
+
+<span class="cmt">/* Out-degree (directed) */</span>
+<span class="ty">int</span> <span class="fn">outDegree</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+              <span class="ty">int</span> v) {
+  <span class="ty">int</span> deg=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;g->vertices;j++)
+    deg += g->adj[v][j];
+  <span class="kw">return</span> deg;
+}
+
+<span class="cmt">/* Maximum degree vertex */</span>
+<span class="ty">int</span> <span class="fn">maxDegreeVertex</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> maxD=<span class="num">-1</span>, maxV=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++) {
+    <span class="ty">int</span> d=<span class="fn">getDegree</span>(g,i);
+    <span class="kw">if</span>(d>maxD) { maxD=d; maxV=i; }
+  }
+  <span class="fn">printf</span>(<span class="str">"Max degree: V%d (%d)\n"</span>,
+         maxV,maxD);
+  <span class="kw">return</span> maxV;
+}
+
+<span class="cmt">/* Minimum degree vertex */</span>
+<span class="ty">int</span> <span class="fn">minDegreeVertex</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> minD=<span class="num">9999</span>, minV=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;g->vertices;i++) {
+    <span class="ty">int</span> d=<span class="fn">getDegree</span>(g,i);
+    <span class="kw">if</span>(d&lt;minD){ minD=d; minV=i; }
+  }
+  <span class="fn">printf</span>(<span class="str">"Min degree: V%d (%d)\n"</span>,
+         minV,minD);
+  <span class="kw">return</span> minV;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 11. STRUCTURAL OPERATIONS                     -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-struct">
+    <div class="section-label">// 10 · Structural Operations</div>
+    <h2>Structural Operations</h2>
+    <p class="subtitle">size · order · density · sparse/dense</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">📐</div>
+        <div class="topic-title">Graph Size · Graph Order · Density Check · Sparse/Dense Check</div>
+        <span class="topic-tag">STRUCTURAL</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent)">Graph Size</h4>
+              <p>The <strong>size</strong> of a graph is the number of <strong>edges</strong>.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="cmt">/* Size = edge count */</span>
+<span class="ty">int</span> <span class="fn">graphSize</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="kw">return</span> <span class="fn">countEdges</span>(g);
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Graph Order</h4>
+              <p>The <strong>order</strong> of a graph is the number of <strong>vertices</strong>.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="cmt">/* Order = vertex count */</span>
+<span class="ty">int</span> <span class="fn">graphOrder</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="kw">return</span> g->vertices;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent2)">Density</h4>
+              <p>Density = actual edges / maximum possible edges. Max edges for undirected = V*(V-1)/2.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">float</span> <span class="fn">density</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">int</span> V=g->vertices;
+  <span class="ty">int</span> E=<span class="fn">countEdges</span>(g);
+  <span class="ty">float</span> maxE=V*(V-<span class="num">1</span>)/<span class="num">2.0</span>;
+  <span class="kw">return</span> E/maxE;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent3)">Sparse/Dense</h4>
+              <p>Sparse: density &lt; 0.5. Dense: density ≥ 0.5. Adjacency matrix is efficient for dense graphs.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">void</span> <span class="fn">checkDense</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="ty">float</span> d=<span class="fn">density</span>(g);
+  <span class="kw">if</span>(d>=<span class="num">0.5</span>)
+    <span class="fn">printf</span>(<span class="str">"Dense\n"</span>);
+  <span class="kw">else</span>
+    <span class="fn">printf</span>(<span class="str">"Sparse\n"</span>);
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="analogy-box" style="margin-top:16px">
+          <div class="analogy-label">Analogy</div>
+          <p><strong>Order</strong> = number of cities. <strong>Size</strong> = number of roads. <strong>Dense</strong> = a city center where almost every street connects to every other (like Manhattan). <strong>Sparse</strong> = rural areas with few roads between towns.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s-struct2">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-green">✅</div>
+        <div class="topic-title">Complete Graph Check · Tree Validation</div>
+        <span class="topic-tag">STRUCTURAL</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Complete Graph Check</h4>
+          <p>A graph is <strong style="color:var(--accent)">complete</strong> (K_n) if every vertex is directly connected to every other vertex. Total edges = V*(V-1)/2 for undirected.</p>
+          <p>Simply check if actual edges == V*(V-1)/2.</p>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>A group where everyone knows everyone else directly — no introductions needed. A complete friend network with direct connections for all pairs.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>Tree Validation + Complete Graph</h4>
+          <div class="code-wrap">
+<pre><span class="cmt">/* Complete graph: edges = V*(V-1)/2 */</span>
+<span class="ty">int</span> <span class="fn">isComplete</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g) {
+    <span class="ty">int</span> V = g->vertices;
+    <span class="ty">int</span> E = <span class="fn">countEdges</span>(g);
+    <span class="kw">if</span>(E == V*(V-<span class="num">1</span>)/<span class="num">2</span>) {
+        <span class="fn">printf</span>(<span class="str">"Complete graph K%d\n"</span>,V);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Not complete.\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Tree: connected + no cycles
+   A tree has exactly V-1 edges */</span>
+<span class="ty">int</span> <span class="fn">isTree</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g) {
+    <span class="ty">int</span> V = g->vertices;
+    <span class="ty">int</span> E = <span class="fn">countEdges</span>(g);
+
+    <span class="cmt">/* Must have exactly V-1 edges */</span>
+    <span class="kw">if</span>(E != V - <span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Not a tree.\n"</span>);
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="cmt">/* Must be connected */</span>
+    <span class="kw">if</span>(!<span class="fn">isConnected</span>(g)) {
+        <span class="fn">printf</span>(<span class="str">"Not a tree.\n"</span>);
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Valid tree!\n"</span>);
+    <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 12. ADVANCED ALGORITHMS                       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-mst">
+    <div class="section-label">// 11 · Advanced Algorithms</div>
+    <h2>Minimum Spanning Tree</h2>
+    <p class="subtitle">Kruskal's algorithm · Prim's algorithm</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-green">🌲</div>
+        <div class="topic-title">Minimum Spanning Tree (MST) — Overview</div>
+        <span class="topic-tag">ADVANCED</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>A <strong style="color:var(--accent)">Minimum Spanning Tree</strong> is a subset of edges that connects all vertices in a weighted graph with the <strong>minimum total edge weight</strong>, without any cycles.</p>
+          <p>Properties of MST:</p>
+          <ul style="color:var(--text-dim);font-size:14px;padding-left:20px;line-height:2">
+            <li>Contains exactly <strong>V - 1</strong> edges</li>
+            <li>Connects all V vertices (spanning)</li>
+            <li>Has minimum total weight (minimum)</li>
+            <li>Has no cycles (tree)</li>
+          </ul>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>You want to lay cables to connect 5 cities with minimum total cable length. The MST tells you which roads to lay cables along so every city gets connected using the least total wire.</p>
+          </div>
+        </div>
+        <div>
+          <div class="viz-box">
+            <h4>MST Visualization</h4>
+            <canvas id="mstCanvas" width="340" height="260"></canvas>
+            <div class="btn-row">
+              <button class="btn btn-green" onclick="animateMST()">▶ Show MST (Prim)</button>
+              <button class="btn btn-orange" onclick="resetMST()">↺ Reset</button>
+            </div>
+            <div id="mstLog" class="log-box">Press ▶ to visualize MST construction.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card" style="margin-top:24px">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">⚗️</div>
+        <div class="topic-title">Kruskal's Algorithm</div>
+        <span class="topic-tag">MST</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>Kruskal's algorithm builds the MST by <strong style="color:var(--accent)">greedily picking the smallest weight edge</strong> that doesn't create a cycle.</p>
+          <ol class="step-list">
+            <li>Extract all edges and sort by weight (ascending)</li>
+            <li>Pick the smallest edge</li>
+            <li>If adding it doesn't create a cycle → add to MST</li>
+            <li>Use <strong>Union-Find</strong> to detect cycles efficiently</li>
+            <li>Repeat until V-1 edges added</li>
+          </ol>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(E log E)</span></div>
+            <div class="complexity-chip">Best for: <span>Sparse graphs</span></div>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code — Kruskal's</h4>
+          <div class="code-wrap">
+<pre><span class="kw">struct</span> <span class="ty">Edge</span> { <span class="ty">int</span> u,v,w; };
+
+<span class="ty">int</span> parent[MAX];
+<span class="ty">int</span> <span class="fn">find</span>(<span class="ty">int</span> x) {
+    <span class="kw">if</span>(parent[x]!=x)
+        parent[x]=<span class="fn">find</span>(parent[x]);
+    <span class="kw">return</span> parent[x];
+}
+<span class="ty">void</span> <span class="fn">unite</span>(<span class="ty">int</span> a, <span class="ty">int</span> b) {
+    parent[<span class="fn">find</span>(a)] = <span class="fn">find</span>(b);
+}
+
+<span class="cmt">/* Compare edges by weight (for sort) */</span>
+<span class="ty">int</span> <span class="fn">cmp</span>(<span class="kw">const</span> <span class="ty">void</span> *a,
+        <span class="kw">const</span> <span class="ty">void</span> *b) {
+    <span class="kw">return</span> ((<span class="kw">struct</span> <span class="ty">Edge</span>*)a)->w -
+           ((<span class="kw">struct</span> <span class="ty">Edge</span>*)b)->w;
+}
+
+<span class="ty">void</span> <span class="fn">kruskal</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+              <span class="ty">int</span> weight[MAX][MAX])
+{
+    <span class="kw">struct</span> <span class="ty">Edge</span> edges[MAX*MAX];
+    <span class="ty">int</span> eCount=<span class="num">0</span>, V=g->vertices;
+
+    <span class="cmt">/* Extract all edges */</span>
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++)
+      <span class="kw">for</span>(<span class="ty">int</span> j=i+<span class="num">1</span>;j&lt;V;j++)
+        <span class="kw">if</span>(g->adj[i][j])
+          edges[eCount++]=((<span class="kw">struct</span> <span class="ty">Edge</span>)
+            {i,j,weight[i][j]});
+
+    <span class="fn">qsort</span>(edges,eCount,
+          <span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="ty">Edge</span>),cmp);
+
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++) parent[i]=i;
+
+    <span class="ty">int</span> mstW=<span class="num">0</span>, edgesUsed=<span class="num">0</span>;
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;eCount;i++) {
+        <span class="ty">int</span> u=edges[i].u, v=edges[i].v;
+        <span class="kw">if</span>(<span class="fn">find</span>(u)!=<span class="fn">find</span>(v)) {
+            <span class="fn">unite</span>(u,v);
+            mstW+=edges[i].w;
+            <span class="fn">printf</span>(<span class="str">"%d-%d w=%d\n"</span>,
+                   u,v,edges[i].w);
+            <span class="kw">if</span>(++edgesUsed==V-<span class="num">1</span>)
+                <span class="kw">break</span>;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"MST weight: %d\n"</span>,mstW);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card" style="margin-top:24px">
+      <div class="topic-header">
+        <div class="topic-icon icon-purple">🌿</div>
+        <div class="topic-title">Prim's Algorithm</div>
+        <span class="topic-tag">MST</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Theory</h4>
+          <p>Prim's algorithm grows the MST one vertex at a time. Start with any vertex, always add the <strong style="color:var(--accent)">cheapest edge</strong> that connects a vertex outside the MST to one inside it.</p>
+          <ol class="step-list">
+            <li>Start with vertex 0 in the MST set</li>
+            <li>Find the minimum weight edge from MST set to non-MST set</li>
+            <li>Add that edge and vertex to the MST</li>
+            <li>Repeat V-1 times</li>
+          </ol>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V²)</span></div>
+            <div class="complexity-chip">Best for: <span>Dense graphs</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Building a phone network city by city: start from one city, always connect the nearest unconnected city next. Grow the network outward from your starting point.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>C Code — Prim's</h4>
+          <div class="code-wrap">
+<pre><span class="ty">void</span> <span class="fn">prim</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g,
+          <span class="ty">int</span> weight[MAX][MAX])
+{
+    <span class="ty">int</span> V=g->vertices;
+    <span class="ty">int</span> key[MAX],parent[MAX];
+    <span class="ty">int</span> inMST[MAX];
+
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++) {
+        key[i]=<span class="num">99999</span>;
+        inMST[i]=<span class="num">0</span>;
+        parent[i]=-<span class="num">1</span>;
+    }
+    key[<span class="num">0</span>]=<span class="num">0</span>; <span class="cmt">/* Start vertex 0 */</span>
+
+    <span class="kw">for</span>(<span class="ty">int</span> count=<span class="num">0</span>;count&lt;V-<span class="num">1</span>;count++) {
+        <span class="cmt">/* Pick min key not in MST */</span>
+        <span class="ty">int</span> u=-<span class="num">1</span>;
+        <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++)
+          <span class="kw">if</span>(!inMST[i]&&
+             (u==-<span class="num">1</span>||key[i]&lt;key[u]))
+            u=i;
+
+        inMST[u]=<span class="num">1</span>;
+
+        <span class="cmt">/* Update neighbors */</span>
+        <span class="kw">for</span>(<span class="ty">int</span> v=<span class="num">0</span>;v&lt;V;v++)
+          <span class="kw">if</span>(g->adj[u][v] &&
+             !inMST[v] &&
+             weight[u][v]&lt;key[v]) {
+            key[v]=weight[u][v];
+            parent[v]=u;
+          }
+    }
+    <span class="cmt">/* Print MST edges */</span>
+    <span class="ty">int</span> total=<span class="num">0</span>;
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">1</span>;i&lt;V;i++) {
+      <span class="fn">printf</span>(<span class="str">"%d-%d w=%d\n"</span>,
+             parent[i],i,key[i]);
+      total+=key[i];
+    }
+    <span class="fn">printf</span>(<span class="str">"MST total: %d\n"</span>,total);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 13. SCC + GRAPH COLORING                      -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-scc">
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-orange">🔩</div>
+        <div class="topic-title">Strongly Connected Components (SCC) · Graph Coloring</div>
+        <span class="topic-tag">ADVANCED</span>
+      </div>
+      <div class="topic-body">
+        <div class="theory-box">
+          <h4>Strongly Connected Components (Kosaraju's)</h4>
+          <p>SCCs are maximal groups where every vertex can reach every other vertex within the group (directed graph).</p>
+          <p>Kosaraju's Algorithm:</p>
+          <ol class="step-list">
+            <li>Run DFS on original graph, push vertices to a stack in finish order</li>
+            <li>Transpose (reverse) all edges</li>
+            <li>Pop from stack, run DFS on transposed graph — each DFS tree is one SCC</li>
+          </ol>
+          <div class="complexity-row">
+            <div class="complexity-chip">Time: <span>O(V²)</span></div>
+          </div>
+          <div class="analogy-box">
+            <div class="analogy-label">Analogy</div>
+            <p>Cliques on social media — groups where everyone follows everyone else. Each clique (mutual follow group) is a strongly connected component.</p>
+          </div>
+        </div>
+        <div class="code-box">
+          <h4>Graph Coloring (Greedy)</h4>
+          <div class="code-wrap">
+<pre><span class="cmt">/* Graph Coloring: assign minimum
+   colors so no adjacent vertices
+   share a color */</span>
+<span class="ty">void</span> <span class="fn">greedyColoring</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+    <span class="ty">int</span> V=g->vertices;
+    <span class="ty">int</span> color[MAX];
+    <span class="ty">int</span> used[MAX]; <span class="cmt">/* temp array */</span>
+
+    color[<span class="num">0</span>]=<span class="num">0</span>; <span class="cmt">/* First vertex gets 0 */</span>
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">1</span>;i&lt;V;i++)
+        color[i]=-<span class="num">1</span>;
+
+    <span class="kw">for</span>(<span class="ty">int</span> u=<span class="num">1</span>;u&lt;V;u++) {
+        <span class="cmt">/* Mark colors used by neighbors */</span>
+        <span class="kw">for</span>(<span class="ty">int</span> c=<span class="num">0</span>;c&lt;V;c++)
+            used[c]=<span class="num">0</span>;
+        <span class="kw">for</span>(<span class="ty">int</span> v=<span class="num">0</span>;v&lt;V;v++)
+            <span class="kw">if</span>(g->adj[u][v]&&color[v]!=-<span class="num">1</span>)
+                used[color[v]]=<span class="num">1</span>;
+
+        <span class="cmt">/* Assign smallest unused color */</span>
+        <span class="ty">int</span> c;
+        <span class="kw">for</span>(c=<span class="num">0</span>;c&lt;V;c++)
+            <span class="kw">if</span>(!used[c]) <span class="kw">break</span>;
+        color[u]=c;
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Vertex colors:\n"</span>);
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++)
+        <span class="fn">printf</span>(<span class="str">"  V%d → Color %d\n"</span>,
+               i,color[i]);
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 14. UTILITY OPERATIONS                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <section class="section" id="s-util">
+    <div class="section-label">// 12 · Utility Operations</div>
+    <h2>Utility Operations</h2>
+    <p class="subtitle">isEmpty · clear · copy · display · resetVisited</p>
+
+    <div class="topic-card">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">🛠️</div>
+        <div class="topic-title">Is Empty · Clear Graph · Copy Graph · Display Graph · Reset Visited Array</div>
+        <span class="topic-tag">UTILITY</span>
+      </div>
+      <div class="topic-body full">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:20px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent)">Is Empty</h4>
+              <p>Check if the graph has no vertices. Returns true if vertex count is zero.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">int</span> <span class="fn">isEmpty</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  <span class="kw">return</span> g->vertices == <span class="num">0</span>;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--red)">Clear Graph</h4>
+              <p>Remove all edges and vertices. Reset everything to initial state — all matrix cells to 0, vertex count to 0.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">void</span> <span class="fn">clearGraph</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *g)
+{
+  g->vertices=<span class="num">0</span>;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;MAX;i++)
+   <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;MAX;j++)
+    g->adj[i][j]=<span class="num">0</span>;
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--green)">Copy Graph</h4>
+              <p>Create an exact duplicate of the graph — copy vertex count and the entire adjacency matrix.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">void</span> <span class="fn">copyGraph</span>(
+    <span class="kw">struct</span> <span class="ty">Graph</span> *src,
+    <span class="kw">struct</span> <span class="ty">Graph</span> *dst)
+{
+  dst->vertices=src->vertices;
+  <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;MAX;i++)
+   <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;MAX;j++)
+    dst->adj[i][j]=src->adj[i][j];
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--yellow)">Display Graph</h4>
+              <p>Print the full adjacency matrix — rows and columns represent vertices, and 1s show edge connections.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">void</span> <span class="fn">displayGraph</span>(<span class="kw">struct</span> <span class="ty">Graph</span> *g) {
+    <span class="ty">int</span> V=g->vertices;
+    <span class="fn">printf</span>(<span class="str">"   "</span>);
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++)
+        <span class="fn">printf</span>(<span class="str">"%3d"</span>,i);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++) {
+        <span class="fn">printf</span>(<span class="str">"%2d "</span>,i);
+        <span class="kw">for</span>(<span class="ty">int</span> j=<span class="num">0</span>;j&lt;V;j++)
+            <span class="fn">printf</span>(<span class="str">"%3d"</span>,g->adj[i][j]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+            </div>
+          </div>
+          <div>
+            <div class="theory-box">
+              <h4 style="color:var(--accent3)">Reset Visited Array</h4>
+              <p>Before each traversal, reset the visited[] array to all zeros so every vertex is treated as unvisited. Essential for running multiple traversals.</p>
+            </div>
+            <div class="code-wrap" style="margin-top:8px">
+<pre><span class="ty">int</span> visited[MAX];
+
+<span class="ty">void</span> <span class="fn">resetVisited</span>(<span class="ty">int</span> V) {
+    <span class="kw">for</span>(<span class="ty">int</span> i=<span class="num">0</span>;i&lt;V;i++)
+        visited[i]=<span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Visited reset.\n"</span>);
+}
+
+<span class="cmt">/* Alternative: memset */</span>
+<span class="cmt">/* memset(visited,0,sizeof(visited)); */</span></pre>
+            </div>
+            <div class="analogy-box" style="margin-top:10px">
+              <div class="analogy-label">Analogy</div>
+              <p>Like erasing all your pencil marks on a map before starting a new route-tracing session. Start fresh every time you traverse.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPLEXITY SUMMARY TABLE -->
+    <div class="topic-card" style="margin-top:32px">
+      <div class="topic-header">
+        <div class="topic-icon icon-blue">📋</div>
+        <div class="topic-title">Complete Complexity Summary</div>
+        <span class="topic-tag">REFERENCE</span>
+      </div>
+      <div class="topic-body full">
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Time Complexity</th>
+                <th>Space</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Init Graph</td><td>O(V²)</td><td>O(V²)</td><td>Fill matrix with zeros</td></tr>
+              <tr><td>Insert Vertex</td><td>O(V)</td><td>O(1)</td><td>Init new row/col</td></tr>
+              <tr><td>Delete Vertex</td><td>O(V²)</td><td>O(1)</td><td>Shift rows & cols</td></tr>
+              <tr><td>Search Vertex</td><td>O(1)</td><td>O(1)</td><td>Range check</td></tr>
+              <tr><td>Insert Edge</td><td>O(1)</td><td>O(1)</td><td>Set matrix cell</td></tr>
+              <tr><td>Delete Edge</td><td>O(1)</td><td>O(1)</td><td>Clear matrix cell</td></tr>
+              <tr><td>Search Edge</td><td>O(1)</td><td>O(1)</td><td>Best advantage of adj matrix</td></tr>
+              <tr><td>BFS</td><td>O(V²)</td><td>O(V)</td><td>Due to full row scan per vertex</td></tr>
+              <tr><td>DFS</td><td>O(V²)</td><td>O(V)</td><td>Same reason</td></tr>
+              <tr><td>Shortest Path (BFS)</td><td>O(V²)</td><td>O(V)</td><td>Unweighted only</td></tr>
+              <tr><td>Cycle Detection</td><td>O(V²)</td><td>O(V)</td><td>DFS-based</td></tr>
+              <tr><td>Find Degree</td><td>O(V)</td><td>O(1)</td><td>Sum a row</td></tr>
+              <tr><td>Kruskal MST</td><td>O(E log E)</td><td>O(V+E)</td><td>Good for sparse graphs</td></tr>
+              <tr><td>Prim MST</td><td>O(V²)</td><td>O(V)</td><td>Good for dense graphs</td></tr>
+              <tr><td>Graph Coloring</td><td>O(V²)</td><td>O(V)</td><td>Greedy — not always optimal</td></tr>
+              <tr><td>Copy Graph</td><td>O(V²)</td><td>O(V²)</td><td>Full matrix copy</td></tr>
+              <tr><td>Count Components</td><td>O(V²)</td><td>O(V)</td><td>Multiple DFS calls</td></tr>
+              <tr><td>Density Check</td><td>O(V²)</td><td>O(1)</td><td>Count edges first</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Scroll to top -->
+<div id="scrolltop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function scrollTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ════════════════════════════════════════
+// GRAPH CANVAS HELPERS
+// ════════════════════════════════════════
+const NODE_R = 20;
+
+function drawNode(ctx, x, y, label, color='#00d4ff', fillColor='rgba(0,212,255,0.15)') {
+  ctx.beginPath();
+  ctx.arc(x, y, NODE_R, 0, Math.PI * 2);
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.font = 'bold 13px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x, y);
+}
+
+function drawEdge(ctx, x1, y1, x2, y2, color='#334155', width=2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function drawEdgeLabel(ctx, x1, y1, x2, y2, label) {
+  const mx = (x1+x2)/2, my = (y1+y2)/2;
+  ctx.fillStyle = '#f59e0b';
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, mx, my - 6);
+}
+
+// ════════════════════════════════════════
+// INTRO GRAPH
+// ════════════════════════════════════════
+const introNodes = [
+  { x:170, y:40,  label:'A' },
+  { x:300, y:110, label:'B' },
+  { x:260, y:230, label:'C' },
+  { x:80,  y:230, label:'D' },
+  { x:40,  y:120, label:'E' }
+];
+const introEdges = [[0,1],[1,2],[2,3],[3,4],[4,0],[0,2],[1,3]];
+let introHighlight = -1;
+
+function drawIntroGraph(highlightNode = -1) {
+  const canvas = document.getElementById('introCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  introEdges.forEach(([a, b]) => {
+    const n1 = introNodes[a], n2 = introNodes[b];
+    const active = (a === highlightNode || b === highlightNode);
+    drawEdge(ctx, n1.x, n1.y, n2.x, n2.y, active ? '#ff6b35' : '#1e3a5f', active ? 3 : 1.5);
+  });
+  introNodes.forEach((n, i) => {
+    const isH = i === highlightNode;
+    drawNode(ctx, n.x, n.y, n.label,
+      isH ? '#ff6b35' : '#00d4ff',
+      isH ? 'rgba(255,107,53,0.2)' : 'rgba(0,212,255,0.1)');
+  });
+}
+drawIntroGraph();
+let introAnim;
+function animateIntroGraph() {
+  let i = 0;
+  clearInterval(introAnim);
+  introAnim = setInterval(() => {
+    drawIntroGraph(i % introNodes.length);
+    i++;
+  }, 400);
+}
+function resetIntroGraph() {
+  clearInterval(introAnim);
+  drawIntroGraph();
+}
+
+// ════════════════════════════════════════
+// ADJACENCY MATRIX BUILDER
+// ════════════════════════════════════════
+let matrixData = [[0,1,0,1],[1,0,1,0],[0,1,0,1],[1,0,1,0]];
+const matrixLabels = ['A','B','C','D'];
+
+function renderMatrix(containerId, data, labels, highlightCell=null) {
+  const container = document.getElementById(containerId);
+  const n = labels.length;
+  let html = `<div class="matrix-grid" style="grid-template-columns: repeat(${n+1}, 36px)">`;
+  // header row
+  html += `<div class="matrix-cell header"></div>`;
+  labels.forEach(l => html += `<div class="matrix-cell header">${l}</div>`);
+  for (let i = 0; i < n; i++) {
+    html += `<div class="matrix-cell header">${labels[i]}</div>`;
+    for (let j = 0; j < n; j++) {
+      const isH = highlightCell && highlightCell[0]===i && highlightCell[1]===j;
+      const cls = isH ? 'highlight' : (data[i][j] ? 'one' : 'zero');
+      html += `<div class="matrix-cell ${cls}" onclick="toggleCell('${containerId}',${i},${j})">${data[i][j]}</div>`;
+    }
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function toggleCell(containerId, i, j) {
+  if (containerId === 'matrixDisplay') {
+    matrixData[i][j] = matrixData[i][j] ? 0 : 1;
+    matrixData[j][i] = matrixData[i][j]; // symmetric
+    renderMatrix('matrixDisplay', matrixData, matrixLabels);
+  }
+}
+
+function buildMatrix() {
+  matrixData = [[0,1,0,1],[1,0,1,0],[0,1,0,1],[1,0,1,0]];
+  renderMatrix('matrixDisplay', matrixData, matrixLabels);
+}
+function clearMatrix() {
+  matrixData = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  renderMatrix('matrixDisplay', matrixData, matrixLabels);
+}
+buildMatrix();
+
+// ════════════════════════════════════════
+// EDGE OPERATIONS
+// ════════════════════════════════════════
+let edgeMatrix = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+const edgeLabels = ['0','1','2','3'];
+renderMatrix('edgeMatrixDisplay', edgeMatrix, edgeLabels);
+
+function insertEdge() {
+  const u = parseInt(document.getElementById('edgeFrom').value);
+  const v = parseInt(document.getElementById('edgeTo').value);
+  const log = document.getElementById('edgeLog');
+  if (u < 0 || u > 3 || v < 0 || v > 3) {
+    log.innerHTML = `<span class="log-err">Invalid! Use 0-3.</span>`;
+    return;
+  }
+  if (u === v) {
+    log.innerHTML = `<span class="log-warn">Self-loop at vertex ${u} added.</span>`;
+  }
+  edgeMatrix[u][v] = 1;
+  edgeMatrix[v][u] = 1;
+  renderMatrix('edgeMatrixDisplay', edgeMatrix, edgeLabels, [u, v]);
+  log.innerHTML = `<span class="log-info">✓ Edge ${u}–${v} inserted. matrix[${u}][${v}] = matrix[${v}][${u}] = 1</span>`;
+}
+
+function deleteEdge() {
+  const u = parseInt(document.getElementById('edgeFrom').value);
+  const v = parseInt(document.getElementById('edgeTo').value);
+  const log = document.getElementById('edgeLog');
+  edgeMatrix[u][v] = 0;
+  edgeMatrix[v][u] = 0;
+  renderMatrix('edgeMatrixDisplay', edgeMatrix, edgeLabels);
+  log.innerHTML = `<span class="log-warn">Edge ${u}–${v} deleted.</span>`;
+}
+
+// ════════════════════════════════════════
+// BFS ANIMATION
+// ════════════════════════════════════════
+const bfsGraph = {
+  nodes: [{x:170,y:40,l:'0'},{x:290,y:110,l:'1'},{x:250,y:210,l:'2'},{x:90,y:210,l:'3'},{x:50,y:110,l:'4'}],
+  edges: [[0,1],[0,4],[1,2],[2,3],[3,4],[1,3]]
+};
+const bfsAdj = [[1,0,0,0,1],[1,0,1,1,0],[0,1,0,1,0],[0,1,1,0,1],[1,0,0,1,0]];
+let bfsState = { visited:[], queue:[], order:[], step:0, done:false };
+let bfsTimer = null;
+
+function drawTraversalGraph(canvas, nodeColors, edgeColors) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  bfsGraph.edges.forEach(([a,b],i) => {
+    const n1=bfsGraph.nodes[a], n2=bfsGraph.nodes[b];
+    drawEdge(ctx, n1.x, n1.y, n2.x, n2.y, edgeColors[i]||'#1e3a5f', 1.5);
+  });
+  bfsGraph.nodes.forEach((n, i) => {
+    const c = nodeColors[i] || '#00d4ff';
+    const fill = c === '#ff6b35' ? 'rgba(255,107,53,0.25)' : c === '#7c3aed' ? 'rgba(124,58,237,0.25)' : c === '#10b981' ? 'rgba(16,185,129,0.25)' : 'rgba(0,212,255,0.1)';
+    drawNode(ctx, n.x, n.y, n.l, c, fill);
+  });
+}
+
+function resetBFS() {
+  clearTimeout(bfsTimer);
+  bfsState = { visited:[], queue:[], order:[], step:0, done:false };
+  const canvas = document.getElementById('bfsCanvas');
+  drawTraversalGraph(canvas, {}, {});
+  document.getElementById('bfsLog').innerHTML = `Press ▶ Run BFS to start from vertex 0.`;
+}
+resetBFS();
+
+function startBFS() {
+  clearTimeout(bfsTimer);
+  const V = 5;
+  let visited = new Array(V).fill(false);
+  let queue = [0];
+  visited[0] = true;
+  let order = [];
+  let steps = [];
+  // Precompute all steps
+  while (queue.length > 0) {
+    let v = queue.shift();
+    order.push(v);
+    steps.push({ current: v, visited: [...visited], queue: [...queue] });
+    for (let j = 0; j < V; j++) {
+      if (bfsAdj[v][j] && !visited[j]) {
+        visited[j] = true;
+        queue.push(j);
+      }
+    }
+  }
+  let stepIdx = 0;
+  const canvas = document.getElementById('bfsCanvas');
+  const log = document.getElementById('bfsLog');
+  function runStep() {
+    if (stepIdx >= steps.length) {
+      log.innerHTML = `<span class="log-info">BFS complete! Order: ${order.join(' → ')}</span>`;
+      return;
+    }
+    const s = steps[stepIdx];
+    const nodeColors = {};
+    for (let i = 0; i < stepIdx; i++) nodeColors[steps[i].current] = '#10b981';
+    nodeColors[s.current] = '#ff6b35';
+    drawTraversalGraph(canvas, nodeColors, {});
+    log.innerHTML = `<span class="log-info">Visiting: ${s.current}</span> | Queue: [${s.queue.join(', ')}] | Visited: ${order.slice(0,stepIdx+1).join(' → ')}`;
+    stepIdx++;
+    bfsTimer = setTimeout(runStep, 800);
+  }
+  runStep();
+}
+
+// ════════════════════════════════════════
+// DFS ANIMATION
+// ════════════════════════════════════════
+let dfsTimer = null;
+function resetDFS() {
+  clearTimeout(dfsTimer);
+  const canvas = document.getElementById('dfsCanvas');
+  drawTraversalGraph(canvas, {}, {});
+  document.getElementById('dfsLog').innerHTML = `Press ▶ Run DFS to start from vertex 0.`;
+}
+resetDFS();
+
+function startDFS() {
+  clearTimeout(dfsTimer);
+  const V = 5;
+  let visited = new Array(V).fill(false);
+  let order = [];
+  let steps = [];
+  let stack = [];
+  function dfsRec(v) {
+    visited[v] = true;
+    order.push(v);
+    steps.push({ current: v, visitedSnap: [...visited], order: [...order] });
+    for (let j = 0; j < V; j++) {
+      if (bfsAdj[v][j] && !visited[j]) {
+        dfsRec(j);
+      }
+    }
+  }
+  dfsRec(0);
+  let stepIdx = 0;
+  const canvas = document.getElementById('dfsCanvas');
+  const log = document.getElementById('dfsLog');
+  function runStep() {
+    if (stepIdx >= steps.length) {
+      log.innerHTML = `<span class="log-info">DFS complete! Order: ${order.join(' → ')}</span>`;
+      return;
+    }
+    const s = steps[stepIdx];
+    const nodeColors = {};
+    s.visitedSnap.forEach((vis, i) => { if (vis && i !== s.current) nodeColors[i] = '#10b981'; });
+    nodeColors[s.current] = '#7c3aed';
+    drawTraversalGraph(canvas, nodeColors, {});
+    log.innerHTML = `<span class="log-info">Visiting: ${s.current}</span> | Path so far: ${s.order.join(' → ')}`;
+    stepIdx++;
+    dfsTimer = setTimeout(runStep, 700);
+  }
+  runStep();
+}
+
+// ════════════════════════════════════════
+// MST ANIMATION (Prim's visual)
+// ════════════════════════════════════════
+const mstNodes = [
+  {x:170, y:30,  l:'A'},
+  {x:300, y:100, l:'B'},
+  {x:270, y:220, l:'C'},
+  {x:90,  y:220, l:'D'},
+  {x:50,  y:100, l:'E'}
+];
+const mstEdges = [
+  [0,1,4],[0,4,2],[0,3,7],[1,2,3],[1,4,5],[2,3,6],[3,4,9],[2,4,8]
+];
+const mstAdj = (function() {
+  const a = Array.from({length:5},()=>Array(5).fill(0));
+  mstEdges.forEach(([u,v,w]) => { a[u][v]=w; a[v][u]=w; });
+  return a;
+})();
+
+let mstTimer = null;
+
+function drawMSTGraph(canvas, mstEdgesActive, nodeColors) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  mstEdges.forEach(([a,b,w],i) => {
+    const n1=mstNodes[a], n2=mstNodes[b];
+    const active = mstEdgesActive.includes(i);
+    drawEdge(ctx, n1.x, n1.y, n2.x, n2.y, active ? '#10b981' : '#1e3a5f', active ? 3 : 1.5);
+    drawEdgeLabel(ctx, n1.x, n1.y, n2.x, n2.y, w);
+  });
+  mstNodes.forEach((n,i) => {
+    const c = (nodeColors||{})[i] || '#00d4ff';
+    const fill = c==='#10b981'?'rgba(16,185,129,0.2)':'rgba(0,212,255,0.1)';
+    drawNode(ctx, n.x, n.y, n.l, c, fill);
+  });
+}
+
+function resetMST() {
+  clearTimeout(mstTimer);
+  drawMSTGraph(document.getElementById('mstCanvas'), [], {});
+  document.getElementById('mstLog').innerHTML = 'Press ▶ to visualize MST construction.';
+}
+resetMST();
+
+function animateMST() {
+  clearTimeout(mstTimer);
+  const V=5;
+  const key = Array(V).fill(99999);
+  const parent = Array(V).fill(-1);
+  const inMST = Array(V).fill(false);
+  key[0] = 0;
+  const steps = [];
+  for (let count=0; count < V-1; count++) {
+    let u = -1;
+    for (let i=0; i<V; i++) if (!inMST[i] && (u===-1 || key[i]<key[u])) u=i;
+    inMST[u] = true;
+    if (parent[u] !== -1) {
+      const edgeIdx = mstEdges.findIndex(([a,b])=>(a===parent[u]&&b===u)||(a===u&&b===parent[u]));
+      steps.push({ newEdge: edgeIdx, mstEdges: steps.length > 0 ? [...steps[steps.length-1].mstEdges, edgeIdx] : [edgeIdx], u, w: key[u] });
+    }
+    for (let v=0; v<V; v++) {
+      if (mstAdj[u][v] && !inMST[v] && mstAdj[u][v] < key[v]) {
+        key[v] = mstAdj[u][v];
+        parent[v] = u;
+      }
+    }
+  }
+  let stepIdx = 0;
+  const canvas = document.getElementById('mstCanvas');
+  const log = document.getElementById('mstLog');
+  function runStep() {
+    if (stepIdx >= steps.length) {
+      log.innerHTML = `<span class="log-info">MST complete! Total weight: ${steps.reduce((s,st)=>s+st.w,0)}</span>`;
+      return;
+    }
+    const s = steps[stepIdx];
+    const nodeColors = {};
+    s.mstEdges.forEach(ei => {
+      const [a,b] = mstEdges[ei];
+      nodeColors[a] = '#10b981';
+      nodeColors[b] = '#10b981';
+    });
+    drawMSTGraph(canvas, s.mstEdges, nodeColors);
+    log.innerHTML = `<span class="log-info">Added edge with weight ${s.w} → MST edge count: ${s.mstEdges.length}</span>`;
+    stepIdx++;
+    mstTimer = setTimeout(runStep, 900);
+  }
+  runStep();
+}
+
+// ════════════════════════════════════════
+// ACTIVE NAV ON SCROLL
+// ════════════════════════════════════════
+const sectionIds = ['s-intro','s-repr','s-vertex','s-vertex-ud','s-edge','s-edge-ud',
+  's-bfs','s-dfs','s-conn','s-strong','s-comp','s-path','s-allpath','s-cycle',
+  's-degree','s-struct','s-struct2','s-mst','s-scc','s-util'];
+window.addEventListener('scroll', () => {
+  let current = sectionIds[0];
+  sectionIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.getBoundingClientRect().top < 120) current = id;
+  });
+});
+</script>
+</body>
+</html>

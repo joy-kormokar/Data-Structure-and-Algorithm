@@ -1,0 +1,3320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hash Table Mastery — From Zero to Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #11141c;
+    --surface2: #181c27;
+    --surface3: #1e2333;
+    --border: #2a2f42;
+    --accent: #4fffb0;
+    --accent2: #7c6fff;
+    --accent3: #ff6f91;
+    --accent4: #ffc04a;
+    --text: #e8eaf0;
+    --text-muted: #8890a8;
+    --text-dim: #525a72;
+    --code-bg: #0d1017;
+    --slot-empty: #1a1e2b;
+    --slot-filled: #1a2f20;
+    --slot-deleted: #2a1a1a;
+    --slot-active: #1a2040;
+    --r: 10px;
+    --r-sm: 6px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'DM Sans',sans-serif;
+    font-size:15px;
+    line-height:1.7;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* LAYOUT */
+  #app{display:flex;min-height:100vh}
+
+  /* SIDEBAR */
+  #sidebar{
+    width:270px;
+    min-width:270px;
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    position:fixed;
+    top:0;left:0;
+    height:100vh;
+    overflow-y:auto;
+    z-index:100;
+    display:flex;
+    flex-direction:column;
+  }
+  #sidebar::-webkit-scrollbar{width:4px}
+  #sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .sidebar-header{
+    padding:24px 20px 16px;
+    border-bottom:1px solid var(--border);
+    background:linear-gradient(135deg,#11141c,#181c27);
+  }
+  .sidebar-logo{
+    font-family:'Syne',sans-serif;
+    font-size:18px;
+    font-weight:800;
+    color:var(--accent);
+    letter-spacing:-0.5px;
+    line-height:1.2;
+  }
+  .sidebar-sub{
+    font-size:11px;
+    color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace;
+    margin-top:4px;
+    letter-spacing:0.5px;
+  }
+
+  .sidebar-progress{
+    padding:14px 20px;
+    border-bottom:1px solid var(--border);
+  }
+  .progress-label{font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:6px;letter-spacing:.5px}
+  .progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .5s ease;width:0%}
+  .progress-count{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:right}
+
+  .nav-section{
+    padding:10px 12px 4px;
+  }
+  .nav-section-title{
+    font-size:10px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--text-dim);
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    padding:0 8px;
+    margin-bottom:4px;
+  }
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 10px;
+    border-radius:var(--r-sm);
+    cursor:pointer;
+    transition:all .2s;
+    border:1px solid transparent;
+    margin-bottom:2px;
+    text-decoration:none;
+  }
+  .nav-item:hover{background:var(--surface2);border-color:var(--border)}
+  .nav-item.active{background:rgba(79,255,176,.08);border-color:rgba(79,255,176,.25);color:var(--accent)}
+  .nav-item.completed .nav-num{background:var(--accent);color:#000}
+  .nav-num{
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--surface3);
+    border:1px solid var(--border);
+    font-size:10px;
+    font-family:'JetBrains Mono',monospace;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    font-weight:600;
+    transition:all .3s;
+  }
+  .nav-item.active .nav-num{background:var(--accent);color:#000;border-color:var(--accent)}
+  .nav-label{font-size:13px;color:var(--text-muted);transition:color .2s}
+  .nav-item.active .nav-label,.nav-item:hover .nav-label{color:var(--text)}
+
+  /* MAIN */
+  #main{
+    margin-left:270px;
+    flex:1;
+    min-height:100vh;
+  }
+
+  /* TOP BAR */
+  .topbar{
+    position:sticky;
+    top:0;
+    background:rgba(10,12,16,.9);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:12px 40px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    z-index:50;
+  }
+  .topbar-title{
+    font-family:'Syne',sans-serif;
+    font-size:15px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .topbar-tag{
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:600;
+    letter-spacing:.5px;
+  }
+  .tag-beginner{background:rgba(79,255,176,.12);color:var(--accent);border:1px solid rgba(79,255,176,.25)}
+  .tag-intermediate{background:rgba(124,111,255,.12);color:var(--accent2);border:1px solid rgba(124,111,255,.25)}
+  .tag-advanced{background:rgba(255,111,145,.12);color:var(--accent3);border:1px solid rgba(255,111,145,.25)}
+  .topbar-nav{margin-left:auto;display:flex;gap:8px}
+  .btn{
+    padding:7px 16px;
+    border-radius:var(--r-sm);
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text-muted);
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,255,176,.06)}
+  .btn-primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+  .btn-primary:hover{background:#3de89e;color:#000}
+
+  /* SECTIONS */
+  .section{
+    display:none;
+    padding:40px;
+    max-width:900px;
+  }
+  .section.active{display:block}
+
+  .section-hero{
+    background:linear-gradient(135deg,rgba(79,255,176,.06),rgba(124,111,255,.04));
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:32px;
+    margin-bottom:32px;
+    position:relative;
+    overflow:hidden;
+  }
+  .section-hero::before{
+    content:'';
+    position:absolute;
+    top:-40px;right:-40px;
+    width:200px;height:200px;
+    background:radial-gradient(circle,rgba(79,255,176,.08) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .section-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--accent);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .section-title{
+    font-family:'Syne',sans-serif;
+    font-size:28px;
+    font-weight:800;
+    color:var(--text);
+    margin-bottom:12px;
+    letter-spacing:-0.5px;
+    line-height:1.2;
+  }
+  .section-desc{
+    color:var(--text-muted);
+    font-size:15px;
+    line-height:1.8;
+    max-width:620px;
+  }
+
+  /* CARDS */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--r);
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .card-title{
+    font-family:'Syne',sans-serif;
+    font-size:16px;
+    font-weight:700;
+    color:var(--text);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .card-icon{
+    width:28px;height:28px;
+    border-radius:7px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;
+  }
+  .icon-theory{background:rgba(79,255,176,.12)}
+  .icon-visual{background:rgba(124,111,255,.12)}
+  .icon-code{background:rgba(255,192,74,.12)}
+  .icon-analogy{background:rgba(255,111,145,.12)}
+
+  p{color:var(--text-muted);margin-bottom:12px;line-height:1.8}
+  p:last-child{margin-bottom:0}
+  strong{color:var(--text);font-weight:500}
+
+  /* HIGHLIGHT BOXES */
+  .info-box{
+    border-radius:var(--r-sm);
+    padding:14px 18px;
+    margin:14px 0;
+    border-left:3px solid;
+    font-size:14px;
+  }
+  .info-box.green{background:rgba(79,255,176,.06);border-color:var(--accent);color:#9fffe0}
+  .info-box.purple{background:rgba(124,111,255,.06);border-color:var(--accent2);color:#b8b4ff}
+  .info-box.yellow{background:rgba(255,192,74,.06);border-color:var(--accent4);color:#ffd98a}
+  .info-box.red{background:rgba(255,111,145,.06);border-color:var(--accent3);color:#ff9ab4}
+
+  /* CODE */
+  .code-block{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:var(--r-sm);
+    overflow:hidden;
+    margin:12px 0;
+    position:relative;
+  }
+  .code-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 16px;
+    border-bottom:1px solid var(--border);
+    background:rgba(255,255,255,.02);
+  }
+  .code-lang{
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--accent4);
+    letter-spacing:.5px;
+  }
+  .code-copy{
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--text-dim);
+    cursor:pointer;
+    padding:2px 8px;
+    border-radius:4px;
+    border:1px solid var(--border);
+    background:transparent;
+    transition:all .2s;
+  }
+  .code-copy:hover{color:var(--accent);border-color:var(--accent)}
+  pre{
+    padding:20px;
+    overflow-x:auto;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    line-height:1.7;
+    color:#c9d1d9;
+    margin:0;
+  }
+  pre::-webkit-scrollbar{height:4px}
+  pre::-webkit-scrollbar-thumb{background:var(--border)}
+  .kw{color:#ff79c6}
+  .fn{color:#50fa7b}
+  .str{color:#f1fa8c}
+  .cm{color:#6272a4;font-style:italic}
+  .num{color:#bd93f9}
+  .tp{color:#8be9fd}
+  .macro{color:#ffb86c}
+
+  /* VISUALIZATION */
+  .viz-container{
+    background:var(--code-bg);
+    border:1px solid var(--border);
+    border-radius:var(--r-sm);
+    padding:20px;
+    margin:12px 0;
+  }
+  .viz-controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:16px;
+    align-items:center;
+  }
+  .viz-input{
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--r-sm);
+    padding:8px 12px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    width:120px;
+    outline:none;
+  }
+  .viz-input:focus{border-color:var(--accent)}
+  .viz-btn{
+    padding:8px 16px;
+    border-radius:var(--r-sm);
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .viz-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .viz-btn.primary{background:rgba(79,255,176,.15);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .viz-btn.danger{background:rgba(255,111,145,.1);border-color:var(--accent3);color:var(--accent3)}
+  .viz-btn.warn{background:rgba(255,192,74,.1);border-color:var(--accent4);color:var(--accent4)}
+
+  /* HASH TABLE VISUAL */
+  .ht-grid{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+  }
+  .ht-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .ht-index{
+    width:28px;
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11px;
+    flex-shrink:0;
+  }
+  .ht-slot{
+    flex:1;
+    height:36px;
+    border-radius:5px;
+    border:1px solid var(--border);
+    background:var(--slot-empty);
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    transition:all .4s;
+    position:relative;
+    overflow:hidden;
+  }
+  .ht-slot.filled{
+    background:var(--slot-filled);
+    border-color:rgba(79,255,176,.3);
+  }
+  .ht-slot.deleted{
+    background:var(--slot-deleted);
+    border-color:rgba(255,111,145,.2);
+    color:var(--accent3);
+    font-style:italic;
+  }
+  .ht-slot.active{
+    background:rgba(79,255,176,.15);
+    border-color:var(--accent);
+    animation:pulse-slot .5s ease;
+  }
+  .ht-slot.probe{
+    background:rgba(124,111,255,.12);
+    border-color:rgba(124,111,255,.4);
+  }
+  .ht-slot.collision{
+    background:rgba(255,192,74,.1);
+    border-color:rgba(255,192,74,.4);
+    animation:shake .3s ease;
+  }
+  @keyframes pulse-slot{
+    0%{transform:scale(1.02);box-shadow:0 0 12px rgba(79,255,176,.4)}
+    100%{transform:scale(1);box-shadow:none}
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-4px)}
+    75%{transform:translateX(4px)}
+  }
+  .ht-key{color:var(--accent4);margin-right:4px}
+  .ht-val{color:var(--accent)}
+  .ht-sep{color:var(--text-dim);margin:0 4px}
+  .ht-empty-label{color:var(--text-dim);font-size:11px}
+  .ht-deleted-label{color:var(--accent3);font-size:11px}
+
+  .viz-log{
+    margin-top:12px;
+    background:rgba(0,0,0,.3);
+    border-radius:var(--r-sm);
+    padding:10px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-muted);
+    max-height:80px;
+    overflow-y:auto;
+    border:1px solid var(--border);
+  }
+  .log-line{margin-bottom:3px;line-height:1.5}
+  .log-line.success{color:var(--accent)}
+  .log-line.error{color:var(--accent3)}
+  .log-line.warn{color:var(--accent4)}
+  .log-line.info{color:var(--accent2)}
+
+  /* FORMULA BOX */
+  .formula{
+    background:rgba(124,111,255,.08);
+    border:1px solid rgba(124,111,255,.2);
+    border-radius:var(--r-sm);
+    padding:14px 20px;
+    margin:12px 0;
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    color:var(--accent2);
+    letter-spacing:1px;
+  }
+
+  /* ANALOGY */
+  .analogy-box{
+    display:flex;
+    gap:14px;
+    background:rgba(255,111,145,.05);
+    border:1px solid rgba(255,111,145,.15);
+    border-radius:var(--r-sm);
+    padding:16px;
+    margin:14px 0;
+  }
+  .analogy-emoji{font-size:28px;flex-shrink:0;line-height:1}
+  .analogy-text{color:#ffb8c8;font-size:14px;line-height:1.7}
+  .analogy-title{color:var(--accent3);font-weight:600;margin-bottom:4px;font-family:'Syne',sans-serif}
+
+  /* STEPS */
+  .steps-list{
+    counter-reset:steps;
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin:12px 0;
+  }
+  .steps-list li{
+    counter-increment:steps;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding:12px 14px;
+    background:var(--surface2);
+    border-radius:var(--r-sm);
+    border:1px solid var(--border);
+  }
+  .steps-list li::before{
+    content:counter(steps);
+    width:22px;height:22px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#000;
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    margin-top:1px;
+  }
+  .steps-list li span{color:var(--text-muted);font-size:14px}
+
+  /* GRID 2 COL */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+  .stat-box{
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--r-sm);
+    padding:16px;
+    text-align:center;
+  }
+  .stat-num{
+    font-family:'Syne',sans-serif;
+    font-size:26px;
+    font-weight:800;
+    color:var(--accent);
+    line-height:1;
+    margin-bottom:4px;
+  }
+  .stat-label{font-size:12px;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+
+  /* TABS */
+  .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+  .tab{
+    padding:8px 16px;
+    border-radius:var(--r-sm) var(--r-sm) 0 0;
+    cursor:pointer;
+    font-size:13px;
+    font-family:'JetBrains Mono',monospace;
+    color:var(--text-dim);
+    border:1px solid transparent;
+    border-bottom:none;
+    transition:all .2s;
+    margin-bottom:-1px;
+  }
+  .tab.active{background:var(--surface2);border-color:var(--border);border-bottom:1px solid var(--surface2);color:var(--accent)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* PROBING VIZ */
+  .probe-grid{
+    display:flex;
+    gap:4px;
+    flex-wrap:wrap;
+    margin:12px 0;
+  }
+  .probe-cell{
+    width:44px;height:44px;
+    border-radius:6px;
+    border:1px solid var(--border);
+    background:var(--slot-empty);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    transition:all .3s;
+    position:relative;
+  }
+  .probe-cell.filled{background:var(--slot-filled);border-color:rgba(79,255,176,.3)}
+  .probe-cell.target{background:rgba(79,255,176,.2);border-color:var(--accent);box-shadow:0 0 8px rgba(79,255,176,.3)}
+  .probe-cell.checking{background:rgba(124,111,255,.15);border-color:var(--accent2);animation:blink .5s ease infinite alternate}
+  .probe-cell.collision{background:rgba(255,192,74,.12);border-color:var(--accent4)}
+  @keyframes blink{0%{opacity:.6}100%{opacity:1}}
+  .probe-cell .cell-idx{color:var(--text-dim);font-size:9px}
+  .probe-cell .cell-val{color:var(--accent);font-size:11px;font-weight:600}
+  .probe-cell.deleted .cell-val{color:var(--accent3)}
+
+  /* LOAD FACTOR */
+  .lf-bar-wrap{
+    background:var(--surface2);
+    border-radius:20px;
+    height:20px;
+    overflow:hidden;
+    border:1px solid var(--border);
+    margin:8px 0;
+    position:relative;
+  }
+  .lf-bar{
+    height:100%;
+    border-radius:20px;
+    transition:width .5s ease, background .3s;
+    background:var(--accent);
+  }
+  .lf-threshold{
+    position:absolute;
+    top:0;bottom:0;
+    width:2px;
+    background:var(--accent4);
+    pointer-events:none;
+  }
+  .lf-label{position:absolute;top:50%;transform:translateY(-50%);right:10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#000;font-weight:700;mix-blend-mode:difference}
+
+  /* RESPONSIVE */
+  @media(max-width:900px){
+    #sidebar{width:220px;min-width:220px}
+    #main{margin-left:220px}
+    .section{padding:24px}
+    .grid2{grid-template-columns:1fr}
+  }
+  @media(max-width:640px){
+    #sidebar{transform:translateX(-100%);transition:transform .3s}
+    #sidebar.open{transform:translateX(0)}
+    #main{margin-left:0}
+    .section{padding:16px}
+    .topbar{padding:12px 16px}
+    .grid3{grid-template-columns:1fr 1fr}
+  }
+
+  /* SCROLLBAR */
+  #main::-webkit-scrollbar{width:6px}
+  #main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  /* BADGE */
+  .badge{
+    display:inline-flex;align-items:center;gap:4px;
+    padding:2px 8px;
+    border-radius:20px;
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:600;
+  }
+  .badge-green{background:rgba(79,255,176,.12);color:var(--accent);border:1px solid rgba(79,255,176,.2)}
+  .badge-purple{background:rgba(124,111,255,.12);color:var(--accent2);border:1px solid rgba(124,111,255,.2)}
+  .badge-yellow{background:rgba(255,192,74,.12);color:var(--accent4);border:1px solid rgba(255,192,74,.2)}
+  .badge-red{background:rgba(255,111,145,.12);color:var(--accent3);border:1px solid rgba(255,111,145,.2)}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  th{background:var(--surface2);color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.5px;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left}
+  td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text-muted)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(255,255,255,.02)}
+
+  /* COMPLETE BTN */
+  .section-footer{
+    margin-top:32px;
+    padding-top:24px;
+    border-top:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .mark-done{
+    padding:10px 24px;
+    border-radius:var(--r-sm);
+    background:rgba(79,255,176,.12);
+    border:1px solid rgba(79,255,176,.3);
+    color:var(--accent);
+    font-family:'Syne',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    transition:all .25s;
+  }
+  .mark-done:hover{background:var(--accent);color:#000}
+  .mark-done.done{background:var(--accent);color:#000}
+
+  /* HAMBURGER */
+  .hamburger{
+    display:none;
+    flex-direction:column;
+    gap:4px;
+    cursor:pointer;
+    padding:6px;
+  }
+  .hamburger span{width:20px;height:2px;background:var(--text-muted);border-radius:1px;display:block}
+  @media(max-width:640px){.hamburger{display:flex}}
+
+  /* WELCOME */
+  .welcome-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+  .welcome-card{
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:var(--r-sm);
+    padding:16px;
+    text-align:center;
+  }
+  .welcome-card-icon{font-size:24px;margin-bottom:8px}
+  .welcome-card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px}
+  .welcome-card-desc{font-size:12px;color:var(--text-dim);line-height:1.5}
+
+  /* HASH CALC DEMO */
+  .hash-demo-wrap{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+  }
+  .hash-step{
+    padding:6px 12px;
+    border-radius:5px;
+    border:1px solid var(--border);
+    background:var(--surface2);
+    color:var(--text-muted);
+  }
+  .hash-arrow{color:var(--text-dim)}
+  .hash-result{
+    padding:6px 12px;
+    border-radius:5px;
+    background:rgba(79,255,176,.12);
+    border:1px solid rgba(79,255,176,.3);
+    color:var(--accent);
+    font-weight:600;
+  }
+
+  /* COMPLEXITY TABLE */
+  .complexity-row td:last-child{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--accent);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Hash Table<br>Mastery</div>
+    <div class="sidebar-sub">// C Programming · Beginner → Advanced</div>
+  </div>
+  <div class="sidebar-progress">
+    <div class="progress-label">// PROGRESS</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-count" id="progressCount">0 / 18 completed</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">// FOUNDATION</div>
+    <div class="nav-item active" data-section="0" onclick="goSection(0)">
+      <div class="nav-num">0</div><div class="nav-label">Introduction</div>
+    </div>
+    <div class="nav-item" data-section="1" onclick="goSection(1)">
+      <div class="nav-num">1</div><div class="nav-label">Create Hash Table</div>
+    </div>
+    <div class="nav-item" data-section="2" onclick="goSection(2)">
+      <div class="nav-num">2</div><div class="nav-label">Initialize Table</div>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">// CORE OPS</div>
+    <div class="nav-item" data-section="3" onclick="goSection(3)">
+      <div class="nav-num">3</div><div class="nav-label">Insert / Put</div>
+    </div>
+    <div class="nav-item" data-section="4" onclick="goSection(4)">
+      <div class="nav-num">4</div><div class="nav-label">Search / Lookup</div>
+    </div>
+    <div class="nav-item" data-section="5" onclick="goSection(5)">
+      <div class="nav-num">5</div><div class="nav-label">Delete / Remove</div>
+    </div>
+    <div class="nav-item" data-section="6" onclick="goSection(6)">
+      <div class="nav-num">6</div><div class="nav-label">Update Entry</div>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">// COLLISION</div>
+    <div class="nav-item" data-section="7" onclick="goSection(7)">
+      <div class="nav-num">7</div><div class="nav-label">Collision Handling</div>
+    </div>
+    <div class="nav-item" data-section="8" onclick="goSection(8)">
+      <div class="nav-num">8</div><div class="nav-label">Linear Probing</div>
+    </div>
+    <div class="nav-item" data-section="9" onclick="goSection(9)">
+      <div class="nav-num">9</div><div class="nav-label">Quadratic Probing</div>
+    </div>
+    <div class="nav-item" data-section="10" onclick="goSection(10)">
+      <div class="nav-num">10</div><div class="nav-label">Double Hashing</div>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-title">// ADVANCED</div>
+    <div class="nav-item" data-section="11" onclick="goSection(11)">
+      <div class="nav-num">11</div><div class="nav-label">Rehashing</div>
+    </div>
+    <div class="nav-item" data-section="12" onclick="goSection(12)">
+      <div class="nav-num">12</div><div class="nav-label">Resize Table</div>
+    </div>
+    <div class="nav-item" data-section="13" onclick="goSection(13)">
+      <div class="nav-num">13</div><div class="nav-label">Traverse / Display</div>
+    </div>
+    <div class="nav-item" data-section="14" onclick="goSection(14)">
+      <div class="nav-num">14</div><div class="nav-label">Validation Ops</div>
+    </div>
+    <div class="nav-item" data-section="15" onclick="goSection(15)">
+      <div class="nav-num">15</div><div class="nav-label">Load Factor Mgmt</div>
+    </div>
+    <div class="nav-item" data-section="16" onclick="goSection(16)">
+      <div class="nav-num">16</div><div class="nav-label">Memory Management</div>
+    </div>
+    <div class="nav-item" data-section="17" onclick="goSection(17)">
+      <div class="nav-num">17</div><div class="nav-label">Iteration Ops</div>
+    </div>
+    <div class="nav-item" data-section="18" onclick="goSection(18)">
+      <div class="nav-num">18</div><div class="nav-label">Utility & Analysis</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="topbar">
+    <div class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </div>
+    <div class="topbar-title" id="topbarTitle">Introduction to Hash Tables</div>
+    <span class="topbar-tag tag-beginner" id="topbarTag">BEGINNER</span>
+    <div class="topbar-nav">
+      <button class="btn" onclick="prevSection()">← Prev</button>
+      <button class="btn btn-primary" onclick="nextSection()">Next →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 0: INTRO -->
+  <div class="section active" id="sec-0">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 00</div>
+      <div class="section-title">Welcome to Hash Table Mastery</div>
+      <div class="section-desc">Learn the most powerful data structure in programming — from understanding what a hash table is, to building a full working implementation in C from scratch.</div>
+    </div>
+
+    <div class="welcome-grid">
+      <div class="welcome-card">
+        <div class="welcome-card-icon">📐</div>
+        <div class="welcome-card-title">Theory First</div>
+        <div class="welcome-card-desc">Every concept explained in plain English before code</div>
+      </div>
+      <div class="welcome-card">
+        <div class="welcome-card-icon">🎮</div>
+        <div class="welcome-card-title">Live Visualizations</div>
+        <div class="welcome-card-desc">Interactive demos — see it work in real-time</div>
+      </div>
+      <div class="welcome-card">
+        <div class="welcome-card-icon">💻</div>
+        <div class="welcome-card-title">C Code Examples</div>
+        <div class="welcome-card-desc">Complete, commented beginner-friendly C programs</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>What is a Hash Table?</div>
+      <p>A <strong>Hash Table</strong> (also called a Hash Map) is a data structure that stores data as <strong>key-value pairs</strong> — like a dictionary. You give it a key, it instantly tells you the value. That's the magic.</p>
+      <p>The secret behind this speed is a <strong>hash function</strong> — a formula that converts a key (like a word or number) into an array index (a slot number). Instead of searching through all items, it goes <em>directly</em> to the right slot.</p>
+      <div class="formula">index = hash(key) % table_size</div>
+      <div class="info-box green">⚡ Average Time Complexity: <strong>O(1)</strong> for Insert, Search, and Delete — the fastest possible!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Real-Life Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🏫</div>
+        <div class="analogy-text">
+          <div class="analogy-title">School Locker System</div>
+          Imagine 100 school lockers numbered 0–99. Each student has an ID. To find locker #, just take: <strong>Student ID % 100</strong>. Student 1542 → Locker 42. You don't search all 100 lockers — you go directly to #42! That's exactly how a hash table works.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">📊</div>Complexity at a Glance</div>
+      <table>
+        <tr><th>Operation</th><th>Average Case</th><th>Worst Case</th></tr>
+        <tr><td>Insert</td><td><span class="badge badge-green">O(1)</span></td><td><span class="badge badge-red">O(n)</span></td></tr>
+        <tr><td>Search</td><td><span class="badge badge-green">O(1)</span></td><td><span class="badge badge-red">O(n)</span></td></tr>
+        <tr><td>Delete</td><td><span class="badge badge-green">O(1)</span></td><td><span class="badge badge-red">O(n)</span></td></tr>
+        <tr><td>Space</td><td colspan="2"><span class="badge badge-yellow">O(n)</span></td></tr>
+      </table>
+      <p>Worst case happens when many keys collide (hash to the same slot). With good design, this is very rare.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">🔤</div>Where Are Hash Tables Used?</div>
+      <div class="grid2">
+        <div class="info-box green" style="margin:0">🔐 <strong>Password storage</strong> (hashed passwords in databases)</div>
+        <div class="info-box purple" style="margin:0">📞 <strong>Phone books</strong> (name → number lookup)</div>
+        <div class="info-box yellow" style="margin:0">🔍 <strong>Search engines</strong> (word → web page)</div>
+        <div class="info-box red" style="margin:0">🛒 <strong>Shopping carts</strong> (item ID → quantity)</div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <span class="badge badge-green">✓ 18 Topics Ahead</span>
+      <button class="mark-done" onclick="markDone(0)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 1: CREATE -->
+  <div class="section" id="sec-1">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 01</div>
+      <div class="section-title">Create Hash Table</div>
+      <div class="section-desc">Learn how to define the structure of a hash table, allocate memory for the array, and set up the hash function.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Building the Blueprint</div>
+      <p>Creating a hash table means deciding three things:</p>
+      <ol class="steps-list">
+        <li><span><strong>Define table size</strong> — How many slots does our array have? Choosing a prime number (like 7, 11, 13, 31) reduces collisions.</span></li>
+        <li><span><strong>Allocate array memory</strong> — Reserve actual memory for the slots using <code>malloc()</code> in C.</span></li>
+        <li><span><strong>Initialize array slots</strong> — Mark all slots as EMPTY (default state).</span></li>
+        <li><span><strong>Set default values</strong> — Each slot should have a valid "null" or empty marker.</span></li>
+        <li><span><strong>Set hash function</strong> — Define how keys map to indexes.</span></li>
+      </ol>
+      <div class="info-box yellow">💡 <strong>Why prime numbers for table size?</strong> Primes reduce the chance of multiple keys landing on the same slot, distributing data more evenly.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Hash Function Demo</div>
+      <p>Type any key (number) and see how the hash function maps it to an index in a table of size 7:</p>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="hashDemoKey" placeholder="Key (e.g. 42)" value="42"/>
+        <button class="viz-btn primary" onclick="runHashDemo()">Compute Hash →</button>
+      </div>
+      <div id="hashDemoResult" style="padding:10px 0">
+        <div class="hash-demo-wrap">
+          <span class="hash-step">key = 42</span>
+          <span class="hash-arrow">→</span>
+          <span class="hash-step">42 % 7</span>
+          <span class="hash-arrow">=</span>
+          <span class="hash-result">Index: 0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Create Hash Table</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#include &lt;stdio.h&gt;</span>
+<span class="macro">#include &lt;stdlib.h&gt;</span>
+<span class="macro">#include &lt;string.h&gt;</span>
+
+<span class="macro">#define TABLE_SIZE 7</span>   <span class="cm">/* Prime number — reduces collisions */</span>
+<span class="macro">#define EMPTY      -1</span>   <span class="cm">/* Marker for an empty slot */</span>
+<span class="macro">#define DELETED    -2</span>   <span class="cm">/* Marker for a deleted slot */</span>
+
+<span class="cm">/* Structure for one slot (entry) in the hash table */</span>
+<span class="kw">typedef struct</span> {
+    <span class="tp">int</span> key;    <span class="cm">/* The key we store (e.g. student ID) */</span>
+    <span class="tp">int</span> value;  <span class="cm">/* The value linked to the key (e.g. grade) */</span>
+} <span class="tp">Entry</span>;
+
+<span class="cm">/* The hash table itself */</span>
+<span class="kw">typedef struct</span> {
+    <span class="tp">Entry</span> *table;   <span class="cm">/* Pointer to the array of slots */</span>
+    <span class="tp">int</span>  size;       <span class="cm">/* Total number of slots */</span>
+    <span class="tp">int</span>  count;      <span class="cm">/* How many entries are currently stored */</span>
+} <span class="tp">HashTable</span>;
+
+<span class="cm">/* Hash Function: converts key → array index */</span>
+<span class="tp">int</span> <span class="fn">hashFunction</span>(<span class="tp">int</span> key, <span class="tp">int</span> size) {
+    <span class="kw">return</span> key % size;  <span class="cm">/* Simple modulo operation */</span>
+}
+
+<span class="cm">/* Step 1: Create and return a new hash table */</span>
+<span class="tp">HashTable</span>* <span class="fn">createHashTable</span>(<span class="tp">int</span> size) {
+    <span class="cm">/* Allocate memory for the HashTable struct */</span>
+    <span class="tp">HashTable</span> *ht = (<span class="tp">HashTable</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="tp">HashTable</span>));
+
+    <span class="cm">/* Allocate memory for the array of entries */</span>
+    ht->table = (<span class="tp">Entry</span>*) <span class="fn">malloc</span>(size * <span class="kw">sizeof</span>(<span class="tp">Entry</span>));
+
+    ht->size  = size;   <span class="cm">/* Store the size */</span>
+    ht->count = <span class="num">0</span>;     <span class="cm">/* Start with 0 entries */</span>
+
+    <span class="cm">/* Initialize all slots as EMPTY */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; size; i++) {
+        ht->table[i].key   = EMPTY;
+        ht->table[i].value = <span class="num">0</span>;
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Hash table created! Size: %d slots\n"</span>, size);
+    <span class="kw">return</span> ht;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(TABLE_SIZE);
+    <span class="fn">printf</span>(<span class="str">"Index of key 25: %d\n"</span>, <span class="fn">hashFunction</span>(<span class="num">25</span>, TABLE_SIZE));
+    <span class="fn">printf</span>(<span class="str">"Index of key 50: %d\n"</span>, <span class="fn">hashFunction</span>(<span class="num">50</span>, TABLE_SIZE));
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+      <div class="info-box green">Output: Hash table created! Size: 7 slots<br>Index of key 25: 4<br>Index of key 50: 1</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🏗️</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Building an Apartment Block</div>
+          Creating a hash table is like building an apartment block. You first decide how many floors (table size), then construct each apartment (allocate memory), and label every room as "vacant" (initialize to EMPTY). The apartment number formula (hash function) tells you which floor a tenant belongs on.
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(1)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 2: INITIALIZE -->
+  <div class="section" id="sec-2">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 02</div>
+      <div class="section-title">Initialize Table</div>
+      <div class="section-desc">Learn how to properly set up markers, reset indexes, initialize counters, and configure the load factor for your hash table.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: What Does "Initialize" Mean?</div>
+      <p>After allocating memory, we need to <strong>initialize</strong> — set each slot to a known starting state. This is critical because uninitialized memory contains random "garbage" values.</p>
+      <ul class="steps-list">
+        <li><span><strong>Set empty markers</strong> — Mark each slot's key as <code>EMPTY (-1)</code> so we know no real data is stored there yet.</span></li>
+        <li><span><strong>Reset indexes</strong> — All slot positions start at their default state (no key, no value).</span></li>
+        <li><span><strong>Initialize counters</strong> — Set <code>count = 0</code> to track how many entries exist.</span></li>
+        <li><span><strong>Configure load factor</strong> — Set a threshold (typically 0.7) beyond which we resize the table.</span></li>
+      </ul>
+      <div class="info-box purple">📌 <strong>Load Factor</strong> = (Number of entries) ÷ (Table size). Keep it below 0.7 for best performance.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Visual: Slot States</div>
+      <p>A slot in a hash table can be in one of three states:</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="ht-slot" style="flex:0 0 180px"><span class="ht-empty-label">[ EMPTY ]</span></div>
+          <span style="color:var(--text-muted);font-size:13px">→ Never used. Search can stop here.</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="ht-slot filled" style="flex:0 0 180px"><span class="ht-key">42</span><span class="ht-sep">→</span><span class="ht-val">100</span></div>
+          <span style="color:var(--text-muted);font-size:13px">→ Has real data (key=42, value=100)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="ht-slot deleted" style="flex:0 0 180px"><span class="ht-deleted-label">[ DELETED ]</span></div>
+          <span style="color:var(--text-muted);font-size:13px">→ Was deleted. Search must continue past it!</span>
+        </div>
+      </div>
+      <div class="info-box red">⚠️ The DELETED marker is crucial! If we just made it EMPTY after deletion, searches for other keys might stop too early and fail to find existing data.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Initialize Table</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#define EMPTY       -1</span>
+<span class="macro">#define DELETED     -2</span>
+<span class="macro">#define LOAD_FACTOR  0.7f</span>  <span class="cm">/* Resize when 70% full */</span>
+
+<span class="kw">typedef struct</span> {
+    <span class="tp">int</span>   key;
+    <span class="tp">int</span>   value;
+    <span class="tp">int</span>   state;   <span class="cm">/* EMPTY, DELETED, or FILLED */</span>
+} <span class="tp">Entry</span>;
+
+<span class="kw">typedef struct</span> {
+    <span class="tp">Entry</span> *table;
+    <span class="tp">int</span>   size;
+    <span class="tp">int</span>   count;
+    <span class="tp">float</span> loadFactor;    <span class="cm">/* Threshold to trigger resize */</span>
+} <span class="tp">HashTable</span>;
+
+<span class="cm">/* Initialize all slots to empty state */</span>
+<span class="tp">void</span> <span class="fn">initTable</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        ht->table[i].key   = EMPTY;    <span class="cm">/* Mark slot as empty */</span>
+        ht->table[i].value = <span class="num">0</span>;
+        ht->table[i].state = EMPTY;    <span class="cm">/* Slot state = EMPTY */</span>
+    }
+    ht->count      = <span class="num">0</span>;           <span class="cm">/* No entries yet */</span>
+    ht->loadFactor = LOAD_FACTOR;   <span class="cm">/* Set 70% threshold */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Table initialized: %d slots, all EMPTY\n"</span>, ht->size);
+}
+
+<span class="cm">/* Check current load factor */</span>
+<span class="tp">float</span> <span class="fn">getLoadFactor</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">return</span> (<span class="tp">float</span>) ht->count / ht->size;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🏨</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Hotel Check-In System</div>
+          Initializing a hash table is like a hotel setting up their room ledger at the start of the season. Every room is marked "Vacant". The manager also sets a rule: "When 70% of rooms are occupied, we need to open another wing" — that's the load factor. The "Do Not Disturb — previous guest" sign is the DELETED marker.
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(2)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 3: INSERT -->
+  <div class="section" id="sec-3">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 03</div>
+      <div class="section-title">Insert / Put</div>
+      <div class="section-desc">Learn how to add key-value pairs into the hash table, including handling collisions, updating existing keys, and storing entries in the array.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: How Insert Works</div>
+      <ul class="steps-list">
+        <li><span><strong>Generate hash index</strong> — Apply hash function to the key: <code>index = key % size</code></span></li>
+        <li><span><strong>Check slot status</strong> — Is the slot EMPTY, FILLED, or DELETED?</span></li>
+        <li><span><strong>Insert key & value</strong> — If slot is empty or deleted, place the entry there.</span></li>
+        <li><span><strong>Handle collision</strong> — If slot is already filled with a different key, find next available slot (probing).</span></li>
+        <li><span><strong>Update existing key</strong> — If the same key already exists, overwrite its value.</span></li>
+        <li><span><strong>Store entry in array</strong> — Write key, value, and state=FILLED to the slot.</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Interactive Insert Demo</div>
+      <p>Insert key-value pairs into a hash table of size 7. Watch how the hash function decides the slot!</p>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="insertKey" placeholder="Key" value="15"/>
+        <input class="viz-input" type="number" id="insertVal" placeholder="Value" value="99"/>
+        <button class="viz-btn primary" onclick="vizInsert()">Insert</button>
+        <button class="viz-btn danger" onclick="vizClear()">Clear All</button>
+      </div>
+      <div class="ht-grid" id="insertGrid"></div>
+      <div class="viz-log" id="insertLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Insert / Put</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Insert a key-value pair into the hash table */</span>
+<span class="tp">void</span> <span class="fn">insert</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> value) {
+
+    <span class="cm">/* Step 1: Generate hash index */</span>
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+
+    <span class="cm">/* Step 2 & 4: Linear probing to find open slot */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="tp">int</span> probe = (index + i) % ht->size;
+
+        <span class="cm">/* Step 5: Key already exists — update its value */</span>
+        <span class="kw">if</span> (ht->table[probe].state == FILLED &amp;&amp;
+            ht->table[probe].key == key) {
+            ht->table[probe].value = value;
+            <span class="fn">printf</span>(<span class="str">"Updated key %d → value %d\n"</span>, key, value);
+            <span class="kw">return</span>;
+        }
+
+        <span class="cm">/* Step 3: Slot is empty or deleted — insert here */</span>
+        <span class="kw">if</span> (ht->table[probe].state != FILLED) {
+            ht->table[probe].key   = key;
+            ht->table[probe].value = value;
+            ht->table[probe].state = FILLED;
+            ht->count++;
+            <span class="fn">printf</span>(<span class="str">"Inserted key %d at index %d\n"</span>, key, probe);
+            <span class="kw">return</span>;
+        }
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Table is FULL! Cannot insert key %d\n"</span>, key);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">insert</span>(ht, <span class="num">10</span>, <span class="num">100</span>);  <span class="cm">/* 10 % 7 = 3 → slot 3 */</span>
+    <span class="fn">insert</span>(ht, <span class="num">20</span>, <span class="num">200</span>);  <span class="cm">/* 20 % 7 = 6 → slot 6 */</span>
+    <span class="fn">insert</span>(ht, <span class="num">15</span>, <span class="num">150</span>);  <span class="cm">/* 15 % 7 = 1 → slot 1 */</span>
+    <span class="fn">insert</span>(ht, <span class="num">10</span>, <span class="num">999</span>);  <span class="cm">/* key 10 exists → update! */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+      <div class="info-box green">Output:<br>Inserted key 10 at index 3<br>Inserted key 20 at index 6<br>Inserted key 15 at index 1<br>Updated key 10 → value 999</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">📬</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Post Office Mailboxes</div>
+          Inserting into a hash table is like delivering mail. The mail carrier uses the street number (key) to calculate which row of mailboxes to go to (hash index). If that box is full, they try the next one (collision handling = linear probing). If the box already has their name, they replace the old letter (update existing key).
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(3)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 4: SEARCH -->
+  <div class="section" id="sec-4">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 04</div>
+      <div class="section-title">Search / Lookup</div>
+      <div class="section-desc">Learn how to find a value by its key, including traversing the probe sequence and handling both found and not-found cases.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: How Search Works</div>
+      <ul class="steps-list">
+        <li><span><strong>Generate hash index</strong> — Same formula as insert: <code>index = key % size</code></span></li>
+        <li><span><strong>Check target slot</strong> — Look at the calculated index first.</span></li>
+        <li><span><strong>Traverse probe sequence</strong> — If the slot has a different key or DELETED marker, keep probing in the same pattern used during insert.</span></li>
+        <li><span><strong>Compare keys</strong> — At each slot, check if the key matches what we're looking for.</span></li>
+        <li><span><strong>Return value</strong> — Found the key? Return its value.</span></li>
+        <li><span><strong>Return not found</strong> — Hit an EMPTY slot? The key doesn't exist. Stop searching.</span></li>
+      </ul>
+      <div class="info-box red">⚠️ Critical rule: Stop at EMPTY slots (key not found), but <strong>continue</strong> past DELETED slots (the key might be further ahead)!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Interactive Search Demo</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="searchInsKey" placeholder="Key" value="10"/>
+        <input class="viz-input" type="number" id="searchInsVal" placeholder="Value" value="100"/>
+        <button class="viz-btn primary" onclick="searchVizInsert()">Insert</button>
+        <input class="viz-input" type="number" id="searchKey" placeholder="Search key" value="10"/>
+        <button class="viz-btn warn" onclick="searchVizSearch()">Search</button>
+        <button class="viz-btn danger" onclick="searchVizClear()">Clear</button>
+      </div>
+      <div class="ht-grid" id="searchGrid"></div>
+      <div class="viz-log" id="searchLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Search / Lookup</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Search for a key; returns value or -1 if not found */</span>
+<span class="tp">int</span> <span class="fn">search</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key) {
+
+    <span class="cm">/* Step 1: Generate starting hash index */</span>
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+
+    <span class="cm">/* Step 2-4: Traverse probe sequence */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="tp">int</span> probe = (index + i) % ht->size;
+
+        <span class="cm">/* Hit an EMPTY slot → key doesn't exist */</span>
+        <span class="kw">if</span> (ht->table[probe].state == EMPTY) {
+            <span class="fn">printf</span>(<span class="str">"Key %d NOT FOUND (hit empty slot)\n"</span>, key);
+            <span class="kw">return</span> -<span class="num">1</span>;
+        }
+
+        <span class="cm">/* Skip DELETED slots and keep searching */</span>
+        <span class="kw">if</span> (ht->table[probe].state == DELETED) {
+            <span class="kw">continue</span>;
+        }
+
+        <span class="cm">/* Step 4-5: Compare keys */</span>
+        <span class="kw">if</span> (ht->table[probe].key == key) {
+            <span class="fn">printf</span>(<span class="str">"Found key %d at index %d → value: %d\n"</span>,
+                    key, probe, ht->table[probe].value);
+            <span class="kw">return</span> ht->table[probe].value;
+        }
+    }
+
+    <span class="cm">/* Step 6: Searched all slots, not found */</span>
+    <span class="fn">printf</span>(<span class="str">"Key %d NOT FOUND\n"</span>, key);
+    <span class="kw">return</span> -<span class="num">1</span>;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+    <span class="fn">insert</span>(ht, <span class="num">10</span>, <span class="num">100</span>);
+    <span class="fn">insert</span>(ht, <span class="num">20</span>, <span class="num">200</span>);
+
+    <span class="fn">search</span>(ht, <span class="num">10</span>);  <span class="cm">/* Found at index 3, value: 100 */</span>
+    <span class="fn">search</span>(ht, <span class="num">99</span>);  <span class="cm">/* NOT FOUND */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🔍</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Library Book Lookup</div>
+          Searching is like finding a book using a catalog. The catalog gives you shelf number (hash index). You go to that shelf. If it's empty — the book doesn't exist. If there's a "reserved" tag (DELETED) — skip and check the next shelf. If the title matches — you found it!
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(4)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 5: DELETE -->
+  <div class="section" id="sec-5">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 05</div>
+      <div class="section-title">Delete / Remove</div>
+      <div class="section-desc">Safely remove key-value pairs from the hash table using the DELETED tombstone marker to preserve probe sequence integrity.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Why Deletion is Tricky</div>
+      <p>Deletion in a hash table isn't as simple as clearing a slot. If we just make a slot EMPTY, it could break the <strong>probe chain</strong> — search would incorrectly stop here and miss keys that were inserted past this slot.</p>
+      <ul class="steps-list">
+        <li><span><strong>Find target index</strong> — Use hash + probing to locate the key.</span></li>
+        <li><span><strong>Verify key</strong> — Confirm the found slot's key matches what we want to delete.</span></li>
+        <li><span><strong>Mark deleted slot</strong> — Set state to <code>DELETED</code> (tombstone), NOT EMPTY!</span></li>
+        <li><span><strong>Remove value</strong> — Clear the value field.</span></li>
+        <li><span><strong>Update counters</strong> — Decrement the count.</span></li>
+      </ul>
+      <div class="info-box yellow">🪦 <strong>Tombstone Pattern:</strong> The DELETED marker acts like a gravestone — it says "something was here but is gone now, keep looking past me."</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Interactive Delete Demo</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="delInsKey" placeholder="Key" value="10"/>
+        <input class="viz-input" type="number" id="delInsVal" placeholder="Value" value="100"/>
+        <button class="viz-btn primary" onclick="delVizInsert()">Insert</button>
+        <input class="viz-input" type="number" id="delKey" placeholder="Delete key" value="10"/>
+        <button class="viz-btn danger" onclick="delVizDelete()">Delete</button>
+        <button class="viz-btn" onclick="delVizClear()">Clear</button>
+      </div>
+      <div class="ht-grid" id="deleteGrid"></div>
+      <div class="viz-log" id="deleteLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Delete / Remove</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Delete a key from the hash table */</span>
+<span class="tp">int</span> <span class="fn">deleteKey</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key) {
+
+    <span class="cm">/* Step 1: Find starting hash index */</span>
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="tp">int</span> probe = (index + i) % ht->size;
+
+        <span class="cm">/* Hit EMPTY → key was never inserted */</span>
+        <span class="kw">if</span> (ht->table[probe].state == EMPTY) {
+            <span class="fn">printf</span>(<span class="str">"Key %d not found — cannot delete\n"</span>, key);
+            <span class="kw">return</span> <span class="num">0</span>;
+        }
+
+        <span class="cm">/* Skip past tombstones */</span>
+        <span class="kw">if</span> (ht->table[probe].state == DELETED) {
+            <span class="kw">continue</span>;
+        }
+
+        <span class="cm">/* Step 2: Verify key matches */</span>
+        <span class="kw">if</span> (ht->table[probe].key == key) {
+            <span class="cm">/* Step 3: Mark as DELETED (tombstone) */</span>
+            ht->table[probe].state = DELETED;
+
+            <span class="cm">/* Step 4: Clear the value */</span>
+            ht->table[probe].value = <span class="num">0</span>;
+
+            <span class="cm">/* Step 5: Decrease count */</span>
+            ht->count--;
+
+            <span class="fn">printf</span>(<span class="str">"Deleted key %d from index %d\n"</span>, key, probe);
+            <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">/* Success */</span>
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Key %d not found\n"</span>, key);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🪦</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Graveyard Headstones</div>
+          When someone leaves an apartment, we don't remove the apartment number from the building — we just put a "Vacant (formerly occupied)" sign. If we completely erased the number, people looking for apartments beyond this one would think the hallway ends here, and miss other tenants further down!
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(5)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 6: UPDATE -->
+  <div class="section" id="sec-6">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 06</div>
+      <div class="section-title">Update Entry</div>
+      <div class="section-desc">Modify the value of an existing key without disrupting the hash table's structure or array integrity.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Update is Search + Overwrite</div>
+      <p>Updating is the simplest core operation. The steps are:</p>
+      <ul class="steps-list">
+        <li><span><strong>Search existing key</strong> — Use the search algorithm to locate the key's slot.</span></li>
+        <li><span><strong>Replace old value</strong> — Once found, simply overwrite the value field.</span></li>
+        <li><span><strong>Maintain array integrity</strong> — The key, state, and position remain unchanged. Only the value changes.</span></li>
+      </ul>
+      <div class="info-box green">✅ Note: Our <code>insert()</code> function already handles updates — if the key exists, it updates instead of inserting a duplicate!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Update Entry</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Update the value of an existing key */</span>
+<span class="tp">int</span> <span class="fn">update</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> newValue) {
+
+    <span class="cm">/* Step 1: Search for the key */</span>
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="tp">int</span> probe = (index + i) % ht->size;
+
+        <span class="kw">if</span> (ht->table[probe].state == EMPTY) {
+            <span class="fn">printf</span>(<span class="str">"Key %d not found — nothing to update\n"</span>, key);
+            <span class="kw">return</span> <span class="num">0</span>;
+        }
+
+        <span class="kw">if</span> (ht->table[probe].state == FILLED &amp;&amp;
+            ht->table[probe].key == key) {
+
+            <span class="cm">/* Step 2: Replace old value with new value */</span>
+            <span class="tp">int</span> oldValue = ht->table[probe].value;
+            ht->table[probe].value = newValue;
+
+            <span class="fn">printf</span>(<span class="str">"Updated key %d: %d → %d\n"</span>, key, oldValue, newValue);
+            <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">/* Step 3: Array integrity maintained */</span>
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+    <span class="fn">insert</span>(ht, <span class="num">5</span>, <span class="num">50</span>);
+    <span class="fn">update</span>(ht, <span class="num">5</span>, <span class="num">500</span>);  <span class="cm">/* Updated key 5: 50 → 500 */</span>
+    <span class="fn">update</span>(ht, <span class="num">9</span>, <span class="num">900</span>);  <span class="cm">/* Key 9 not found */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">✏️</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Grade Book</div>
+          A teacher has a grade book. When a student's grade changes (they retook a test), the teacher doesn't add a new row — they find the student's existing row (search) and erase the old grade and write the new one (replace value). The student's name and row number stay the same.
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(6)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 7: COLLISION -->
+  <div class="section" id="sec-7">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 07</div>
+      <div class="section-title">Collision Handling</div>
+      <div class="section-desc">Understand what collisions are, why they happen, and the three main strategies to resolve them: linear probing, quadratic probing, and double hashing.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: What is a Collision?</div>
+      <p>A <strong>collision</strong> occurs when two different keys hash to the <strong>same array index</strong>. Since only one value can sit in a slot, we need a strategy to handle this conflict.</p>
+      <p>Example: With table size 7:</p>
+      <div class="formula">hash(3) = 3 % 7 = 3 &nbsp;&nbsp;|&nbsp;&nbsp; hash(10) = 10 % 7 = 3 → COLLISION!</div>
+      <p>Both keys 3 and 10 want slot 3. We need to figure out where key 10 goes.</p>
+      <ul class="steps-list">
+        <li><span><strong>Detect collision</strong> — Slot at hash(key) is already FILLED with a different key.</span></li>
+        <li><span><strong>Linear probing</strong> — Try slots +1, +2, +3... (next-door search)</span></li>
+        <li><span><strong>Quadratic probing</strong> — Try slots +1², +2², +3²... (jump farther)</span></li>
+        <li><span><strong>Double hashing</strong> — Use a second hash function to determine jump size</span></li>
+        <li><span><strong>Probe sequence generation</strong> — The pattern of slots checked when a collision occurs</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Collision Visualization</div>
+      <p>Insert key 10 and key 17 — both hash to the same slot in a table of size 7:</p>
+      <div class="viz-controls">
+        <button class="viz-btn primary" onclick="showCollision()">Demonstrate Collision</button>
+        <button class="viz-btn" onclick="clearCollision()">Reset</button>
+      </div>
+      <div class="ht-grid" id="collisionGrid"></div>
+      <div class="viz-log" id="collisionLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Collision Detection</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Detect if inserting key would cause a collision */</span>
+<span class="tp">int</span> <span class="fn">hasCollision</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key) {
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+
+    <span class="cm">/* Check if the target slot already has a different key */</span>
+    <span class="kw">if</span> (ht->table[index].state == FILLED &amp;&amp;
+        ht->table[index].key != key) {
+        <span class="fn">printf</span>(<span class="str">"COLLISION! key %d → index %d (already has key %d)\n"</span>,
+               key, index, ht->table[index].key);
+        <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">/* Collision detected */</span>
+    }
+    <span class="kw">return</span> <span class="num">0</span>;  <span class="cm">/* No collision */</span>
+}
+
+<span class="cm">/* Example: Both keys hash to index 3 in size-7 table */</span>
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">insert</span>(ht, <span class="num">10</span>, <span class="num">100</span>);         <span class="cm">/* 10 % 7 = 3 → slot 3 */</span>
+    <span class="fn">hasCollision</span>(ht, <span class="num">17</span>);         <span class="cm">/* 17 % 7 = 3 → COLLISION! */</span>
+    <span class="fn">insert</span>(ht, <span class="num">17</span>, <span class="num">170</span>);         <span class="cm">/* probe to slot 4 */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Collision Resolution Strategies Comparison</div>
+      <table>
+        <tr><th>Strategy</th><th>Formula</th><th>Pros</th><th>Cons</th></tr>
+        <tr><td>Linear Probing</td><td><code>(h + i) % n</code></td><td>Simple, cache-friendly</td><td>Clustering</td></tr>
+        <tr><td>Quadratic Probing</td><td><code>(h + i²) % n</code></td><td>Reduces clustering</td><td>Secondary clustering</td></tr>
+        <tr><td>Double Hashing</td><td><code>(h1 + i·h2) % n</code></td><td>Best distribution</td><td>More computation</td></tr>
+      </table>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(7)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 8: LINEAR PROBING -->
+  <div class="section" id="sec-8">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 08</div>
+      <div class="section-title">Linear Probing Operations</div>
+      <div class="section-desc">The simplest collision resolution: check the next slot, then the next, wrapping around the array like a circular buffer.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Linear Probing</div>
+      <p>When a collision occurs, <strong>linear probing</strong> searches for the next open slot by checking one slot at a time in order.</p>
+      <div class="formula">probe(i) = (hash(key) + i) % size &nbsp;&nbsp;[i = 0, 1, 2, 3...]</div>
+      <ul class="steps-list">
+        <li><span><strong>Check next slot</strong> — If slot (hash + 1) is busy, try (hash + 2), etc.</span></li>
+        <li><span><strong>Sequential probing</strong> — Always moves forward by exactly 1 slot.</span></li>
+        <li><span><strong>Wrap-around traversal</strong> — When reaching the end, wraps to index 0 (modulo).</span></li>
+        <li><span><strong>Empty slot detection</strong> — Stops when it finds an EMPTY slot (for insert) or EMPTY slot (for search = not found).</span></li>
+      </ul>
+      <div class="info-box yellow">⚠️ <strong>Primary Clustering Problem:</strong> Linear probing creates "clusters" — long runs of filled slots — which slow down future operations. Quadratic probing and double hashing solve this.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Linear Probing Step-by-Step Demo</div>
+      <p>Watch linear probing in action. Insert several keys to see how clustering forms:</p>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="lpKey" placeholder="Key" value="3"/>
+        <input class="viz-input" type="number" id="lpVal" placeholder="Value" value="30"/>
+        <button class="viz-btn primary" onclick="lpInsert()">Insert (Linear Probe)</button>
+        <button class="viz-btn danger" onclick="lpClear()">Clear</button>
+      </div>
+      <div class="probe-grid" id="lpGrid"></div>
+      <div class="viz-log" id="lpLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Linear Probing</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Linear Probing: find next slot with +1 step */</span>
+<span class="tp">int</span> <span class="fn">linearProbeInsert</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> value) {
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+    <span class="tp">int</span> i;
+
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="cm">/* Next probe index: moves +1 each time */</span>
+        <span class="tp">int</span> probe = (index + i) % ht->size;  <span class="cm">/* LINEAR: step = 1 */</span>
+
+        <span class="fn">printf</span>(<span class="str">"Checking slot %d... "</span>, probe);
+
+        <span class="cm">/* Update if same key found */</span>
+        <span class="kw">if</span> (ht->table[probe].state == FILLED &amp;&amp;
+            ht->table[probe].key == key) {
+            ht->table[probe].value = value;
+            <span class="fn">printf</span>(<span class="str">"Updated!\n"</span>);
+            <span class="kw">return</span> probe;
+        }
+
+        <span class="cm">/* Insert at empty or deleted slot */</span>
+        <span class="kw">if</span> (ht->table[probe].state != FILLED) {
+            ht->table[probe].key   = key;
+            ht->table[probe].value = value;
+            ht->table[probe].state = FILLED;
+            ht->count++;
+            <span class="fn">printf</span>(<span class="str">"Inserted! (after %d probe(s))\n"</span>, i);
+            <span class="kw">return</span> probe;
+        }
+
+        <span class="fn">printf</span>(<span class="str">"Collision! Try next...\n"</span>);
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Table full!\n"</span>);
+    <span class="kw">return</span> -<span class="num">1</span>;
+}
+
+<span class="cm">/* Wrap-around example: insert at last slot wraps to 0 */</span>
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">linearProbeInsert</span>(ht, <span class="num">3</span>,  <span class="num">30</span>);   <span class="cm">/* Slot 3 */</span>
+    <span class="fn">linearProbeInsert</span>(ht, <span class="num">10</span>, <span class="num">100</span>); <span class="cm">/* 10%7=3 → probe→ slot 4 */</span>
+    <span class="fn">linearProbeInsert</span>(ht, <span class="num">17</span>, <span class="num">170</span>); <span class="cm">/* 17%7=3 → probe→ slot 5 */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🚗</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Parking Lot</div>
+          Linear probing is like finding a parking spot. You go to your preferred spot (hash index). If it's taken, you check the next spot, then the next, going around the lot if needed. The problem: once a cluster of cars forms in one area, more cars keep filling nearby spots, making that area even more crowded!
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(8)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 9: QUADRATIC -->
+  <div class="section" id="sec-9">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 09</div>
+      <div class="section-title">Quadratic Probing Operations</div>
+      <div class="section-desc">Jump farther with each collision using squared offsets to break up clusters and distribute keys more evenly across the table.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Quadratic Probing</div>
+      <p>Instead of jumping by 1 each time, <strong>quadratic probing</strong> squares the attempt number to jump farther and farther, breaking up clusters.</p>
+      <div class="formula">probe(i) = (hash(key) + i²) % size &nbsp;&nbsp;[i = 0, 1, 2, 3...]</div>
+      <ul class="steps-list">
+        <li><span><strong>Calculate quadratic offset</strong> — Offset = i × i (i squared). For i=1: offset=1, i=2: offset=4, i=3: offset=9.</span></li>
+        <li><span><strong>Jump probing</strong> — Jumps farther with each attempt, not just one step at a time.</span></li>
+        <li><span><strong>Collision resolution</strong> — Same goal as linear, but with less clustering.</span></li>
+      </ul>
+      <div class="info-box purple">⚠️ <strong>Secondary clustering:</strong> Keys that hash to the same slot will follow the exact same probe path (1², 2², 3²...). Double hashing avoids even this.</div>
+      <div class="info-box green">✅ <strong>Important:</strong> For quadratic probing to always find an empty slot, the table size must be a prime number and the table must be less than 50% full.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Quadratic Probing Demo</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="qpKey" placeholder="Key" value="3"/>
+        <input class="viz-input" type="number" id="qpVal" placeholder="Value" value="30"/>
+        <button class="viz-btn primary" onclick="qpInsert()">Insert (Quadratic)</button>
+        <button class="viz-btn danger" onclick="qpClear()">Clear</button>
+      </div>
+      <div class="probe-grid" id="qpGrid"></div>
+      <div class="viz-log" id="qpLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Quadratic Probing</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Quadratic Probing: jump by i*i each time */</span>
+<span class="tp">int</span> <span class="fn">quadraticInsert</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> value) {
+    <span class="tp">int</span> index = <span class="fn">hashFunction</span>(key, ht->size);
+
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+
+        <span class="cm">/* QUADRATIC: offset = i squared */</span>
+        <span class="tp">int</span> offset = i * i;
+        <span class="tp">int</span> probe  = (index + offset) % ht->size;
+
+        <span class="fn">printf</span>(<span class="str">"i=%d → offset=%d → slot %d\n"</span>, i, offset, probe);
+
+        <span class="kw">if</span> (ht->table[probe].state == FILLED &amp;&amp;
+            ht->table[probe].key == key) {
+            ht->table[probe].value = value;
+            <span class="kw">return</span> probe;
+        }
+
+        <span class="kw">if</span> (ht->table[probe].state != FILLED) {
+            ht->table[probe].key   = key;
+            ht->table[probe].value = value;
+            ht->table[probe].state = FILLED;
+            ht->count++;
+            <span class="fn">printf</span>(<span class="str">"Inserted key %d at slot %d\n"</span>, key, probe);
+            <span class="kw">return</span> probe;
+        }
+    }
+    <span class="kw">return</span> -<span class="num">1</span>;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">11</span>);  <span class="cm">/* Prime size */</span>
+    <span class="fn">initTable</span>(ht);
+
+    <span class="cm">/* All three hash to index 3 in size-11 table */</span>
+    <span class="fn">quadraticInsert</span>(ht, <span class="num">3</span>,  <span class="num">30</span>);   <span class="cm">/* Slot 3 (i=0, offset=0) */</span>
+    <span class="fn">quadraticInsert</span>(ht, <span class="num">14</span>, <span class="num">140</span>); <span class="cm">/* Slot 4 (i=1, offset=1) */</span>
+    <span class="fn">quadraticInsert</span>(ht, <span class="num">25</span>, <span class="num">250</span>); <span class="cm">/* Slot 7 (i=2, offset=4) */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🦘</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Kangaroo Jumping</div>
+          Quadratic probing is like a kangaroo looking for a resting spot. If its preferred spot is taken, it jumps 1 space ahead. If still taken, it jumps 4 spaces. Then 9. The jumps get bigger each time, so the kangaroo doesn't cluster near its starting point — it spreads out across the field!
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(9)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 10: DOUBLE HASHING -->
+  <div class="section" id="sec-10">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 10</div>
+      <div class="section-title">Double Hashing Operations</div>
+      <div class="section-desc">The most sophisticated open addressing technique — use a second hash function to determine unique jump sizes for each key, eliminating clustering entirely.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Double Hashing</div>
+      <p>Double hashing uses <strong>two hash functions</strong>. The second one determines how far to jump when a collision occurs. Different keys get different jump sizes, virtually eliminating clustering.</p>
+      <div class="formula">probe(i) = (h1(key) + i × h2(key)) % size</div>
+      <p>A classic second hash function is:</p>
+      <div class="formula">h2(key) = PRIME - (key % PRIME)</div>
+      <p>Where PRIME is a prime number smaller than table size.</p>
+      <ul class="steps-list">
+        <li><span><strong>Primary hash calculation</strong> — h1(key) = key % size → gives starting index</span></li>
+        <li><span><strong>Secondary hash calculation</strong> — h2(key) = PRIME - (key % PRIME) → gives step size</span></li>
+        <li><span><strong>Probe jump calculation</strong> — Each probe jumps by h2(key) slots</span></li>
+        <li><span><strong>Alternative slot traversal</strong> — Visits completely different slots than linear/quadratic probing</span></li>
+      </ul>
+      <div class="info-box green">✅ h2(key) must <strong>never return 0</strong> (that would mean no movement). The formula PRIME - (key % PRIME) always gives a value between 1 and PRIME.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Double Hashing Demo</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="dhKey" placeholder="Key" value="14"/>
+        <input class="viz-input" type="number" id="dhVal" placeholder="Value" value="140"/>
+        <button class="viz-btn primary" onclick="dhInsert()">Insert (Double Hash)</button>
+        <button class="viz-btn danger" onclick="dhClear()">Clear</button>
+      </div>
+      <div id="dhFormula" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);margin:8px 0;padding:8px 12px;background:var(--code-bg);border-radius:5px;border:1px solid var(--border)">Enter a key and insert to see the calculation</div>
+      <div class="probe-grid" id="dhGrid"></div>
+      <div class="viz-log" id="dhLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Double Hashing</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#define TABLE_SIZE  11</span>  <span class="cm">/* Primary table size (prime) */</span>
+<span class="macro">#define PRIME        7</span>  <span class="cm">/* Secondary prime (smaller than TABLE_SIZE) */</span>
+
+<span class="cm">/* Primary hash function */</span>
+<span class="tp">int</span> <span class="fn">h1</span>(<span class="tp">int</span> key) {
+    <span class="kw">return</span> key % TABLE_SIZE;
+}
+
+<span class="cm">/* Secondary hash function — determines step size */</span>
+<span class="tp">int</span> <span class="fn">h2</span>(<span class="tp">int</span> key) {
+    <span class="kw">return</span> PRIME - (key % PRIME);  <span class="cm">/* Always between 1 and PRIME */</span>
+}
+
+<span class="cm">/* Double hashing insert */</span>
+<span class="tp">int</span> <span class="fn">doubleHashInsert</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> value) {
+    <span class="tp">int</span> start = <span class="fn">h1</span>(key);     <span class="cm">/* Primary: starting index */</span>
+    <span class="tp">int</span> step  = <span class="fn">h2</span>(key);     <span class="cm">/* Secondary: jump size */</span>
+
+    <span class="fn">printf</span>(<span class="str">"h1(%d)=%d  h2(%d)=%d\n"</span>, key, start, key, step);
+
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="cm">/* DOUBLE HASH: jump by h2 instead of 1 */</span>
+        <span class="tp">int</span> probe = (start + i * step) % ht->size;
+
+        <span class="fn">printf</span>(<span class="str">"  Probe %d → slot %d\n"</span>, i, probe);
+
+        <span class="kw">if</span> (ht->table[probe].state == FILLED &amp;&amp;
+            ht->table[probe].key == key) {
+            ht->table[probe].value = value;
+            <span class="kw">return</span> probe;
+        }
+        <span class="kw">if</span> (ht->table[probe].state != FILLED) {
+            ht->table[probe].key   = key;
+            ht->table[probe].value = value;
+            ht->table[probe].state = FILLED;
+            ht->count++;
+            <span class="fn">printf</span>(<span class="str">"Inserted at slot %d\n"</span>, probe);
+            <span class="kw">return</span> probe;
+        }
+    }
+    <span class="kw">return</span> -<span class="num">1</span>;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(TABLE_SIZE);
+    <span class="fn">initTable</span>(ht);
+    <span class="fn">doubleHashInsert</span>(ht, <span class="num">14</span>, <span class="num">140</span>);
+    <span class="fn">doubleHashInsert</span>(ht, <span class="num">25</span>, <span class="num">250</span>); <span class="cm">/* Different step size! */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🌌</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Space Probe Navigation</div>
+          Double hashing is like two space agencies jointly calculating where to land a probe. Agency 1 (h1) picks the target region. Agency 2 (h2) determines how far to travel between landing attempts. Since each spacecraft has different physics (different h2), they each explore completely different regions of the planet — no two probes follow the same path!
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(10)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 11: REHASHING -->
+  <div class="section" id="sec-11">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 11</div>
+      <div class="section-title">Rehashing Operations</div>
+      <div class="section-desc">When the table gets too full, rehashing rebuilds the entire structure with a larger size and recalculated positions for all existing entries.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: What is Rehashing?</div>
+      <p><strong>Rehashing</strong> is the process of creating a completely new, larger hash table and reinserting all existing entries. It's triggered when the load factor exceeds the threshold (usually 0.7).</p>
+      <ul class="steps-list">
+        <li><span><strong>Detect high load factor</strong> — After each insert, check if <code>count/size ≥ loadFactor</code></span></li>
+        <li><span><strong>Create larger array</strong> — New size is typically <code>nextPrime(2 × oldSize)</code></span></li>
+        <li><span><strong>Recalculate indexes</strong> — Since size changed, ALL keys get new hash values</span></li>
+        <li><span><strong>Reinsert entries</strong> — Insert every FILLED entry from old table into new table</span></li>
+      </ul>
+      <div class="info-box red">⚠️ You CANNOT just copy the old array! Every entry must be rehashed because the new table size changes all index calculations.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Rehashing Visualization</div>
+      <p>Fill the table past 70% to trigger automatic rehashing:</p>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="rehashKey" placeholder="Key" value="1"/>
+        <input class="viz-input" type="number" id="rehashVal" placeholder="Value" value="10"/>
+        <button class="viz-btn primary" onclick="rehashInsert()">Insert + Auto-Rehash</button>
+        <button class="viz-btn danger" onclick="rehashClear()">Reset</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim)">LOAD FACTOR</span>
+        <span id="rehashLFText" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">0 / 7 = 0.00</span>
+      </div>
+      <div class="lf-bar-wrap">
+        <div class="lf-bar" id="rehashLFBar" style="width:0%"></div>
+        <div class="lf-threshold" style="left:70%"></div>
+        <div class="lf-label">70%</div>
+      </div>
+      <div class="ht-grid" id="rehashGrid" style="margin-top:12px"></div>
+      <div class="viz-log" id="rehashLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Rehashing</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Find the next prime number >= n */</span>
+<span class="tp">int</span> <span class="fn">isPrime</span>(<span class="tp">int</span> n) {
+    <span class="kw">if</span> (n &lt; <span class="num">2</span>) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">2</span>; i * i &lt;= n; i++)
+        <span class="kw">if</span> (n % i == <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> <span class="num">1</span>;
+}
+
+<span class="tp">int</span> <span class="fn">nextPrime</span>(<span class="tp">int</span> n) {
+    <span class="kw">while</span> (!<span class="fn">isPrime</span>(n)) n++;
+    <span class="kw">return</span> n;
+}
+
+<span class="cm">/* Rehash: build a bigger table and reinsert all entries */</span>
+<span class="tp">void</span> <span class="fn">rehash</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">int</span>   oldSize  = ht->size;
+    <span class="tp">Entry</span> *oldTable = ht->table;
+
+    <span class="cm">/* Step 2: New size = next prime after 2x old size */</span>
+    <span class="tp">int</span> newSize = <span class="fn">nextPrime</span>(oldSize * <span class="num">2</span>);
+    <span class="fn">printf</span>(<span class="str">"Rehashing: size %d → %d\n"</span>, oldSize, newSize);
+
+    <span class="cm">/* Step 2: Allocate new array */</span>
+    ht->table = (<span class="tp">Entry</span>*) <span class="fn">malloc</span>(newSize * <span class="kw">sizeof</span>(<span class="tp">Entry</span>));
+    ht->size  = newSize;
+    ht->count = <span class="num">0</span>;
+
+    <span class="cm">/* Initialize new array */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; newSize; i++) {
+        ht->table[i].state = EMPTY;
+    }
+
+    <span class="cm">/* Step 3-4: Reinsert all non-deleted entries */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; oldSize; i++) {
+        <span class="kw">if</span> (oldTable[i].state == FILLED) {
+            <span class="fn">insert</span>(ht, oldTable[i].key, oldTable[i].value);
+        }
+    }
+
+    <span class="cm">/* Free old memory */</span>
+    <span class="fn">free</span>(oldTable);
+    <span class="fn">printf</span>(<span class="str">"Rehash complete! New size: %d\n"</span>, newSize);
+}
+
+<span class="cm">/* Smart insert: rehash automatically if needed */</span>
+<span class="tp">void</span> <span class="fn">smartInsert</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> value) {
+    <span class="cm">/* Step 1: Check load factor BEFORE inserting */</span>
+    <span class="kw">if</span> ((<span class="tp">float</span>)ht->count / ht->size >= ht->loadFactor) {
+        <span class="fn">rehash</span>(ht);  <span class="cm">/* Grow the table first */</span>
+    }
+    <span class="fn">insert</span>(ht, key, value);
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🏙️</div>
+        <div class="analogy-text">
+          <div class="analogy-title">City Expansion</div>
+          Rehashing is like a city that runs out of space. They can't just add rooms to existing buildings. Instead, they build a brand new, bigger city (new array), then relocate every resident using the new, larger city's postal system (new hash calculations). The old city is then demolished (freed from memory).
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(11)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 12: RESIZE -->
+  <div class="section" id="sec-12">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 12</div>
+      <div class="section-title">Resize Table</div>
+      <div class="section-desc">The mechanics of growing the underlying array: allocating new memory, copying entries, and recomputing all positions.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Resize vs Rehash</div>
+      <p><strong>Resize</strong> and <strong>rehash</strong> are closely related. Resize focuses on the memory operations; rehashing is the broader process including reinsertion.</p>
+      <ul class="steps-list">
+        <li><span><strong>Increase array size</strong> — Choose new size: typically next prime after 2× current size</span></li>
+        <li><span><strong>Allocate new array</strong> — Use <code>malloc(newSize * sizeof(Entry))</code></span></li>
+        <li><span><strong>Copy entries</strong> — But NOT by direct memory copy! Must reinsert each FILLED entry</span></li>
+        <li><span><strong>Recompute positions</strong> — Each key gets a new index: <code>key % newSize</code></span></li>
+      </ul>
+      <div class="info-box green">💡 Some implementations use <strong>lazy resizing</strong> — only resize when an insert would fail, not at a load factor threshold. Both approaches are valid.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Resize Table</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Resize the hash table to a new larger size */</span>
+<span class="tp">void</span> <span class="fn">resizeTable</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> newSize) {
+    <span class="tp">int</span>   oldSize  = ht->size;
+    <span class="tp">Entry</span> *oldTable = ht->table;
+    <span class="tp">int</span>   oldCount = ht->count;
+
+    <span class="fn">printf</span>(<span class="str">"Resizing: %d → %d slots\n"</span>, oldSize, newSize);
+
+    <span class="cm">/* Step 2: Allocate fresh memory for bigger array */</span>
+    ht->table = (<span class="tp">Entry</span>*) <span class="fn">malloc</span>(newSize * <span class="kw">sizeof</span>(<span class="tp">Entry</span>));
+    ht->size  = newSize;
+    ht->count = <span class="num">0</span>;
+
+    <span class="cm">/* Initialize new table */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; newSize; i++) {
+        ht->table[i].key   = EMPTY;
+        ht->table[i].state = EMPTY;
+        ht->table[i].value = <span class="num">0</span>;
+    }
+
+    <span class="cm">/* Step 3 & 4: Reinsert each valid entry */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; oldSize; i++) {
+        <span class="kw">if</span> (oldTable[i].state == FILLED) {
+            <span class="cm">/* Recompute position: key % NEW size */</span>
+            <span class="fn">insert</span>(ht, oldTable[i].key, oldTable[i].value);
+        }
+        <span class="cm">/* DELETED entries are dropped during resize */</span>
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Resize done: %d entries moved\n"</span>, ht->count);
+
+    <span class="cm">/* Free old array memory */</span>
+    <span class="fn">free</span>(oldTable);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">insert</span>(ht, <span class="num">1</span>, <span class="num">10</span>);
+    <span class="fn">insert</span>(ht, <span class="num">2</span>, <span class="num">20</span>);
+    <span class="fn">insert</span>(ht, <span class="num">3</span>, <span class="num">30</span>);
+    <span class="fn">insert</span>(ht, <span class="num">4</span>, <span class="num">40</span>);
+    <span class="fn">insert</span>(ht, <span class="num">5</span>, <span class="num">50</span>);
+
+    <span class="cm">/* Table is 5/7 = 71% full → resize! */</span>
+    <span class="fn">resizeTable</span>(ht, <span class="fn">nextPrime</span>(<span class="num">14</span>)); <span class="cm">/* New size: 17 */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">📊</div>Old vs New Position After Resize</div>
+      <div class="info-box purple">Example: key=5 in old table (size 7): 5 % 7 = <strong>5</strong><br>Same key=5 in new table (size 17): 5 % 17 = <strong>5</strong><br><br>key=10 in old table: 10 % 7 = <strong>3</strong><br>key=10 in new table: 10 % 17 = <strong>10</strong> ← position changed!</div>
+      <p>This is why we must reinsert, not copy — every key's home changes with the new table size!</p>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(12)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 13: TRAVERSE -->
+  <div class="section" id="sec-13">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 13</div>
+      <div class="section-title">Traverse / Display</div>
+      <div class="section-desc">Walk through every slot in the array, printing keys, values, or both — skipping empty and deleted slots.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Traversal</div>
+      <p>Traversal visits every slot in the underlying array from index 0 to size-1. Unlike search (which uses hashing to jump), traversal is purely sequential.</p>
+      <ul class="steps-list">
+        <li><span><strong>Traverse entire array</strong> — Loop from i=0 to i=size-1</span></li>
+        <li><span><strong>Skip empty slots</strong> — If <code>state == EMPTY</code>, skip and continue</span></li>
+        <li><span><strong>Print keys</strong> — Show the key at each FILLED slot</span></li>
+        <li><span><strong>Print values</strong> — Show the value at each FILLED slot</span></li>
+        <li><span><strong>Print key-value pairs</strong> — Show both together (e.g., "key=5 → value=50")</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Interactive Traverse Demo</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="travKey" placeholder="Key" value="7"/>
+        <input class="viz-input" type="number" id="travVal" placeholder="Value" value="70"/>
+        <button class="viz-btn primary" onclick="travInsert()">Insert</button>
+        <button class="viz-btn warn" onclick="travTraverse()">Traverse All</button>
+        <button class="viz-btn danger" onclick="travClear()">Clear</button>
+      </div>
+      <div class="ht-grid" id="travGrid"></div>
+      <div class="viz-log" id="travLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Traverse / Display</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Print all key-value pairs in the hash table */</span>
+<span class="tp">void</span> <span class="fn">displayTable</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="fn">printf</span>(<span class="str">"\n=== Hash Table Contents ===\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"%-6s %-10s %-10s %-10s\n"</span>,
+           <span class="str">"Index"</span>, <span class="str">"State"</span>, <span class="str">"Key"</span>, <span class="str">"Value"</span>);
+    <span class="fn">printf</span>(<span class="str">"------------------------------\n"</span>);
+
+    <span class="cm">/* Step 1: Traverse entire array (all indexes) */</span>
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+
+        <span class="kw">if</span> (ht->table[i].state == EMPTY) {
+            <span class="cm">/* Step 2: Skip empty slots */</span>
+            <span class="fn">printf</span>(<span class="str">"%-6d [EMPTY]\n"</span>, i);
+            <span class="kw">continue</span>;
+        }
+
+        <span class="kw">if</span> (ht->table[i].state == DELETED) {
+            <span class="fn">printf</span>(<span class="str">"%-6d [DELETED]\n"</span>, i);
+            <span class="kw">continue</span>;
+        }
+
+        <span class="cm">/* Step 3-5: Print key-value pairs for FILLED slots */</span>
+        <span class="fn">printf</span>(<span class="str">"%-6d [FILLED]  %-10d %-10d\n"</span>,
+               i, ht->table[i].key, ht->table[i].value);
+    }
+    <span class="fn">printf</span>(<span class="str">"=========================\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"Total entries: %d / %d\n\n"</span>, ht->count, ht->size);
+}
+
+<span class="cm">/* Print only keys */</span>
+<span class="tp">void</span> <span class="fn">printKeys</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="fn">printf</span>(<span class="str">"Keys: "</span>);
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++)
+        <span class="kw">if</span> (ht->table[i].state == FILLED)
+            <span class="fn">printf</span>(<span class="str">"%d "</span>, ht->table[i].key);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cm">/* Print only values */</span>
+<span class="tp">void</span> <span class="fn">printValues</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="fn">printf</span>(<span class="str">"Values: "</span>);
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++)
+        <span class="kw">if</span> (ht->table[i].state == FILLED)
+            <span class="fn">printf</span>(<span class="str">"%d "</span>, ht->table[i].value);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(13)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 14: VALIDATION -->
+  <div class="section" id="sec-14">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 14</div>
+      <div class="section-title">Validation Operations</div>
+      <div class="section-desc">Guard your hash table with checks: is it empty? full? is a key valid? is an index in range? is a slot marked as deleted?</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Why Validate?</div>
+      <p>Validation prevents crashes and bugs. Before performing any operation, we should verify that inputs and states are valid.</p>
+      <ul class="steps-list">
+        <li><span><strong>Check empty</strong> — Is the table completely empty? (<code>count == 0</code>)</span></li>
+        <li><span><strong>Check full</strong> — Is every slot occupied? (<code>count == size</code>)</span></li>
+        <li><span><strong>Validate key</strong> — Is the key value within acceptable range? (not EMPTY sentinel)</span></li>
+        <li><span><strong>Validate index</strong> — Is the computed index within [0, size-1]?</span></li>
+        <li><span><strong>Check deleted marker</strong> — Is a specific slot marked DELETED vs EMPTY?</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Validation Operations</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Check if the hash table is empty */</span>
+<span class="tp">int</span> <span class="fn">isEmpty</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">return</span> (ht->count == <span class="num">0</span>);
+}
+
+<span class="cm">/* Check if the hash table is full */</span>
+<span class="tp">int</span> <span class="fn">isFull</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">return</span> (ht->count == ht->size);
+}
+
+<span class="cm">/* Validate key: must not be our sentinel values */</span>
+<span class="tp">int</span> <span class="fn">isValidKey</span>(<span class="tp">int</span> key) {
+    <span class="kw">if</span> (key == EMPTY) {
+        <span class="fn">printf</span>(<span class="str">"Invalid key: %d is reserved as EMPTY marker\n"</span>, key);
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="kw">if</span> (key == DELETED) {
+        <span class="fn">printf</span>(<span class="str">"Invalid key: %d is reserved as DELETED marker\n"</span>, key);
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="kw">return</span> <span class="num">1</span>;
+}
+
+<span class="cm">/* Validate that index is in range */</span>
+<span class="tp">int</span> <span class="fn">isValidIndex</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> index) {
+    <span class="kw">return</span> (index >= <span class="num">0</span> &amp;&amp; index &lt; ht->size);
+}
+
+<span class="cm">/* Check if a specific slot has a deleted marker */</span>
+<span class="tp">int</span> <span class="fn">isDeleted</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> index) {
+    <span class="kw">return</span> (ht->table[index].state == DELETED);
+}
+
+<span class="cm">/* Safe insert with all validations */</span>
+<span class="tp">void</span> <span class="fn">safeInsert</span>(<span class="tp">HashTable</span> *ht, <span class="tp">int</span> key, <span class="tp">int</span> value) {
+    <span class="kw">if</span> (!<span class="fn">isValidKey</span>(key)) <span class="kw">return</span>;   <span class="cm">/* Validate key */</span>
+    <span class="kw">if</span> (<span class="fn">isFull</span>(ht)) {                   <span class="cm">/* Check if full */</span>
+        <span class="fn">printf</span>(<span class="str">"Table is FULL! Resize first.\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="fn">insert</span>(ht, key, value);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">printf</span>(<span class="str">"Is empty? %d\n"</span>, <span class="fn">isEmpty</span>(ht));    <span class="cm">/* 1 (yes) */</span>
+    <span class="fn">safeInsert</span>(ht, -<span class="num">1</span>, <span class="num">100</span>);  <span class="cm">/* Invalid! -1 is EMPTY marker */</span>
+    <span class="fn">safeInsert</span>(ht,  <span class="num">5</span>, <span class="num">50</span>);   <span class="cm">/* Valid — inserted */</span>
+    <span class="fn">printf</span>(<span class="str">"Is empty? %d\n"</span>, <span class="fn">isEmpty</span>(ht));    <span class="cm">/* 0 (no) */</span>
+    <span class="fn">printf</span>(<span class="str">"Is full?  %d\n"</span>, <span class="fn">isFull</span>(ht));     <span class="cm">/* 0 (no) */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+      <div class="info-box green">Output:<br>Is empty? 1<br>Invalid key: -1 is reserved as EMPTY marker<br>Inserted key 5 at index 5<br>Is empty? 0<br>Is full? 0</div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(14)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 15: LOAD FACTOR -->
+  <div class="section" id="sec-15">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 15</div>
+      <div class="section-title">Load Factor Management</div>
+      <div class="section-desc">Monitor how full your table is, calculate the load factor, compare against thresholds, and trigger resizing at the right moment.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Load Factor</div>
+      <p>The <strong>load factor (α)</strong> measures how "crowded" the hash table is:</p>
+      <div class="formula">α = number of entries / table size</div>
+      <ul class="steps-list">
+        <li><span><strong>Count occupied slots</strong> — Use the <code>count</code> variable (updated on every insert/delete)</span></li>
+        <li><span><strong>Calculate load factor</strong> — <code>(float)count / size</code></span></li>
+        <li><span><strong>Compare threshold</strong> — If α ≥ 0.7, performance degrades significantly</span></li>
+        <li><span><strong>Trigger resize</strong> — Call rehash/resize when threshold is exceeded</span></li>
+      </ul>
+      <div class="grid2" style="margin-top:12px">
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--accent)">0.0–0.5</div>
+          <div class="stat-label">Excellent performance</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--accent4)">0.5–0.7</div>
+          <div class="stat-label">Good — acceptable</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--accent3)">0.7–0.9</div>
+          <div class="stat-label">Poor — should resize</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:#ff4466">0.9–1.0</div>
+          <div class="stat-label">Critical — resize NOW!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Live Load Factor Monitor</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="lfKey" placeholder="Key" value="5"/>
+        <input class="viz-input" type="number" id="lfVal" placeholder="Value" value="50"/>
+        <button class="viz-btn primary" onclick="lfInsert()">Insert</button>
+        <input class="viz-input" type="number" id="lfDelKey" placeholder="Delete key"/>
+        <button class="viz-btn danger" onclick="lfDelete()">Delete</button>
+        <button class="viz-btn" onclick="lfClear()">Clear</button>
+      </div>
+      <div style="margin:12px 0">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-size:11px">
+          <span style="color:var(--text-dim)">LOAD FACTOR</span>
+          <span id="lfValue" style="color:var(--accent)">0 / 7 = 0.00 (0%)</span>
+        </div>
+        <div class="lf-bar-wrap" style="height:28px">
+          <div class="lf-bar" id="lfBar" style="width:0%"></div>
+          <div class="lf-threshold" style="left:70%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--text-dim);font-family:'JetBrains Mono',monospace">
+          <span>0%</span><span>25%</span><span style="color:var(--accent4)">70% threshold</span><span>100%</span>
+        </div>
+      </div>
+      <div class="ht-grid" id="lfGrid"></div>
+      <div class="viz-log" id="lfLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Load Factor Management</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#define MAX_LOAD_FACTOR 0.7f</span>
+
+<span class="cm">/* Step 2: Calculate current load factor */</span>
+<span class="tp">float</span> <span class="fn">getLoadFactor</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">return</span> (<span class="tp">float</span>) ht->count / ht->size;
+}
+
+<span class="cm">/* Step 1: Count only occupied (FILLED) slots */</span>
+<span class="tp">int</span> <span class="fn">countOccupied</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">int</span> count = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++)
+        <span class="kw">if</span> (ht->table[i].state == FILLED)
+            count++;
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Step 3 & 4: Check and trigger resize if needed */</span>
+<span class="tp">void</span> <span class="fn">checkAndResize</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">float</span> lf = <span class="fn">getLoadFactor</span>(ht);
+    <span class="fn">printf</span>(<span class="str">"Load factor: %.2f (%d/%d)\n"</span>,
+           lf, ht->count, ht->size);
+
+    <span class="kw">if</span> (lf >= MAX_LOAD_FACTOR) {
+        <span class="fn">printf</span>(<span class="str">"WARNING: Load factor %.2f >= %.2f! Resizing...\n"</span>,
+               lf, MAX_LOAD_FACTOR);
+        <span class="fn">rehash</span>(ht);  <span class="cm">/* Step 4: Trigger resize */</span>
+    } <span class="kw">else</span> {
+        <span class="fn">printf</span>(<span class="str">"Load factor OK. No resize needed.\n"</span>);
+    }
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">1</span>; i &lt;= <span class="num">6</span>; i++) {
+        <span class="fn">insert</span>(ht, i * <span class="num">10</span>, i * <span class="num">100</span>);
+        <span class="fn">checkAndResize</span>(ht);  <span class="cm">/* Check after every insert */</span>
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(15)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 16: MEMORY -->
+  <div class="section" id="sec-16">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 16</div>
+      <div class="section-title">Memory Management</div>
+      <div class="section-desc">Allocate, use, clear, and free memory responsibly — essential for production C programs that avoid memory leaks.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Memory in C</div>
+      <p>In C, memory is manually managed. Every <code>malloc()</code> must be paired with a <code>free()</code>. Forgetting to free causes <strong>memory leaks</strong> — your program eats more and more RAM until the system crashes.</p>
+      <ul class="steps-list">
+        <li><span><strong>Allocate array</strong> — <code>malloc(size * sizeof(Entry))</code> reserves bytes for the array</span></li>
+        <li><span><strong>Free array memory</strong> — <code>free(ht->table)</code> releases the slot array</span></li>
+        <li><span><strong>Clear table</strong> — Reset all slots to EMPTY without freeing memory (reuse the table)</span></li>
+        <li><span><strong>Destroy table</strong> — Free both the array AND the HashTable struct itself</span></li>
+      </ul>
+      <div class="info-box red">⚠️ Memory management order matters! Free the INNER data (array) BEFORE the OUTER struct. Freeing the struct first loses the pointer to the array — memory leak!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Memory Management</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="macro">#include &lt;stdlib.h&gt;</span>
+
+<span class="cm">/* Step 1: Allocate memory for the hash table */</span>
+<span class="tp">HashTable</span>* <span class="fn">allocateHashTable</span>(<span class="tp">int</span> size) {
+    <span class="cm">/* Outer: allocate the struct */</span>
+    <span class="tp">HashTable</span> *ht = (<span class="tp">HashTable</span>*) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="tp">HashTable</span>));
+    <span class="kw">if</span> (ht == NULL) {
+        <span class="fn">printf</span>(<span class="str">"Error: failed to allocate HashTable!\n"</span>);
+        <span class="kw">return</span> NULL;
+    }
+
+    <span class="cm">/* Inner: allocate the entry array */</span>
+    ht->table = (<span class="tp">Entry</span>*) <span class="fn">malloc</span>(size * <span class="kw">sizeof</span>(<span class="tp">Entry</span>));
+    <span class="kw">if</span> (ht->table == NULL) {
+        <span class="fn">printf</span>(<span class="str">"Error: failed to allocate table array!\n"</span>);
+        <span class="fn">free</span>(ht);  <span class="cm">/* Free struct if array fails */</span>
+        <span class="kw">return</span> NULL;
+    }
+
+    ht->size  = size;
+    ht->count = <span class="num">0</span>;
+    <span class="kw">return</span> ht;
+}
+
+<span class="cm">/* Step 3: Clear table (keep memory, reset contents) */</span>
+<span class="tp">void</span> <span class="fn">clearTable</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        ht->table[i].key   = EMPTY;
+        ht->table[i].value = <span class="num">0</span>;
+        ht->table[i].state = EMPTY;
+    }
+    ht->count = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Table cleared (memory retained).\n"</span>);
+}
+
+<span class="cm">/* Step 2 & 4: Free all memory — destroy table */</span>
+<span class="tp">void</span> <span class="fn">destroyTable</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">if</span> (ht == NULL) <span class="kw">return</span>;
+
+    <span class="cm">/* IMPORTANT: Free inner array FIRST */</span>
+    <span class="fn">free</span>(ht->table);    <span class="cm">/* Step 2: Free the slot array */</span>
+    ht->table = NULL;   <span class="cm">/* Prevent dangling pointer */</span>
+
+    <span class="fn">free</span>(ht);           <span class="cm">/* Step 4: Free the struct itself */</span>
+    <span class="fn">printf</span>(<span class="str">"Hash table destroyed. All memory freed.\n"</span>);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">allocateHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">insert</span>(ht, <span class="num">10</span>, <span class="num">100</span>);
+    <span class="fn">insert</span>(ht, <span class="num">20</span>, <span class="num">200</span>);
+
+    <span class="fn">clearTable</span>(ht);         <span class="cm">/* Wipe data but keep structure */</span>
+    <span class="fn">insert</span>(ht, <span class="num">99</span>, <span class="num">999</span>);   <span class="cm">/* Reuse the cleared table */</span>
+
+    <span class="fn">destroyTable</span>(ht);       <span class="cm">/* Free all memory when done */</span>
+    ht = NULL;               <span class="cm">/* Avoid using freed pointer */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">🏠</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Renting vs Demolishing a House</div>
+          <strong>clearTable</strong> is like cleaning a house — you empty it out but keep the structure for future use. <strong>destroyTable</strong> is like demolishing the house completely — you first remove the furniture (free the array), then tear down the walls (free the struct). Trying to demolish the walls first would trap the furniture inside forever (memory leak)!
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(16)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 17: ITERATION -->
+  <div class="section" id="sec-17">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 17</div>
+      <div class="section-title">Iteration Operations</div>
+      <div class="section-desc">Implement iterators to cycle through all keys, all values, or all entries in sequence — essential for bulk operations and reporting.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Iteration vs Traversal</div>
+      <p>While traversal just prints, <strong>iteration</strong> means stepping through entries programmatically — your code processes each item. This is useful for batch updates, exports, or counting.</p>
+      <ul class="steps-list">
+        <li><span><strong>Iterate keys</strong> — Visit every FILLED slot and return/process its key</span></li>
+        <li><span><strong>Iterate values</strong> — Visit every FILLED slot and return/process its value</span></li>
+        <li><span><strong>Iterate entries</strong> — Return both key AND value for each filled slot</span></li>
+        <li><span><strong>Sequential array traversal</strong> — Always goes from index 0 to size-1, never skips</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Iteration Operations</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Iterator structure: tracks current position */</span>
+<span class="kw">typedef struct</span> {
+    <span class="tp">HashTable</span> *ht;      <span class="cm">/* Pointer to hash table */</span>
+    <span class="tp">int</span>        current; <span class="cm">/* Current index in array */</span>
+} <span class="tp">Iterator</span>;
+
+<span class="cm">/* Create an iterator starting at index 0 */</span>
+<span class="tp">Iterator</span> <span class="fn">createIterator</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">Iterator</span> it;
+    it.ht      = ht;
+    it.current = <span class="num">0</span>;
+    <span class="kw">return</span> it;
+}
+
+<span class="cm">/* Check if more entries exist */</span>
+<span class="tp">int</span> <span class="fn">hasNext</span>(<span class="tp">Iterator</span> *it) {
+    <span class="cm">/* Step 4: Sequential scan from current position */</span>
+    <span class="kw">while</span> (it->current &lt; it->ht->size) {
+        <span class="kw">if</span> (it->ht->table[it->current].state == FILLED)
+            <span class="kw">return</span> <span class="num">1</span>;  <span class="cm">/* Found a valid entry ahead */</span>
+        it->current++;
+    }
+    <span class="kw">return</span> <span class="num">0</span>;  <span class="cm">/* No more entries */</span>
+}
+
+<span class="cm">/* Step 3: Get next key-value entry and advance */</span>
+<span class="tp">Entry</span> <span class="fn">nextEntry</span>(<span class="tp">Iterator</span> *it) {
+    <span class="tp">Entry</span> entry = it->ht->table[it->current];
+    it->current++;  <span class="cm">/* Advance to next position */</span>
+    <span class="kw">return</span> entry;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+    <span class="fn">insert</span>(ht, <span class="num">5</span>, <span class="num">50</span>);
+    <span class="fn">insert</span>(ht, <span class="num">12</span>, <span class="num">120</span>);
+    <span class="fn">insert</span>(ht, <span class="num">3</span>, <span class="num">30</span>);
+
+    <span class="cm">/* Step 1 & 2: Iterate all keys and values */</span>
+    <span class="tp">Iterator</span> it = <span class="fn">createIterator</span>(ht);
+    <span class="fn">printf</span>(<span class="str">"All entries:\n"</span>);
+    <span class="kw">while</span> (<span class="fn">hasNext</span>(&amp;it)) {
+        <span class="tp">Entry</span> e = <span class="fn">nextEntry</span>(&amp;it);
+        <span class="fn">printf</span>(<span class="str">"  key=%d → value=%d\n"</span>, e.key, e.value);
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-analogy">💡</div>Analogy</div>
+      <div class="analogy-box">
+        <div class="analogy-emoji">📋</div>
+        <div class="analogy-text">
+          <div class="analogy-title">Attendance Roll Call</div>
+          An iterator is like a teacher calling attendance. The teacher goes through the list from name 1 to name N. They skip empty seats (EMPTY slots). For each present student (FILLED slot), they call the name and mark "present". They don't need to know where each student sits beforehand — they just go in order.
+        </div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(17)">Mark Complete ✓</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ SECTION 18: UTILITY -->
+  <div class="section" id="sec-18">
+    <div class="section-hero">
+      <div class="section-num">// SECTION 18</div>
+      <div class="section-title">Utility & Analysis Operations</div>
+      <div class="section-desc">Advanced diagnostic tools: count collisions, measure occupied slots, find empty slots, perform performance analysis and generate statistics.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-theory">📖</div>Theory: Why Analysis Matters</div>
+      <p>Once your hash table works correctly, you need to verify it works <em>efficiently</em>. Utility functions help you measure and diagnose performance.</p>
+      <ul class="steps-list">
+        <li><span><strong>Count collisions</strong> — How many keys had to be relocated during insertion? High = bad hash function</span></li>
+        <li><span><strong>Count occupied slots</strong> — How many slots have real data (FILLED state)?</span></li>
+        <li><span><strong>Find empty slots</strong> — How much space is left? Useful before bulk inserts</span></li>
+        <li><span><strong>Performance analysis</strong> — Average probes per operation, worst-case probes</span></li>
+        <li><span><strong>Statistics generation</strong> — Summary report: size, count, load factor, collision rate</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-visual">🎮</div>Live Statistics Dashboard</div>
+      <div class="viz-controls">
+        <input class="viz-input" type="number" id="utilKey" placeholder="Key" value="1"/>
+        <input class="viz-input" type="number" id="utilVal" placeholder="Value" value="10"/>
+        <button class="viz-btn primary" onclick="utilInsert()">Insert</button>
+        <button class="viz-btn danger" onclick="utilClear()">Clear</button>
+      </div>
+      <div class="grid3" style="margin:12px 0" id="utilStats">
+        <div class="stat-box"><div class="stat-num" id="statFilled">0</div><div class="stat-label">FILLED</div></div>
+        <div class="stat-box"><div class="stat-num" id="statEmpty">7</div><div class="stat-label">EMPTY</div></div>
+        <div class="stat-box"><div class="stat-num" id="statCollisions">0</div><div class="stat-label">COLLISIONS</div></div>
+        <div class="stat-box"><div class="stat-num" id="statLF" style="font-size:20px">0.00</div><div class="stat-label">LOAD FACTOR</div></div>
+        <div class="stat-box"><div class="stat-num" id="statSize">7</div><div class="stat-label">TABLE SIZE</div></div>
+        <div class="stat-box"><div class="stat-num" id="statAvgProbe">0.0</div><div class="stat-label">AVG PROBES</div></div>
+      </div>
+      <div class="ht-grid" id="utilGrid"></div>
+      <div class="viz-log" id="utilLog"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><div class="card-icon icon-code">💻</div>C Code: Utility & Analysis</div>
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">/* Step 1: Count total collisions (slots not at ideal index) */</span>
+<span class="tp">int</span> <span class="fn">countCollisions</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">int</span> collisions = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++) {
+        <span class="kw">if</span> (ht->table[i].state == FILLED) {
+            <span class="tp">int</span> ideal = <span class="fn">hashFunction</span>(ht->table[i].key, ht->size);
+            <span class="kw">if</span> (ideal != i) collisions++;  <span class="cm">/* Not in ideal slot */</span>
+        }
+    }
+    <span class="kw">return</span> collisions;
+}
+
+<span class="cm">/* Step 2: Count occupied (FILLED) slots */</span>
+<span class="tp">int</span> <span class="fn">countOccupied</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="kw">return</span> ht->count;  <span class="cm">/* Already tracked */</span>
+}
+
+<span class="cm">/* Step 3: Find how many slots are EMPTY */</span>
+<span class="tp">int</span> <span class="fn">countEmpty</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">int</span> empty = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="num">0</span>; i &lt; ht->size; i++)
+        <span class="kw">if</span> (ht->table[i].state == EMPTY)
+            empty++;
+    <span class="kw">return</span> empty;
+}
+
+<span class="cm">/* Step 5: Full statistics report */</span>
+<span class="tp">void</span> <span class="fn">printStats</span>(<span class="tp">HashTable</span> *ht) {
+    <span class="tp">int</span>   filled     = <span class="fn">countOccupied</span>(ht);
+    <span class="tp">int</span>   empty      = <span class="fn">countEmpty</span>(ht);
+    <span class="tp">int</span>   collisions = <span class="fn">countCollisions</span>(ht);
+    <span class="tp">float</span> lf         = <span class="fn">getLoadFactor</span>(ht);
+
+    <span class="fn">printf</span>(<span class="str">"\n====== Hash Table Statistics ======\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"Table size    : %d\n"</span>, ht->size);
+    <span class="fn">printf</span>(<span class="str">"Filled slots  : %d\n"</span>, filled);
+    <span class="fn">printf</span>(<span class="str">"Empty slots   : %d\n"</span>, empty);
+    <span class="fn">printf</span>(<span class="str">"Collisions    : %d\n"</span>, collisions);
+    <span class="fn">printf</span>(<span class="str">"Load factor   : %.2f (%.1f%%)\n"</span>, lf, lf * <span class="num">100</span>);
+    <span class="fn">printf</span>(<span class="str">"Collision rate: %.1f%%\n"</span>,
+           filled > <span class="num">0</span> ? (<span class="tp">float</span>)collisions / filled * <span class="num">100</span> : <span class="num">0</span>);
+    <span class="fn">printf</span>(<span class="str">"===================================\n\n"</span>);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="tp">HashTable</span> *ht = <span class="fn">createHashTable</span>(<span class="num">7</span>);
+    <span class="fn">initTable</span>(ht);
+
+    <span class="fn">insert</span>(ht, <span class="num">10</span>, <span class="num">100</span>);  <span class="cm">/* ideal slot: 3 */</span>
+    <span class="fn">insert</span>(ht, <span class="num">17</span>, <span class="num">170</span>);  <span class="cm">/* ideal: 3, goes to 4 → collision! */</span>
+    <span class="fn">insert</span>(ht, <span class="num">5</span>,  <span class="num">50</span>);   <span class="cm">/* ideal slot: 5 */</span>
+    <span class="fn">insert</span>(ht, <span class="num">24</span>, <span class="num">240</span>);  <span class="cm">/* ideal: 3, goes to 5 → collision! */</span>
+
+    <span class="fn">printStats</span>(ht);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎓 Course Complete! What You've Learned</div>
+      <div class="grid2">
+        <div class="info-box green" style="margin:0">✓ Create & initialize hash tables<br>✓ Insert, search, delete, update<br>✓ Three collision resolution methods</div>
+        <div class="info-box purple" style="margin:0">✓ Rehashing & resizing<br>✓ Load factor management<br>✓ Memory management in C</div>
+        <div class="info-box yellow" style="margin:0">✓ Traversal & iteration<br>✓ Validation & safety checks<br>✓ Performance analysis</div>
+        <div class="info-box red" style="margin:0">🚀 You can now build a complete hash table from scratch in C!</div>
+      </div>
+    </div>
+
+    <div class="section-footer">
+      <button class="btn" onclick="prevSection()">← Previous</button>
+      <button class="mark-done" onclick="markDone(18)">Complete Course 🎓</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+// ================================================================
+// STATE
+// ================================================================
+const EMPTY = -1, DELETED = -2, FILLED = 1;
+const TABLE_SIZE = 7;
+let completed = new Set();
+let currentSection = 0;
+
+const sectionMeta = [
+  {title:"Introduction to Hash Tables", level:"beginner"},
+  {title:"Create Hash Table", level:"beginner"},
+  {title:"Initialize Table", level:"beginner"},
+  {title:"Insert / Put", level:"beginner"},
+  {title:"Search / Lookup", level:"beginner"},
+  {title:"Delete / Remove", level:"beginner"},
+  {title:"Update Entry", level:"beginner"},
+  {title:"Collision Handling", level:"intermediate"},
+  {title:"Linear Probing", level:"intermediate"},
+  {title:"Quadratic Probing", level:"intermediate"},
+  {title:"Double Hashing", level:"advanced"},
+  {title:"Rehashing Operations", level:"advanced"},
+  {title:"Resize Table", level:"advanced"},
+  {title:"Traverse / Display", level:"intermediate"},
+  {title:"Validation Operations", level:"intermediate"},
+  {title:"Load Factor Management", level:"advanced"},
+  {title:"Memory Management", level:"advanced"},
+  {title:"Iteration Operations", level:"advanced"},
+  {title:"Utility & Analysis", level:"advanced"},
+];
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function goSection(n) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('sec-' + n).classList.add('active');
+  const ni = document.querySelector(`.nav-item[data-section="${n}"]`);
+  if (ni) ni.classList.add('active');
+  currentSection = n;
+  const meta = sectionMeta[n];
+  document.getElementById('topbarTitle').textContent = meta.title;
+  const tag = document.getElementById('topbarTag');
+  tag.className = 'topbar-tag tag-' + meta.level;
+  tag.textContent = meta.level.toUpperCase();
+  document.getElementById('main').scrollTo(0,0);
+  initSectionViz(n);
+}
+
+function nextSection() { if (currentSection < 18) goSection(currentSection + 1); }
+function prevSection() { if (currentSection > 0) goSection(currentSection - 1); }
+
+function markDone(n) {
+  completed.add(n);
+  const btn = document.querySelector(`#sec-${n} .mark-done`);
+  if (btn) { btn.textContent = '✓ Completed!'; btn.classList.add('done'); }
+  document.querySelector(`.nav-item[data-section="${n}"]`).classList.add('completed');
+  updateProgress();
+  if (n < 18) setTimeout(() => nextSection(), 400);
+}
+
+function updateProgress() {
+  const pct = Math.round((completed.size / 19) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCount').textContent = completed.size + ' / 19 completed';
+}
+
+// ================================================================
+// HASH TABLE ENGINE (JS for visualization)
+// ================================================================
+function makeTable(size) {
+  return Array.from({length: size}, (_, i) => ({key: EMPTY, value: 0, state: EMPTY}));
+}
+
+function hashFn(key, size) { return ((key % size) + size) % size; }
+
+function htInsert(table, key, value, collisionTracker) {
+  const size = table.length;
+  const idx = hashFn(key, size);
+  let cols = 0;
+  for (let i = 0; i < size; i++) {
+    const probe = (idx + i) % size;
+    if (table[probe].state === FILLED && table[probe].key === key) {
+      table[probe].value = value;
+      return {probe, updated: true, probes: i, cols};
+    }
+    if (table[probe].state !== FILLED) {
+      if (i > 0) cols = 1;
+      table[probe] = {key, value, state: FILLED};
+      return {probe, updated: false, probes: i, cols};
+    }
+    cols++;
+  }
+  return {probe: -1, updated: false, probes: size, cols};
+}
+
+function htSearch(table, key) {
+  const size = table.length;
+  const idx = hashFn(key, size);
+  const path = [];
+  for (let i = 0; i < size; i++) {
+    const probe = (idx + i) % size;
+    path.push(probe);
+    if (table[probe].state === EMPTY) return {found: false, probe: -1, path};
+    if (table[probe].state === FILLED && table[probe].key === key)
+      return {found: true, probe, value: table[probe].value, path};
+  }
+  return {found: false, probe: -1, path};
+}
+
+function htDelete(table, key) {
+  const size = table.length;
+  const idx = hashFn(key, size);
+  for (let i = 0; i < size; i++) {
+    const probe = (idx + i) % size;
+    if (table[probe].state === EMPTY) return {deleted: false, probe: -1};
+    if (table[probe].state === FILLED && table[probe].key === key) {
+      table[probe].state = DELETED;
+      table[probe].value = 0;
+      return {deleted: true, probe};
+    }
+  }
+  return {deleted: false, probe: -1};
+}
+
+// ================================================================
+// RENDER HELPERS
+// ================================================================
+function renderGrid(gridId, table, highlighted = {}, showIndex = true) {
+  const el = document.getElementById(gridId);
+  if (!el) return;
+  el.innerHTML = '';
+  table.forEach((slot, i) => {
+    const row = document.createElement('div');
+    row.className = 'ht-row';
+    if (showIndex) {
+      const idx = document.createElement('div');
+      idx.className = 'ht-index';
+      idx.textContent = i;
+      row.appendChild(idx);
+    }
+    const s = document.createElement('div');
+    s.className = 'ht-slot';
+    if (highlighted.active === i) s.classList.add('active');
+    else if (highlighted.probe && highlighted.probe.includes(i)) s.classList.add('probe');
+    else if (highlighted.collision === i) s.classList.add('collision');
+
+    if (slot.state === FILLED) {
+      s.classList.add('filled');
+      s.innerHTML = `<span class="ht-key">${slot.key}</span><span class="ht-sep">→</span><span class="ht-val">${slot.value}</span>`;
+    } else if (slot.state === DELETED) {
+      s.classList.add('deleted');
+      s.innerHTML = '<span class="ht-deleted-label">[ DELETED ]</span>';
+    } else {
+      s.innerHTML = '<span class="ht-empty-label">[ empty ]</span>';
+    }
+    row.appendChild(s);
+    el.appendChild(row);
+  });
+}
+
+function renderProbeGrid(gridId, table, highlighted = {}) {
+  const el = document.getElementById(gridId);
+  if (!el) return;
+  el.innerHTML = '';
+  table.forEach((slot, i) => {
+    const c = document.createElement('div');
+    c.className = 'probe-cell';
+    if (highlighted.target === i) c.classList.add('target');
+    else if (highlighted.checking === i) c.classList.add('checking');
+    else if (highlighted.collision === i) c.classList.add('collision');
+    if (slot.state === FILLED) c.classList.add('filled');
+    if (slot.state === DELETED) { c.classList.add('deleted'); }
+    const idxEl = document.createElement('div');
+    idxEl.className = 'cell-idx';
+    idxEl.textContent = i;
+    const valEl = document.createElement('div');
+    valEl.className = 'cell-val';
+    valEl.textContent = slot.state === FILLED ? slot.key : slot.state === DELETED ? '✗' : '—';
+    c.appendChild(idxEl);
+    c.appendChild(valEl);
+    el.appendChild(c);
+  });
+}
+
+function log(logId, msg, type = '') {
+  const el = document.getElementById(logId);
+  if (!el) return;
+  const line = document.createElement('div');
+  line.className = 'log-line' + (type ? ' ' + type : '');
+  line.textContent = '> ' + msg;
+  el.insertBefore(line, el.firstChild);
+  if (el.children.length > 20) el.removeChild(el.lastChild);
+}
+
+// ================================================================
+// COPY CODE
+// ================================================================
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('pre').textContent;
+  navigator.clipboard.writeText(code).catch(() => {});
+  btn.textContent = 'copied!';
+  setTimeout(() => btn.textContent = 'copy', 1500);
+}
+
+// ================================================================
+// SECTION 1: HASH DEMO
+// ================================================================
+function runHashDemo() {
+  const key = parseInt(document.getElementById('hashDemoKey').value) || 0;
+  const size = 7;
+  const idx = ((key % size) + size) % size;
+  document.getElementById('hashDemoResult').innerHTML = `
+    <div class="hash-demo-wrap">
+      <span class="hash-step">key = ${key}</span>
+      <span class="hash-arrow">→</span>
+      <span class="hash-step">${key} % ${size}</span>
+      <span class="hash-arrow">=</span>
+      <span class="hash-result">Index: ${idx}</span>
+    </div>`;
+}
+
+// ================================================================
+// SECTION 3: INSERT VIZ
+// ================================================================
+let insertTable = makeTable(TABLE_SIZE);
+function initInsertGrid() { renderGrid('insertGrid', insertTable); }
+function vizInsert() {
+  const key = parseInt(document.getElementById('insertKey').value);
+  const val = parseInt(document.getElementById('insertVal').value);
+  if (isNaN(key) || isNaN(val)) { log('insertLog', 'Enter valid key and value', 'error'); return; }
+  const res = htInsert(insertTable, key, val);
+  if (res.probe === -1) { log('insertLog', 'Table is full!', 'error'); return; }
+  renderGrid('insertGrid', insertTable, {active: res.probe});
+  if (res.updated) log('insertLog', `Updated key ${key} → ${val} at slot ${res.probe}`, 'warn');
+  else if (res.probes > 0) log('insertLog', `Inserted key ${key}→${val} at slot ${res.probe} (${res.probes} collision${res.probes>1?'s':''})`, 'warn');
+  else log('insertLog', `Inserted key ${key}→${val} at slot ${res.probe} (no collision)`, 'success');
+}
+function vizClear() { insertTable = makeTable(TABLE_SIZE); renderGrid('insertGrid', insertTable); log('insertLog', 'Table cleared', 'info'); }
+
+// ================================================================
+// SECTION 4: SEARCH VIZ
+// ================================================================
+let searchTable = makeTable(TABLE_SIZE);
+function initSearchGrid() { renderGrid('searchGrid', searchTable); }
+function searchVizInsert() {
+  const key = parseInt(document.getElementById('searchInsKey').value);
+  const val = parseInt(document.getElementById('searchInsVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  htInsert(searchTable, key, val);
+  renderGrid('searchGrid', searchTable);
+  log('searchLog', `Inserted key ${key}→${val}`, 'success');
+}
+function searchVizSearch() {
+  const key = parseInt(document.getElementById('searchKey').value);
+  if (isNaN(key)) return;
+  const res = htSearch(searchTable, key);
+  renderGrid('searchGrid', searchTable, res.found ? {active: res.probe, probe: res.path.slice(0,-1)} : {probe: res.path});
+  if (res.found) log('searchLog', `Found key ${key} at slot ${res.probe} → value: ${res.value}`, 'success');
+  else log('searchLog', `Key ${key} NOT found (checked ${res.path.length} slot${res.path.length>1?'s':''})`, 'error');
+}
+function searchVizClear() { searchTable = makeTable(TABLE_SIZE); renderGrid('searchGrid', searchTable); }
+
+// ================================================================
+// SECTION 5: DELETE VIZ
+// ================================================================
+let deleteTable = makeTable(TABLE_SIZE);
+function initDeleteGrid() { renderGrid('deleteGrid', deleteTable); }
+function delVizInsert() {
+  const key = parseInt(document.getElementById('delInsKey').value);
+  const val = parseInt(document.getElementById('delInsVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  htInsert(deleteTable, key, val);
+  renderGrid('deleteGrid', deleteTable);
+  log('deleteLog', `Inserted key ${key}→${val}`, 'success');
+}
+function delVizDelete() {
+  const key = parseInt(document.getElementById('delKey').value);
+  if (isNaN(key)) return;
+  const res = htDelete(deleteTable, key);
+  renderGrid('deleteGrid', deleteTable, res.deleted ? {active: res.probe} : {});
+  if (res.deleted) log('deleteLog', `Deleted key ${key} from slot ${res.probe} (tombstone set)`, 'warn');
+  else log('deleteLog', `Key ${key} not found — nothing deleted`, 'error');
+}
+function delVizClear() { deleteTable = makeTable(TABLE_SIZE); renderGrid('deleteGrid', deleteTable); }
+
+// ================================================================
+// SECTION 7: COLLISION VIZ
+// ================================================================
+let collisionTable = makeTable(TABLE_SIZE);
+function initCollisionGrid() { renderGrid('collisionGrid', collisionTable); }
+async function showCollision() {
+  collisionTable = makeTable(TABLE_SIZE);
+  log('collisionLog', 'Step 1: Insert key=10 → hash=10%7=3 → slot 3', 'info');
+  htInsert(collisionTable, 10, 100);
+  renderGrid('collisionGrid', collisionTable, {active: 3});
+  await delay(800);
+  log('collisionLog', 'Step 2: Insert key=17 → hash=17%7=3 → COLLISION! Slot 3 taken', 'error');
+  renderGrid('collisionGrid', collisionTable, {collision: 3});
+  await delay(800);
+  htInsert(collisionTable, 17, 170);
+  log('collisionLog', 'Step 3: Linear probe → try slot 4 → EMPTY → inserted!', 'success');
+  renderGrid('collisionGrid', collisionTable, {active: 4, probe: [3]});
+}
+function clearCollision() { collisionTable = makeTable(TABLE_SIZE); renderGrid('collisionGrid', collisionTable); }
+
+// ================================================================
+// SECTION 8: LINEAR PROBING
+// ================================================================
+let lpTable = makeTable(TABLE_SIZE);
+function initLPGrid() { renderProbeGrid('lpGrid', lpTable); }
+function lpInsert() {
+  const key = parseInt(document.getElementById('lpKey').value);
+  const val = parseInt(document.getElementById('lpVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  const size = lpTable.length;
+  const idx = hashFn(key, size);
+  let probeLog = `key=${key}, h=${idx}`;
+  for (let i = 0; i < size; i++) {
+    const probe = (idx + i) % size;
+    if (lpTable[probe].state === FILLED && lpTable[probe].key === key) {
+      lpTable[probe].value = val;
+      renderProbeGrid('lpGrid', lpTable, {target: probe});
+      log('lpLog', `Updated key ${key} at slot ${probe}`, 'warn');
+      return;
+    }
+    if (lpTable[probe].state !== FILLED) {
+      lpTable[probe] = {key, value: val, state: FILLED};
+      renderProbeGrid('lpGrid', lpTable, {target: probe});
+      log('lpLog', `${probeLog} → slot ${probe} (${i} probe${i===1?'':'s'})`, i>0?'warn':'success');
+      return;
+    }
+    probeLog += ` →[${probe}]collision`;
+  }
+  log('lpLog', 'Table full!', 'error');
+}
+function lpClear() { lpTable = makeTable(TABLE_SIZE); renderProbeGrid('lpGrid', lpTable); }
+
+// ================================================================
+// SECTION 9: QUADRATIC PROBING
+// ================================================================
+let qpTable = makeTable(TABLE_SIZE);
+function initQPGrid() { renderProbeGrid('qpGrid', qpTable); }
+function qpInsert() {
+  const key = parseInt(document.getElementById('qpKey').value);
+  const val = parseInt(document.getElementById('qpVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  const size = qpTable.length;
+  const idx = hashFn(key, size);
+  let probeLog = `key=${key}, h=${idx}`;
+  for (let i = 0; i < size; i++) {
+    const probe = (idx + i*i) % size;
+    if (qpTable[probe].state === FILLED && qpTable[probe].key === key) {
+      qpTable[probe].value = val;
+      renderProbeGrid('qpGrid', qpTable, {target: probe});
+      log('qpLog', `Updated key ${key} at slot ${probe}`, 'warn');
+      return;
+    }
+    if (qpTable[probe].state !== FILLED) {
+      qpTable[probe] = {key, value: val, state: FILLED};
+      renderProbeGrid('qpGrid', qpTable, {target: probe});
+      log('qpLog', `${probeLog} → i=${i}, offset=${i*i}, slot ${probe}`, i>0?'warn':'success');
+      return;
+    }
+    probeLog += ` →[${probe}]coll`;
+  }
+  log('qpLog', 'Table full!', 'error');
+}
+function qpClear() { qpTable = makeTable(TABLE_SIZE); renderProbeGrid('qpGrid', qpTable); }
+
+// ================================================================
+// SECTION 10: DOUBLE HASHING
+// ================================================================
+let dhTable = makeTable(11);
+const DH_SIZE = 11, DH_PRIME = 7;
+function h1(key) { return ((key % DH_SIZE) + DH_SIZE) % DH_SIZE; }
+function h2(key) { return DH_PRIME - (((key % DH_PRIME) + DH_PRIME) % DH_PRIME) || DH_PRIME; }
+function initDHGrid() { renderProbeGrid('dhGrid', dhTable); }
+function dhInsert() {
+  const key = parseInt(document.getElementById('dhKey').value);
+  const val = parseInt(document.getElementById('dhVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  const start = h1(key), step = h2(key);
+  document.getElementById('dhFormula').textContent =
+    `h1(${key}) = ${key} % ${DH_SIZE} = ${start}  |  h2(${key}) = ${DH_PRIME} - (${key} % ${DH_PRIME}) = ${step}  |  probe(i) = (${start} + i×${step}) % ${DH_SIZE}`;
+  for (let i = 0; i < dhTable.length; i++) {
+    const probe = (start + i * step) % DH_SIZE;
+    if (dhTable[probe].state === FILLED && dhTable[probe].key === key) {
+      dhTable[probe].value = val;
+      renderProbeGrid('dhGrid', dhTable, {target: probe});
+      log('dhLog', `Updated key ${key} at slot ${probe}`, 'warn');
+      return;
+    }
+    if (dhTable[probe].state !== FILLED) {
+      dhTable[probe] = {key, value: val, state: FILLED};
+      renderProbeGrid('dhGrid', dhTable, {target: probe});
+      log('dhLog', `i=${i}: probe=(${start}+${i}×${step})%${DH_SIZE}=${probe} → inserted!`, i>0?'warn':'success');
+      return;
+    }
+    log('dhLog', `i=${i}: probe=(${start}+${i}×${step})%${DH_SIZE}=${probe} → collision`, 'error');
+  }
+  log('dhLog', 'Table full!', 'error');
+}
+function dhClear() { dhTable = makeTable(11); renderProbeGrid('dhGrid', dhTable); document.getElementById('dhFormula').textContent = 'Enter a key and insert to see the calculation'; }
+
+// ================================================================
+// SECTION 11: REHASH
+// ================================================================
+let rehashState = { table: makeTable(7), count: 0, size: 7, collisionTotal: 0 };
+function initRehashGrid() { renderGrid('rehashGrid', rehashState.table); updateRehashLF(); }
+function updateRehashLF() {
+  const lf = rehashState.count / rehashState.size;
+  const pct = Math.min(100, Math.round(lf * 100));
+  document.getElementById('rehashLFBar').style.width = pct + '%';
+  document.getElementById('rehashLFBar').style.background = lf > 0.7 ? 'var(--accent3)' : lf > 0.5 ? 'var(--accent4)' : 'var(--accent)';
+  document.getElementById('rehashLFText').textContent = `${rehashState.count} / ${rehashState.size} = ${lf.toFixed(2)}`;
+}
+function rehashInsert() {
+  const key = parseInt(document.getElementById('rehashKey').value);
+  const val = parseInt(document.getElementById('rehashVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  const lf = rehashState.count / rehashState.size;
+  if (lf >= 0.7) {
+    log('rehashLog', `Load factor ${lf.toFixed(2)} ≥ 0.7 → Rehashing now!`, 'warn');
+    const oldTable = rehashState.table;
+    const newSize = nextPrimeJS(rehashState.size * 2);
+    rehashState.table = makeTable(newSize);
+    rehashState.size = newSize;
+    rehashState.count = 0;
+    oldTable.forEach(s => { if (s.state === FILLED) { htInsert(rehashState.table, s.key, s.value); rehashState.count++; } });
+    log('rehashLog', `Rehashed → new size: ${newSize}`, 'success');
+    renderGrid('rehashGrid', rehashState.table);
+    updateRehashLF();
+  }
+  const res = htInsert(rehashState.table, key, val);
+  if (!res.updated) rehashState.count++;
+  renderGrid('rehashGrid', rehashState.table, {active: res.probe});
+  updateRehashLF();
+  log('rehashLog', `Inserted key ${key}→${val} at slot ${res.probe}`, 'success');
+}
+function rehashClear() { rehashState = {table:makeTable(7),count:0,size:7,collisionTotal:0}; initRehashGrid(); log('rehashLog','Reset','info'); }
+function nextPrimeJS(n) { while (!isPrimeJS(n)) n++; return n; }
+function isPrimeJS(n) { if (n<2) return false; for (let i=2;i*i<=n;i++) if (n%i===0) return false; return true; }
+
+// ================================================================
+// SECTION 13: TRAVERSE
+// ================================================================
+let travTable = makeTable(TABLE_SIZE);
+function initTravGrid() { renderGrid('travGrid', travTable); }
+function travInsert() {
+  const key = parseInt(document.getElementById('travKey').value);
+  const val = parseInt(document.getElementById('travVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  htInsert(travTable, key, val);
+  renderGrid('travGrid', travTable);
+  log('travLog', `Inserted key ${key}→${val}`, 'success');
+}
+async function travTraverse() {
+  log('travLog', '--- Traversal Start ---', 'info');
+  let count = 0;
+  for (let i = 0; i < travTable.length; i++) {
+    renderGrid('travGrid', travTable, {active: i});
+    await delay(300);
+    if (travTable[i].state === FILLED) {
+      log('travLog', `[${i}] key=${travTable[i].key} → value=${travTable[i].value}`, 'success');
+      count++;
+    } else if (travTable[i].state === DELETED) {
+      log('travLog', `[${i}] DELETED — skipped`, 'warn');
+    } else {
+      log('travLog', `[${i}] EMPTY — skipped`, '');
+    }
+  }
+  renderGrid('travGrid', travTable);
+  log('travLog', `--- Done: ${count} entries found ---`, 'info');
+}
+function travClear() { travTable = makeTable(TABLE_SIZE); renderGrid('travGrid', travTable); }
+
+// ================================================================
+// SECTION 15: LOAD FACTOR LIVE
+// ================================================================
+let lfTable = makeTable(TABLE_SIZE);
+let lfCount = 0;
+function initLFGrid() { renderGrid('lfGrid', lfTable); }
+function lfInsert() {
+  const key = parseInt(document.getElementById('lfKey').value);
+  const val = parseInt(document.getElementById('lfVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  const res = htInsert(lfTable, key, val);
+  if (!res.updated && res.probe >= 0) lfCount++;
+  renderGrid('lfGrid', lfTable, {active: res.probe});
+  updateLFBar();
+  const lf = lfCount / TABLE_SIZE;
+  log('lfLog', `Insert key ${key}: LF=${lf.toFixed(2)} (${lfCount}/${TABLE_SIZE})` + (lf>=0.7?' ⚠️ Consider resize!':''), lf>=0.7?'warn':'success');
+}
+function lfDelete() {
+  const key = parseInt(document.getElementById('lfDelKey').value);
+  if (isNaN(key)) return;
+  const res = htDelete(lfTable, key);
+  if (res.deleted) lfCount = Math.max(0, lfCount - 1);
+  renderGrid('lfGrid', lfTable);
+  updateLFBar();
+  log('lfLog', res.deleted ? `Deleted key ${key}` : `Key ${key} not found`, res.deleted?'warn':'error');
+}
+function updateLFBar() {
+  const lf = lfCount / TABLE_SIZE;
+  const pct = Math.min(100, Math.round(lf * 100));
+  const bar = document.getElementById('lfBar');
+  bar.style.width = pct + '%';
+  bar.style.background = lf>=0.7?'var(--accent3)':lf>=0.5?'var(--accent4)':'var(--accent)';
+  document.getElementById('lfValue').textContent = `${lfCount} / ${TABLE_SIZE} = ${lf.toFixed(2)} (${pct}%)`;
+  document.getElementById('lfValue').style.color = lf>=0.7?'var(--accent3)':lf>=0.5?'var(--accent4)':'var(--accent)';
+}
+function lfClear() { lfTable = makeTable(TABLE_SIZE); lfCount = 0; renderGrid('lfGrid', lfTable); updateLFBar(); }
+
+// ================================================================
+// SECTION 18: UTILITY STATS
+// ================================================================
+let utilTable = makeTable(TABLE_SIZE);
+let utilCount = 0;
+let utilCollisions = 0;
+let utilTotalProbes = 0;
+let utilInserts = 0;
+function initUtilGrid() { renderGrid('utilGrid', utilTable); }
+function utilInsert() {
+  const key = parseInt(document.getElementById('utilKey').value);
+  const val = parseInt(document.getElementById('utilVal').value);
+  if (isNaN(key)||isNaN(val)) return;
+  const res = htInsert(utilTable, key, val);
+  if (!res.updated && res.probe >= 0) {
+    utilCount++;
+    utilCollisions += res.cols;
+    utilTotalProbes += res.probes + 1;
+    utilInserts++;
+  }
+  renderGrid('utilGrid', utilTable, {active: res.probe});
+  updateUtilStats();
+  log('utilLog', `Inserted key ${key}→${val}, ${res.cols} collision(s), ${res.probes+1} probe(s)`, 'success');
+}
+function updateUtilStats() {
+  const empty = utilTable.filter(s => s.state === EMPTY).length;
+  const lf = utilCount / TABLE_SIZE;
+  document.getElementById('statFilled').textContent = utilCount;
+  document.getElementById('statEmpty').textContent = empty;
+  document.getElementById('statCollisions').textContent = utilCollisions;
+  document.getElementById('statLF').textContent = lf.toFixed(2);
+  document.getElementById('statSize').textContent = TABLE_SIZE;
+  document.getElementById('statAvgProbe').textContent = utilInserts > 0 ? (utilTotalProbes / utilInserts).toFixed(1) : '0.0';
+}
+function utilClear() {
+  utilTable = makeTable(TABLE_SIZE);
+  utilCount = 0; utilCollisions = 0; utilTotalProbes = 0; utilInserts = 0;
+  renderGrid('utilGrid', utilTable);
+  updateUtilStats();
+}
+
+// ================================================================
+// DELAY HELPER
+// ================================================================
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ================================================================
+// INIT PER SECTION
+// ================================================================
+function initSectionViz(n) {
+  const fns = {
+    0: ()=>{},
+    1: ()=>runHashDemo(),
+    3: ()=>initInsertGrid(),
+    4: ()=>initSearchGrid(),
+    5: ()=>initDeleteGrid(),
+    7: ()=>initCollisionGrid(),
+    8: ()=>initLPGrid(),
+    9: ()=>initQPGrid(),
+    10: ()=>initDHGrid(),
+    11: ()=>initRehashGrid(),
+    13: ()=>initTravGrid(),
+    15: ()=>initLFGrid(),
+    18: ()=>{ initUtilGrid(); updateUtilStats(); }
+  };
+  if (fns[n]) fns[n]();
+}
+
+// ================================================================
+// BOOT
+// ================================================================
+goSection(0);
+</script>
+</body>
+</html>

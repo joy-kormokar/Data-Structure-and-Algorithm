@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indexable Skip List — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090f;
+    --bg2: #0d1117;
+    --bg3: #141922;
+    --bg4: #1c2333;
+    --border: #232d3f;
+    --cyan: #38bdf8;
+    --cyan2: #0ea5e9;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --rose: #f87171;
+    --purple: #a78bfa;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --nav-w: 280px;
+    --radius: 10px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow-x: hidden; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--nav-w); min-width: var(--nav-w); height: 100vh; position: sticky; top: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden; z-index: 100;
+  }
+  .logo {
+    padding: 22px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo h1 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; color: var(--cyan); letter-spacing: .5px; line-height: 1.3; }
+  .logo p { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  #nav { flex: 1; overflow-y: auto; padding: 10px 0; }
+  #nav::-webkit-scrollbar { width: 4px; }
+  #nav::-webkit-scrollbar-track { background: transparent; }
+  #nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px; cursor: pointer; transition: all .2s;
+    border-left: 3px solid transparent; font-size: 13px; font-weight: 600; color: var(--text2);
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(56,189,248,.08); border-left-color: var(--cyan); color: var(--cyan); }
+  .nav-num { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text3); min-width: 20px; }
+  .nav-item.active .nav-num { color: var(--cyan2); }
+
+  /* ── MAIN ── */
+  #main { flex: 1; overflow-y: auto; min-width: 0; }
+  #main::-webkit-scrollbar { width: 6px; }
+  #main::-webkit-scrollbar-track { background: transparent; }
+  #main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── HERO ── */
+  #hero {
+    padding: 60px 60px 50px;
+    background: linear-gradient(135deg, #0d1117 0%, #0f172a 50%, #0a0f1e 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  #hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 70% at 80% 40%, rgba(56,189,248,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  #hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .4; }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.25); border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--cyan); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 18px; }
+  #hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px, 4vw, 48px); font-weight: 800; line-height: 1.15; color: #fff; }
+  #hero h1 span { color: var(--cyan); }
+  #hero p { max-width: 560px; margin-top: 14px; color: var(--text2); font-size: 15px; line-height: 1.7; }
+  .hero-stats { display: flex; gap: 28px; margin-top: 28px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; }
+  .stat-n { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--cyan); }
+  .stat-l { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* ── SECTION ── */
+  .section { padding: 48px 56px; border-bottom: 1px solid var(--border); }
+  .section:last-child { border-bottom: none; }
+  .sec-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 28px; }
+  .sec-num { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--cyan2); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.2); border-radius: 6px; padding: 4px 9px; margin-top: 3px; white-space: nowrap; }
+  .sec-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #fff; }
+  .sec-sub { color: var(--text2); font-size: 13.5px; margin-top: 4px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text3); border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ── THEORY ── */
+  .theory p { color: var(--text2); line-height: 1.8; font-size: 14.5px; margin-bottom: 12px; }
+  .theory p:last-child { margin-bottom: 0; }
+  .ops-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0; }
+  .op-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .op-card h4 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--amber); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+  .op-card ul { list-style: none; }
+  .op-card li { font-size: 13px; color: var(--text2); padding: 3px 0; display: flex; align-items: center; gap: 7px; }
+  .op-card li::before { content: '→'; color: var(--cyan); font-size: 11px; flex-shrink: 0; }
+  .info-box { background: rgba(52,211,153,.06); border: 1px solid rgba(52,211,153,.2); border-radius: var(--radius); padding: 14px 16px; margin: 14px 0; }
+  .info-box p { color: var(--green); margin: 0 !important; font-size: 13.5px; }
+  .warn-box { background: rgba(251,191,36,.06); border: 1px solid rgba(251,191,36,.2); border-radius: var(--radius); padding: 14px 16px; margin: 14px 0; }
+  .warn-box p { color: var(--amber); margin: 0 !important; font-size: 13.5px; }
+  .complexity-table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+  .complexity-table th { background: var(--bg4); color: var(--cyan); font-family: 'Syne', sans-serif; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 9px 14px; text-align: left; }
+  .complexity-table td { padding: 8px 14px; color: var(--text2); border-top: 1px solid var(--border); }
+  .complexity-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── CODE ── */
+  .code-wrap { background: #080c12; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--bg4); border-bottom: 1px solid var(--border); }
+  .code-lang { font-size: 11px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 1px; }
+  .copy-btn { font-size: 11px; font-weight: 700; color: var(--text3); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 5px; padding: 3px 10px; transition: all .2s; }
+  .copy-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+  pre { padding: 20px; overflow-x: auto; font-family: 'Space Mono', monospace; font-size: 12.5px; line-height: 1.75; color: #cdd6f4; }
+  pre::-webkit-scrollbar { height: 4px; }
+  pre::-webkit-scrollbar-track { background: transparent; }
+  pre::-webkit-scrollbar-thumb { background: var(--border); }
+  .kw { color: #cba6f7; } .fn { color: #89b4fa; } .ty { color: #89dceb; }
+  .cm { color: #585b70; font-style: italic; } .st { color: #a6e3a1; }
+  .nu { color: #fab387; } .pp { color: #f38ba8; }
+
+  /* ── ANALOGY ── */
+  .analogy-card { background: linear-gradient(135deg, rgba(56,189,248,.06) 0%, rgba(167,139,250,.06) 100%); border: 1px solid rgba(56,189,248,.15); border-radius: var(--radius); padding: 22px 24px; }
+  .analogy-card h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--cyan); margin-bottom: 10px; }
+  .analogy-card p { color: var(--text2); font-size: 14px; line-height: 1.8; margin-bottom: 10px; }
+  .analogy-card p:last-child { margin-bottom: 0; }
+  .use-cases { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .use-case { background: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.25); color: var(--purple); font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+
+  /* ── CANVAS VIZ ── */
+  .viz-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .viz-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg4); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .viz-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); font-size: 12px; font-weight: 700; padding: 5px 13px; border-radius: 6px; cursor: pointer; transition: all .2s; font-family: 'Nunito', sans-serif; }
+  .viz-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  .viz-btn.primary { background: rgba(56,189,248,.15); border-color: var(--cyan); color: var(--cyan); }
+  .viz-input { background: var(--bg2); border: 1px solid var(--border); color: var(--text); font-size: 12px; padding: 5px 10px; border-radius: 6px; width: 70px; font-family: 'Space Mono', monospace; }
+  .viz-input:focus { outline: none; border-color: var(--cyan); }
+  .viz-label { font-size: 12px; color: var(--text3); }
+  canvas.viz { width: 100%; display: block; }
+  .viz-status { padding: 8px 14px; font-family: 'Space Mono', monospace; font-size: 11px; color: var(--green); border-top: 1px solid var(--border); background: var(--bg4); min-height: 32px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    #sidebar { display: none; }
+    .section { padding: 32px 20px; }
+    #hero { padding: 40px 24px; }
+    .ops-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="logo">
+    <h1>Indexable Skip List</h1>
+    <p>Complete Learning Dashboard</p>
+  </div>
+  <div id="nav">
+    <div class="nav-item active" onclick="scrollTo('hero')"><span class="nav-num">00</span>Introduction</div>
+    <div class="nav-item" onclick="scrollTo('s1')"><span class="nav-num">01</span>Initialization</div>
+    <div class="nav-item" onclick="scrollTo('s2')"><span class="nav-num">02</span>Insertion</div>
+    <div class="nav-item" onclick="scrollTo('s3')"><span class="nav-num">03</span>Deletion</div>
+    <div class="nav-item" onclick="scrollTo('s4')"><span class="nav-num">04</span>Search</div>
+    <div class="nav-item" onclick="scrollTo('s5')"><span class="nav-num">05</span>Positional Access</div>
+    <div class="nav-item" onclick="scrollTo('s6')"><span class="nav-num">06</span>Update</div>
+    <div class="nav-item" onclick="scrollTo('s7')"><span class="nav-num">07</span>Traversal</div>
+    <div class="nav-item" onclick="scrollTo('s8')"><span class="nav-num">08</span>Level Management</div>
+    <div class="nav-item" onclick="scrollTo('s9')"><span class="nav-num">09</span>Width / Span Mgmt</div>
+    <div class="nav-item" onclick="scrollTo('s10')"><span class="nav-num">10</span>Pointer Management</div>
+    <div class="nav-item" onclick="scrollTo('s11')"><span class="nav-num">11</span>Utility Operations</div>
+    <div class="nav-item" onclick="scrollTo('s12')"><span class="nav-num">12</span>Memory Management</div>
+    <div class="nav-item" onclick="scrollTo('s13')"><span class="nav-num">13</span>Analytical Operations</div>
+    <div class="nav-item" onclick="scrollTo('s14')"><span class="nav-num">14</span>Iterator Operations</div>
+    <div class="nav-item" onclick="scrollTo('s15')"><span class="nav-num">15</span>Advanced Structural</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-badge">📚 Data Structures · C Language</div>
+    <h1>Indexable <span>Skip List</span><br>Mastery Guide</h1>
+    <p>A complete beginner-to-advanced guide covering every operation, suboperation, visualization, and C code example for the Indexable Skip List data structure.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-n">15</span><span class="stat-l">Operation Categories</span></div>
+      <div class="stat"><span class="stat-n">60+</span><span class="stat-l">Suboperations</span></div>
+      <div class="stat"><span class="stat-n">O(log n)</span><span class="stat-l">Average Complexity</span></div>
+      <div class="stat"><span class="stat-n">Live</span><span class="stat-l">Interactive Visuals</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 1: INITIALIZATION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="sec-header">
+    <span class="sec-num">01</span>
+    <div><div class="sec-title">Initialization Operations</div><div class="sec-sub">Creating and setting up the Indexable Skip List from scratch</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s1t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s1v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s1c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s1a')">💡 Analogy</div>
+  </div>
+
+  <div id="s1t" class="tab-pane active theory">
+    <p>An <strong style="color:var(--cyan)">Indexable Skip List</strong> is a probabilistic data structure that extends a regular linked list with multiple "express lanes" (levels). Unlike a regular skip list, it also tracks <strong style="color:var(--amber)">width values (spans)</strong> at each pointer, enabling O(log n) access by index — just like an array, but with dynamic insertion/deletion.</p>
+    <p>Initialization sets up the skeleton: a special <strong>header node</strong> that acts as the entry point, forward pointer arrays, width/span arrays, probability factor (usually 0.5), and the maximum level cap.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Create Indexable Skip List</li>
+          <li>Initialize Header Node</li>
+          <li>Set Maximum Level</li>
+          <li>Define Probability Factor</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Allocate Header Node</li>
+          <li>Initialize Forward Pointers</li>
+          <li>Initialize Width/Span Arrays</li>
+          <li>Set Current Level</li>
+          <li>Assign NULL References</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box"><p>💡 <strong>Key Insight:</strong> The header node is a dummy node that never holds real data. All levels of the skip list start from the header. This simplifies insertion and deletion logic considerably.</p></div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Time</th><th>Space</th></tr>
+      <tr><td>Create Skip List</td><td>O(max_level)</td><td>O(max_level)</td></tr>
+      <tr><td>Initialize Header</td><td>O(max_level)</td><td>O(max_level)</td></tr>
+      <tr><td>Total Initialization</td><td>O(max_level)</td><td>O(max_level)</td></tr>
+    </table>
+    <p>The <strong>maximum level</strong> is typically set to log₂(expected_n). For 1 million elements, max_level ≈ 20. The probability factor p = 0.5 means each node has a 50% chance of being promoted to the next level.</p>
+  </div>
+
+  <div id="s1v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <span class="viz-label">Max Level:</span>
+        <input type="number" class="viz-input" id="s1-maxlvl" value="4" min="2" max="6">
+        <button class="viz-btn primary" onclick="drawInit()">🔨 Create Skip List</button>
+        <button class="viz-btn" onclick="s1Step()">▶ Animate Steps</button>
+      </div>
+      <canvas class="viz" id="s1canvas" height="260"></canvas>
+      <div class="viz-status" id="s1status">Click "Create Skip List" to visualize the initialization process.</div>
+    </div>
+  </div>
+
+  <div id="s1c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Indexable Skip List — Initialization ===== */</span>
+<span class="pp">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+<span class="pp">#include</span> <span class="st">&lt;stdlib.h&gt;</span>
+<span class="pp">#include</span> <span class="st">&lt;time.h&gt;</span>
+
+<span class="pp">#define</span> MAX_LEVEL  <span class="nu">16</span>   <span class="cm">/* maximum number of levels */</span>
+<span class="pp">#define</span> PROBABILITY <span class="nu">0.5</span> <span class="cm">/* coin-flip probability   */</span>
+
+<span class="cm">/* ── Node Structure ── */</span>
+<span class="kw">typedef struct</span> Node {
+    <span class="kw">int</span> key;                        <span class="cm">/* the stored value        */</span>
+    <span class="kw">struct</span> Node *forward[MAX_LEVEL]; <span class="cm">/* forward pointer array   */</span>
+    <span class="kw">int</span> width[MAX_LEVEL];            <span class="cm">/* span/width per level    */</span>
+} Node;
+
+<span class="cm">/* ── Skip List Structure ── */</span>
+<span class="kw">typedef struct</span> {
+    Node  *header;      <span class="cm">/* dummy head node  */</span>
+    <span class="kw">int</span>    level;       <span class="cm">/* current max used level */</span>
+    <span class="kw">int</span>    size;        <span class="cm">/* total element count    */</span>
+    <span class="kw">float</span>  probability; <span class="cm">/* promotion probability  */</span>
+} SkipList;
+
+<span class="cm">/* ── Allocate a New Node ── */</span>
+Node* <span class="fn">createNode</span>(<span class="kw">int</span> key) {
+    Node *n = (<span class="ty">Node*</span>)malloc(<span class="kw">sizeof</span>(Node));
+    <span class="kw">if</span> (!n) { printf(<span class="st">"Memory error!\n"</span>); exit(<span class="nu">1</span>); }
+    n->key = key;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; MAX_LEVEL; i++) {
+        n->forward[i] = NULL;   <span class="cm">/* no next node yet */</span>
+        n->width[i]   = <span class="nu">0</span>;     <span class="cm">/* width is 0       */</span>
+    }
+    <span class="kw">return</span> n;
+}
+
+<span class="cm">/* ── Create the Skip List ── */</span>
+SkipList* <span class="fn">createSkipList</span>() {
+    SkipList *sl = (<span class="ty">SkipList*</span>)malloc(<span class="kw">sizeof</span>(SkipList));
+    sl->header      = <span class="fn">createNode</span>(-<span class="nu">1</span>); <span class="cm">/* dummy header key = -1 */</span>
+    sl->level       = <span class="nu">0</span>;             <span class="cm">/* list starts empty     */</span>
+    sl->size        = <span class="nu">0</span>;
+    sl->probability = PROBABILITY;
+    srand(time(NULL));               <span class="cm">/* seed random levels    */</span>
+    printf(<span class="st">"Skip list created! Header at %p\n"</span>, sl->header);
+    <span class="kw">return</span> sl;
+}
+
+<span class="cm">/* ── Main ── */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    SkipList *sl = <span class="fn">createSkipList</span>();
+    printf(<span class="st">"Level: %d, Size: %d\n"</span>, sl->level, sl->size);
+    <span class="kw">return</span> <span class="nu">0</span>;
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s1a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🏢 Real-Life Analogy: A Multi-Floor Library Index</h3>
+      <p>Imagine a huge library. On the <strong>ground floor</strong>, every single book is in order (this is Level 0 — the base linked list). On the <strong>2nd floor</strong>, only every other bookshelf is accessible (Level 1 — fewer pointers, faster jumps). On the <strong>3rd floor</strong>, only every 4th bookshelf is reachable (Level 2). And so on.</p>
+      <p>When you <strong>initialize</strong> the library, you first build the reception desk (header node) with express-elevator cards for every floor. No books are shelved yet — but the structure is ready to receive them efficiently.</p>
+      <p>The <strong>width/span</strong> on each level tells you: "If I take this express elevator, I will skip over exactly N books." This is what makes it <em>indexable</em> — you can jump to the 500th book without reading the first 499!</p>
+      <div class="use-cases">
+        <span class="use-case">Database Indexing</span>
+        <span class="use-case">Redis Sorted Sets</span>
+        <span class="use-case">Leaderboards</span>
+        <span class="use-case">Time-Series Storage</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 2: INSERTION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="sec-header">
+    <span class="sec-num">02</span>
+    <div><div class="sec-title">Insertion Operations</div><div class="sec-sub">Adding elements with correct pointer and width updates</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s2t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s2v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s2c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s2a')">💡 Analogy</div>
+  </div>
+
+  <div id="s2t" class="tab-pane active theory">
+    <p>Insertion is the most complex operation. It must: find the correct position at every level, update the forward pointer chain, and recalculate all width/span values so positional indexing remains accurate.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Insert Element</li>
+          <li>Insert at Position</li>
+          <li>Insert Key-Value Pair</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Search Insert Position</li>
+          <li>Traverse Levels Top to Bottom</li>
+          <li>Maintain Update Array</li>
+          <li>Generate Random Level</li>
+          <li>Create New Node</li>
+          <li>Update Forward Pointers</li>
+          <li>Update Width/Span Values</li>
+          <li>Shift Positional Offsets</li>
+          <li>Adjust Current Level</li>
+          <li>Increase Node Count</li>
+        </ul>
+      </div>
+    </div>
+    <p>The <code style="color:var(--amber);background:var(--bg4);padding:2px 6px;border-radius:4px">update[]</code> array stores the last node at each level that falls to the left of the new node. The <code style="color:var(--amber);background:var(--bg4);padding:2px 6px;border-radius:4px">rank[]</code> array tracks how many nodes each update node is from the header — this is critical for computing new widths.</p>
+    <div class="warn-box"><p>⚠️ <strong>Width Update Rule:</strong> When inserting at level i, the new node's width at level i = (width of the update[i] node at level i) − (rank[new] − rank[update[i]]). All bypassed upper-level pointers get their width increased by 1.</p></div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Average</th><th>Worst</th></tr>
+      <tr><td>Insert Element</td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>Insert at Position</td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>Random Level Generation</td><td>O(log n)</td><td>O(max_level)</td></tr>
+    </table>
+  </div>
+
+  <div id="s2v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <span class="viz-label">Value:</span>
+        <input type="number" class="viz-input" id="s2-val" value="15" min="1" max="99">
+        <button class="viz-btn primary" onclick="vizInsert()">➕ Insert</button>
+        <button class="viz-btn" onclick="vizReset2()">🔄 Reset</button>
+      </div>
+      <canvas class="viz" id="s2canvas" height="280"></canvas>
+      <div class="viz-status" id="s2status">Insert values to build the skip list. Try: 10, 20, 30, 40, 50...</div>
+    </div>
+  </div>
+
+  <div id="s2c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Insertion with Width/Span Update ===== */</span>
+
+<span class="cm">/* Generate a random level using coin flips */</span>
+<span class="kw">int</span> <span class="fn">randomLevel</span>(SkipList *sl) {
+    <span class="kw">int</span> lvl = <span class="nu">1</span>;
+    <span class="kw">while</span> ((<span class="kw">float</span>)rand() / RAND_MAX &lt; sl->probability
+           &amp;&amp; lvl &lt; MAX_LEVEL)
+        lvl++;
+    <span class="kw">return</span> lvl;
+}
+
+<span class="cm">/* Insert a key into the Indexable Skip List */</span>
+<span class="kw">void</span> <span class="fn">insert</span>(SkipList *sl, <span class="kw">int</span> key) {
+    Node *update[MAX_LEVEL]; <span class="cm">/* predecessor at each level */</span>
+    <span class="kw">int</span>   rank[MAX_LEVEL];   <span class="cm">/* rank of each predecessor  */</span>
+    Node *cur = sl->header;
+    <span class="kw">int</span>   pos = <span class="nu">0</span>;           <span class="cm">/* current position count    */</span>
+
+    <span class="cm">/* Step 1: Traverse from top level down, recording update nodes */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i >= <span class="nu">0</span>; i--) {
+        rank[i] = (i == sl->level - <span class="nu">1</span>) ? <span class="nu">0</span> : rank[i + <span class="nu">1</span>];
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp; cur->forward[i]->key &lt; key) {
+            rank[i] += cur->width[i]; <span class="cm">/* count skipped nodes */</span>
+            cur = cur->forward[i];
+        }
+        update[i] = cur; <span class="cm">/* save the predecessor node */</span>
+    }
+
+    <span class="cm">/* Step 2: Pick a random height for the new node */</span>
+    <span class="kw">int</span> newLevel = <span class="fn">randomLevel</span>(sl);
+
+    <span class="cm">/* Step 3: If new level exceeds current, extend update array */</span>
+    <span class="kw">if</span> (newLevel &gt; sl->level) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = sl->level; i &lt; newLevel; i++) {
+            rank[i]    = <span class="nu">0</span>;
+            update[i]  = sl->header;
+            update[i]->width[i] = sl->size; <span class="cm">/* entire list width */</span>
+        }
+        sl->level = newLevel;
+    }
+
+    <span class="cm">/* Step 4: Create the new node */</span>
+    Node *newNode = <span class="fn">createNode</span>(key);
+
+    <span class="cm">/* Step 5: Splice new node into each level and fix widths */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; newLevel; i++) {
+        newNode->forward[i]    = update[i]->forward[i];
+        update[i]->forward[i]  = newNode;
+
+        <span class="cm">/* Width of new node = predecessor's old width - rank gap */</span>
+        newNode->width[i]      = update[i]->width[i]
+                                 - (rank[<span class="nu">0</span>] - rank[i]);
+        update[i]->width[i]    = rank[<span class="nu">0</span>] - rank[i] + <span class="nu">1</span>;
+    }
+
+    <span class="cm">/* Step 6: Update skipped levels' widths (add 1 for new node) */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = newLevel; i &lt; sl->level; i++)
+        update[i]->width[i]++;
+
+    sl->size++; <span class="cm">/* increment total count */</span>
+    printf(<span class="st">"Inserted %d at level %d\n"</span>, key, newLevel);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s2a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🚂 Real-Life Analogy: Adding a New Train Station</h3>
+      <p>Imagine a railway line where every station is a node. There are <strong>local trains</strong> (level 0, stop everywhere), <strong>express trains</strong> (level 1, stop every 2nd station), and <strong>bullet trains</strong> (level 2, stop every 4th). Each train has a ticket that says "my next stop is X stations away" — this is the <em>width/span</em>.</p>
+      <p>When you add a new station, you must update the tickets: the local train now shows an extra stop, the express train's skip count changes, and if the new station gets a bullet-train platform (random coin flip), you create a new bullet-train route through it and update all related tickets.</p>
+      <div class="use-cases">
+        <span class="use-case">Ordered Set Insert</span>
+        <span class="use-case">Redis ZADD</span>
+        <span class="use-case">Priority Queues</span>
+        <span class="use-case">Game Score Boards</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 3: DELETION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="sec-header">
+    <span class="sec-num">03</span>
+    <div><div class="sec-title">Deletion Operations</div><div class="sec-sub">Removing elements while maintaining structural integrity</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s3t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s3v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s3c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s3a')">💡 Analogy</div>
+  </div>
+
+  <div id="s3t" class="tab-pane active theory">
+    <p>Deletion is the mirror image of insertion. You find the target node, remove it from every level it exists in, merge the widths back, and free the memory. The key challenge is correctly updating the positional offsets so rank queries remain accurate after removal.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Delete Element</li>
+          <li>Delete by Position</li>
+          <li>Delete Key</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Search Target Node</li>
+          <li>Traverse Levels</li>
+          <li>Maintain Update Array</li>
+          <li>Remove Forward Links</li>
+          <li>Update Width/Span Values</li>
+          <li>Shift Positional Offsets</li>
+          <li>Delete Node Memory</li>
+          <li>Reduce Current Level</li>
+          <li>Decrease Node Count</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box"><p>💡 After deletion, if the topmost levels of the header have NULL forward pointers, reduce <code>sl→level</code> to keep the structure clean and avoid wasteful traversal at empty levels.</p></div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Average</th><th>Worst</th></tr>
+      <tr><td>Delete by Key</td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>Delete by Position</td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>Free Node Memory</td><td>O(1)</td><td>O(1)</td></tr>
+    </table>
+  </div>
+
+  <div id="s3v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <span class="viz-label">Delete Key:</span>
+        <input type="number" class="viz-input" id="s3-val" value="30" min="1" max="99">
+        <button class="viz-btn primary" onclick="vizDelete()">🗑️ Delete</button>
+        <button class="viz-btn" onclick="vizReset3()">🔄 Reset</button>
+      </div>
+      <canvas class="viz" id="s3canvas" height="280"></canvas>
+      <div class="viz-status" id="s3status">A sample list is pre-loaded. Enter a key and click Delete.</div>
+    </div>
+  </div>
+
+  <div id="s3c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Deletion with Width Merge ===== */</span>
+
+<span class="kw">void</span> <span class="fn">deleteKey</span>(SkipList *sl, <span class="kw">int</span> key) {
+    Node *update[MAX_LEVEL];
+    Node *cur = sl->header;
+
+    <span class="cm">/* Step 1: Find predecessors at each level */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp; cur->forward[i]->key &lt; key)
+            cur = cur->forward[i];
+        update[i] = cur;
+    }
+
+    <span class="cm">/* Step 2: Check if the key actually exists at level 0 */</span>
+    Node *target = update[<span class="nu">0</span>]->forward[<span class="nu">0</span>];
+    <span class="kw">if</span> (!target || target->key != key) {
+        printf(<span class="st">"Key %d not found!\n"</span>, key);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 3: Remove target from each level and merge widths */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; sl->level; i++) {
+        <span class="kw">if</span> (update[i]->forward[i] != target) {
+            <span class="cm">/* target doesn't exist at this level — just decrease width */</span>
+            update[i]->width[i]--;
+        } <span class="kw">else</span> {
+            <span class="cm">/* merge: predecessor's width absorbs target's width minus 1 */</span>
+            update[i]->width[i]  += target->width[i] - <span class="nu">1</span>;
+            update[i]->forward[i] = target->forward[i];
+        }
+    }
+
+    <span class="cm">/* Step 4: Remove empty top levels */</span>
+    <span class="kw">while</span> (sl->level &gt; <span class="nu">1</span> &amp;&amp;
+           sl->header->forward[sl->level - <span class="nu">1</span>] == NULL)
+        sl->level--;
+
+    <span class="cm">/* Step 5: Free memory and update count */</span>
+    free(target);
+    sl->size--;
+    printf(<span class="st">"Deleted key %d. New size: %d\n"</span>, key, sl->size);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s3a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🧱 Real-Life Analogy: Removing a Floor from a Building</h3>
+      <p>Imagine floors of a building are connected by elevators. Removing a floor means you have to reconnect the elevators that previously went through that floor. For each elevator (level), you redirect its cable from the floor above to the floor below the removed one, and update the "distance" reading on each elevator so passengers still know how many floors they'll skip.</p>
+      <p>If after removal the top floor of the building is empty (no one up there), you demolish that floor entirely — just like reducing <code>sl→level</code> after deletion when top levels become empty.</p>
+      <div class="use-cases">
+        <span class="use-case">Eviction Policies</span>
+        <span class="use-case">LRU Cache</span>
+        <span class="use-case">Stream Processing</span>
+        <span class="use-case">Event Scheduling</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 4: SEARCH -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="sec-header">
+    <span class="sec-num">04</span>
+    <div><div class="sec-title">Search Operations</div><div class="sec-sub">Finding elements by key or index with logarithmic speed</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s4t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s4v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s4c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s4a')">💡 Analogy</div>
+  </div>
+
+  <div id="s4t" class="tab-pane active theory">
+    <p>Search in a skip list begins at the highest level (express lane) and moves forward as long as the next key is ≤ the target. When no more forward progress is possible, it drops one level down and continues. It's like a greedy staircase descent.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Search Key</li>
+          <li>Search by Index</li>
+          <li>Search Value</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Start from Highest Level</li>
+          <li>Move Forward in Level</li>
+          <li>Track Current Position</li>
+          <li>Drop to Lower Level</li>
+          <li>Compare Keys</li>
+          <li>Detect Key Found</li>
+          <li>Detect Missing Key</li>
+          <li>Return Node/Data</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box"><p>💡 <strong>Search by Index</strong> uses the width values: if you want the 7th element, traverse levels accumulating widths until you've counted 7 steps. This is the key feature that makes it "indexable"!</p></div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Average</th><th>Worst</th></tr>
+      <tr><td>Search by Key</td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>Search by Index</td><td>O(log n)</td><td>O(n)</td></tr>
+      <tr><td>Search Value (scan)</td><td>O(n)</td><td>O(n)</td></tr>
+    </table>
+  </div>
+
+  <div id="s4v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <span class="viz-label">Search Key:</span>
+        <input type="number" class="viz-input" id="s4-val" value="40">
+        <button class="viz-btn primary" onclick="vizSearch()">🔍 Search</button>
+        <button class="viz-btn" onclick="vizReset4()">🔄 Reset</button>
+      </div>
+      <canvas class="viz" id="s4canvas" height="280"></canvas>
+      <div class="viz-status" id="s4status">A pre-loaded list is ready. Enter a key and watch the search path.</div>
+    </div>
+  </div>
+
+  <div id="s4c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Search Operations ===== */</span>
+
+<span class="cm">/* Search by key — returns the node or NULL */</span>
+Node* <span class="fn">searchKey</span>(SkipList *sl, <span class="kw">int</span> key) {
+    Node *cur = sl->header;
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="cm">/* move forward while next key is smaller */</span>
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp; cur->forward[i]->key &lt; key)
+            cur = cur->forward[i];
+    }
+    <span class="cm">/* after dropping to level 0, check the next node */</span>
+    cur = cur->forward[<span class="nu">0</span>];
+    <span class="kw">if</span> (cur &amp;&amp; cur->key == key) {
+        printf(<span class="st">"Found: %d\n"</span>, cur->key);
+        <span class="kw">return</span> cur;
+    }
+    printf(<span class="st">"Key %d not found\n"</span>, key);
+    <span class="kw">return</span> NULL;
+}
+
+<span class="cm">/* Search by index (1-based) — O(log n) using widths */</span>
+Node* <span class="fn">searchByIndex</span>(SkipList *sl, <span class="kw">int</span> index) {
+    <span class="kw">if</span> (index &lt; <span class="nu">1</span> || index &gt; sl->size) {
+        printf(<span class="st">"Index out of range\n"</span>);
+        <span class="kw">return</span> NULL;
+    }
+    Node *cur = sl->header;
+    <span class="kw">int</span>   remaining = index; <span class="cm">/* steps left to count */</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp;
+               cur->width[i] &lt;= remaining) {
+            remaining -= cur->width[i]; <span class="cm">/* subtract span */</span>
+            cur = cur->forward[i];
+        }
+    }
+    printf(<span class="st">"Index %d = key %d\n"</span>, index, cur->key);
+    <span class="kw">return</span> cur;
+}
+
+<span class="cm">/* Detect if a key is missing (returns 1 if absent) */</span>
+<span class="kw">int</span> <span class="fn">isMissing</span>(SkipList *sl, <span class="kw">int</span> key) {
+    <span class="kw">return</span> <span class="fn">searchKey</span>(sl, key) == NULL;
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s4a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>✈️ Real-Life Analogy: Airport Express + Local Bus</h3>
+      <p>You're travelling from city A to city Z. You first take a <strong>direct flight</strong> (highest level), which skips dozens of cities, landing you close to Z. Then you take an <strong>express train</strong> (middle level) to get closer. Finally, you take a <strong>local bus</strong> (level 0) to your exact street.</p>
+      <p>Searching by <em>index</em> is like saying "I want the 50th city on the map" — you use the flight's distance gauge (width) to know how many cities each hop covers, and stop precisely when you've counted 50.</p>
+      <div class="use-cases">
+        <span class="use-case">Redis ZRANK</span>
+        <span class="use-case">Binary Search Replacement</span>
+        <span class="use-case">Range Queries</span>
+        <span class="use-case">Auto-complete</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 5: POSITIONAL ACCESS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="sec-header">
+    <span class="sec-num">05</span>
+    <div><div class="sec-title">Positional Access Operations</div><div class="sec-sub">O(log n) random access by numeric index — the superpower of indexable skip lists</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s5t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s5v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s5c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s5a')">💡 Analogy</div>
+  </div>
+
+  <div id="s5t" class="tab-pane active theory">
+    <p>The "indexable" in indexable skip list comes entirely from this section. By storing a <strong>width (span)</strong> on every forward pointer — representing how many base-level nodes that pointer skips — we can compute positional rank queries in O(log n).</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Access by Index</li>
+          <li>Find Position of Key</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Traverse Using Width Values</li>
+          <li>Count Node Offsets</li>
+          <li>Locate Exact Position</li>
+          <li>Return Indexed Element</li>
+          <li>Compute Rank</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong style="color:var(--amber)">How width works:</strong> If a level-2 pointer skips over 4 nodes at level 0, its width = 4. To get the 7th element: start with remaining=7, take a level-2 hop of width 4 → remaining=3, take a level-1 hop of width 2 → remaining=1, take a level-0 hop → you've arrived at index 7.</p>
+    <div class="info-box"><p>💡 <strong>Finding Rank of a Key:</strong> Accumulate widths while traversing to the key. The total accumulated width is the rank (1-based position) of that key in the sorted list.</p></div>
+  </div>
+
+  <div id="s5v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <span class="viz-label">Get Index:</span>
+        <input type="number" class="viz-input" id="s5-idx" value="3" min="1">
+        <button class="viz-btn primary" onclick="vizAccess()">📍 Access by Index</button>
+        <span class="viz-label" style="margin-left:16px">Find Rank of:</span>
+        <input type="number" class="viz-input" id="s5-key" value="40">
+        <button class="viz-btn" onclick="vizRank()">🏅 Get Rank</button>
+      </div>
+      <canvas class="viz" id="s5canvas" height="280"></canvas>
+      <div class="viz-status" id="s5status">Use Access by Index or Get Rank to see width traversal in action.</div>
+    </div>
+  </div>
+
+  <div id="s5c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Positional Access & Rank Computation ===== */</span>
+
+<span class="cm">/* Access element at 1-based index using accumulated widths */</span>
+Node* <span class="fn">accessByIndex</span>(SkipList *sl, <span class="kw">int</span> index) {
+    <span class="kw">if</span> (index &lt; <span class="nu">1</span> || index &gt; sl->size) <span class="kw">return</span> NULL;
+
+    Node *cur       = sl->header;
+    <span class="kw">int</span>   remaining = index;   <span class="cm">/* positions left to count */</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="cm">/* take the hop if it doesn't overshoot */</span>
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp;
+               cur->width[i] &lt;= remaining) {
+            remaining -= cur->width[i];
+            cur = cur->forward[i];
+            printf(<span class="st">"  Hop at level %d → node %d (rem=%d)\n"</span>,
+                   i, cur->key, remaining);
+        }
+    }
+    <span class="kw">return</span> cur; <span class="cm">/* remaining == 0 means exact node found */</span>
+}
+
+<span class="cm">/* Find 1-based rank of a given key */</span>
+<span class="kw">int</span> <span class="fn">getRank</span>(SkipList *sl, <span class="kw">int</span> key) {
+    Node *cur  = sl->header;
+    <span class="kw">int</span>   rank = <span class="nu">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp;
+               cur->forward[i]->key &lt;= key) {
+            rank += cur->width[i];  <span class="cm">/* accumulate skipped nodes */</span>
+            cur   = cur->forward[i];
+        }
+        <span class="kw">if</span> (cur->key == key) {
+            printf(<span class="st">"Rank of %d is %d\n"</span>, key, rank);
+            <span class="kw">return</span> rank;
+        }
+    }
+    printf(<span class="st">"Key %d not found\n"</span>, key);
+    <span class="kw">return</span> -<span class="nu">1</span>; <span class="cm">/* not found */</span>
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s5a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>📚 Real-Life Analogy: Table of Contents in a Book</h3>
+      <p>A Table of Contents in a book is an indexable skip list of chapters. Each entry says "Chapter 5 starts on page 142." You don't flip through 141 pages — you jump directly. The page numbers ARE the widths/spans.</p>
+      <p><strong>Finding rank</strong> is like asking: "On which page does Section 3.2 start?" You add up page spans from the table of contents until you reach that section.</p>
+      <div class="use-cases">
+        <span class="use-case">Redis ZRANGE</span>
+        <span class="use-case">Rank Queries</span>
+        <span class="use-case">Percentile Lookup</span>
+        <span class="use-case">Ordered Statistics</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 6: UPDATE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="sec-header">
+    <span class="sec-num">06</span>
+    <div><div class="sec-title">Update Operations</div><div class="sec-sub">Modifying stored values without disrupting structure</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s6t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s6c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s6a')">💡 Analogy</div>
+  </div>
+
+  <div id="s6t" class="tab-pane active theory">
+    <p>Update modifies the value stored in an existing node. Since the skip list is keyed and sorted, we only update the <em>value</em> (satellite data), not the key — changing a key would break sorted order. If you need to change the key, delete and re-insert.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Update Existing Value</li>
+          <li>Replace Data</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Search Target Node</li>
+          <li>Modify Stored Value</li>
+          <li>Update Position Metadata</li>
+          <li>Replace Old Value</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn-box"><p>⚠️ <strong>Key vs Value:</strong> In a key-value skip list, keys define ordering and are immutable after insertion. Only the associated value (satellite data) can be safely updated in-place.</p></div>
+  </div>
+
+  <div id="s6c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Update Operations (Key-Value Version) ===== */</span>
+
+<span class="kw">typedef struct</span> KVNode {
+    <span class="kw">int</span>   key;
+    <span class="kw">char</span>  value[<span class="nu">64</span>];          <span class="cm">/* satellite data */</span>
+    <span class="kw">struct</span> KVNode *forward[MAX_LEVEL];
+    <span class="kw">int</span>   width[MAX_LEVEL];
+} KVNode;
+
+<span class="cm">/* Search for a node by key, then modify its value */</span>
+<span class="kw">int</span> <span class="fn">updateValue</span>(SkipList *sl, <span class="kw">int</span> key, <span class="kw">const char</span> *newVal) {
+    KVNode *cur = (KVNode*)sl->header;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp;
+               cur->forward[i]->key &lt; key)
+            cur = cur->forward[i];
+    }
+    cur = cur->forward[<span class="nu">0</span>];
+
+    <span class="kw">if</span> (!cur || cur->key != key) {
+        printf(<span class="st">"Key %d not found for update\n"</span>, key);
+        <span class="kw">return</span> <span class="nu">0</span>; <span class="cm">/* failure */</span>
+    }
+
+    <span class="cm">/* Replace old value with new value in-place */</span>
+    printf(<span class="st">"Old value: %s\n"</span>, cur->value);
+    snprintf(cur->value, <span class="kw">sizeof</span>(cur->value), <span class="st">"%s"</span>, newVal);
+    printf(<span class="st">"Updated key %d → \"%s\"\n"</span>, key, cur->value);
+    <span class="kw">return</span> <span class="nu">1</span>; <span class="cm">/* success */</span>
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s6a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>📝 Real-Life Analogy: Updating a Price Tag</h3>
+      <p>In a sorted price list, the <em>order</em> (the key — the price slot number) stays the same, but the <em>label</em> (the product description) can be changed. You search for shelf #42, pull out the tag, write the new description, and put it back — the shelf order never changes.</p>
+      <div class="use-cases">
+        <span class="use-case">In-place Score Update</span>
+        <span class="use-case">Metadata Replacement</span>
+        <span class="use-case">Cache Value Refresh</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 7: TRAVERSAL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="sec-header">
+    <span class="sec-num">07</span>
+    <div><div class="sec-title">Traversal Operations</div><div class="sec-sub">Visiting every node in order or level by level</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s7t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s7v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s7c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s7a')">💡 Analogy</div>
+  </div>
+
+  <div id="s7t" class="tab-pane active theory">
+    <p>Traversal walks through nodes to print, display, or collect them. <strong>Full traversal</strong> always uses level 0 (the base lane) since it contains every node. <strong>Level-wise traversal</strong> visits only nodes present at a specific level — useful for debugging or displaying the skip list structure.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Traverse Entire Skip List</li>
+          <li>Traverse Specific Level</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Visit Nodes Sequentially</li>
+          <li>Move Through Forward Links</li>
+          <li>Print Keys</li>
+          <li>Print Values</li>
+          <li>Display Width Information</li>
+          <li>Show Level-wise Structure</li>
+        </ul>
+      </div>
+    </div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Time</th></tr>
+      <tr><td>Full Traversal (level 0)</td><td>O(n)</td></tr>
+      <tr><td>Single Level Traversal</td><td>O(n/2^i) avg for level i</td></tr>
+      <tr><td>Print all levels</td><td>O(n log n)</td></tr>
+    </table>
+  </div>
+
+  <div id="s7v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <button class="viz-btn primary" onclick="vizTraverse()">▶ Animate Traversal (Level 0)</button>
+        <button class="viz-btn" onclick="vizTraverseAll()">📊 Show All Levels</button>
+        <button class="viz-btn" onclick="vizReset7()">🔄 Reset</button>
+      </div>
+      <canvas class="viz" id="s7canvas" height="280"></canvas>
+      <div class="viz-status" id="s7status">Click Animate Traversal to see the base-level walk.</div>
+    </div>
+  </div>
+
+  <div id="s7c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Traversal Operations ===== */</span>
+
+<span class="cm">/* Full traversal — always on level 0 (complete list) */</span>
+<span class="kw">void</span> <span class="fn">traverseAll</span>(SkipList *sl) {
+    Node *cur = sl->header->forward[<span class="nu">0</span>]; <span class="cm">/* skip dummy header */</span>
+    printf(<span class="st">"Full list: "</span>);
+    <span class="kw">while</span> (cur) {
+        printf(<span class="st">"%d "</span>, cur->key);
+        cur = cur->forward[<span class="nu">0</span>];           <span class="cm">/* move to next node */</span>
+    }
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* Traverse a specific level and show widths */</span>
+<span class="kw">void</span> <span class="fn">traverseLevel</span>(SkipList *sl, <span class="kw">int</span> level) {
+    <span class="kw">if</span> (level &lt; <span class="nu">0</span> || level &gt;= sl->level) {
+        printf(<span class="st">"Invalid level\n"</span>); <span class="kw">return</span>;
+    }
+    Node *cur = sl->header;
+    printf(<span class="st">"Level %d: [HDR]"</span>, level);
+    <span class="kw">while</span> (cur->forward[level]) {
+        printf(<span class="st">" -(%d)→ [%d]"</span>,
+               cur->width[level],
+               cur->forward[level]->key);
+        cur = cur->forward[level];
+    }
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* Show the entire skip list structure (all levels) */</span>
+<span class="kw">void</span> <span class="fn">displaySkipList</span>(SkipList *sl) {
+    printf(<span class="st">"\n=== Skip List (size=%d, level=%d) ===\n"</span>,
+           sl->size, sl->level);
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--)
+        <span class="fn">traverseLevel</span>(sl, i);
+    printf(<span class="st">"=====================================\n"</span>);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s7a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🚶 Real-Life Analogy: Walking a City vs Taking the Metro</h3>
+      <p><strong>Full traversal</strong> (level 0) is like walking every street — you pass every single house. <strong>Level traversal</strong> is like riding the metro: at level 1 you stop at every 2nd station; at level 2, every 4th. You see the structure of the city from different "altitudes."</p>
+      <div class="use-cases">
+        <span class="use-case">Debugging</span>
+        <span class="use-case">Serialization</span>
+        <span class="use-case">Sorted Export</span>
+        <span class="use-case">Range Scan</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 8: LEVEL MANAGEMENT -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="sec-header">
+    <span class="sec-num">08</span>
+    <div><div class="sec-title">Level Management Operations</div><div class="sec-sub">Growing and shrinking the skip list's height dynamically</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s8t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s8c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s8a')">💡 Analogy</div>
+  </div>
+
+  <div id="s8t" class="tab-pane active theory">
+    <p>The <em>current level</em> of a skip list is dynamic — it grows when a new node gets promoted to a level higher than current, and shrinks when the topmost level(s) become empty after deletion. Proper level management avoids wasted traversal through empty levels.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Manage Levels</li>
+          <li>Adjust Maximum Level</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Increase Current Level</li>
+          <li>Decrease Current Level</li>
+          <li>Remove Empty Levels</li>
+          <li>Maintain Balanced Levels</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box"><p>💡 The ideal current level is ⌈log₂(n)⌉. With probability p=0.5, around 50% of nodes are at level 1, 25% at level 2, and so on — naturally balancing itself without any extra logic.</p></div>
+    <div class="warn-box"><p>⚠️ Changing max_level after creation requires rebuilding or carefully extending all arrays — typically avoided in practice. Set max_level generously at creation time.</p></div>
+  </div>
+
+  <div id="s8c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Level Management ===== */</span>
+
+<span class="cm">/* Called during insertion when new node exceeds current level */</span>
+<span class="kw">void</span> <span class="fn">increaseLevel</span>(SkipList *sl, <span class="kw">int</span> newLevel,
+                    Node *update[]) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level; i &lt; newLevel; i++) {
+        update[i]          = sl->header;
+        update[i]->width[i] = sl->size; <span class="cm">/* full list width */</span>
+    }
+    sl->level = newLevel;
+    printf(<span class="st">"Level increased to %d\n"</span>, sl->level);
+}
+
+<span class="cm">/* Called during deletion to remove empty top levels */</span>
+<span class="kw">void</span> <span class="fn">removeEmptyLevels</span>(SkipList *sl) {
+    <span class="kw">while</span> (sl->level &gt; <span class="nu">1</span> &amp;&amp;
+           sl->header->forward[sl->level - <span class="nu">1</span>] == NULL) {
+        sl->level--;
+        printf(<span class="st">"Removed empty top level. Now: %d\n"</span>, sl->level);
+    }
+}
+
+<span class="cm">/* Check and maintain balanced level distribution */</span>
+<span class="kw">void</span> <span class="fn">maintainLevels</span>(SkipList *sl) {
+    <span class="kw">int</span> ideal = <span class="nu">1</span>;
+    <span class="kw">int</span> n = sl->size;
+    <span class="kw">while</span> (n &gt; <span class="nu">1</span>) { n >>= <span class="nu">1</span>; ideal++; } <span class="cm">/* log2(size) */</span>
+    <span class="kw">if</span> (sl->level &gt; ideal)
+        printf(<span class="st">"Warning: level %d > ideal %d\n"</span>,
+               sl->level, ideal);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s8a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🏗️ Real-Life Analogy: A Growing Skyscraper</h3>
+      <p>When a city is small, it needs only a 2-floor building (2 skip list levels). As the city grows, you add more floors (increase level). When the population shrinks and the top floors empty out, you demolish them (decrease level) to save maintenance costs.</p>
+      <p>The target height is always log₂(population) — perfectly balanced for efficient travel between any two floors.</p>
+      <div class="use-cases">
+        <span class="use-case">Dynamic Resizing</span>
+        <span class="use-case">Memory Efficiency</span>
+        <span class="use-case">Performance Tuning</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 9: WIDTH / SPAN MANAGEMENT -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="sec-header">
+    <span class="sec-num">09</span>
+    <div><div class="sec-title">Width / Span Management Operations</div><div class="sec-sub">The backbone of O(log n) positional queries</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s9t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s9c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s9a')">💡 Analogy</div>
+  </div>
+
+  <div id="s9t" class="tab-pane active theory">
+    <p>Width (also called span) is the number of <strong>base-level (level 0) nodes</strong> a forward pointer skips over, plus 1 for the destination node itself. Maintaining widths correctly during every insert and delete is what separates an indexable skip list from a plain skip list.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Maintain Width Values</li>
+          <li>Maintain Span Information</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Update Width During Insert</li>
+          <li>Update Width During Delete</li>
+          <li>Adjust Span Counts</li>
+          <li>Recalculate Positional Offsets</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box">
+      <p>💡 <strong>Width Invariant:</strong> The sum of all width values along the path from header to a node at level 0 must always equal that node's 1-based position in the list.</p>
+    </div>
+    <p><strong>During Insert:</strong> For each level ≤ newNode's level, split the predecessor's width. For each level &gt; newNode's level, increment the predecessor's width by 1 (new node added below).</p>
+    <p><strong>During Delete:</strong> For each level ≤ node's level, merge widths (pred.width = pred.width + node.width - 1). For each level &gt; node's level, decrement by 1.</p>
+  </div>
+
+  <div id="s9c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Width / Span Management ===== */</span>
+
+<span class="cm">/* Update widths during insertion (called from insert()) */</span>
+<span class="kw">void</span> <span class="fn">updateWidthInsert</span>(SkipList *sl, Node *newNode,
+                        Node *update[], <span class="kw">int</span> rank[],
+                        <span class="kw">int</span> newLevel) {
+    <span class="kw">int</span> insertRank = rank[<span class="nu">0</span>]; <span class="cm">/* rank of insertion point */</span>
+
+    <span class="cm">/* Split widths for levels the new node participates in */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; newLevel; i++) {
+        <span class="kw">int</span> gap = insertRank - rank[i];
+        newNode->width[i]     = update[i]->width[i] - gap;
+        update[i]->width[i]   = gap + <span class="nu">1</span>;
+    }
+
+    <span class="cm">/* Increment widths for levels above new node */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = newLevel; i &lt; sl->level; i++)
+        update[i]->width[i]++;
+}
+
+<span class="cm">/* Update widths during deletion (called from deleteKey()) */</span>
+<span class="kw">void</span> <span class="fn">updateWidthDelete</span>(SkipList *sl, Node *target,
+                        Node *update[]) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; sl->level; i++) {
+        <span class="kw">if</span> (update[i]->forward[i] == target) {
+            <span class="cm">/* merge: absorb target's width, subtract 1 */</span>
+            update[i]->width[i] += target->width[i] - <span class="nu">1</span>;
+        } <span class="kw">else</span> {
+            <span class="cm">/* target not at this level — just decrement */</span>
+            update[i]->width[i]--;
+        }
+    }
+}
+
+<span class="cm">/* Verify width invariant (for debugging) */</span>
+<span class="kw">void</span> <span class="fn">verifyWidths</span>(SkipList *sl) {
+    Node *cur = sl->header->forward[<span class="nu">0</span>];
+    <span class="kw">int</span>   pos = <span class="nu">1</span>;
+    <span class="kw">while</span> (cur) {
+        <span class="kw">int</span> rank = <span class="fn">getRank</span>(sl, cur->key);
+        <span class="kw">if</span> (rank != pos)
+            printf(<span class="st">"WIDTH ERROR at key %d: expected %d, got %d\n"</span>,
+                   cur->key, pos, rank);
+        pos++; cur = cur->forward[<span class="nu">0</span>];
+    }
+    printf(<span class="st">"Width verification complete.\n"</span>);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s9a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>📏 Real-Life Analogy: Odometer on an Express Bus</h3>
+      <p>Every express bus has an odometer that shows "from here, the next stop is 4 km away." When a new bus stop is added between two existing stops, you update the odometers: the preceding bus now shows "2 km to new stop," and the new stop shows "2 km to the old next stop." Every bus that skips the new stop (higher-level express) gets its odometer incremented by 1.</p>
+      <div class="use-cases">
+        <span class="use-case">Position Tracking</span>
+        <span class="use-case">Gap Counting</span>
+        <span class="use-case">Rank Maintenance</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 10: POINTER MANAGEMENT -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="sec-header">
+    <span class="sec-num">10</span>
+    <div><div class="sec-title">Pointer Management Operations</div><div class="sec-sub">Maintaining the network of forward references correctly</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s10t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s10c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s10a')">💡 Analogy</div>
+  </div>
+
+  <div id="s10t" class="tab-pane active theory">
+    <p>Every node holds an array of <strong>forward pointers</strong> — one per level it participates in. Pointer management ensures these references remain consistent during every structural change. Incorrect pointers cause infinite loops, skipped nodes, or segmentation faults.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Maintain Forward Pointers</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Update Pointer Links</li>
+          <li>Redirect References</li>
+          <li>Remove Invalid Links</li>
+          <li>Initialize Pointer Arrays</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn-box"><p>⚠️ Always set unused forward pointer slots to NULL during node creation. Dangling pointers (pointing to freed memory) are the most common bug in skip list implementations.</p></div>
+  </div>
+
+  <div id="s10c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Pointer Management ===== */</span>
+
+<span class="cm">/* Initialize pointer array for a newly created node */</span>
+<span class="kw">void</span> <span class="fn">initPointers</span>(Node *n) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; MAX_LEVEL; i++) {
+        n->forward[i] = NULL;  <span class="cm">/* safe NULL initialization */</span>
+        n->width[i]   = <span class="nu">0</span>;
+    }
+}
+
+<span class="cm">/* Update pointer links when splicing new node at level i */</span>
+<span class="kw">void</span> <span class="fn">updatePointerLinks</span>(Node *newNode, Node *pred, <span class="kw">int</span> level) {
+    newNode->forward[level] = pred->forward[level]; <span class="cm">/* inherit */</span>
+    pred->forward[level]    = newNode;              <span class="cm">/* insert   */</span>
+}
+
+<span class="cm">/* Remove invalid link during deletion */</span>
+<span class="kw">void</span> <span class="fn">removeLink</span>(Node *pred, Node *target, <span class="kw">int</span> level) {
+    <span class="kw">if</span> (pred->forward[level] == target) {
+        pred->forward[level] = target->forward[level];
+        target->forward[level] = NULL; <span class="cm">/* prevent dangling pointer */</span>
+    }
+}
+
+<span class="cm">/* Redirect a pointer (e.g., during split or merge) */</span>
+<span class="kw">void</span> <span class="fn">redirectPointer</span>(Node *node, Node *newTarget, <span class="kw">int</span> level) {
+    node->forward[level] = newTarget;
+    printf(<span class="st">"Redirected level %d pointer of node %d → %d\n"</span>,
+           level, node->key,
+           newTarget ? newTarget->key : -<span class="nu">1</span>);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s10a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🔗 Real-Life Analogy: Redirecting Phone Lines</h3>
+      <p>Each node is a telephone exchange. Forward pointers are the cables going out. When a new exchange is added, you physically re-route cables: the old connection gets split between the new exchange and what comes after. When an exchange is removed, you reconnect the cables directly from predecessor to successor — no dangling wires left behind.</p>
+      <div class="use-cases">
+        <span class="use-case">Linked Structure Integrity</span>
+        <span class="use-case">Splice Operations</span>
+        <span class="use-case">Memory Safety</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 11: UTILITY -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="sec-header">
+    <span class="sec-num">11</span>
+    <div><div class="sec-title">Utility Operations</div><div class="sec-sub">Helpers for checking state, measuring size, and resetting</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s11t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s11c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s11a')">💡 Analogy</div>
+  </div>
+
+  <div id="s11t" class="tab-pane active theory">
+    <p>Utility operations are the "housekeeping" tools of a skip list: checking if it's empty, counting elements, and clearing everything for reuse. These are simple but essential for building robust programs on top of skip lists.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Check Empty List</li>
+          <li>Get Size</li>
+          <li>Clear Skip List</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Count Nodes</li>
+          <li>Reset Levels</li>
+          <li>Remove All Nodes</li>
+          <li>Reinitialize Header</li>
+        </ul>
+      </div>
+    </div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Time</th></tr>
+      <tr><td>isEmpty</td><td>O(1)</td></tr>
+      <tr><td>getSize</td><td>O(1)</td></tr>
+      <tr><td>clear (free all nodes)</td><td>O(n)</td></tr>
+    </table>
+  </div>
+
+  <div id="s11c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Utility Operations ===== */</span>
+
+<span class="cm">/* Check if the skip list is empty */</span>
+<span class="kw">int</span> <span class="fn">isEmpty</span>(SkipList *sl) {
+    <span class="kw">return</span> sl->size == <span class="nu">0</span>;
+}
+
+<span class="cm">/* Return total number of elements */</span>
+<span class="kw">int</span> <span class="fn">getSize</span>(SkipList *sl) {
+    <span class="kw">return</span> sl->size;
+}
+
+<span class="cm">/* Free all element nodes (not the header or struct) */</span>
+<span class="kw">void</span> <span class="fn">removeAllNodes</span>(SkipList *sl) {
+    Node *cur = sl->header->forward[<span class="nu">0</span>];
+    <span class="kw">while</span> (cur) {
+        Node *next = cur->forward[<span class="nu">0</span>];
+        free(cur);
+        cur = next;
+    }
+}
+
+<span class="cm">/* Reinitialize header and reset all metadata */</span>
+<span class="kw">void</span> <span class="fn">reinitHeader</span>(SkipList *sl) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; MAX_LEVEL; i++) {
+        sl->header->forward[i] = NULL;
+        sl->header->width[i]   = <span class="nu">0</span>;
+    }
+    sl->level = <span class="nu">0</span>;
+    sl->size  = <span class="nu">0</span>;
+}
+
+<span class="cm">/* Clear (resets to empty state, reusable) */</span>
+<span class="kw">void</span> <span class="fn">clearSkipList</span>(SkipList *sl) {
+    <span class="fn">removeAllNodes</span>(sl);
+    <span class="fn">reinitHeader</span>(sl);
+    printf(<span class="st">"Skip list cleared.\n"</span>);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s11a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🧹 Real-Life Analogy: Library Management Desk</h3>
+      <p>The management desk always knows: "Is the library empty? How many books do we have?" These are O(1) lookups because they maintain a running count. Clearing the library means going through every shelf and removing every book — O(n) — then resetting the catalog to empty state, ready for new books.</p>
+      <div class="use-cases">
+        <span class="use-case">Cache Eviction</span>
+        <span class="use-case">Session Reset</span>
+        <span class="use-case">Test Setup/Teardown</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 12: MEMORY MANAGEMENT -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="sec-header">
+    <span class="sec-num">12</span>
+    <div><div class="sec-title">Memory Management Operations</div><div class="sec-sub">Safe allocation and deallocation — preventing leaks and corruption</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s12t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s12c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s12a')">💡 Analogy</div>
+  </div>
+
+  <div id="s12t" class="tab-pane active theory">
+    <p>C requires explicit memory management. Every <code>malloc()</code> must be paired with a <code>free()</code>. A skip list can accumulate many nodes, and forgetting to free even one when the structure is destroyed causes a memory leak. Systematic destruction is critical in long-running systems.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Allocate Memory</li>
+          <li>Deallocate Memory</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Create Node</li>
+          <li>Free Single Node</li>
+          <li>Free Entire Skip List</li>
+          <li>Prevent Memory Leak</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warn-box"><p>⚠️ After calling <code>free(ptr)</code>, immediately set <code>ptr = NULL</code> to prevent use-after-free bugs. Never access a freed node's members.</p></div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Time</th><th>Notes</th></tr>
+      <tr><td>Allocate single node</td><td>O(1) amortized</td><td>malloc can be slow in fragments</td></tr>
+      <tr><td>Free single node</td><td>O(1)</td><td>Always safe if not dangling</td></tr>
+      <tr><td>Free entire skip list</td><td>O(n)</td><td>Must traverse all nodes</td></tr>
+    </table>
+  </div>
+
+  <div id="s12c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Memory Management ===== */</span>
+
+<span class="cm">/* Allocate memory for a new node */</span>
+Node* <span class="fn">allocateNode</span>(<span class="kw">int</span> key) {
+    Node *n = (<span class="ty">Node*</span>)malloc(<span class="kw">sizeof</span>(Node));
+    <span class="kw">if</span> (!n) {
+        fprintf(stderr, <span class="st">"Out of memory!\n"</span>);
+        exit(EXIT_FAILURE);
+    }
+    n->key = key;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; MAX_LEVEL; i++) {
+        n->forward[i] = NULL; <span class="cm">/* safe initialization */</span>
+        n->width[i]   = <span class="nu">0</span>;
+    }
+    <span class="kw">return</span> n;
+}
+
+<span class="cm">/* Free a single node safely */</span>
+<span class="kw">void</span> <span class="fn">freeNode</span>(Node **n) {
+    <span class="kw">if</span> (*n) {
+        free(*n);
+        *n = NULL; <span class="cm">/* prevent dangling pointer */</span>
+    }
+}
+
+<span class="cm">/* Destroy entire skip list — free every node and struct */</span>
+<span class="kw">void</span> <span class="fn">freeSkipList</span>(SkipList **sl) {
+    <span class="kw">if</span> (!*sl) <span class="kw">return</span>;
+
+    Node *cur = (*sl)->header;  <span class="cm">/* start from header */</span>
+    <span class="kw">while</span> (cur) {
+        Node *next = cur->forward[<span class="nu">0</span>]; <span class="cm">/* save next before free */</span>
+        free(cur);
+        cur = next;
+    }
+    free(*sl);   <span class="cm">/* free the SkipList struct itself */</span>
+    *sl = NULL;  <span class="cm">/* caller's pointer goes NULL       */</span>
+    printf(<span class="st">"Skip list fully freed.\n"</span>);
+}
+
+<span class="cm">/* Safe usage pattern */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    SkipList *sl = <span class="fn">createSkipList</span>();
+    <span class="cm">/* ... use the skip list ... */</span>
+    <span class="fn">freeSkipList</span>(&sl);   <span class="cm">/* sl is NULL after this */</span>
+    <span class="kw">return</span> <span class="nu">0</span>;
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s12a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🏨 Real-Life Analogy: Hotel Check-in / Check-out</h3>
+      <p>When a guest arrives, you <em>allocate</em> a room (malloc). When they leave, you <em>free</em> the room (free) and mark it available (set to NULL). If you forget to mark it available, the room appears occupied forever — a memory leak. If you accidentally give the room to a new guest while the old one is still there, that's a dangling pointer bug.</p>
+      <p>When the hotel closes permanently, you free every room systematically before demolishing the building — just like <code>freeSkipList()</code>.</p>
+      <div class="use-cases">
+        <span class="use-case">Embedded Systems</span>
+        <span class="use-case">Server Processes</span>
+        <span class="use-case">Long-running Daemons</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 13: ANALYTICAL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="sec-header">
+    <span class="sec-num">13</span>
+    <div><div class="sec-title">Analytical Operations</div><div class="sec-sub">Measuring performance and evaluating structural quality</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s13t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s13c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s13a')">💡 Analogy</div>
+  </div>
+
+  <div id="s13t" class="tab-pane active theory">
+    <p>Analytical operations help you understand how well-balanced your skip list is, whether the width distribution is ideal, and whether searches are taking expected O(log n) steps. These are essential for benchmarking and tuning.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Analyze Structure</li>
+          <li>Analyze Performance</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Count Total Levels</li>
+          <li>Measure Search Complexity</li>
+          <li>Evaluate Width Distribution</li>
+          <li>Analyze Positional Efficiency</li>
+        </ul>
+      </div>
+    </div>
+    <table class="complexity-table">
+      <tr><th>Metric</th><th>Expected Value</th></tr>
+      <tr><td>Current level</td><td>≈ log₂(n)</td></tr>
+      <tr><td>Nodes at level i</td><td>≈ n / 2^i</td></tr>
+      <tr><td>Avg search steps</td><td>≈ (log₂ n) / p</td></tr>
+      <tr><td>Total pointers</td><td>≈ n × (1/(1-p)) = 2n</td></tr>
+    </table>
+  </div>
+
+  <div id="s13c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Analytical Operations ===== */</span>
+
+<span class="cm">/* Count nodes at each level */</span>
+<span class="kw">void</span> <span class="fn">analyzeStructure</span>(SkipList *sl) {
+    printf(<span class="st">"=== Structure Analysis ===\n"</span>);
+    printf(<span class="st">"Total nodes: %d\n"</span>, sl->size);
+    printf(<span class="st">"Current level: %d\n"</span>, sl->level);
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nu">0</span>; i &lt; sl->level; i++) {
+        <span class="kw">int</span> count = <span class="nu">0</span>;
+        Node *cur = sl->header->forward[i];
+        <span class="kw">while</span> (cur) { count++; cur = cur->forward[i]; }
+        printf(<span class="st">"Level %d: %d nodes (expected ~%d)\n"</span>,
+               i, count, sl->size >> i);
+    }
+}
+
+<span class="cm">/* Measure search steps for a given key */</span>
+<span class="kw">int</span> <span class="fn">measureSearchSteps</span>(SkipList *sl, <span class="kw">int</span> key) {
+    Node *cur   = sl->header;
+    <span class="kw">int</span>   steps = <span class="nu">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--) {
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp;
+               cur->forward[i]->key &lt; key) {
+            cur = cur->forward[i];
+            steps++;
+        }
+        steps++; <span class="cm">/* count the drop too */</span>
+    }
+    printf(<span class="st">"Search for %d took %d steps (log2(%d)=%.1f)\n"</span>,
+           key, steps, sl->size,
+           sl->size > <span class="nu">1</span> ? log2(sl->size) : <span class="nu">0</span>);
+    <span class="kw">return</span> steps;
+}
+
+<span class="cm">/* Evaluate width distribution (checks balance) */</span>
+<span class="kw">void</span> <span class="fn">evaluateWidthDist</span>(SkipList *sl) {
+    <span class="kw">int</span> total = <span class="nu">0</span>, count = <span class="nu">0</span>;
+    Node *cur = sl->header->forward[<span class="nu">1</span>]; <span class="cm">/* level 1 widths */</span>
+    <span class="kw">while</span> (cur) {
+        total += sl->header->width[<span class="nu">0</span>];
+        count++;
+        cur = cur->forward[<span class="nu">1</span>];
+    }
+    <span class="kw">if</span> (count)
+        printf(<span class="st">"Avg level-1 width: %.2f (ideal ~2.0)\n"</span>,
+               (<span class="kw">float</span>)total / count);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s13a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>📊 Real-Life Analogy: Hospital Efficiency Audit</h3>
+      <p>An analyst walks through a hospital and counts: how many patients per floor, how many nurses per ward, how long on average it takes to reach any patient. This is exactly what analytical operations do — they audit the skip list's "health" and tell you if it's well-balanced or degenerated into a slow linked list.</p>
+      <div class="use-cases">
+        <span class="use-case">Performance Tuning</span>
+        <span class="use-case">Benchmark Testing</span>
+        <span class="use-case">Auto-rebalancing</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 14: ITERATOR -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s14">
+  <div class="sec-header">
+    <span class="sec-num">14</span>
+    <div><div class="sec-title">Iterator Operations</div><div class="sec-sub">Stateful traversal with a cursor that remembers position</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s14t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s14c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s14a')">💡 Analogy</div>
+  </div>
+
+  <div id="s14t" class="tab-pane active theory">
+    <p>An iterator wraps a pointer to the current position, letting you visit nodes one at a time without exposing internal skip list details. It's the standard way to let user code loop over the list safely.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Iterate Skip List</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Move to Next Node</li>
+          <li>Access Current Node</li>
+          <li>Reset Iterator</li>
+          <li>Traverse Lowest Level</li>
+        </ul>
+      </div>
+    </div>
+    <div class="info-box"><p>💡 The iterator always traverses <strong>level 0</strong> — the complete sorted sequence. Iterating higher levels would miss nodes and give incomplete results.</p></div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Time</th></tr>
+      <tr><td>Iterator init / reset</td><td>O(1)</td></tr>
+      <tr><td>hasNext</td><td>O(1)</td></tr>
+      <tr><td>next</td><td>O(1)</td></tr>
+      <tr><td>Full iteration</td><td>O(n)</td></tr>
+    </table>
+  </div>
+
+  <div id="s14c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Iterator Operations ===== */</span>
+
+<span class="cm">/* Iterator struct — holds current position */</span>
+<span class="kw">typedef struct</span> {
+    Node     *current;   <span class="cm">/* current node pointer  */</span>
+    SkipList *list;      <span class="cm">/* reference to the list */</span>
+} Iterator;
+
+<span class="cm">/* Create and initialize an iterator */</span>
+Iterator <span class="fn">iteratorCreate</span>(SkipList *sl) {
+    Iterator it;
+    it.list    = sl;
+    it.current = sl->header->forward[<span class="nu">0</span>]; <span class="cm">/* first real node */</span>
+    <span class="kw">return</span> it;
+}
+
+<span class="cm">/* Check if more nodes exist */</span>
+<span class="kw">int</span> <span class="fn">hasNext</span>(Iterator *it) {
+    <span class="kw">return</span> it->current != NULL;
+}
+
+<span class="cm">/* Move to next node and return current key */</span>
+<span class="kw">int</span> <span class="fn">iterNext</span>(Iterator *it) {
+    <span class="kw">if</span> (!it->current) {
+        printf(<span class="st">"Iterator exhausted\n"</span>);
+        <span class="kw">return</span> -<span class="nu">1</span>;
+    }
+    <span class="kw">int</span> key    = it->current->key;
+    it->current = it->current->forward[<span class="nu">0</span>]; <span class="cm">/* advance */</span>
+    <span class="kw">return</span> key;
+}
+
+<span class="cm">/* Reset iterator to beginning */</span>
+<span class="kw">void</span> <span class="fn">iterReset</span>(Iterator *it) {
+    it->current = it->list->header->forward[<span class="nu">0</span>];
+}
+
+<span class="cm">/* Example usage */</span>
+<span class="kw">void</span> <span class="fn">printAll</span>(SkipList *sl) {
+    Iterator it = <span class="fn">iteratorCreate</span>(sl);
+    printf(<span class="st">"Iterate: "</span>);
+    <span class="kw">while</span> (<span class="fn">hasNext</span>(&it))
+        printf(<span class="st">"%d "</span>, <span class="fn">iterNext</span>(&it));
+    printf(<span class="st">"\n"</span>);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s14a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>📖 Real-Life Analogy: A Bookmark in a Book</h3>
+      <p>An iterator is like a physical bookmark. You place it at the start (reset), then move it one page at a time (next), checking if you've reached the end (hasNext). You can always go back to the beginning by moving the bookmark to page 1.</p>
+      <p>The key benefit: multiple bookmarks can exist simultaneously in the same book — you can have multiple iterators traversing the same skip list at different positions without interfering with each other.</p>
+      <div class="use-cases">
+        <span class="use-case">for-each Loops</span>
+        <span class="use-case">Cursor-based APIs</span>
+        <span class="use-case">Stream Processing</span>
+        <span class="use-case">Lazy Evaluation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 15: ADVANCED STRUCTURAL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="s15">
+  <div class="sec-header">
+    <span class="sec-num">15</span>
+    <div><div class="sec-title">Advanced Structural Operations</div><div class="sec-sub">Merge, split, range queries, and boundary access</div></div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s15t')">📖 Theory</div>
+    <div class="tab" onclick="switchTab(this,'s15v')">🎬 Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s15c')">💻 C Code</div>
+    <div class="tab" onclick="switchTab(this,'s15a')">💡 Analogy</div>
+  </div>
+
+  <div id="s15t" class="tab-pane active theory">
+    <p>Advanced operations compose the primitives from earlier sections into powerful algorithms. These are the operations that make skip lists competitive with balanced BSTs for complex workloads.</p>
+    <div class="ops-grid">
+      <div class="op-card">
+        <h4>Main Operations</h4>
+        <ul>
+          <li>Merge Skip Lists</li>
+          <li>Split Skip List</li>
+          <li>Range Query</li>
+          <li>Find Minimum / Maximum</li>
+        </ul>
+      </div>
+      <div class="op-card">
+        <h4>Suboperations</h4>
+        <ul>
+          <li>Combine Levels</li>
+          <li>Separate Node Ranges</li>
+          <li>Maintain Sorted Order</li>
+          <li>Search Range Values</li>
+          <li>Access Boundary Nodes</li>
+        </ul>
+      </div>
+    </div>
+    <table class="complexity-table">
+      <tr><th>Operation</th><th>Time</th><th>Notes</th></tr>
+      <tr><td>Find Minimum</td><td>O(1)</td><td>header→forward[0]</td></tr>
+      <tr><td>Find Maximum</td><td>O(log n)</td><td>Traverse top level</td></tr>
+      <tr><td>Range Query [lo, hi]</td><td>O(log n + k)</td><td>k = range size</td></tr>
+      <tr><td>Merge two lists</td><td>O((n+m) log(n+m))</td><td>Re-insert all</td></tr>
+      <tr><td>Split at key k</td><td>O(log n)</td><td>Careful pointer redirect</td></tr>
+    </table>
+    <div class="info-box"><p>💡 <strong>Find Minimum is O(1)</strong> — the first real node (header→forward[0]) is always the smallest because the list is sorted. Find Maximum traverses the highest level rightward to the end, visiting only log n nodes.</p></div>
+  </div>
+
+  <div id="s15v" class="tab-pane">
+    <div class="viz-box">
+      <div class="viz-toolbar">
+        <span class="viz-label">Range Lo:</span>
+        <input type="number" class="viz-input" id="s15-lo" value="20">
+        <span class="viz-label">Hi:</span>
+        <input type="number" class="viz-input" id="s15-hi" value="60">
+        <button class="viz-btn primary" onclick="vizRange()">📏 Range Query</button>
+        <button class="viz-btn" onclick="vizMinMax()">↕ Min/Max</button>
+        <button class="viz-btn" onclick="vizReset15()">🔄 Reset</button>
+      </div>
+      <canvas class="viz" id="s15canvas" height="280"></canvas>
+      <div class="viz-status" id="s15status">Set a range and click Range Query to highlight elements in [lo, hi].</div>
+    </div>
+  </div>
+
+  <div id="s15c" class="tab-pane">
+    <div class="code-wrap">
+      <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span class="cm">/* ===== Advanced Structural Operations ===== */</span>
+
+<span class="cm">/* Find minimum — O(1) */</span>
+Node* <span class="fn">findMin</span>(SkipList *sl) {
+    <span class="kw">return</span> sl->header->forward[<span class="nu">0</span>]; <span class="cm">/* always first node */</span>
+}
+
+<span class="cm">/* Find maximum — O(log n) */</span>
+Node* <span class="fn">findMax</span>(SkipList *sl) {
+    Node *cur = sl->header;
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--)
+        <span class="kw">while</span> (cur->forward[i])
+            cur = cur->forward[i]; <span class="cm">/* move right on highest level */</span>
+    <span class="kw">return</span> (cur == sl->header) ? NULL : cur;
+}
+
+<span class="cm">/* Range query: collect all keys in [lo, hi] */</span>
+<span class="kw">void</span> <span class="fn">rangeQuery</span>(SkipList *sl, <span class="kw">int</span> lo, <span class="kw">int</span> hi) {
+    Node *cur = sl->header;
+
+    <span class="cm">/* Skip to the first node >= lo */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->level - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--)
+        <span class="kw">while</span> (cur->forward[i] &amp;&amp; cur->forward[i]->key &lt; lo)
+            cur = cur->forward[i];
+
+    cur = cur->forward[<span class="nu">0</span>]; <span class="cm">/* first node >= lo */</span>
+    printf(<span class="st">"Range [%d, %d]: "</span>, lo, hi);
+    <span class="kw">while</span> (cur &amp;&amp; cur->key &lt;= hi) {
+        printf(<span class="st">"%d "</span>, cur->key);
+        cur = cur->forward[<span class="nu">0</span>];
+    }
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* Merge: insert all elements from src into dst */</span>
+<span class="kw">void</span> <span class="fn">mergeSkipLists</span>(SkipList *dst, SkipList *src) {
+    Node *cur = src->header->forward[<span class="nu">0</span>];
+    <span class="kw">while</span> (cur) {
+        <span class="fn">insert</span>(dst, cur->key); <span class="cm">/* re-insert each element */</span>
+        cur = cur->forward[<span class="nu">0</span>];
+    }
+    printf(<span class="st">"Merged %d elements into destination.\n"</span>, src->size);
+}
+
+<span class="cm">/* Split: create two lists — keys &lt; pivot and keys >= pivot */</span>
+<span class="kw">void</span> <span class="fn">splitSkipList</span>(SkipList *src,
+                   SkipList **left, SkipList **right,
+                   <span class="kw">int</span> pivot) {
+    *left  = <span class="fn">createSkipList</span>();
+    *right = <span class="fn">createSkipList</span>();
+    Node *cur = src->header->forward[<span class="nu">0</span>];
+    <span class="kw">while</span> (cur) {
+        <span class="kw">if</span> (cur->key &lt; pivot) <span class="fn">insert</span>(*left, cur->key);
+        <span class="kw">else</span>                  <span class="fn">insert</span>(*right, cur->key);
+        cur = cur->forward[<span class="nu">0</span>];
+    }
+    printf(<span class="st">"Split at %d: left=%d, right=%d nodes\n"</span>,
+           pivot, (*left)->size, (*right)->size);
+}
+</pre>
+    </div>
+  </div>
+
+  <div id="s15a" class="tab-pane">
+    <div class="analogy-card">
+      <h3>🗂️ Real-Life Analogy: Postal Sorting Office</h3>
+      <p><strong>Range Query</strong> is like telling the sorting office: "Give me all letters for street numbers 20 to 60." They jump to the 20s (log n search), then hand you every letter until they hit 61 — only touching the relevant section.</p>
+      <p><strong>Merge</strong> is combining two post offices' sorted letter piles into one sorted pile. <strong>Split</strong> is dividing one office's letters into two piles at a dividing street number.</p>
+      <p><strong>Find Min/Max</strong> is instantly grabbing the first or last letter in the sorted pile — no searching needed for minimum, fast traversal for maximum.</p>
+      <div class="use-cases">
+        <span class="use-case">Database Range Scans</span>
+        <span class="use-case">Redis ZRANGEBYSCORE</span>
+        <span class="use-case">Top-K Queries</span>
+        <span class="use-case">Time Window Aggregation</span>
+        <span class="use-case">Interval Scheduling</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main><!-- /main -->
+
+<script>
+/* ─────────────────────────────────────────────────
+   SHARED SKIP LIST ENGINE (used by all visualizations)
+   ───────────────────────────────────────────────── */
+const MAXLVL = 5, PROB = 0.5;
+
+class SLNode {
+  constructor(key) {
+    this.key = key;
+    this.forward = new Array(MAXLVL).fill(null);
+    this.width = new Array(MAXLVL).fill(0);
+    this.level = 1;
+  }
+}
+
+class SkipList {
+  constructor() {
+    this.header = new SLNode(-Infinity);
+    this.level = 1;
+    this.size = 0;
+  }
+  randomLevel() {
+    let l = 1;
+    while (Math.random() < PROB && l < MAXLVL) l++;
+    return l;
+  }
+  insert(key) {
+    const update = new Array(MAXLVL).fill(null);
+    const rank = new Array(MAXLVL).fill(0);
+    let cur = this.header;
+    for (let i = this.level - 1; i >= 0; i--) {
+      rank[i] = (i === this.level - 1) ? 0 : rank[i + 1];
+      while (cur.forward[i] && cur.forward[i].key < key) {
+        rank[i] += cur.width[i]; cur = cur.forward[i];
+      }
+      update[i] = cur;
+    }
+    if (update[0].forward[0] && update[0].forward[0].key === key) return false;
+    const nl = this.randomLevel();
+    if (nl > this.level) {
+      for (let i = this.level; i < nl; i++) {
+        rank[i] = 0; update[i] = this.header;
+        update[i].width[i] = this.size;
+      }
+      this.level = nl;
+    }
+    const nn = new SLNode(key); nn.level = nl;
+    for (let i = 0; i < nl; i++) {
+      nn.forward[i] = update[i].forward[i];
+      update[i].forward[i] = nn;
+      const gap = rank[0] - rank[i];
+      nn.width[i] = update[i].width[i] - gap;
+      update[i].width[i] = gap + 1;
+    }
+    for (let i = nl; i < this.level; i++) update[i].width[i]++;
+    this.size++; return true;
+  }
+  delete(key) {
+    const update = new Array(MAXLVL).fill(null);
+    let cur = this.header;
+    for (let i = this.level - 1; i >= 0; i--) {
+      while (cur.forward[i] && cur.forward[i].key < key) cur = cur.forward[i];
+      update[i] = cur;
+    }
+    const tgt = update[0].forward[0];
+    if (!tgt || tgt.key !== key) return false;
+    for (let i = 0; i < this.level; i++) {
+      if (update[i].forward[i] !== tgt) { update[i].width[i]--; }
+      else {
+        update[i].width[i] += tgt.width[i] - 1;
+        update[i].forward[i] = tgt.forward[i];
+      }
+    }
+    while (this.level > 1 && !this.header.forward[this.level - 1]) this.level--;
+    this.size--; return true;
+  }
+  toArray() {
+    const arr = []; let c = this.header.forward[0];
+    while (c) { arr.push(c); c = c.forward[0]; }
+    return arr;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   CANVAS DRAWING ENGINE
+   ───────────────────────────────────────────────── */
+const COLORS = {
+  bg: '#0d1117', node: '#1c2333', nodeBorder: '#232d3f',
+  cyan: '#38bdf8', green: '#34d399', amber: '#fbbf24',
+  rose: '#f87171', purple: '#a78bfa', text: '#e2e8f0',
+  text2: '#64748b', line: '#232d3f', header: '#0ea5e9'
+};
+
+function drawSkipList(canvasId, sl, highlight = {}, widthLabels = false) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.offsetWidth * devicePixelRatio;
+  const H = canvas.height;
+  ctx.scale(1, 1);
+
+  ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, W, H);
+
+  const nodes = sl.toArray();
+  const total = nodes.length;
+  const maxLvl = sl.level;
+  const PAD = 40, R = 18;
+  const colW = total > 0 ? Math.min(70, (W - PAD * 2 - 60) / total) : 70;
+  const rowH = Math.min(44, (H - 60) / (maxLvl + 1));
+  const startX = 60;
+
+  function nx(i) { return startX + PAD + i * colW; }
+  function ny(lvl) { return H - 30 - (lvl) * rowH; }
+
+  ctx.font = `${Math.round(11 * devicePixelRatio)}px Space Mono`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Draw level labels
+  for (let l = 0; l <= maxLvl; l++) {
+    ctx.fillStyle = COLORS.text2;
+    ctx.font = `${Math.round(9 * devicePixelRatio)}px Space Mono`;
+    ctx.textAlign = 'left';
+    ctx.fillText('L' + l, 8, ny(l));
+  }
+
+  // Draw horizontal level lines
+  for (let l = 0; l < maxLvl; l++) {
+    ctx.strokeStyle = 'rgba(35,45,63,0.5)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(startX, ny(l)); ctx.lineTo(W - 20, ny(l)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw header
+  ctx.fillStyle = '#0a3555'; ctx.strokeStyle = COLORS.header;
+  ctx.lineWidth = 1.5;
+  const hx = startX - 8;
+  roundRect(ctx, hx - 22, ny(0) - R, 44, R * 2, 5);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = COLORS.cyan; ctx.font = `${Math.round(9 * devicePixelRatio)}px Space Mono`;
+  ctx.textAlign = 'center';
+  ctx.fillText('HDR', hx, ny(0));
+
+  // Draw header vertical bar through levels
+  ctx.strokeStyle = COLORS.header; ctx.lineWidth = 1.5;
+  for (let l = 1; l < maxLvl; l++) {
+    roundRect(ctx, hx - 22, ny(l) - R, 44, R * 2, 5);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COLORS.cyan;
+    ctx.fillText('HDR', hx, ny(l));
+    ctx.fillStyle = '#0a3555';
+  }
+
+  // Draw forward arrows from header
+  for (let l = 0; l < maxLvl; l++) {
+    const firstNode = sl.header.forward[l];
+    if (firstNode) {
+      const fi = nodes.findIndex(n => n === firstNode);
+      if (fi >= 0) {
+        const color = COLORS.header;
+        drawArrow(ctx, hx + 22, ny(l), nx(fi) - R, ny(l), color, widthLabels ? sl.header.width[l] : null);
+      }
+    }
+  }
+
+  // Draw nodes and their arrows
+  nodes.forEach((node, i) => {
+    const x = nx(i);
+    for (let l = 0; l < node.level; l++) {
+      const y = ny(l);
+      let fill = COLORS.node, border = COLORS.nodeBorder, textColor = COLORS.text;
+      if (highlight.found === node) { fill = '#064e3b'; border = COLORS.green; textColor = COLORS.green; }
+      else if (highlight.deleted === node) { fill = '#4c0519'; border = COLORS.rose; textColor = COLORS.rose; }
+      else if (highlight.path && highlight.path.includes(node)) { fill = '#1e3a5f'; border = COLORS.cyan; textColor = COLORS.cyan; }
+      else if (highlight.range && node.key >= highlight.range[0] && node.key <= highlight.range[1]) { fill = '#2d1b69'; border = COLORS.purple; textColor = COLORS.purple; }
+
+      ctx.fillStyle = fill; ctx.strokeStyle = border; ctx.lineWidth = 1.5;
+      roundRect(ctx, x - R, y - R, R * 2, R * 2, 5);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = textColor;
+      ctx.font = `bold ${Math.round(10 * devicePixelRatio)}px Space Mono`;
+      ctx.textAlign = 'center';
+      ctx.fillText(node.key, x, y);
+
+      // Vertical connection
+      if (l < node.level - 1) {
+        ctx.strokeStyle = border; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, y + R); ctx.lineTo(x, ny(l + 1) - R); ctx.stroke();
+      }
+
+      // Forward arrows
+      if (node.forward[l]) {
+        const ni = nodes.findIndex(n => n === node.forward[l]);
+        if (ni >= 0) {
+          const isPath = highlight.path && highlight.path.includes(node);
+          const color = isPath ? COLORS.cyan : COLORS.nodeBorder;
+          drawArrow(ctx, x + R, y, nx(ni) - R, y, color, widthLabels ? node.width[l] : null);
+        }
+      }
+    }
+  });
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color, label) {
+  if (x2 <= x1) return;
+  ctx.strokeStyle = color; ctx.fillStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y1); ctx.lineTo(x2 - 7, y1 - 4); ctx.lineTo(x2 - 7, y1 + 4); ctx.closePath(); ctx.fill();
+  if (label !== null && label !== undefined) {
+    const mx = (x1 + x2) / 2, my = y1 - 10;
+    ctx.fillStyle = '#fbbf24'; ctx.font = `${Math.round(8 * devicePixelRatio)}px Space Mono`;
+    ctx.fillText('w=' + label, mx, my);
+  }
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 1 — INIT VISUALIZATION
+   ───────────────────────────────────────────────── */
+let s1sl = null;
+function drawInit() {
+  const ml = parseInt(document.getElementById('s1-maxlvl').value) || 4;
+  s1sl = new SkipList();
+  const canvas = document.getElementById('s1canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  const W = canvas.width, H = canvas.height;
+  ctx.fillStyle = COLORS.bg; ctx.fillRect(0, 0, W, H);
+  const rowH = Math.min(46, (H - 50) / (ml + 1));
+  ctx.font = `${Math.round(10 * devicePixelRatio)}px Space Mono`;
+  ctx.textAlign = 'left'; ctx.fillStyle = COLORS.text2;
+  for (let l = 0; l < ml; l++) {
+    const y = H - 30 - l * rowH;
+    ctx.fillStyle = COLORS.text2; ctx.fillText('Level ' + l, 10, y);
+    ctx.fillStyle = '#0a3555'; ctx.strokeStyle = COLORS.cyan; ctx.lineWidth = 1.5;
+    roundRect(ctx, 80, y - 14, 50, 28, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = COLORS.cyan; ctx.textAlign = 'center';
+    ctx.fillText('HDR', 105, y);
+    ctx.strokeStyle = COLORS.nodeBorder; ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(130, y); ctx.lineTo(W - 20, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = COLORS.text3; ctx.textAlign = 'left'; ctx.font = `${Math.round(9 * devicePixelRatio)}px Space Mono`;
+    ctx.fillText('→ NULL', W - 70, y);
+    ctx.font = `${Math.round(10 * devicePixelRatio)}px Space Mono`;
+  }
+  document.getElementById('s1status').textContent = `Skip list initialized! Max level = ${ml}. Header node created with ${ml} NULL forward pointers.`;
+}
+
+let s1stepIdx = 0;
+function s1Step() {
+  const steps = ['Allocating header node...', 'Initializing forward pointer array [MAX_LEVEL]...', 'Initializing width/span array [MAX_LEVEL]...', 'Setting current level = 0...', 'Setting size = 0...', 'Seeding random number generator...', '✅ Initialization complete!'];
+  document.getElementById('s1status').textContent = steps[s1stepIdx % steps.length];
+  s1stepIdx++;
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 2 — INSERT VISUALIZATION
+   ───────────────────────────────────────────────── */
+let s2sl = new SkipList();
+[10, 25, 40, 55].forEach(v => s2sl.insert(v));
+
+function vizInsert() {
+  const val = parseInt(document.getElementById('s2-val').value);
+  if (isNaN(val)) return;
+  const ok = s2sl.insert(val);
+  const status = document.getElementById('s2status');
+  if (ok) {
+    status.textContent = `Inserted ${val}. Size = ${s2sl.size}. Levels used: ${s2sl.level}. Forward pointers and widths updated.`;
+  } else {
+    status.textContent = `Key ${val} already exists!`;
+  }
+  drawSkipList('s2canvas', s2sl, {}, true);
+}
+
+function vizReset2() {
+  s2sl = new SkipList();
+  [10, 25, 40, 55].forEach(v => s2sl.insert(v));
+  document.getElementById('s2status').textContent = 'Reset. Pre-loaded: 10, 25, 40, 55.';
+  drawSkipList('s2canvas', s2sl, {}, true);
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 3 — DELETE VISUALIZATION
+   ───────────────────────────────────────────────── */
+let s3sl = new SkipList();
+[10, 20, 30, 40, 50, 60].forEach(v => s3sl.insert(v));
+
+function vizDelete() {
+  const val = parseInt(document.getElementById('s3-val').value);
+  const ok = s3sl.delete(val);
+  const status = document.getElementById('s3status');
+  if (ok) {
+    status.textContent = `Deleted ${val}. Widths merged. Empty levels removed. Size = ${s3sl.size}.`;
+  } else {
+    status.textContent = `Key ${val} not found in the list.`;
+  }
+  drawSkipList('s3canvas', s3sl);
+}
+
+function vizReset3() {
+  s3sl = new SkipList();
+  [10, 20, 30, 40, 50, 60].forEach(v => s3sl.insert(v));
+  document.getElementById('s3status').textContent = 'Reset. Pre-loaded: 10, 20, 30, 40, 50, 60.';
+  drawSkipList('s3canvas', s3sl);
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 4 — SEARCH VISUALIZATION
+   ───────────────────────────────────────────────── */
+let s4sl = new SkipList();
+[10, 20, 30, 40, 50, 60, 70].forEach(v => s4sl.insert(v));
+
+function vizSearch() {
+  const key = parseInt(document.getElementById('s4-val').value);
+  const status = document.getElementById('s4status');
+  const path = [];
+  let cur = s4sl.header;
+  for (let i = s4sl.level - 1; i >= 0; i--) {
+    while (cur.forward[i] && cur.forward[i].key < key) {
+      cur = cur.forward[i]; if (!path.includes(cur)) path.push(cur);
+    }
+  }
+  const found = cur.forward[0] && cur.forward[0].key === key ? cur.forward[0] : null;
+  if (found) {
+    status.textContent = `✅ Found ${key}! Traversal path highlighted in cyan.`;
+    drawSkipList('s4canvas', s4sl, { found, path });
+  } else {
+    status.textContent = `❌ Key ${key} not found.`;
+    drawSkipList('s4canvas', s4sl, { path });
+  }
+}
+
+function vizReset4() {
+  s4sl = new SkipList();
+  [10, 20, 30, 40, 50, 60, 70].forEach(v => s4sl.insert(v));
+  document.getElementById('s4status').textContent = 'Reset. Pre-loaded: 10, 20, 30, 40, 50, 60, 70.';
+  drawSkipList('s4canvas', s4sl);
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 5 — POSITIONAL ACCESS
+   ───────────────────────────────────────────────── */
+let s5sl = new SkipList();
+[10, 20, 30, 40, 50, 60, 70].forEach(v => s5sl.insert(v));
+
+function vizAccess() {
+  const idx = parseInt(document.getElementById('s5-idx').value);
+  const nodes = s5sl.toArray();
+  if (idx < 1 || idx > nodes.length) {
+    document.getElementById('s5status').textContent = `Index ${idx} out of range (1–${nodes.length}).`;
+    return;
+  }
+  const found = nodes[idx - 1];
+  document.getElementById('s5status').textContent = `Index ${idx} → Key = ${found.key}. Width traversal highlighted.`;
+  drawSkipList('s5canvas', s5sl, { found });
+}
+
+function vizRank() {
+  const key = parseInt(document.getElementById('s5-key').value);
+  const nodes = s5sl.toArray();
+  const idx = nodes.findIndex(n => n.key === key);
+  if (idx < 0) {
+    document.getElementById('s5status').textContent = `Key ${key} not found.`;
+    return;
+  }
+  document.getElementById('s5status').textContent = `Key ${key} has rank ${idx + 1} (1-based position in sorted list).`;
+  drawSkipList('s5canvas', s5sl, { found: nodes[idx] }, true);
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 7 — TRAVERSAL
+   ───────────────────────────────────────────────── */
+let s7sl = new SkipList();
+[15, 25, 35, 45, 55, 65].forEach(v => s7sl.insert(v));
+let s7stepIdx = 0;
+let s7nodes = [];
+
+function vizTraverse() {
+  s7nodes = s7sl.toArray();
+  s7stepIdx = 0;
+  function step() {
+    if (s7stepIdx >= s7nodes.length) {
+      document.getElementById('s7status').textContent = '✅ Traversal complete! All ' + s7nodes.length + ' nodes visited in O(n).';
+      return;
+    }
+    const path = s7nodes.slice(0, s7stepIdx + 1);
+    const found = s7nodes[s7stepIdx];
+    drawSkipList('s7canvas', s7sl, { found, path });
+    document.getElementById('s7status').textContent = `Visiting node: ${found.key} (step ${s7stepIdx + 1}/${s7nodes.length})`;
+    s7stepIdx++;
+    setTimeout(step, 600);
+  }
+  step();
+}
+
+function vizTraverseAll() {
+  drawSkipList('s7canvas', s7sl, {}, true);
+  const keys = s7sl.toArray().map(n => n.key);
+  document.getElementById('s7status').textContent = 'All levels shown with widths. Level 0 (base): ' + keys.join(' → ');
+}
+
+function vizReset7() {
+  s7sl = new SkipList();
+  [15, 25, 35, 45, 55, 65].forEach(v => s7sl.insert(v));
+  document.getElementById('s7status').textContent = 'Reset. Pre-loaded: 15, 25, 35, 45, 55, 65.';
+  drawSkipList('s7canvas', s7sl);
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION 15 — ADVANCED
+   ───────────────────────────────────────────────── */
+let s15sl = new SkipList();
+[10, 20, 30, 40, 50, 60, 70, 80].forEach(v => s15sl.insert(v));
+
+function vizRange() {
+  const lo = parseInt(document.getElementById('s15-lo').value);
+  const hi = parseInt(document.getElementById('s15-hi').value);
+  const inRange = s15sl.toArray().filter(n => n.key >= lo && n.key <= hi).map(n => n.key);
+  document.getElementById('s15status').textContent = `Range [${lo}, ${hi}] contains: ${inRange.join(', ')} (${inRange.length} elements). Found in O(log n + k).`;
+  drawSkipList('s15canvas', s15sl, { range: [lo, hi] });
+}
+
+function vizMinMax() {
+  const nodes = s15sl.toArray();
+  const min = nodes[0], max = nodes[nodes.length - 1];
+  document.getElementById('s15status').textContent = `Min = ${min ? min.key : 'N/A'} (O(1)), Max = ${max ? max.key : 'N/A'} (O(log n)).`;
+  drawSkipList('s15canvas', s15sl, { found: min, range: max ? [max.key, max.key] : null });
+}
+
+function vizReset15() {
+  s15sl = new SkipList();
+  [10, 20, 30, 40, 50, 60, 70, 80].forEach(v => s15sl.insert(v));
+  document.getElementById('s15status').textContent = 'Reset. Pre-loaded: 10, 20, 30, 40, 50, 60, 70, 80.';
+  drawSkipList('s15canvas', s15sl);
+}
+
+/* ─────────────────────────────────────────────────
+   HERO CANVAS ANIMATION
+   ───────────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('heroCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [], frame = 0;
+
+  function resize() {
+    W = canvas.width = canvas.offsetWidth * devicePixelRatio;
+    H = canvas.height = canvas.offsetHeight * devicePixelRatio;
+    nodes = [];
+    const cols = 10, rows = 4;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (Math.random() < 0.6) {
+          nodes.push({
+            x: (c + 0.5) * (W / cols) + (Math.random() - 0.5) * 30,
+            y: (r + 0.5) * (H / rows),
+            r: 6 + Math.random() * 6,
+            phase: Math.random() * Math.PI * 2,
+            level: r
+          });
+        }
+      }
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    frame++;
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const a = nodes[i], b = nodes[i + 1];
+      if (a.level === b.level) {
+        ctx.strokeStyle = 'rgba(56,189,248,0.12)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+    nodes.forEach(n => {
+      const pulse = Math.sin(frame * 0.02 + n.phase) * 2;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r + pulse, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(56,189,248,0.15)';
+      ctx.strokeStyle = 'rgba(56,189,248,0.3)';
+      ctx.lineWidth = 1;
+      ctx.fill(); ctx.stroke();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  new ResizeObserver(resize).observe(canvas.parentElement);
+  resize(); draw();
+})();
+
+/* ─────────────────────────────────────────────────
+   TAB SWITCHER
+   ───────────────────────────────────────────────── */
+function switchTab(el, prefix) {
+  const section = el.closest('.section');
+  section.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  section.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const idx = Array.from(el.parentElement.children).indexOf(el);
+  section.querySelectorAll('.tab-pane')[idx].classList.add('active');
+}
+
+/* ─────────────────────────────────────────────────
+   SIDEBAR ACTIVE TRACKING
+   ───────────────────────────────────────────────── */
+function scrollTo(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+}
+
+const main = document.getElementById('main');
+const sectionEls = [...document.querySelectorAll('section.section, section#hero')];
+const navItems = [...document.querySelectorAll('.nav-item')];
+
+main.addEventListener('scroll', () => {
+  const scrollTop = main.scrollTop + 100;
+  let active = 0;
+  sectionEls.forEach((s, i) => {
+    if (s.offsetTop <= scrollTop) active = i;
+  });
+  navItems.forEach((n, i) => n.classList.toggle('active', i === active));
+}, { passive: true });
+
+/* ─────────────────────────────────────────────────
+   COPY CODE
+   ───────────────────────────────────────────────── */
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+/* ─────────────────────────────────────────────────
+   INITIAL RENDERS
+   ───────────────────────────────────────────────── */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    drawSkipList('s2canvas', s2sl, {}, true);
+    drawSkipList('s3canvas', s3sl);
+    drawSkipList('s4canvas', s4sl);
+    drawSkipList('s5canvas', s5sl, {}, true);
+    drawSkipList('s7canvas', s7sl);
+    drawSkipList('s15canvas', s15sl);
+  }, 300);
+});
+
+window.addEventListener('resize', () => {
+  drawSkipList('s2canvas', s2sl, {}, true);
+  drawSkipList('s3canvas', s3sl);
+  drawSkipList('s4canvas', s4sl);
+  drawSkipList('s5canvas', s5sl, {}, true);
+  drawSkipList('s7canvas', s7sl);
+  drawSkipList('s15canvas', s15sl);
+});
+</script>
+</body>
+</html>

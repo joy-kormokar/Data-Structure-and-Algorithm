@@ -1,0 +1,2736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concurrent Skip List — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #111318;
+  --surface2: #181b22;
+  --surface3: #1e2130;
+  --border: #252a38;
+  --accent: #00e5ff;
+  --accent2: #7b61ff;
+  --accent3: #ff6b6b;
+  --accent4: #39ff7e;
+  --text: #e2e8f0;
+  --text2: #8892a4;
+  --text3: #525d72;
+  --code-bg: #0d1117;
+  --node-color: #1a2235;
+  --node-border: #2a3a55;
+  --node-active: #00e5ff;
+  --header-h: 60px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Syne',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── HEADER ── */
+#top-header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);
+  background:rgba(10,12,16,.92);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;z-index:1000;
+}
+.logo{
+  font-weight:800;font-size:1.1rem;letter-spacing:-.01em;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  white-space:nowrap;
+}
+.header-badge{
+  font-family:'Space Mono',monospace;font-size:.7rem;
+  background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);
+  color:var(--accent);padding:4px 12px;border-radius:20px;
+  letter-spacing:.08em;
+}
+#hamburger{
+  display:none;background:none;border:none;color:var(--text);
+  cursor:pointer;font-size:1.4rem;padding:4px;
+}
+
+/* ── LAYOUT ── */
+#layout{display:flex;margin-top:var(--header-h);min-height:calc(100vh - var(--header-h));}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:280px;flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  height:calc(100vh - var(--header-h));
+  position:sticky;top:var(--header-h);
+  overflow-y:auto;padding:16px 0;
+  transition:transform .3s ease;
+}
+#sidebar::-webkit-scrollbar{width:4px;}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.nav-section-label{
+  font-family:'Space Mono',monospace;font-size:.6rem;
+  letter-spacing:.15em;color:var(--text3);
+  padding:12px 20px 6px;text-transform:uppercase;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 20px;cursor:pointer;
+  font-size:.82rem;font-weight:600;
+  color:var(--text2);border-left:3px solid transparent;
+  transition:all .18s;user-select:none;
+}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
+.nav-item.active{
+  color:var(--accent);border-left-color:var(--accent);
+  background:rgba(0,229,255,.06);
+}
+.nav-num{
+  font-family:'JetBrains Mono',monospace;font-size:.68rem;
+  color:var(--text3);min-width:22px;
+}
+.nav-item.active .nav-num{color:var(--accent);}
+
+/* ── MAIN ── */
+#main{flex:1;overflow-y:auto;padding:40px 48px 80px;}
+#main::-webkit-scrollbar{width:6px;}
+#main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── SECTION ── */
+.section{display:none;animation:fadeIn .4s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+.section-header{margin-bottom:32px;}
+.section-tag{
+  font-family:'Space Mono',monospace;font-size:.65rem;
+  letter-spacing:.15em;color:var(--accent2);
+  text-transform:uppercase;margin-bottom:8px;
+}
+.section-title{
+  font-size:2rem;font-weight:800;
+  background:linear-gradient(135deg,#e2e8f0 30%,#8892a4);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1.2;margin-bottom:10px;
+}
+.section-desc{color:var(--text2);font-size:.95rem;line-height:1.7;max-width:680px;}
+
+/* ── CARDS ── */
+.card{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:14px;padding:28px;margin-bottom:24px;
+}
+.card-title{
+  font-size:.8rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--accent);
+  margin-bottom:16px;display:flex;align-items:center;gap:8px;
+}
+.card-title::before{
+  content:'';width:3px;height:16px;
+  background:var(--accent);border-radius:2px;display:block;
+}
+
+/* ── THEORY ── */
+.theory-text{color:var(--text2);line-height:1.8;font-size:.93rem;}
+.theory-text strong{color:var(--text);}
+.theory-text ul{margin:12px 0 12px 20px;}
+.theory-text li{margin-bottom:6px;}
+.highlight-box{
+  background:rgba(0,229,255,.05);
+  border:1px solid rgba(0,229,255,.15);
+  border-radius:8px;padding:14px 18px;
+  margin:14px 0;font-size:.88rem;color:var(--accent);
+  line-height:1.7;
+}
+.ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
+.op-chip{
+  background:var(--surface3);border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;
+  font-size:.8rem;color:var(--text2);
+}
+.op-chip strong{color:var(--accent4);display:block;margin-bottom:2px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;}
+
+/* ── ANALOGY ── */
+.analogy-box{
+  background:linear-gradient(135deg,rgba(123,97,255,.08),rgba(255,107,107,.04));
+  border:1px solid rgba(123,97,255,.2);
+  border-radius:12px;padding:20px;margin-top:4px;
+}
+.analogy-icon{font-size:2rem;margin-bottom:8px;}
+.analogy-title{font-weight:700;color:var(--accent2);font-size:.9rem;margin-bottom:6px;}
+.analogy-text{color:var(--text2);font-size:.88rem;line-height:1.7;}
+
+/* ── CODE ── */
+.code-wrap{position:relative;}
+.code-block{
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  border-radius:10px;overflow:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.78rem;line-height:1.7;
+  padding:20px;color:#c9d1d9;
+}
+.copy-btn{
+  position:absolute;top:10px;right:10px;
+  background:rgba(255,255,255,.06);border:1px solid var(--border);
+  color:var(--text2);border-radius:6px;padding:4px 10px;
+  font-size:.7rem;cursor:pointer;font-family:'Space Mono',monospace;
+  transition:all .2s;
+}
+.copy-btn:hover{background:rgba(0,229,255,.1);color:var(--accent);}
+/* syntax */
+.kw{color:#ff7b72;} .fn{color:#d2a8ff;} .cm{color:#6e7681;font-style:italic;}
+.st{color:#a5d6ff;} .nm{color:#79c0ff;} .op{color:#e3b341;}
+.ty{color:#ffa657;}
+
+/* ── VISUALIZATION ── */
+.viz-container{
+  background:var(--code-bg);border:1px solid var(--border);
+  border-radius:12px;padding:20px;margin-bottom:8px;
+  min-height:160px;position:relative;overflow:hidden;
+}
+.viz-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.btn{
+  background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);
+  color:var(--accent);border-radius:8px;padding:8px 18px;
+  font-size:.78rem;cursor:pointer;font-family:'Space Mono',monospace;
+  transition:all .2s;letter-spacing:.04em;
+}
+.btn:hover{background:rgba(0,229,255,.18);}
+.btn.danger{
+  background:rgba(255,107,107,.08);border-color:rgba(255,107,107,.25);color:var(--accent3);
+}
+.btn.danger:hover{background:rgba(255,107,107,.18);}
+.btn.success{
+  background:rgba(57,255,126,.08);border-color:rgba(57,255,126,.25);color:var(--accent4);
+}
+.btn.success:hover{background:rgba(57,255,126,.18);}
+.viz-info{
+  font-family:'Space Mono',monospace;font-size:.7rem;
+  color:var(--accent);margin-top:8px;min-height:20px;
+  background:rgba(0,229,255,.04);border-radius:6px;padding:6px 10px;
+}
+
+canvas{width:100%;display:block;border-radius:8px;}
+
+/* ── SUB-OPS TABLE ── */
+.subop-list{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;
+}
+.subop-tag{
+  font-family:'JetBrains Mono',monospace;font-size:.72rem;
+  background:rgba(123,97,255,.1);border:1px solid rgba(123,97,255,.2);
+  color:var(--accent2);padding:4px 10px;border-radius:20px;
+}
+
+/* ── GRID LAYOUT for two-col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}.ops-grid{grid-template-columns:1fr;}}
+
+/* ── STEP FLOW ── */
+.step-flow{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.step-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:10px 14px;background:var(--surface3);
+  border-radius:8px;font-size:.83rem;color:var(--text2);
+  border-left:3px solid var(--border);
+  transition:border-color .2s;
+}
+.step-item.highlight{border-left-color:var(--accent);background:rgba(0,229,255,.04);}
+.step-num{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;
+  color:var(--accent);min-width:24px;font-weight:700;
+}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{
+  height:3px;background:var(--border);border-radius:2px;
+  margin-bottom:32px;overflow:hidden;
+}
+.progress-fill{
+  height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));
+  border-radius:2px;transition:width .4s ease;
+}
+
+/* ── MOBILE ── */
+@media(max-width:768px){
+  #sidebar{
+    position:fixed;left:0;top:var(--header-h);bottom:0;
+    transform:translateX(-100%);z-index:999;width:260px;
+  }
+  #sidebar.open{transform:translateX(0);}
+  #main{padding:24px 18px 60px;}
+  .section-title{font-size:1.4rem;}
+  #hamburger{display:block;}
+  .two-col{grid-template-columns:1fr;}
+  #main{padding-left:18px;}
+}
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+  z-index:998;
+}
+.overlay.show{display:block;}
+
+/* Horizontal scroll on small code blocks */
+.code-block{white-space:pre;}
+</style>
+</head>
+<body>
+
+<header id="top-header">
+  <div class="logo">⟨ Concurrent Skip List ⟩</div>
+  <div class="header-badge">BEGINNER → ADVANCED</div>
+  <button id="hamburger" onclick="toggleSidebar()">☰</button>
+</header>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<div id="layout">
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="nav-section-label">Fundamentals</div>
+  <div class="nav-item active" onclick="show(0)"><span class="nav-num">01</span>Initialization</div>
+  <div class="nav-item" onclick="show(1)"><span class="nav-num">02</span>Insertion</div>
+  <div class="nav-item" onclick="show(2)"><span class="nav-num">03</span>Deletion</div>
+  <div class="nav-item" onclick="show(3)"><span class="nav-num">04</span>Search</div>
+  <div class="nav-section-label">Concurrency</div>
+  <div class="nav-item" onclick="show(4)"><span class="nav-num">05</span>Synchronization</div>
+  <div class="nav-item" onclick="show(5)"><span class="nav-num">06</span>Validation</div>
+  <div class="nav-item" onclick="show(6)"><span class="nav-num">07</span>Update</div>
+  <div class="nav-section-label">Structure</div>
+  <div class="nav-item" onclick="show(7)"><span class="nav-num">08</span>Traversal</div>
+  <div class="nav-item" onclick="show(8)"><span class="nav-num">09</span>Level Management</div>
+  <div class="nav-item" onclick="show(9)"><span class="nav-num">10</span>Pointer Management</div>
+  <div class="nav-section-label">Advanced</div>
+  <div class="nav-item" onclick="show(10)"><span class="nav-num">11</span>Conflict Handling</div>
+  <div class="nav-item" onclick="show(11)"><span class="nav-num">12</span>Utility Operations</div>
+  <div class="nav-item" onclick="show(12)"><span class="nav-num">13</span>Memory Management</div>
+  <div class="nav-item" onclick="show(13)"><span class="nav-num">14</span>Analytical Ops</div>
+  <div class="nav-item" onclick="show(14)"><span class="nav-num">15</span>Advanced Structural</div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+<div class="progress-bar"><div class="progress-fill" id="progress" style="width:6.7%"></div></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 01 -->
+<div class="section active" id="s0">
+  <div class="section-header">
+    <div class="section-tag">Section 01 · Initialization</div>
+    <div class="section-title">Creating a Concurrent Skip List</div>
+    <div class="section-desc">Before any operation, we must set up the structure — allocating memory, configuring levels, and making it thread-safe from the start.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">What is a Skip List?</div>
+    <div class="theory-text">
+      A <strong>Skip List</strong> is a probabilistic data structure — like a linked list on steroids. It has multiple layers of linked lists stacked on top of each other, where higher layers "skip" over many elements, giving you O(log n) average search time.<br><br>
+      A <strong>Concurrent Skip List</strong> adds thread-safety so multiple threads can read and write simultaneously without corrupting data.
+      <div class="highlight-box">
+        💡 Think of it as a highway system: the bottom layer (local road) visits every node. Higher layers are express highways that skip blocks to reach distant nodes faster.
+      </div>
+      <strong>Key properties:</strong>
+      <ul>
+        <li>Probabilistic balancing — no need for complex rotations like AVL trees</li>
+        <li>Average O(log n) for insert, delete, and search</li>
+        <li>Nodes at higher levels are chosen randomly (usually 50% probability each level)</li>
+        <li>Header node acts as entry point to all levels</li>
+        <li>Each level forms a sorted linked list</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Create Concurrent Skip List</strong>Allocates and wires the entire structure</div>
+      <div class="op-chip"><strong>Initialize Header Node</strong>The sentinel node that anchors all levels</div>
+      <div class="op-chip"><strong>Set Maximum Level</strong>Caps how many layers the skip list has</div>
+      <div class="op-chip"><strong>Configure Concurrency Policy</strong>Choose locks, lock-free, or hybrid approach</div>
+    </div>
+    <div style="margin-top:14px;"><div class="card-title" style="margin-bottom:8px;">Sub-Operations</div>
+    <div class="subop-list">
+      <span class="subop-tag">Allocate Header Node</span>
+      <span class="subop-tag">Initialize Forward Pointers</span>
+      <span class="subop-tag">Initialize Sync Objects</span>
+      <span class="subop-tag">Set Current Level</span>
+      <span class="subop-tag">Configure Thread-Safe Env</span>
+    </div></div>
+  </div>
+
+  <!-- VISUALIZATION -->
+  <div class="card">
+    <div class="card-title">Live Visualization — Skip List Structure</div>
+    <div class="viz-container">
+      <canvas id="initCanvas" height="180"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="vizInit()">🔄 Reinitialize</button>
+      <button class="btn success" onclick="animateInit()">▶ Animate Build</button>
+    </div>
+    <div class="viz-info" id="initInfo">Header node sits at all levels. Forward pointers set to NULL.</div>
+  </div>
+
+  <!-- CODE -->
+  <div class="card">
+    <div class="card-title">C Code — Initialization</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* ── Concurrent Skip List in C ── */</span>
+<span class="cm">/* Step 1: Define constants and structures */</span>
+
+<span class="kw">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;stdlib.h&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;pthread.h&gt;</span>
+
+<span class="kw">#define</span> <span class="nm">MAX_LEVEL</span> <span class="nm">6</span>     <span class="cm">/* Max number of levels in skip list */</span>
+<span class="kw">#define</span> <span class="nm">PROB</span>      <span class="nm">0.5</span>  <span class="cm">/* Probability for level promotion    */</span>
+
+<span class="cm">/* A single node in the skip list */</span>
+<span class="kw">typedef struct</span> <span class="ty">Node</span> {
+    <span class="kw">int</span>         key;
+    <span class="kw">int</span>         value;
+    <span class="kw">struct</span> <span class="ty">Node</span> <span class="op">*</span>forward[<span class="nm">MAX_LEVEL</span>]; <span class="cm">/* Array of forward pointers */</span>
+} <span class="ty">Node</span>;
+
+<span class="cm">/* The skip list itself */</span>
+<span class="kw">typedef struct</span> <span class="ty">SkipList</span> {
+    <span class="ty">Node</span>           <span class="op">*</span>header;       <span class="cm">/* Sentinel/header node */</span>
+    <span class="kw">int</span>             currentLevel; <span class="cm">/* Highest occupied level */</span>
+    <span class="kw">int</span>             size;         <span class="cm">/* Number of real nodes  */</span>
+    pthread_mutex_t lock;         <span class="cm">/* Global mutex for thread-safety */</span>
+} <span class="ty">SkipList</span>;
+
+<span class="cm">/* Create a fresh node */</span>
+<span class="ty">Node</span><span class="op">*</span> <span class="fn">createNode</span>(<span class="kw">int</span> key, <span class="kw">int</span> value) {
+    <span class="ty">Node</span> <span class="op">*</span>n = (<span class="ty">Node</span><span class="op">*</span>) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="ty">Node</span>));
+    n<span class="op">-&gt;</span>key   = key;
+    n<span class="op">-&gt;</span>value = value;
+    <span class="cm">/* Set all forward pointers to NULL */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+        n<span class="op">-&gt;</span>forward[i] = <span class="nm">NULL</span>;
+    <span class="kw">return</span> n;
+}
+
+<span class="cm">/* Initialize the skip list */</span>
+<span class="ty">SkipList</span><span class="op">*</span> <span class="fn">initSkipList</span>() {
+    <span class="ty">SkipList</span> <span class="op">*</span>sl = (<span class="ty">SkipList</span><span class="op">*</span>) <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="ty">SkipList</span>));
+    sl<span class="op">-&gt;</span>header       = <span class="fn">createNode</span>(<span class="op">-</span><span class="nm">1</span>, <span class="nm">0</span>); <span class="cm">/* Sentinel key = -1 */</span>
+    sl<span class="op">-&gt;</span>currentLevel = <span class="nm">0</span>;
+    sl<span class="op">-&gt;</span>size          = <span class="nm">0</span>;
+    <span class="fn">pthread_mutex_init</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock, <span class="nm">NULL</span>);  <span class="cm">/* Init the mutex */</span>
+    <span class="kw">return</span> sl;
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="ty">SkipList</span> <span class="op">*</span>sl = <span class="fn">initSkipList</span>();
+    <span class="fn">printf</span>(<span class="st">"Skip list initialized! Max levels: %d\n"</span>, <span class="nm">MAX_LEVEL</span>);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+</div>
+    </div>
+  </div>
+
+  <!-- ANALOGY -->
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🏙️</div>
+      <div class="analogy-title">The City Road System</div>
+      <div class="analogy-text">
+        Imagine a city being built from scratch. First, engineers create the <strong>main highway</strong> (header node). Then they build <strong>local streets</strong> branching off it (forward pointers). Before opening to traffic (threads), they install <strong>traffic signals</strong> (mutex locks) at every intersection. 
+        MAX_LEVEL is like deciding how many expressway layers the city will have — 6 levels means 6 different speed roads, from local to superhighway.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 02 -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-tag">Section 02 · Insertion</div>
+    <div class="section-title">Inserting Elements Safely</div>
+    <div class="section-desc">Insertion must find the right position, generate a random level, link new nodes, and do all this without breaking concurrent reads or writes.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">How Insertion Works</div>
+    <div class="theory-text">
+      Inserting into a concurrent skip list is trickier than a normal linked list because other threads might be reading or writing at the same time.
+      <div class="highlight-box">🔑 The key insight: we <strong>lock nodes we plan to modify</strong> (not the whole list), update forward pointers level-by-level, then release locks.</div>
+      <strong>Insertion Steps:</strong>
+      <div class="step-flow">
+        <div class="step-item highlight"><span class="step-num">01</span>Search for the correct position — traverse from top level down</div>
+        <div class="step-item highlight"><span class="step-num">02</span>Lock nodes at each level that need updating (predecessors)</div>
+        <div class="step-item highlight"><span class="step-num">03</span>Validate those nodes are still valid (not deleted by another thread)</div>
+        <div class="step-item highlight"><span class="step-num">04</span>Generate a random level for the new node</div>
+        <div class="step-item highlight"><span class="step-num">05</span>Create the new node and link its forward pointers</div>
+        <div class="step-item highlight"><span class="step-num">06</span>Update predecessor forward pointers to point to new node</div>
+        <div class="step-item highlight"><span class="step-num">07</span>Release all locks and increment node count</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Insert Element</strong>Inserts a key-value pair thread-safely</div>
+      <div class="op-chip"><strong>Insert Key-Value Pair</strong>Core insert with locking protocol</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Search Insert Position</span>
+      <span class="subop-tag">Traverse Levels Top-to-Bottom</span>
+      <span class="subop-tag">Lock Required Nodes</span>
+      <span class="subop-tag">Validate Node State</span>
+      <span class="subop-tag">Generate Random Level</span>
+      <span class="subop-tag">Create New Node</span>
+      <span class="subop-tag">Update Forward Pointers</span>
+      <span class="subop-tag">Release Locks</span>
+      <span class="subop-tag">Increase Node Count</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Insert Animation</div>
+    <div class="viz-container">
+      <canvas id="insertCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn success" onclick="insertViz()">➕ Insert Random</button>
+      <button class="btn danger" onclick="resetInsert()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="insertInfo">Click "Insert Random" to add nodes and watch the skip list grow.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Insertion</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Generate a random level (probabilistic) */</span>
+<span class="kw">int</span> <span class="fn">randomLevel</span>() {
+    <span class="kw">int</span> level = <span class="nm">1</span>;
+    <span class="kw">while</span> ((<span class="kw">double</span>)<span class="fn">rand</span>() / <span class="nm">RAND_MAX</span> &lt; <span class="nm">PROB</span> &amp;&amp; level &lt; <span class="nm">MAX_LEVEL</span>)
+        level++;
+    <span class="kw">return</span> level; <span class="cm">/* Returns 1..MAX_LEVEL */</span>
+}
+
+<span class="cm">/* Thread-safe insert */</span>
+<span class="kw">void</span> <span class="fn">insert</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> value) {
+    <span class="cm">/* update[] stores predecessors at each level */</span>
+    <span class="ty">Node</span> <span class="op">*</span>update[<span class="nm">MAX_LEVEL</span>];
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header;
+
+    <span class="cm">/* Step 1: Search insert position top-to-bottom */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr<span class="op">-&gt;</span>forward[i] &amp;&amp; curr<span class="op">-&gt;</span>forward[i]<span class="op">-&gt;</span>key &lt; key)
+            curr = curr<span class="op">-&gt;</span>forward[i];  <span class="cm">/* move forward on level i */</span>
+        update[i] = curr;             <span class="cm">/* save predecessor      */</span>
+    }
+
+    <span class="cm">/* Step 2: Lock for thread safety */</span>
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+
+    <span class="cm">/* Step 3: Validate key doesn't already exist */</span>
+    curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="kw">if</span> (curr &amp;&amp; curr<span class="op">-&gt;</span>key == key) {
+        curr<span class="op">-&gt;</span>value = value;     <span class="cm">/* Update if duplicate key */</span>
+        <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 4: Generate random level for new node */</span>
+    <span class="kw">int</span> newLevel = <span class="fn">randomLevel</span>();
+
+    <span class="cm">/* Step 5: If new node has more levels, update skip list level */</span>
+    <span class="kw">if</span> (newLevel &gt; sl<span class="op">-&gt;</span>currentLevel) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel; i &lt; newLevel; i++)
+            update[i] = sl<span class="op">-&gt;</span>header;
+        sl<span class="op">-&gt;</span>currentLevel = newLevel;
+    }
+
+    <span class="cm">/* Step 6: Create new node */</span>
+    <span class="ty">Node</span> <span class="op">*</span>newNode = <span class="fn">createNode</span>(key, value);
+
+    <span class="cm">/* Step 7: Link new node into each level */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; newLevel; i++) {
+        newNode<span class="op">-&gt;</span>forward[i]  = update[i]<span class="op">-&gt;</span>forward[i];
+        update[i]<span class="op">-&gt;</span>forward[i] = newNode;  <span class="cm">/* splice in */</span>
+    }
+
+    sl<span class="op">-&gt;</span>size++;
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock); <span class="cm">/* Step 8: Release lock */</span>
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">📚</div>
+      <div class="analogy-title">Inserting a New Book in a Library</div>
+      <div class="analogy-text">
+        Imagine a library with books sorted by ID. You find the right shelf slot (search position), <strong>place a "reserved" cone</strong> on the adjacent slots (locking), verify no one just grabbed that slot (validate), then slide the book in and update the catalog cards at each express-index level (forward pointers). Remove the cone (unlock) and the book is live.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 03 -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-tag">Section 03 · Deletion</div>
+    <div class="section-title">Removing Nodes Safely</div>
+    <div class="section-desc">Deletion in a concurrent environment uses a two-phase approach: first <em>logically</em> mark a node deleted, then <em>physically</em> remove it — preventing use-after-free bugs.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Two-Phase Deletion</div>
+    <div class="theory-text">
+      Concurrent deletion is dangerous: while you're removing a node, another thread might be reading it. The solution is <strong>logical + physical deletion</strong>.
+      <div class="highlight-box">⚠️ <strong>Logical deletion</strong>: mark the node as "deleted" (set a flag). Other threads can see the flag and skip it.<br>⚠️ <strong>Physical deletion</strong>: actually unlink and free the node only when it's safe (no threads hold a reference).</div>
+      <strong>Deletion Steps:</strong>
+      <div class="step-flow">
+        <div class="step-item highlight"><span class="step-num">01</span>Search for the target node, collecting predecessors</div>
+        <div class="step-item highlight"><span class="step-num">02</span>Lock the target path (predecessor nodes)</div>
+        <div class="step-item highlight"><span class="step-num">03</span>Validate node links are still intact</div>
+        <div class="step-item highlight"><span class="step-num">04</span>Remove forward references at each level</div>
+        <div class="step-item highlight"><span class="step-num">05</span>Mark node as logically deleted</div>
+        <div class="step-item highlight"><span class="step-num">06</span>Physically free the node's memory</div>
+        <div class="step-item highlight"><span class="step-num">07</span>Release locks and decrement count</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Delete Element</strong>Removes a node by key</div>
+      <div class="op-chip"><strong>Delete Key</strong>Thread-safe key removal</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Search Target Node</span>
+      <span class="subop-tag">Lock Target Path</span>
+      <span class="subop-tag">Validate Node Links</span>
+      <span class="subop-tag">Remove Forward References</span>
+      <span class="subop-tag">Mark Node as Deleted</span>
+      <span class="subop-tag">Physically Remove Node</span>
+      <span class="subop-tag">Release Locks</span>
+      <span class="subop-tag">Decrease Node Count</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Deletion</div>
+    <div class="viz-container">
+      <canvas id="deleteCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn danger" onclick="deleteViz()">🗑 Delete Node</button>
+      <button class="btn" onclick="resetDelete()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="deleteInfo">Click "Delete Node" to see logical then physical removal.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Deletion</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Thread-safe deletion */</span>
+<span class="kw">int</span> <span class="fn">deleteKey</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key) {
+    <span class="ty">Node</span> <span class="op">*</span>update[<span class="nm">MAX_LEVEL</span>];
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header;
+
+    <span class="cm">/* Step 1: Search target, collect predecessors */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr<span class="op">-&gt;</span>forward[i] &amp;&amp; curr<span class="op">-&gt;</span>forward[i]<span class="op">-&gt;</span>key &lt; key)
+            curr = curr<span class="op">-&gt;</span>forward[i];
+        update[i] = curr;
+    }
+
+    <span class="cm">/* Step 2: Lock for thread safety */</span>
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+
+    <span class="cm">/* Step 3: Get the actual target node */</span>
+    curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+
+    <span class="cm">/* Step 4: Validate it actually exists */</span>
+    <span class="kw">if</span> (!curr || curr<span class="op">-&gt;</span>key != key) {
+        <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+        <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* Not found */</span>
+    }
+
+    <span class="cm">/* Step 5: Remove forward references at each level */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; sl<span class="op">-&gt;</span>currentLevel; i++) {
+        <span class="kw">if</span> (update[i]<span class="op">-&gt;</span>forward[i] != curr) <span class="kw">break</span>;
+        update[i]<span class="op">-&gt;</span>forward[i] = curr<span class="op">-&gt;</span>forward[i]; <span class="cm">/* bypass node */</span>
+    }
+
+    <span class="cm">/* Step 6: Physically free memory */</span>
+    <span class="fn">free</span>(curr);
+    sl<span class="op">-&gt;</span>size--;
+
+    <span class="cm">/* Step 7: Lower level if top levels are empty */</span>
+    <span class="kw">while</span> (sl<span class="op">-&gt;</span>currentLevel &gt; <span class="nm">1</span> &amp;&amp;
+           sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>] == <span class="nm">NULL</span>)
+        sl<span class="op">-&gt;</span>currentLevel--;
+
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+    <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* Success */</span>
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🚧</div>
+      <div class="analogy-title">Road Closure on a Highway</div>
+      <div class="analogy-text">
+        Closing a road while cars are still using it: first you put up <strong>"Road Closed Ahead"</strong> signs (logical deletion — mark the node). Cars still on the road finish their journey. Once the road is empty, you <strong>physically demolish</strong> it (physical deletion — free memory) and update the GPS maps (forward pointers) to route around it.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 04 -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-tag">Section 04 · Search</div>
+    <div class="section-title">Searching Concurrently</div>
+    <div class="section-desc">Search is the most frequently called operation. In a concurrent skip list, reads can often proceed lock-free, making this O(log n) on average.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">How Search Works</div>
+    <div class="theory-text">
+      Search starts at the <strong>highest level</strong> of the header node and works down — like taking the express lane until you overshoot, then dropping to local roads.
+      <div class="highlight-box">🔍 Search is often <strong>wait-free</strong> or <strong>lock-free</strong> — meaning readers don't need to acquire locks. They just traverse and validate node visibility.</div>
+      <strong>Key suboperations:</strong>
+      <ul>
+        <li><strong>Start from Highest Level:</strong> Begin at the topmost occupied level</li>
+        <li><strong>Move Forward in Level:</strong> Advance while next key &lt; target</li>
+        <li><strong>Drop to Lower Level:</strong> When next key ≥ target, go down</li>
+        <li><strong>Validate Node Visibility:</strong> Check node not marked as deleted</li>
+        <li><strong>Compare Keys:</strong> At level 0, do an exact key comparison</li>
+        <li><strong>Return Thread-Safe Result:</strong> Copy the value before returning</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Concurrent Search Key</strong>Lock-free key lookup returning value</div>
+      <div class="op-chip"><strong>Concurrent Search Value</strong>Full list scan for a matching value</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Start from Highest Level</span>
+      <span class="subop-tag">Move Forward in Level</span>
+      <span class="subop-tag">Drop to Lower Level</span>
+      <span class="subop-tag">Validate Node Visibility</span>
+      <span class="subop-tag">Compare Keys</span>
+      <span class="subop-tag">Detect Key Found</span>
+      <span class="subop-tag">Return Thread-Safe Result</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Search Traversal</div>
+    <div class="viz-container">
+      <canvas id="searchCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="searchViz()">🔍 Search Key</button>
+      <button class="btn" onclick="resetSearch()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="searchInfo">Watch the search probe drop levels like an express elevator.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Search</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Lock-free concurrent search */</span>
+<span class="kw">int</span> <span class="fn">search</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> <span class="op">*</span>outValue) {
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header;
+
+    <span class="cm">/* Start from the highest occupied level */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="cm">/* Move forward while next node key &lt; target */</span>
+        <span class="kw">while</span> (curr<span class="op">-&gt;</span>forward[i] &amp;&amp;
+               curr<span class="op">-&gt;</span>forward[i]<span class="op">-&gt;</span>key &lt; key)
+            curr = curr<span class="op">-&gt;</span>forward[i];
+        <span class="cm">/* If next key &gt; target, drop one level down */</span>
+    }
+
+    <span class="cm">/* Arrived at level 0 — check exact match */</span>
+    curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+
+    <span class="cm">/* Validate: node exists and key matches */</span>
+    <span class="kw">if</span> (curr &amp;&amp; curr<span class="op">-&gt;</span>key == key) {
+        <span class="op">*</span>outValue = curr<span class="op">-&gt;</span>value;  <span class="cm">/* Copy value (thread-safe read) */</span>
+        <span class="kw">return</span> <span class="nm">1</span>;               <span class="cm">/* Found! */</span>
+    }
+    <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* Not found */</span>
+}
+
+<span class="cm">/* Example usage */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="ty">SkipList</span> <span class="op">*</span>sl = <span class="fn">initSkipList</span>();
+    <span class="fn">insert</span>(sl, <span class="nm">10</span>, <span class="nm">100</span>);
+    <span class="fn">insert</span>(sl, <span class="nm">20</span>, <span class="nm">200</span>);
+    <span class="fn">insert</span>(sl, <span class="nm">30</span>, <span class="nm">300</span>);
+
+    <span class="kw">int</span> val;
+    <span class="kw">if</span> (<span class="fn">search</span>(sl, <span class="nm">20</span>, &amp;val))
+        <span class="fn">printf</span>(<span class="st">"Found: %d\n"</span>, val); <span class="cm">/* Prints: Found: 200 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">✈️</div>
+      <div class="analogy-title">Finding a City on a Map</div>
+      <div class="analogy-text">
+        Searching for "Dhaka" on a map: start at <strong>continent level</strong> (highest skip list level), zoom to Asia, then zoom to Bangladesh, then pinpoint the city (level 0). Each zoom is "dropping a level." The skip list does exactly this — skipping continents of irrelevant data at higher levels for blazing speed.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 05 -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-tag">Section 05 · Synchronization</div>
+    <div class="section-title">Managing Concurrent Access</div>
+    <div class="section-desc">Synchronization is the heart of concurrency. Without it, two threads modifying the same node simultaneously can corrupt data permanently.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Three Locking Strategies</div>
+    <div class="theory-text">
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Coarse-Grained Locking</strong>One big lock for the whole list. Simple but slow under high contention.</div>
+        <div class="op-chip"><strong>Fine-Grained Locking</strong>Each node has its own lock. Allows more parallelism but complex to manage.</div>
+        <div class="op-chip"><strong>Optimistic Locking</strong>Don't lock during search; lock only to validate and commit changes.</div>
+        <div class="op-chip"><strong>Lock-Free (CAS)</strong>Uses atomic Compare-And-Swap instructions — no locks at all!</div>
+      </div>
+      <div class="highlight-box">
+        🔐 <strong>Fine-grained locking</strong> is the most common in production skip lists. It locks only the nodes needed for an operation, letting other threads work on unrelated parts simultaneously.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Synchronize Threads</strong>Ensure operations don't interfere</div>
+      <div class="op-chip"><strong>Manage Concurrent Access</strong>Control who reads/writes when</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Acquire Lock</span>
+      <span class="subop-tag">Release Lock</span>
+      <span class="subop-tag">Apply Fine-Grained Locking</span>
+      <span class="subop-tag">Apply Optimistic Locking</span>
+      <span class="subop-tag">Apply Lock-Free Sync</span>
+      <span class="subop-tag">Detect Concurrent Modification</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Thread Contention</div>
+    <div class="viz-container">
+      <canvas id="syncCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="startSyncViz()">▶ Simulate Threads</button>
+      <button class="btn danger" onclick="stopSyncViz()">■ Stop</button>
+    </div>
+    <div class="viz-info" id="syncInfo">Watch multiple threads (colored) contend for lock access.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Synchronization Strategies</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* ── Strategy 1: Coarse-Grained (Global Lock) ── */</span>
+<span class="kw">void</span> <span class="fn">coarseInsert</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> val) {
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);   <span class="cm">/* LOCK entire list */</span>
+    <span class="cm">/* ... do insert ... */</span>
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock); <span class="cm">/* UNLOCK */</span>
+}
+
+<span class="cm">/* ── Strategy 2: Fine-Grained (Per-Node Locks) ── */</span>
+<span class="kw">typedef struct</span> <span class="ty">FGNode</span> {
+    <span class="kw">int</span>             key, value;
+    pthread_mutex_t nodeLock;       <span class="cm">/* Each node has its own lock */</span>
+    <span class="kw">struct</span> <span class="ty">FGNode</span>   <span class="op">*</span>forward[<span class="nm">MAX_LEVEL</span>];
+} <span class="ty">FGNode</span>;
+
+<span class="kw">void</span> <span class="fn">fineInsert</span>(<span class="ty">FGNode</span> <span class="op">*</span>header, <span class="kw">int</span> key, <span class="kw">int</span> val) {
+    <span class="ty">FGNode</span> <span class="op">*</span>preds[<span class="nm">MAX_LEVEL</span>], <span class="op">*</span>succs[<span class="nm">MAX_LEVEL</span>];
+    <span class="cm">/* Find position, lock only relevant predecessor nodes */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+        <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>preds[i]<span class="op">-&gt;</span>nodeLock);
+    <span class="cm">/* ... link new node ... */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+        <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>preds[i]<span class="op">-&gt;</span>nodeLock);
+}
+
+<span class="cm">/* ── Strategy 3: Lock-Free (CAS with stdatomic) ── */</span>
+<span class="kw">#include</span> <span class="st">&lt;stdatomic.h&gt;</span>
+
+<span class="kw">typedef struct</span> <span class="ty">LFNode</span> {
+    <span class="kw">int</span>                  key, value;
+    _Atomic(<span class="kw">struct</span> <span class="ty">LFNode</span><span class="op">*</span>) forward[<span class="nm">MAX_LEVEL</span>]; <span class="cm">/* atomic ptr */</span>
+} <span class="ty">LFNode</span>;
+
+<span class="cm">/* Compare-And-Swap: only update if expected value matches */</span>
+<span class="kw">void</span> <span class="fn">casLink</span>(<span class="ty">LFNode</span> <span class="op">*</span>pred, <span class="kw">int</span> level, <span class="ty">LFNode</span> <span class="op">*</span>expected, <span class="ty">LFNode</span> <span class="op">*</span>newNode) {
+    <span class="fn">atomic_compare_exchange_strong</span>(
+        <span class="op">&amp;</span>pred<span class="op">-&gt;</span>forward[level], <span class="op">&amp;</span>expected, newNode
+    ); <span class="cm">/* Succeeds only if no other thread changed the pointer */</span>
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🚦</div>
+      <div class="analogy-title">Traffic Light System</div>
+      <div class="analogy-text">
+        <strong>Coarse-grained</strong> = One giant red light stops ALL traffic city-wide. Simple but causes massive jams.<br>
+        <strong>Fine-grained</strong> = Individual traffic lights at each intersection — each corner manages its own flow.<br>
+        <strong>Lock-free</strong> = A roundabout with no lights — cars negotiate entry atomically, yielding naturally without stopping.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 06 -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-tag">Section 06 · Validation</div>
+    <div class="section-title">Ensuring Structural Integrity</div>
+    <div class="section-desc">After concurrent modifications, the structure must be validated — detecting orphaned nodes, broken links, and logically-deleted nodes still reachable.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Why Validation Matters</div>
+    <div class="theory-text">
+      In a concurrent environment, between the time you <em>search</em> for an insert position and <em>actually insert</em>, another thread may have:
+      <ul>
+        <li>Deleted one of your predecessor nodes</li>
+        <li>Inserted a node with the same key</li>
+        <li>Restructured the links you were planning to use</li>
+      </ul>
+      <div class="highlight-box">🛡️ Validation re-checks all invariants <em>while holding locks</em> before committing changes. If validation fails, the operation retries from scratch.</div>
+      <strong>Validation checks:</strong>
+      <ul>
+        <li><strong>Check Forward Links:</strong> Predecessor's forward[i] still points to successor</li>
+        <li><strong>Verify Node Consistency:</strong> Node is not marked as logically deleted</li>
+        <li><strong>Detect Marked Nodes:</strong> The "deleted" flag is not set on key nodes</li>
+        <li><strong>Confirm Safe Modification:</strong> All conditions met — safe to proceed</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Validate Structural Integrity</strong>Check the whole list is consistent</div>
+      <div class="op-chip"><strong>Validate Node State</strong>Check a specific node before modifying it</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Check Forward Links</span>
+      <span class="subop-tag">Verify Node Consistency</span>
+      <span class="subop-tag">Detect Marked Nodes</span>
+      <span class="subop-tag">Confirm Safe Modification</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Validation</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Node with a "deleted" flag for logical deletion */</span>
+<span class="kw">typedef struct</span> <span class="ty">VNode</span> {
+    <span class="kw">int</span>          key, value;
+    <span class="kw">int</span>          marked;   <span class="cm">/* 1 = logically deleted */</span>
+    <span class="kw">int</span>          fullyLinked; <span class="cm">/* 1 = visible at all levels */</span>
+    pthread_mutex_t lock;
+    <span class="kw">struct</span> <span class="ty">VNode</span> <span class="op">*</span>forward[<span class="nm">MAX_LEVEL</span>];
+} <span class="ty">VNode</span>;
+
+<span class="cm">/* Validate before insert/delete — call while holding locks */</span>
+<span class="kw">int</span> <span class="fn">validate</span>(<span class="ty">VNode</span> <span class="op">*</span>pred, <span class="ty">VNode</span> <span class="op">*</span>curr, <span class="kw">int</span> level) {
+    <span class="cm">/* Check 1: predecessor is not deleted */</span>
+    <span class="kw">if</span> (pred<span class="op">-&gt;</span>marked)
+        <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* FAIL: pred was deleted */</span>
+
+    <span class="cm">/* Check 2: current node is not deleted */</span>
+    <span class="kw">if</span> (curr<span class="op">-&gt;</span>marked)
+        <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* FAIL: target was deleted */</span>
+
+    <span class="cm">/* Check 3: forward link still intact */</span>
+    <span class="kw">if</span> (pred<span class="op">-&gt;</span>forward[level] != curr)
+        <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* FAIL: another thread changed the link */</span>
+
+    <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* All checks passed — safe to modify */</span>
+}
+
+<span class="cm">/* Usage inside insert */</span>
+<span class="kw">void</span> <span class="fn">safeInsert</span>(<span class="ty">VNode</span> <span class="op">*</span>header, <span class="kw">int</span> key, <span class="kw">int</span> val) {
+    <span class="kw">while</span> (<span class="nm">1</span>) {  <span class="cm">/* Retry loop */</span>
+        <span class="ty">VNode</span> <span class="op">*</span>preds[<span class="nm">MAX_LEVEL</span>], <span class="op">*</span>succs[<span class="nm">MAX_LEVEL</span>];
+        <span class="cm">/* ... find preds and succs ... */</span>
+
+        <span class="cm">/* Lock preds */</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+            <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>preds[i]<span class="op">-&gt;</span>lock);
+
+        <span class="cm">/* Validate all levels */</span>
+        <span class="kw">int</span> valid = <span class="nm">1</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+            valid &amp;= <span class="fn">validate</span>(preds[i], succs[i], i);
+
+        <span class="kw">if</span> (!valid) { <span class="cm">/* Validation failed — retry */</span>
+            <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+                <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>preds[i]<span class="op">-&gt;</span>lock);
+            <span class="kw">continue</span>; <span class="cm">/* Go back to top of while loop */</span>
+        }
+
+        <span class="cm">/* Safe to insert now */</span>
+        <span class="cm">/* ... link new node ... */</span>
+        <span class="kw">break</span>;
+    }
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🔬</div>
+      <div class="analogy-title">Medical Safety Check Before Surgery</div>
+      <div class="analogy-text">
+        Before a surgeon makes an incision, the team runs a <strong>final safety checklist</strong>: correct patient? correct site? blood type confirmed? If anything changed (wrong patient wheeled in), they abort and restart. Validation in concurrent skip lists is exactly this — a final confirmation that the world still looks the way you planned before committing the irreversible action.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 07 -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-tag">Section 07 · Update</div>
+    <div class="section-title">Updating Existing Values</div>
+    <div class="section-desc">Updating is simpler than insert/delete — the node stays in place, but we must lock it to prevent two threads writing different values simultaneously.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Update Strategy</div>
+    <div class="theory-text">
+      Since the key doesn't change, the node's position in the skip list is unchanged. We only need to:
+      <div class="step-flow">
+        <div class="step-item highlight"><span class="step-num">01</span>Search for the node with the target key (lock-free read)</div>
+        <div class="step-item highlight"><span class="step-num">02</span>Lock the specific node (fine-grained)</div>
+        <div class="step-item highlight"><span class="step-num">03</span>Validate: node not deleted and key matches</div>
+        <div class="step-item highlight"><span class="step-num">04</span>Modify the stored value atomically</div>
+        <div class="step-item highlight"><span class="step-num">05</span>Release the node lock</div>
+      </div>
+      <div class="highlight-box">
+        ⚡ Update is the most <strong>parallelism-friendly</strong> operation — two threads can update different nodes simultaneously with zero contention.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Update Existing Value</strong>Change value for an existing key</div>
+      <div class="op-chip"><strong>Replace Data</strong>Atomic swap of old value with new</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Lock Target Node</span>
+      <span class="subop-tag">Search Existing Key</span>
+      <span class="subop-tag">Modify Stored Value</span>
+      <span class="subop-tag">Validate Concurrent Access</span>
+      <span class="subop-tag">Release Lock</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Update</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Thread-safe value update */</span>
+<span class="kw">int</span> <span class="fn">update</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> newValue) {
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header;
+
+    <span class="cm">/* Step 1: Lock-free search for the node */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr<span class="op">-&gt;</span>forward[i] &amp;&amp;
+               curr<span class="op">-&gt;</span>forward[i]<span class="op">-&gt;</span>key &lt; key)
+            curr = curr<span class="op">-&gt;</span>forward[i];
+    }
+    curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+
+    <span class="cm">/* Step 2: Node must exist and key must match */</span>
+    <span class="kw">if</span> (!curr || curr<span class="op">-&gt;</span>key != key)
+        <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* Not found */</span>
+
+    <span class="cm">/* Step 3: Lock just this node, then update */</span>
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+
+    <span class="cm">/* Step 4: Re-validate after locking (state may have changed) */</span>
+    <span class="kw">if</span> (curr<span class="op">-&gt;</span>key == key) {
+        <span class="kw">int</span> old = curr<span class="op">-&gt;</span>value;
+        curr<span class="op">-&gt;</span>value = newValue;  <span class="cm">/* Atomic write of value */</span>
+        <span class="fn">printf</span>(<span class="st">"Updated key %d: %d -&gt; %d\n"</span>, key, old, newValue);
+        <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+        <span class="kw">return</span> <span class="nm">1</span>; <span class="cm">/* Success */</span>
+    }
+
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+    <span class="kw">return</span> <span class="nm">0</span>; <span class="cm">/* Key disappeared (deleted by another thread) */</span>
+}
+
+<span class="cm">/* Atomic replace using CAS (lock-free approach) */</span>
+<span class="kw">int</span> <span class="fn">atomicUpdate</span>(_Atomic <span class="kw">int</span> <span class="op">*</span>target, <span class="kw">int</span> expected, <span class="kw">int</span> newVal) {
+    <span class="kw">return</span> <span class="fn">atomic_compare_exchange_strong</span>(target, &amp;expected, newVal);
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🏦</div>
+      <div class="analogy-title">Updating a Bank Account Balance</div>
+      <div class="analogy-text">
+        A bank teller updates your balance: finds your account (search), <strong>locks the account</strong> (no other teller can touch it simultaneously), reads the current balance, subtracts the withdrawal, <strong>writes the new balance</strong>, then unlocks. If two tellers updated simultaneously without locking, you could withdraw the same money twice — the classic race condition.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 08 -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-tag">Section 08 · Traversal</div>
+    <div class="section-title">Walking Through All Nodes</div>
+    <div class="section-desc">Traversal visits every node in sorted order. Concurrent traversal must handle nodes being inserted or deleted mid-walk without crashing.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Traversal Modes</div>
+    <div class="theory-text">
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Full Traversal</strong>Visit every node at level 0 (the base list). Gives complete sorted view.</div>
+        <div class="op-chip"><strong>Concurrent Traversal</strong>Walk while others insert/delete. Must skip deleted nodes.</div>
+        <div class="op-chip"><strong>Level-Specific Traversal</strong>Walk only nodes at a given level. Useful for debugging/analytics.</div>
+        <div class="op-chip"><strong>Skip Deleted Nodes</strong>Check the "marked" flag; skip if set. Avoids stale data.</div>
+      </div>
+      <div class="highlight-box">
+        🚶 Traversal always happens at <strong>Level 0</strong> (the base level) because it's the only level guaranteed to contain ALL keys.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Traverse Entire Skip List</strong>Full base-level walk</div>
+      <div class="op-chip"><strong>Concurrent Traversal</strong>Safe walk with deleted-node handling</div>
+      <div class="op-chip"><strong>Traverse Specific Level</strong>Walk only at level i</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Visit Nodes Sequentially</span>
+      <span class="subop-tag">Move Through Forward Links</span>
+      <span class="subop-tag">Skip Deleted Nodes</span>
+      <span class="subop-tag">Print Keys</span>
+      <span class="subop-tag">Print Values</span>
+      <span class="subop-tag">Display Level-wise Structure</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Traversal Animation</div>
+    <div class="viz-container">
+      <canvas id="traversalCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="runTraversal()">▶ Run Traversal</button>
+      <button class="btn" onclick="resetTraversal()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="traversalInfo">Traversal walks level 0 from left to right visiting every key.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Traversal</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Print all keys in sorted order (level 0 traversal) */</span>
+<span class="kw">void</span> <span class="fn">traverse</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>]; <span class="cm">/* Start at level 0 */</span>
+    <span class="fn">printf</span>(<span class="st">"Keys: "</span>);
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, curr<span class="op">-&gt;</span>key);
+        curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>]; <span class="cm">/* Follow level-0 link */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* Display full level-wise structure */</span>
+<span class="kw">void</span> <span class="fn">displayLevels</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[i];
+        <span class="fn">printf</span>(<span class="st">"L%d: HEAD"</span>, i);
+        <span class="kw">while</span> (curr) {
+            <span class="fn">printf</span>(<span class="st">" --&gt; [%d]"</span>, curr<span class="op">-&gt;</span>key);
+            curr = curr<span class="op">-&gt;</span>forward[i];
+        }
+        <span class="fn">printf</span>(<span class="st">" --&gt; NULL\n"</span>);
+    }
+}
+
+<span class="cm">/* Concurrent traversal — skip logically deleted nodes */</span>
+<span class="kw">void</span> <span class="fn">concurrentTraverse</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr) {
+        <span class="cm">/* In a real implementation, check the marked flag */</span>
+        <span class="cm">/* if (!curr-&gt;marked) { process(curr); } */</span>
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, curr<span class="op">-&gt;</span>key);
+        curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    }
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🚂</div>
+      <div class="analogy-title">Train Stopping at Every Station</div>
+      <div class="analogy-text">
+        Level-0 traversal is like a <strong>local train</strong> stopping at every station (node). The higher-level traversals are like express trains that skip most stations. Skipping deleted nodes is like a conductor ignoring <strong>closed stations</strong> — she drives right past without opening doors.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 09 -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-tag">Section 09 · Level Management</div>
+    <div class="section-title">Managing the Layer Structure</div>
+    <div class="section-desc">Levels are what give skip lists their speed. Managing them properly — growing, shrinking, rebalancing — keeps performance at O(log n).</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">How Levels Work</div>
+    <div class="theory-text">
+      When a new node is inserted, it's randomly assigned a level (1 to MAX_LEVEL). Each level appears with probability P = 0.5.
+      <div class="highlight-box">
+        📐 Statistically: ~50% of nodes are at level 1 only, ~25% reach level 2, ~12.5% reach level 3, etc. This distribution gives the O(log n) guarantee.
+      </div>
+      <strong>Level Management rules:</strong>
+      <ul>
+        <li><strong>Increase Current Level:</strong> When a new node's random level exceeds current, raise the list's level</li>
+        <li><strong>Decrease Current Level:</strong> After deletion, if top levels are empty, lower the level count</li>
+        <li><strong>Remove Empty Levels:</strong> Trim dead levels to avoid wasted pointer traversal</li>
+        <li><strong>Maintain Balanced Levels:</strong> Probabilistic approach keeps the structure naturally balanced</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Manage Levels</strong>Control number of active levels</div>
+      <div class="op-chip"><strong>Adjust Maximum Level</strong>Dynamically resize the level cap</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Increase Current Level</span>
+      <span class="subop-tag">Decrease Current Level</span>
+      <span class="subop-tag">Remove Empty Levels</span>
+      <span class="subop-tag">Maintain Balanced Levels</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Level Distribution</div>
+    <div class="viz-container">
+      <canvas id="levelCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="simulateLevels()">🎲 Simulate 20 Nodes</button>
+      <button class="btn" onclick="resetLevelViz()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="levelInfo">See the probabilistic level distribution form naturally.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Level Management</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Probabilistic level generator */</span>
+<span class="kw">int</span> <span class="fn">randomLevel</span>() {
+    <span class="kw">int</span> level = <span class="nm">1</span>;
+    <span class="cm">/* Each level doubles the skip distance but halves probability */</span>
+    <span class="kw">while</span> (<span class="fn">rand</span>() % <span class="nm">2</span> == <span class="nm">0</span> &amp;&amp; level &lt; <span class="nm">MAX_LEVEL</span>)
+        level++;
+    <span class="kw">return</span> level;
+}
+
+<span class="cm">/* After insert: grow level if needed */</span>
+<span class="kw">void</span> <span class="fn">maybeGrowLevel</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> newNodeLevel,
+                      <span class="ty">Node</span> <span class="op">*</span>update[]) {
+    <span class="kw">if</span> (newNodeLevel &gt; sl<span class="op">-&gt;</span>currentLevel) {
+        <span class="cm">/* New levels: header points directly to new node */</span>
+        <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel; i &lt; newNodeLevel; i++)
+            update[i] = sl<span class="op">-&gt;</span>header;
+        sl<span class="op">-&gt;</span>currentLevel = newNodeLevel;
+        <span class="fn">printf</span>(<span class="st">"Level grown to %d\n"</span>, sl<span class="op">-&gt;</span>currentLevel);
+    }
+}
+
+<span class="cm">/* After delete: shrink empty top levels */</span>
+<span class="kw">void</span> <span class="fn">maybeShrinkLevel</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="kw">while</span> (sl<span class="op">-&gt;</span>currentLevel &gt; <span class="nm">1</span> &amp;&amp;
+           sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>] == <span class="nm">NULL</span>) {
+        sl<span class="op">-&gt;</span>currentLevel--;
+        <span class="fn">printf</span>(<span class="st">"Level shrunk to %d\n"</span>, sl<span class="op">-&gt;</span>currentLevel);
+    }
+}
+
+<span class="cm">/* Expected level for n nodes = log2(n) */</span>
+<span class="kw">int</span> <span class="fn">optimalMaxLevel</span>(<span class="kw">int</span> expectedNodes) {
+    <span class="kw">int</span> level = <span class="nm">1</span>;
+    <span class="kw">while</span> ((<span class="nm">1</span> &lt;&lt; level) &lt; expectedNodes) level++;
+    <span class="kw">return</span> level;  <span class="cm">/* ceil(log2(expectedNodes)) */</span>
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🏗️</div>
+      <div class="analogy-title">Skyscraper Floors</div>
+      <div class="analogy-text">
+        A skip list's levels are like a skyscraper's floors. When a new tenant (node) arrives, they're randomly assigned a floor number. If they're on floor 10 and the building only has 8 floors, we <strong>add 2 new floors</strong>. When tenants leave and upper floors empty out, we <strong>demolish the empty floors</strong> to save maintenance costs.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 10 -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="section-tag">Section 10 · Pointer Management</div>
+    <div class="section-title">Maintaining Forward Pointers</div>
+    <div class="section-desc">Forward pointers are the veins of a skip list. Corrupted pointers = corrupted data. Atomic pointer updates ensure thread-safe linking.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pointer Management Rules</div>
+    <div class="theory-text">
+      Each node has an array of <code>forward[]</code> pointers — one per level. Managing these safely is critical:
+      <div class="highlight-box">
+        ⚡ <strong>Atomic pointer updates</strong> use CPU-level instructions that guarantee a pointer is updated in a single, uninterruptible operation — no thread can see a "half-updated" pointer.
+      </div>
+      <strong>Key principles:</strong>
+      <ul>
+        <li><strong>Update Pointer Links:</strong> Always update bottom-up (level 0 first) on delete, top-down on insert</li>
+        <li><strong>Redirect References:</strong> When bypassing a node, predecessor's forward must point to successor</li>
+        <li><strong>Use Atomic Pointer Update:</strong> Prevents torn reads on 64-bit pointer values</li>
+        <li><strong>Prevent Broken Links:</strong> Never leave a dangling pointer, even briefly</li>
+        <li><strong>Initialize Pointer Arrays:</strong> All forward[] start as NULL</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Maintain Forward Pointers</strong>Keep all forward[] consistent</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Update Pointer Links</span>
+      <span class="subop-tag">Redirect References</span>
+      <span class="subop-tag">Use Atomic Pointer Update</span>
+      <span class="subop-tag">Prevent Broken Links</span>
+      <span class="subop-tag">Initialize Pointer Arrays</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Pointer Management</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* ── Safe pointer initialization ── */</span>
+<span class="ty">Node</span><span class="op">*</span> <span class="fn">createNode</span>(<span class="kw">int</span> key, <span class="kw">int</span> value) {
+    <span class="ty">Node</span> <span class="op">*</span>n = (<span class="ty">Node</span><span class="op">*</span>)<span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="ty">Node</span>));
+    n<span class="op">-&gt;</span>key = key; n<span class="op">-&gt;</span>value = value;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+        n<span class="op">-&gt;</span>forward[i] = <span class="nm">NULL</span>;  <span class="cm">/* ALWAYS initialize to NULL */</span>
+    <span class="kw">return</span> n;
+}
+
+<span class="cm">/* ── Atomic pointer type (C11) ── */</span>
+<span class="kw">#include</span> <span class="st">&lt;stdatomic.h&gt;</span>
+
+<span class="kw">typedef struct</span> <span class="ty">AtomicNode</span> {
+    <span class="kw">int</span>   key, value;
+    _Atomic(<span class="kw">struct</span> <span class="ty">AtomicNode</span><span class="op">*</span>) fwd[<span class="nm">MAX_LEVEL</span>];
+} <span class="ty">AtomicNode</span>;
+
+<span class="cm">/* Atomic read of a forward pointer */</span>
+<span class="ty">AtomicNode</span><span class="op">*</span> <span class="fn">getNext</span>(<span class="ty">AtomicNode</span> <span class="op">*</span>node, <span class="kw">int</span> level) {
+    <span class="kw">return</span> <span class="fn">atomic_load</span>(<span class="op">&amp;</span>node<span class="op">-&gt;</span>fwd[level]);
+}
+
+<span class="cm">/* Atomic write of a forward pointer */</span>
+<span class="kw">void</span> <span class="fn">setNext</span>(<span class="ty">AtomicNode</span> <span class="op">*</span>node, <span class="kw">int</span> level, <span class="ty">AtomicNode</span> <span class="op">*</span>next) {
+    <span class="fn">atomic_store</span>(<span class="op">&amp;</span>node<span class="op">-&gt;</span>fwd[level], next);
+}
+
+<span class="cm">/* CAS-based pointer redirect (lock-free link update) */</span>
+<span class="kw">int</span> <span class="fn">casNext</span>(<span class="ty">AtomicNode</span> <span class="op">*</span>node, <span class="kw">int</span> level,
+              <span class="ty">AtomicNode</span> <span class="op">*</span>expected, <span class="ty">AtomicNode</span> <span class="op">*</span>desired) {
+    <span class="kw">return</span> <span class="fn">atomic_compare_exchange_strong</span>(
+        <span class="op">&amp;</span>node<span class="op">-&gt;</span>fwd[level], <span class="op">&amp;</span>expected, desired
+    );
+    <span class="cm">/* Returns 1 if swap succeeded, 0 if expected didn't match */</span>
+}
+
+<span class="cm">/* Prevent broken links — insert new node safely */</span>
+<span class="kw">void</span> <span class="fn">safeLink</span>(<span class="ty">AtomicNode</span> <span class="op">*</span>pred, <span class="ty">AtomicNode</span> <span class="op">*</span>succ,
+               <span class="ty">AtomicNode</span> <span class="op">*</span>newNode, <span class="kw">int</span> level) {
+    <span class="cm">/* First: new node points to successor */</span>
+    <span class="fn">setNext</span>(newNode, level, succ);
+    <span class="cm">/* Then: predecessor points to new node (atomic swap) */</span>
+    <span class="kw">while</span> (!<span class="fn">casNext</span>(pred, level, succ, newNode))
+        ; <span class="cm">/* Retry if another thread interfered */</span>
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🔗</div>
+      <div class="analogy-title">Chain Links</div>
+      <div class="analogy-text">
+        Imagine a chain (linked list). To insert a new link: first hook the new link onto the right side (set new→forward), then hook the left link onto the new one (set pred→forward). If you did it in reverse — detaching the left link before attaching the new one — the chain breaks momentarily and anything hanging on it falls. Atomic pointer updates ensure the chain is <strong>never broken</strong>, even for a nanosecond.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 11 -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <div class="section-tag">Section 11 · Conflict Handling</div>
+    <div class="section-title">Resolving Thread Conflicts</div>
+    <div class="section-desc">When two threads collide — trying to modify the same node simultaneously — conflict handling decides who wins, who retries, and who aborts.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Types of Conflicts</div>
+    <div class="theory-text">
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Data Race</strong>Two threads read-then-write the same memory without synchronization. Result: corrupted data.</div>
+        <div class="op-chip"><strong>ABA Problem</strong>Thread A reads value A, Thread B changes it to B then back to A. Thread A thinks nothing changed but the world has changed.</div>
+        <div class="op-chip"><strong>Lock Contention</strong>Many threads waiting for the same lock. Kills performance even with correct logic.</div>
+        <div class="op-chip"><strong>Deadlock</strong>Thread 1 holds Lock A waiting for B; Thread 2 holds Lock B waiting for A. Both stuck forever.</div>
+      </div>
+      <div class="highlight-box">
+        🔄 <strong>Retry strategy</strong>: if a conflict is detected, release all locks and restart the operation. This is simple and correct, but may cause starvation under extreme contention.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Handle Thread Conflict</strong>Detect and respond to contention</div>
+      <div class="op-chip"><strong>Resolve Concurrent Modification</strong>Pick a winner, retry losers</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Detect Data Race</span>
+      <span class="subop-tag">Retry Failed Operation</span>
+      <span class="subop-tag">Abort Unsafe Modification</span>
+      <span class="subop-tag">Resolve Lock Contention</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Conflict Handling</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Backoff strategy to reduce lock contention */</span>
+<span class="kw">#include</span> <span class="st">&lt;time.h&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;unistd.h&gt;</span>
+
+<span class="cm">/* Exponential backoff: wait longer each retry */</span>
+<span class="kw">void</span> <span class="fn">backoff</span>(<span class="kw">int</span> attempt) {
+    <span class="kw">struct</span> <span class="ty">timespec</span> ts;
+    ts.tv_sec  = <span class="nm">0</span>;
+    ts.tv_nsec = (<span class="nm">1</span> &lt;&lt; attempt) <span class="op">*</span> <span class="nm">1000</span>; <span class="cm">/* 1us, 2us, 4us... */</span>
+    <span class="fn">nanosleep</span>(<span class="op">&amp;</span>ts, <span class="nm">NULL</span>);
+}
+
+<span class="cm">/* Insert with retry on conflict */</span>
+<span class="kw">void</span> <span class="fn">insertWithRetry</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> val) {
+    <span class="kw">int</span> attempt = <span class="nm">0</span>;
+    <span class="kw">while</span> (<span class="nm">1</span>) {
+        <span class="kw">int</span> result = <span class="fn">pthread_mutex_trylock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+        <span class="kw">if</span> (result == <span class="nm">0</span>) {          <span class="cm">/* Got the lock! */</span>
+            <span class="cm">/* ... do insert ... */</span>
+            <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+            <span class="kw">return</span>;
+        }
+        <span class="cm">/* Lock was busy — backoff and retry */</span>
+        <span class="fn">backoff</span>(attempt++);
+        <span class="kw">if</span> (attempt &gt; <span class="nm">10</span>) attempt = <span class="nm">10</span>; <span class="cm">/* Cap backoff */</span>
+    }
+}
+
+<span class="cm">/* Detect ABA problem using version counters */</span>
+<span class="kw">typedef struct</span> <span class="ty">Stamped</span> {
+    <span class="ty">Node</span> <span class="op">*</span>ptr;
+    <span class="kw">int</span>   version; <span class="cm">/* Incremented on each change */</span>
+} <span class="ty">Stamped</span>;
+
+<span class="cm">/* CAS on stamped pointer: checks BOTH pointer and version */</span>
+<span class="kw">int</span> <span class="fn">stampedCAS</span>(<span class="ty">Stamped</span> <span class="op">*</span>target, <span class="ty">Stamped</span> expected, <span class="ty">Stamped</span> desired) {
+    <span class="kw">if</span> (target<span class="op">-&gt;</span>ptr == expected.ptr &amp;&amp;
+        target<span class="op">-&gt;</span>version == expected.version) {
+        <span class="op">*</span>target = desired; <span class="cm">/* Atomically in real code */</span>
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🥊</div>
+      <div class="analogy-title">Two Shoppers Grabbing the Last Item</div>
+      <div class="analogy-text">
+        Two customers reach for the last item on a shelf simultaneously. Conflict handling is the store policy: one customer gets it (operation succeeds), the other either <strong>tries another size</strong> (retry), <strong>leaves the store</strong> (abort), or waits for a restock (backoff). Without policy, they'd tear the item in half — a data race.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 12 -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <div class="section-tag">Section 12 · Utility Operations</div>
+    <div class="section-title">Helper Operations</div>
+    <div class="section-desc">Utility functions support everyday operations — checking if the list is empty, counting nodes, and clearing the entire structure safely.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Utility Functions Explained</div>
+    <div class="theory-text">
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Check Empty List</strong>Returns 1 if no nodes exist. Thread-safe with atomic size read.</div>
+        <div class="op-chip"><strong>Get Size</strong>Returns the current node count. Must be read atomically.</div>
+        <div class="op-chip"><strong>Clear Skip List</strong>Removes ALL nodes, resets to initial state. Requires exclusive lock.</div>
+      </div>
+      <div class="highlight-box">
+        ⚠️ <strong>Clear</strong> is the most dangerous utility — it must acquire the <em>global</em> lock and block all other operations. Never call clear() under contention.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Check Empty List</strong>isEmpty() returns bool</div>
+      <div class="op-chip"><strong>Get Size</strong>getSize() returns count</div>
+      <div class="op-chip"><strong>Clear Skip List</strong>Remove everything</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Count Nodes</span>
+      <span class="subop-tag">Reset Levels</span>
+      <span class="subop-tag">Remove All Nodes</span>
+      <span class="subop-tag">Reinitialize Header</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Utility Operations</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Check if skip list has no elements */</span>
+<span class="kw">int</span> <span class="fn">isEmpty</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="cm">/* size is protected by the mutex in all mutating ops */</span>
+    <span class="kw">return</span> sl<span class="op">-&gt;</span>size == <span class="nm">0</span>;
+}
+
+<span class="cm">/* Get current count of nodes */</span>
+<span class="kw">int</span> <span class="fn">getSize</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="kw">int</span> sz;
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+    sz = sl<span class="op">-&gt;</span>size;
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+    <span class="kw">return</span> sz;
+}
+
+<span class="cm">/* Clear ALL nodes — resets to empty state */</span>
+<span class="kw">void</span> <span class="fn">clearSkipList</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock); <span class="cm">/* Exclusive access */</span>
+
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="ty">Node</span> <span class="op">*</span>next = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>]; <span class="cm">/* save next before free */</span>
+        <span class="fn">free</span>(curr);                       <span class="cm">/* deallocate node      */</span>
+        curr = next;
+    }
+
+    <span class="cm">/* Reinitialize header pointers */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">MAX_LEVEL</span>; i++)
+        sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[i] = <span class="nm">NULL</span>;
+
+    sl<span class="op">-&gt;</span>currentLevel = <span class="nm">0</span>;
+    sl<span class="op">-&gt;</span>size          = <span class="nm">0</span>;
+
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock);
+    <span class="fn">printf</span>(<span class="st">"Skip list cleared.\n"</span>);
+}
+
+<span class="cm">/* Usage */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="ty">SkipList</span> <span class="op">*</span>sl = <span class="fn">initSkipList</span>();
+    <span class="fn">insert</span>(sl, <span class="nm">1</span>, <span class="nm">10</span>); <span class="fn">insert</span>(sl, <span class="nm">2</span>, <span class="nm">20</span>);
+    <span class="fn">printf</span>(<span class="st">"Size: %d, Empty: %d\n"</span>, <span class="fn">getSize</span>(sl), <span class="fn">isEmpty</span>(sl));
+    <span class="fn">clearSkipList</span>(sl);
+    <span class="fn">printf</span>(<span class="st">"After clear — Size: %d\n"</span>, <span class="fn">getSize</span>(sl));
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🧹</div>
+      <div class="analogy-title">Restaurant End-of-Night Cleanup</div>
+      <div class="analogy-text">
+        isEmpty() = checking if the dining hall has any guests. getSize() = counting how many tables are occupied. clearSkipList() = closing the restaurant at night: <strong>lock the doors</strong> (exclusive lock), clear every table, reset chairs, wipe counters (reinitialize header), then unlock for next morning.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 13 -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <div class="section-tag">Section 13 · Memory Management</div>
+    <div class="section-title">Safe Memory Allocation & Deallocation</div>
+    <div class="section-desc">In concurrent systems, memory bugs are silent killers — use-after-free, double-free, and memory leaks. Hazard pointers and garbage collection prevent these.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">The Memory Danger Zone</div>
+    <div class="theory-text">
+      <div class="highlight-box">
+        ☠️ <strong>Use-after-free</strong>: Thread A deletes node X. Thread B has a pointer to X and reads it — undefined behavior (crash or wrong data).<br><br>
+        🛡️ <strong>Hazard Pointers</strong>: Each thread announces the nodes it's currently using. A node is only freed when no thread has it hazard-listed.
+      </div>
+      <strong>Memory Management Strategies:</strong>
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Hazard Pointers</strong>Thread registers pointer before use; GC checks all registered pointers before freeing</div>
+        <div class="op-chip"><strong>Epoch-Based Reclamation</strong>Group operations into epochs; free memory from old epochs when all threads advance</div>
+        <div class="op-chip"><strong>RCU (Read-Copy-Update)</strong>Readers run lockfree; writers make copies; old copies freed when all readers leave</div>
+        <div class="op-chip"><strong>Reference Counting</strong>Each node has a refcount; freed only when count reaches 0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Allocate Memory</strong>Create node with malloc/calloc</div>
+      <div class="op-chip"><strong>Deallocate Memory</strong>Free node safely</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Create Node</span>
+      <span class="subop-tag">Safe Node Deallocation</span>
+      <span class="subop-tag">Hazard Pointer Handling</span>
+      <span class="subop-tag">Prevent Memory Leak</span>
+      <span class="subop-tag">Garbage Collection Support</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Memory Management</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* ── Hazard Pointer Implementation ── */</span>
+<span class="kw">#define</span> <span class="nm">MAX_THREADS</span>  <span class="nm">8</span>
+<span class="kw">#define</span> <span class="nm">MAX_HAZARD</span>   <span class="nm">2</span>  <span class="cm">/* pointers per thread */</span>
+
+<span class="cm">/* Global hazard pointer table */</span>
+<span class="ty">Node</span> <span class="op">*</span>hazardTable[<span class="nm">MAX_THREADS</span>][<span class="nm">MAX_HAZARD</span>] = {<span class="nm">NULL</span>};
+
+<span class="cm">/* Thread registers a "hazardous" pointer before using it */</span>
+<span class="kw">void</span> <span class="fn">setHazard</span>(<span class="kw">int</span> threadId, <span class="kw">int</span> slot, <span class="ty">Node</span> <span class="op">*</span>ptr) {
+    hazardTable[threadId][slot] = ptr;
+    <span class="fn">__sync_synchronize</span>();  <span class="cm">/* memory fence: visible to all threads */</span>
+}
+
+<span class="cm">/* Clear hazard after done with pointer */</span>
+<span class="kw">void</span> <span class="fn">clearHazard</span>(<span class="kw">int</span> threadId, <span class="kw">int</span> slot) {
+    hazardTable[threadId][slot] = <span class="nm">NULL</span>;
+}
+
+<span class="cm">/* Check if a node is hazardous (another thread is using it) */</span>
+<span class="kw">int</span> <span class="fn">isHazardous</span>(<span class="ty">Node</span> <span class="op">*</span>node) {
+    <span class="kw">for</span> (<span class="kw">int</span> t = <span class="nm">0</span>; t &lt; <span class="nm">MAX_THREADS</span>; t++)
+        <span class="kw">for</span> (<span class="kw">int</span> s = <span class="nm">0</span>; s &lt; <span class="nm">MAX_HAZARD</span>; s++)
+            <span class="kw">if</span> (hazardTable[t][s] == node)
+                <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* Someone is using it! */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="cm">/* Safe deallocation using hazard pointers */</span>
+<span class="kw">void</span> <span class="fn">safeDelete</span>(<span class="ty">Node</span> <span class="op">*</span>node) {
+    <span class="kw">if</span> (!<span class="fn">isHazardous</span>(node)) {
+        <span class="fn">free</span>(node);  <span class="cm">/* Safe: no thread has this pointer */</span>
+    } <span class="kw">else</span> {
+        <span class="cm">/* Defer: add to a "retired" list for later reclamation */</span>
+        <span class="cm">/* retiredList[retiredCount++] = node; */</span>
+        <span class="fn">printf</span>(<span class="st">"Node hazardous — deferred.\n"</span>);
+    }
+}
+
+<span class="cm">/* Usage: thread reading a node */</span>
+<span class="kw">void</span> <span class="fn">safeRead</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> threadId) {
+    <span class="ty">Node</span> <span class="op">*</span>node = sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="fn">setHazard</span>(threadId, <span class="nm">0</span>, node); <span class="cm">/* REGISTER before dereferencing */</span>
+    <span class="kw">if</span> (node &amp;&amp; node<span class="op">-&gt;</span>key == key)
+        <span class="fn">printf</span>(<span class="st">"Value: %d\n"</span>, node<span class="op">-&gt;</span>value);
+    <span class="fn">clearHazard</span>(threadId, <span class="nm">0</span>);    <span class="cm">/* CLEAR after done         */</span>
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">📋</div>
+      <div class="analogy-title">Library Book Checkout System</div>
+      <div class="analogy-text">
+        Hazard pointers = the <strong>library checkout log</strong>. A patron checks out a book (registers hazard pointer). The library will never destroy a checked-out book. When the patron returns it (clears hazard), and it's not checked out by anyone else, the library can safely discard it. Books never disappear while someone is reading them.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 14 -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <div class="section-tag">Section 14 · Analytical Operations</div>
+    <div class="section-title">Measuring Performance</div>
+    <div class="section-desc">Analytics tell you if your concurrent skip list is actually performing well — or just looking correct while being slow.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Key Metrics</div>
+    <div class="theory-text">
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Thread Contention</strong>How often threads block each other. High contention = poor scalability.</div>
+        <div class="op-chip"><strong>Throughput</strong>Operations per second under N threads. Should scale linearly with lock-free designs.</div>
+        <div class="op-chip"><strong>Search Complexity</strong>Average path length during search. Should approximate log(N) for a balanced skip list.</div>
+        <div class="op-chip"><strong>Lock Efficiency</strong>% of time locks are uncontested. &gt;95% means your locking is well-designed.</div>
+      </div>
+      <div class="highlight-box">
+        📊 <strong>Amdahl's Law</strong>: Speedup = 1 / (S + (1-S)/N) where S = fraction of sequential code. Even 5% sequential code limits speedup to 20× regardless of thread count.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Analyze Concurrency Performance</strong>Benchmark under load</div>
+      <div class="op-chip"><strong>Analyze Structure</strong>Verify level distribution</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Measure Thread Contention</span>
+      <span class="subop-tag">Evaluate Throughput</span>
+      <span class="subop-tag">Measure Search Complexity</span>
+      <span class="subop-tag">Analyze Lock Efficiency</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Performance Meter</div>
+    <div class="viz-container">
+      <canvas id="analyticsCanvas" height="180"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="runAnalytics()">📊 Simulate Benchmark</button>
+      <button class="btn" onclick="resetAnalytics()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="analyticsInfo">Benchmarking skip list operations under simulated thread load.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Analytics</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* Measure actual search path length */</span>
+<span class="kw">int</span> <span class="fn">searchWithCount</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> key, <span class="kw">int</span> <span class="op">*</span>steps) {
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header;
+    <span class="op">*</span>steps = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr<span class="op">-&gt;</span>forward[i] &amp;&amp;
+               curr<span class="op">-&gt;</span>forward[i]<span class="op">-&gt;</span>key &lt; key) {
+            curr = curr<span class="op">-&gt;</span>forward[i];
+            (<span class="op">*</span>steps)++;
+        }
+    }
+    curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>]; (<span class="op">*</span>steps)++;
+    <span class="kw">return</span> curr &amp;&amp; curr<span class="op">-&gt;</span>key == key;
+}
+
+<span class="cm">/* Throughput benchmark */</span>
+<span class="kw">typedef struct</span> <span class="ty">BenchArgs</span> {
+    <span class="ty">SkipList</span> <span class="op">*</span>sl;
+    <span class="kw">int</span>       ops;     <span class="cm">/* operations to perform */</span>
+    <span class="kw">int</span>       successes;
+} <span class="ty">BenchArgs</span>;
+
+<span class="kw">void</span><span class="op">*</span> <span class="fn">benchThread</span>(<span class="kw">void</span> <span class="op">*</span>arg) {
+    <span class="ty">BenchArgs</span> <span class="op">*</span>b = (<span class="ty">BenchArgs</span><span class="op">*</span>)arg;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; b<span class="op">-&gt;</span>ops; i++) {
+        <span class="kw">int</span> key = <span class="fn">rand</span>() % <span class="nm">1000</span>;
+        <span class="kw">int</span> val;
+        <span class="kw">if</span> (<span class="fn">search</span>(b<span class="op">-&gt;</span>sl, key, &amp;val)) b<span class="op">-&gt;</span>successes++;
+    }
+    <span class="kw">return</span> <span class="nm">NULL</span>;
+}
+
+<span class="kw">void</span> <span class="fn">benchmark</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> numThreads, <span class="kw">int</span> opsPerThread) {
+    pthread_t    threads[<span class="nm">8</span>];
+    <span class="ty">BenchArgs</span>   args[<span class="nm">8</span>];
+    <span class="kw">struct</span> <span class="ty">timespec</span> start, end;
+
+    <span class="fn">clock_gettime</span>(<span class="nm">CLOCK_MONOTONIC</span>, &amp;start);
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; numThreads; i++) {
+        args[i] = (BenchArgs){sl, opsPerThread, <span class="nm">0</span>};
+        <span class="fn">pthread_create</span>(&amp;threads[i], <span class="nm">NULL</span>, benchThread, &amp;args[i]);
+    }
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; numThreads; i++)
+        <span class="fn">pthread_join</span>(threads[i], <span class="nm">NULL</span>);
+    <span class="fn">clock_gettime</span>(<span class="nm">CLOCK_MONOTONIC</span>, &amp;end);
+
+    <span class="kw">double</span> elapsed = (end.tv_sec - start.tv_sec) +
+                     (end.tv_nsec - start.tv_nsec) / <span class="nm">1e9</span>;
+    <span class="fn">printf</span>(<span class="st">"Throughput: %.0f ops/sec\n"</span>,
+           (numThreads <span class="op">*</span> opsPerThread) / elapsed);
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">📈</div>
+      <div class="analogy-title">A Hospital's Patient Flow Analysis</div>
+      <div class="analogy-text">
+        Hospital administrators measure: wait times at each desk (thread contention), patients processed per hour (throughput), steps a patient takes from entry to treatment (search complexity), and how often rooms are unused (lock efficiency). The goal: maximum patients served with minimum waiting — exactly what a well-tuned concurrent skip list achieves.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 15 -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <div class="section-tag">Section 15 · Advanced Structural Operations</div>
+    <div class="section-title">Merge, Split, Snapshot & Range Query</div>
+    <div class="section-desc">The most complex operations — combining two skip lists, splitting into halves, capturing a consistent snapshot, and querying ranges — all while threads keep running.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Advanced Operations Explained</div>
+    <div class="theory-text">
+      <div class="ops-grid">
+        <div class="op-chip"><strong>Merge Two Skip Lists</strong>Combine two sorted lists into one. Iterate both level-0 lists, merging like merge-sort.</div>
+        <div class="op-chip"><strong>Split Skip List</strong>Divide at a key boundary. Create two new headers, redirect pointers at the split point.</div>
+        <div class="op-chip"><strong>Snapshot Traversal</strong>Read a consistent view of the list as it was at time T, even while others modify it.</div>
+        <div class="op-chip"><strong>Range Query</strong>Return all nodes with key in [lo, hi]. Start from lo, collect until key &gt; hi.</div>
+      </div>
+      <div class="highlight-box">
+        📸 <strong>Snapshot</strong> is the hardest: you need to see a consistent view. Approach: acquire a global lock momentarily, copy all keys, release, then work from the copy.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Main & Sub Operations</div>
+    <div class="ops-grid">
+      <div class="op-chip"><strong>Merge Concurrent Skip Lists</strong>Combine two into one</div>
+      <div class="op-chip"><strong>Split Skip List</strong>Divide at a key pivot</div>
+      <div class="op-chip"><strong>Snapshot Traversal</strong>Consistent point-in-time read</div>
+      <div class="op-chip"><strong>Range Query</strong>Collect keys between lo and hi</div>
+    </div>
+    <div style="margin-top:12px;"><div class="subop-list">
+      <span class="subop-tag">Combine Structures</span>
+      <span class="subop-tag">Separate Node Ranges</span>
+      <span class="subop-tag">Capture Consistent Snapshot</span>
+      <span class="subop-tag">Traverse Range Safely</span>
+    </div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Live Visualization — Range Query</div>
+    <div class="viz-container">
+      <canvas id="advCanvas" height="200"></canvas>
+    </div>
+    <div class="viz-controls">
+      <button class="btn" onclick="runRangeQuery()">🔎 Range Query [15–55]</button>
+      <button class="btn" onclick="runSnapshot()">📸 Snapshot</button>
+      <button class="btn" onclick="resetAdv()">↺ Reset</button>
+    </div>
+    <div class="viz-info" id="advInfo">Range query highlights nodes within a key range.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">C Code — Advanced Structural Operations</div>
+    <div class="code-wrap">
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <div class="code-block"><span class="cm">/* ── Range Query ── */</span>
+<span class="kw">int</span> <span class="fn">rangeQuery</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl, <span class="kw">int</span> lo, <span class="kw">int</span> hi,
+                <span class="kw">int</span> <span class="op">*</span>results, <span class="kw">int</span> maxResults) {
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header;
+    <span class="kw">int</span> count = <span class="nm">0</span>;
+
+    <span class="cm">/* Skip to first node >= lo */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl<span class="op">-&gt;</span>currentLevel - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--)
+        <span class="kw">while</span> (curr<span class="op">-&gt;</span>forward[i] &amp;&amp; curr<span class="op">-&gt;</span>forward[i]<span class="op">-&gt;</span>key &lt; lo)
+            curr = curr<span class="op">-&gt;</span>forward[i];
+
+    curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr &amp;&amp; curr<span class="op">-&gt;</span>key &lt;= hi &amp;&amp; count &lt; maxResults) {
+        results[count++] = curr<span class="op">-&gt;</span>key;
+        curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    }
+    <span class="kw">return</span> count; <span class="cm">/* Number of keys found */</span>
+}
+
+<span class="cm">/* ── Snapshot (consistent read) ── */</span>
+<span class="kw">typedef struct</span> <span class="ty">Snapshot</span> {
+    <span class="kw">int</span> <span class="op">*</span>keys; <span class="kw">int</span> count;
+} <span class="ty">Snapshot</span>;
+
+<span class="ty">Snapshot</span> <span class="fn">takeSnapshot</span>(<span class="ty">SkipList</span> <span class="op">*</span>sl) {
+    <span class="fn">pthread_mutex_lock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock); <span class="cm">/* Freeze the world */</span>
+    <span class="kw">int</span> n = sl<span class="op">-&gt;</span>size;
+    <span class="ty">Snapshot</span> snap = {(<span class="kw">int</span><span class="op">*</span>)<span class="fn">malloc</span>(n <span class="op">*</span> <span class="kw">sizeof</span>(<span class="kw">int</span>)), <span class="nm">0</span>};
+    <span class="ty">Node</span> <span class="op">*</span>curr = sl<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr) {
+        snap.keys[snap.count++] = curr<span class="op">-&gt;</span>key;
+        curr = curr<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    }
+    <span class="fn">pthread_mutex_unlock</span>(<span class="op">&amp;</span>sl<span class="op">-&gt;</span>lock); <span class="cm">/* Unfreeze */</span>
+    <span class="kw">return</span> snap; <span class="cm">/* Caller must free snap.keys */</span>
+}
+
+<span class="cm">/* ── Merge two skip lists ── */</span>
+<span class="ty">SkipList</span><span class="op">*</span> <span class="fn">merge</span>(<span class="ty">SkipList</span> <span class="op">*</span>a, <span class="ty">SkipList</span> <span class="op">*</span>b) {
+    <span class="ty">SkipList</span> <span class="op">*</span>result = <span class="fn">initSkipList</span>();
+    <span class="ty">Node</span> <span class="op">*</span>ca = a<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="ty">Node</span> <span class="op">*</span>cb = b<span class="op">-&gt;</span>header<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (ca || cb) {
+        <span class="kw">if</span> (!cb || (ca &amp;&amp; ca<span class="op">-&gt;</span>key &lt;= cb<span class="op">-&gt;</span>key)) {
+            <span class="fn">insert</span>(result, ca<span class="op">-&gt;</span>key, ca<span class="op">-&gt;</span>value);
+            ca = ca<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+        } <span class="kw">else</span> {
+            <span class="fn">insert</span>(result, cb<span class="op">-&gt;</span>key, cb<span class="op">-&gt;</span>value);
+            cb = cb<span class="op">-&gt;</span>forward[<span class="nm">0</span>];
+        }
+    }
+    <span class="kw">return</span> result;
+}
+</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Real-Life Analogy</div>
+    <div class="analogy-box">
+      <div class="analogy-icon">🌐</div>
+      <div class="analogy-title">Database Operations</div>
+      <div class="analogy-text">
+        <strong>Merge</strong> = Merging two company databases after a corporate acquisition.<br>
+        <strong>Split</strong> = Sharding a database: customers A-M go to Server 1, N-Z to Server 2.<br>
+        <strong>Snapshot</strong> = A database backup — a frozen-in-time image of all data.<br>
+        <strong>Range Query</strong> = <code>SELECT * FROM orders WHERE date BETWEEN '2024-01-01' AND '2024-12-31'</code> — returning only a slice.
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+const progress = document.getElementById('progress');
+
+function show(idx) {
+  sections.forEach(s => s.classList.remove('active'));
+  navItems.forEach(n => n.classList.remove('active'));
+  sections[idx].classList.add('active');
+  navItems[idx].classList.add('active');
+  progress.style.width = ((idx + 1) / sections.length * 100) + '%';
+  document.getElementById('main').scrollTop = 0;
+  closeSidebar();
+  // trigger viz init for that section
+  setTimeout(() => initVizForSection(idx), 100);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════
+// COPY CODE
+// ════════════════════════════════════════════════════════
+function copyCode(btn) {
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// SHARED DRAWING UTILITIES
+// ════════════════════════════════════════════════════════
+const C = {
+  bg: '#0d1117', border: '#252a38', accent: '#00e5ff',
+  accent2: '#7b61ff', accent3: '#ff6b6b', accent4: '#39ff7e',
+  text: '#e2e8f0', text2: '#8892a4', node: '#1a2235', nodeBorder: '#2a3a55'
+};
+
+function getCtx(id) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return null;
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.parentElement.clientWidth - 40;
+  const h = parseInt(canvas.getAttribute('height'));
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.W = w; ctx.H = h;
+  return ctx;
+}
+
+function drawNode(ctx, x, y, key, color, textColor, size) {
+  const r = size || 22;
+  ctx.beginPath();
+  ctx.roundRect(x - r, y - 14, r * 2, 28, 6);
+  ctx.fillStyle = color || C.node;
+  ctx.fill();
+  ctx.strokeStyle = textColor || C.accent;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = textColor || C.accent;
+  ctx.font = 'bold 12px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(key, x, y);
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2 - 10, y2);
+  ctx.strokeStyle = color || C.border;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // arrowhead
+  ctx.beginPath();
+  ctx.moveTo(x2 - 10, y2 - 5);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x2 - 10, y2 + 5);
+  ctx.strokeStyle = color || C.border;
+  ctx.stroke();
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 01 — INIT VISUALIZATION
+// ════════════════════════════════════════════════════════
+function vizInit() {
+  const ctx = getCtx('initCanvas');
+  if (!ctx) return;
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  const levels = 4;
+  const levelH = H / (levels + 1);
+  const labels = ['L3 (Express)', 'L2 (Skip)', 'L1 (Express)', 'L0 (Base)'];
+
+  for (let i = 0; i < levels; i++) {
+    const y = levelH * (i + 1);
+    // label
+    ctx.fillStyle = C.text2;
+    ctx.font = '10px Space Mono, monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(labels[i], 8, y + 4);
+    // header node
+    drawNode(ctx, 90, y, 'HEAD', '#1a2a1a', C.accent4);
+    // null at end
+    ctx.fillStyle = C.text2;
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('NULL', W - 30, y + 4);
+    // arrow from head to null
+    drawArrow(ctx, 114, y, W - 50, y, C.nodeBorder);
+  }
+  document.getElementById('initInfo').textContent = 'Header initialized. All forward pointers → NULL. Ready for insertions.';
+}
+
+let initAnimFrame;
+async function animateInit() {
+  const ctx = getCtx('initCanvas');
+  if (!ctx) return;
+  const { W, H } = ctx;
+  const levels = 4;
+  const levelH = H / (levels + 1);
+  const labels = ['L3', 'L2', 'L1', 'L0'];
+  const info = document.getElementById('initInfo');
+
+  for (let i = 0; i < levels; i++) {
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+    for (let j = 0; j < i; j++) {
+      const y = levelH * (j + 1);
+      ctx.fillStyle = C.text2; ctx.font = '10px Space Mono'; ctx.textAlign = 'left';
+      ctx.fillText(labels[j], 8, y + 4);
+      drawNode(ctx, 90, y, 'HEAD', '#1a2a1a', C.accent4);
+      drawArrow(ctx, 114, y, W - 50, y, C.nodeBorder);
+      ctx.fillStyle = C.text2; ctx.font = '10px JetBrains Mono'; ctx.textAlign = 'center';
+      ctx.fillText('NULL', W - 30, y + 4);
+    }
+    const y = levelH * (i + 1);
+    ctx.fillStyle = C.text2; ctx.font = '10px Space Mono'; ctx.textAlign = 'left';
+    ctx.fillText(labels[i], 8, y + 4);
+    drawNode(ctx, 90, y, 'HEAD', '#0a2a1a', C.accent);
+    info.textContent = `Initializing level ${i}: forward pointer set to NULL`;
+    await sleep(500);
+  }
+  vizInit();
+  info.textContent = 'All levels initialized! Skip list is ready.';
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 02 — INSERT VISUALIZATION
+// ════════════════════════════════════════════════════════
+let insertedKeys = [];
+
+function drawSkipList(ctx, keys, highlightKey, phase) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg;
+  ctx.fillRect(0, 0, W, H);
+  if (keys.length === 0) return;
+
+  const maxLevel = 3;
+  const levelH = H / (maxLevel + 2);
+  const nodeW = Math.min(60, (W - 120) / (keys.length + 1));
+  const startX = 80;
+
+  for (let lv = maxLevel; lv >= 0; lv--) {
+    const y = levelH * (maxLevel - lv + 1);
+    ctx.fillStyle = C.text2;
+    ctx.font = '9px Space Mono,monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('L' + lv, 8, y + 4);
+    drawNode(ctx, 50, y, 'H', '#1a2a1a', C.accent4, 18);
+    let prevX = 68;
+
+    for (let k = 0; k < keys.length; k++) {
+      // probabilistic: show node on this level ~50% chance, always on L0
+      const inLevel = lv === 0 || (keys[k] % (1 << lv)) < (1 << (lv - 1));
+      if (!inLevel) continue;
+      const x = startX + k * nodeW + nodeW / 2;
+      const isNew = keys[k] === highlightKey;
+      const color = isNew ? (phase === 'link' ? '#1a2a1a' : C.node) : C.node;
+      const border = isNew ? C.accent3 : C.nodeBorder;
+      drawNode(ctx, x, y, keys[k], color, border, 20);
+      drawArrow(ctx, prevX, y, x - 22, y, isNew ? C.accent3 : C.border);
+      prevX = x + 22;
+    }
+    ctx.fillStyle = C.text2;
+    ctx.font = '9px Space Mono,monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('→', prevX + 10, y + 4);
+  }
+}
+
+async function insertViz() {
+  const ctx = getCtx('insertCanvas');
+  if (!ctx) return;
+  const info = document.getElementById('insertInfo');
+  const keys = [5, 10, 15, 20, 25, 30, 40, 50];
+  const newKey = keys[Math.floor(Math.random() * keys.length)];
+  if (insertedKeys.includes(newKey)) {
+    info.textContent = `Key ${newKey} already exists! Updating value...`;
+    return;
+  }
+  insertedKeys.push(newKey);
+  insertedKeys.sort((a,b) => a-b);
+  info.textContent = `Searching position for key ${newKey}...`;
+  drawSkipList(ctx, insertedKeys, newKey, 'search');
+  await sleep(600);
+  info.textContent = `Generated random level. Locking predecessors...`;
+  drawSkipList(ctx, insertedKeys, newKey, 'lock');
+  await sleep(600);
+  info.textContent = `Linking key ${newKey} at all levels. Forward pointers updated!`;
+  drawSkipList(ctx, insertedKeys, newKey, 'link');
+  await sleep(600);
+  info.textContent = `✅ Key ${newKey} inserted. List: [${insertedKeys.join(', ')}]`;
+  drawSkipList(ctx, insertedKeys, null, 'done');
+}
+
+function resetInsert() {
+  insertedKeys = [];
+  const ctx = getCtx('insertCanvas');
+  if (!ctx) return;
+  ctx.fillStyle = C.bg; ctx.fillRect(0,0,ctx.W,ctx.H);
+  document.getElementById('insertInfo').textContent = 'Click "Insert Random" to add nodes.';
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 03 — DELETE VISUALIZATION
+// ════════════════════════════════════════════════════════
+let deleteKeys = [10, 20, 30, 40, 50];
+let deletePhase = 'idle';
+
+async function deleteViz() {
+  const ctx = getCtx('deleteCanvas');
+  if (!ctx) return;
+  if (deleteKeys.length === 0) { document.getElementById('deleteInfo').textContent = 'List is empty!'; return; }
+  const info = document.getElementById('deleteInfo');
+  const target = deleteKeys[Math.floor(Math.random() * deleteKeys.length)];
+  info.textContent = `Searching for key ${target}...`;
+  await drawDeleteList(ctx, deleteKeys, target, 'search');
+  await sleep(500);
+  info.textContent = `Logically marking node ${target} as deleted (flag set)...`;
+  await drawDeleteList(ctx, deleteKeys, target, 'marked');
+  await sleep(600);
+  info.textContent = `Physically removing node ${target} from all levels...`;
+  deleteKeys = deleteKeys.filter(k => k !== target);
+  await drawDeleteList(ctx, deleteKeys, null, 'done');
+  info.textContent = `✅ Key ${target} deleted. Remaining: [${deleteKeys.join(', ')}]`;
+}
+
+async function drawDeleteList(ctx, keys, target, phase) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const nodeW = keys.length > 0 ? Math.min(65, (W - 100) / (keys.length + 1)) : 60;
+  const y = H / 2;
+  ctx.fillStyle = C.text2; ctx.font = '9px Space Mono'; ctx.textAlign = 'left';
+  ctx.fillText('L0', 8, y + 4);
+  drawNode(ctx, 50, y, 'H', '#1a2a1a', C.accent4, 18);
+  let prevX = 68;
+  for (let k = 0; k < keys.length; k++) {
+    const x = 90 + k * nodeW;
+    const isTgt = keys[k] === target;
+    const col = isTgt && phase === 'marked' ? '#2a1a1a' : C.node;
+    const brd = isTgt ? (phase === 'search' ? C.accent : C.accent3) : C.nodeBorder;
+    drawNode(ctx, x, y, keys[k], col, brd, 22);
+    if (isTgt && phase === 'marked') {
+      ctx.fillStyle = C.accent3; ctx.font = 'bold 9px Space Mono';
+      ctx.textAlign = 'center'; ctx.fillText('✗DEL', x, y - 22);
+    }
+    drawArrow(ctx, prevX, y, x - 24, y, isTgt && phase === 'search' ? C.accent : C.border);
+    prevX = x + 24;
+  }
+  ctx.fillStyle = C.text2; ctx.textAlign = 'center'; ctx.font = '9px Space Mono';
+  ctx.fillText('NULL', prevX + 20, y + 4);
+}
+
+function resetDelete() {
+  deleteKeys = [10, 20, 30, 40, 50];
+  const ctx = getCtx('deleteCanvas');
+  if (!ctx) return;
+  drawDeleteList(ctx, deleteKeys, null, 'done');
+  document.getElementById('deleteInfo').textContent = 'List restored. Click "Delete Node" to remove a node.';
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 04 — SEARCH VISUALIZATION
+// ════════════════════════════════════════════════════════
+const searchData = [
+  { key: 10, levels: [0,1,2] },
+  { key: 20, levels: [0] },
+  { key: 30, levels: [0,1] },
+  { key: 40, levels: [0,1,2,3] },
+  { key: 50, levels: [0] },
+  { key: 60, levels: [0,1] },
+  { key: 70, levels: [0] },
+];
+let searchAnimId;
+
+async function searchViz() {
+  const ctx = getCtx('searchCanvas');
+  if (!ctx) return;
+  const target = searchData[Math.floor(Math.random() * searchData.length)].key;
+  const info = document.getElementById('searchInfo');
+  const maxLevel = 3;
+  info.textContent = `Searching for key ${target}. Starting at highest level...`;
+
+  for (let lv = maxLevel; lv >= 0; lv--) {
+    await drawSearchState(ctx, searchData, target, lv, 'scanning');
+    info.textContent = `Level ${lv}: scanning forward...`;
+    await sleep(400);
+  }
+  await drawSearchState(ctx, searchData, target, 0, 'found');
+  const found = searchData.find(n => n.key === target);
+  info.textContent = found ? `✅ Key ${target} found at level 0!` : `❌ Key ${target} not found.`;
+}
+
+async function drawSearchState(ctx, nodes, target, curLevel, phase) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const maxLevel = 3;
+  const lH = H / (maxLevel + 2);
+  const nW = Math.min(70, (W - 120) / (nodes.length + 1));
+
+  for (let lv = maxLevel; lv >= 0; lv--) {
+    const y = lH * (maxLevel - lv + 1);
+    ctx.fillStyle = lv === curLevel ? C.accent : C.text2;
+    ctx.font = '9px Space Mono'; ctx.textAlign = 'left';
+    ctx.fillText('L' + lv, 8, y + 4);
+    drawNode(ctx, 45, y, 'H', '#1a2a1a', C.accent4, 16);
+    let prevX = 61;
+    for (let n of nodes) {
+      if (!n.levels.includes(lv)) continue;
+      const idx = nodes.indexOf(n);
+      const x = 80 + idx * nW;
+      const isTarget = n.key === target;
+      const active = lv === curLevel;
+      const col = isTarget && phase === 'found' ? '#1a2a1a' : C.node;
+      const brd = isTarget && phase === 'found' ? C.accent4 :
+                  active ? C.accent : C.nodeBorder;
+      drawNode(ctx, x, y, n.key, col, brd, 20);
+      drawArrow(ctx, prevX, y, x - 22, y, active ? C.accent2 : C.border);
+      prevX = x + 22;
+    }
+  }
+}
+
+function resetSearch() {
+  const ctx = getCtx('searchCanvas');
+  if (!ctx) return;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, ctx.W, ctx.H);
+  document.getElementById('searchInfo').textContent = 'Click "Search Key" to see the traversal.';
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 05 — SYNC VISUALIZATION
+// ════════════════════════════════════════════════════════
+let syncTimer;
+const threads = [
+  { id: 0, x: 30, locked: false, color: '#00e5ff', waiting: false },
+  { id: 1, x: 30, locked: false, color: '#7b61ff', waiting: false },
+  { id: 2, x: 30, locked: false, color: '#ff6b6b', waiting: false },
+  { id: 3, x: 30, locked: false, color: '#39ff7e', waiting: false },
+];
+
+function startSyncViz() {
+  const ctx = getCtx('syncCanvas');
+  if (!ctx) return;
+  stopSyncViz();
+  let lockHolder = -1;
+  let tick = 0;
+  const info = document.getElementById('syncInfo');
+
+  function frame() {
+    tick++;
+    const { W, H } = ctx;
+    ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+
+    // shared lock zone
+    const lockX = W / 2 - 40;
+    ctx.fillStyle = lockHolder >= 0 ? 'rgba(0,229,255,0.08)' : 'rgba(255,255,255,0.02)';
+    ctx.strokeStyle = lockHolder >= 0 ? C.accent : C.border;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(lockX, 20, 80, H - 40, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = lockHolder >= 0 ? C.accent : C.text2;
+    ctx.font = 'bold 10px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText(lockHolder >= 0 ? '🔒 LOCKED' : '🔓 FREE', lockX + 40, H / 2);
+
+    threads.forEach((t, i) => {
+      const y = 30 + i * ((H - 40) / 4);
+      if (tick % (20 + i * 7) === 0) {
+        if (lockHolder === -1) {
+          lockHolder = i; t.x = lockX + 10;
+        } else {
+          t.waiting = true;
+        }
+      }
+      if (lockHolder === i && tick % (35 + i * 5) === 0) {
+        lockHolder = -1; t.x = W - 80; t.waiting = false;
+      }
+      if (t.x < lockX - 10 && lockHolder !== i) t.x += 2;
+      if (t.x > W - 80) t.x = 30;
+
+      ctx.fillStyle = t.color;
+      ctx.beginPath(); ctx.roundRect(t.x, y, 60, 18, 4); ctx.fill();
+      ctx.fillStyle = '#0a0c10'; ctx.font = 'bold 9px Space Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('T' + i + (t.waiting ? ' WAIT' : ' RUN'), t.x + 30, y + 12);
+    });
+
+    const busy = threads.filter(t => t.waiting).length;
+    info.textContent = lockHolder >= 0
+      ? `Thread T${lockHolder} holds the lock. ${busy} thread(s) waiting.`
+      : 'No lock held. All threads can run.';
+    syncTimer = requestAnimationFrame(frame);
+  }
+  frame();
+}
+function stopSyncViz() {
+  if (syncTimer) cancelAnimationFrame(syncTimer);
+  threads.forEach(t => { t.x = 30; t.waiting = false; });
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 08 — TRAVERSAL VISUALIZATION
+// ════════════════════════════════════════════════════════
+const traversalNodes = [10, 20, 30, 40, 50, 60, 70];
+let traversalTimer;
+
+async function runTraversal() {
+  const ctx = getCtx('traversalCanvas');
+  if (!ctx) return;
+  const info = document.getElementById('traversalInfo');
+  const visited = [];
+
+  for (let i = 0; i < traversalNodes.length; i++) {
+    visited.push(traversalNodes[i]);
+    drawTraversalState(ctx, traversalNodes, i);
+    info.textContent = `Visiting node ${traversalNodes[i]}... Keys visited: [${visited.join(', ')}]`;
+    await sleep(400);
+  }
+  info.textContent = `✅ Traversal complete! All ${traversalNodes.length} keys visited in sorted order.`;
+}
+
+function drawTraversalState(ctx, nodes, currentIdx) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const y = H / 2;
+  const nW = (W - 120) / (nodes.length + 1);
+  ctx.fillStyle = C.text2; ctx.font = '9px Space Mono'; ctx.textAlign = 'left';
+  ctx.fillText('L0', 8, y + 4);
+  drawNode(ctx, 45, y, 'H', '#1a2a1a', C.accent4, 16);
+  let prevX = 61;
+  for (let i = 0; i < nodes.length; i++) {
+    const x = 80 + i * nW;
+    const past = i < currentIdx;
+    const current = i === currentIdx;
+    const col = current ? '#1a2a1a' : past ? '#1a1a2a' : C.node;
+    const brd = current ? C.accent : past ? C.accent2 : C.nodeBorder;
+    drawNode(ctx, x, y, nodes[i], col, brd, 22);
+    if (current) {
+      ctx.fillStyle = C.accent; ctx.font = '14px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('👆', x, y - 28);
+    }
+    drawArrow(ctx, prevX, y, x - 24, y, past ? C.accent2 : C.border);
+    prevX = x + 24;
+  }
+  ctx.fillStyle = C.text2; ctx.textAlign = 'center'; ctx.font = '9px Space Mono';
+  ctx.fillText('NULL', prevX + 20, y + 4);
+}
+
+function resetTraversal() {
+  const ctx = getCtx('traversalCanvas');
+  if (!ctx) return;
+  drawTraversalState(ctx, traversalNodes, -1);
+  document.getElementById('traversalInfo').textContent = 'Traversal walks level 0 from left to right visiting every key.';
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 09 — LEVEL DISTRIBUTION VISUALIZATION
+// ════════════════════════════════════════════════════════
+async function simulateLevels() {
+  const ctx = getCtx('levelCanvas');
+  if (!ctx) return;
+  const info = document.getElementById('levelInfo');
+  const counts = [0, 0, 0, 0, 0, 0];
+
+  for (let n = 0; n < 20; n++) {
+    let lv = 0;
+    while (Math.random() < 0.5 && lv < 5) lv++;
+    counts[lv]++;
+    drawLevelBars(ctx, counts, n + 1);
+    info.textContent = `Node ${n + 1}/20: assigned level ${lv}. Distribution updating...`;
+    await sleep(150);
+  }
+  info.textContent = `Done! ~50% at L0, ~25% at L1, ~12.5% at L2 — the geometric distribution.`;
+}
+
+function drawLevelBars(ctx, counts, total) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const colors = [C.accent, C.accent2, C.accent3, C.accent4, '#ffa657', '#ff79c6'];
+  const maxCount = Math.max(...counts, 1);
+  const barW = (W - 80) / 6;
+
+  for (let i = 0; i < 6; i++) {
+    const x = 40 + i * barW;
+    const barH = Math.max(4, (counts[i] / maxCount) * (H - 60));
+    const y = H - 30 - barH;
+    ctx.fillStyle = colors[i] + '33';
+    ctx.fillRect(x + 4, H - 30, barW - 8, -barH);
+    ctx.fillStyle = colors[i];
+    ctx.fillRect(x + 4, y, barW - 8, 4);
+    ctx.font = 'bold 12px JetBrains Mono'; ctx.textAlign = 'center';
+    ctx.fillText(counts[i], x + barW / 2, y - 8);
+    ctx.fillStyle = C.text2; ctx.font = '9px Space Mono';
+    ctx.fillText('L' + i, x + barW / 2, H - 12);
+  }
+  ctx.fillStyle = C.text2; ctx.font = '9px Space Mono'; ctx.textAlign = 'left';
+  ctx.fillText(`Total: ${total} nodes`, 10, 16);
+}
+
+function resetLevelViz() {
+  const ctx = getCtx('levelCanvas');
+  if (!ctx) return;
+  drawLevelBars(ctx, [0,0,0,0,0,0], 0);
+  document.getElementById('levelInfo').textContent = 'Click "Simulate 20 Nodes" to see the level distribution.';
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 14 — ANALYTICS VISUALIZATION
+// ════════════════════════════════════════════════════════
+async function runAnalytics() {
+  const ctx = getCtx('analyticsCanvas');
+  if (!ctx) return;
+  const info = document.getElementById('analyticsInfo');
+  const metrics = [
+    { label: 'Throughput', val: 0, target: 87, color: C.accent, unit: 'K ops/s' },
+    { label: 'Lock Efficiency', val: 0, target: 96, color: C.accent4, unit: '%' },
+    { label: 'Contention', val: 0, target: 12, color: C.accent3, unit: '%' },
+    { label: 'Avg Search', val: 0, target: 6.2, color: C.accent2, unit: ' steps' },
+  ];
+
+  for (let step = 0; step <= 30; step++) {
+    metrics.forEach(m => { m.val = m.target * step / 30; });
+    drawAnalyticsBars(ctx, metrics);
+    info.textContent = `Benchmarking ${step * 1000} operations... collecting metrics...`;
+    await sleep(80);
+  }
+  info.textContent = '✅ Benchmark complete: 87K ops/s · 96% lock efficiency · 6.2 avg steps';
+}
+
+function drawAnalyticsBars(ctx, metrics) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const barW = (W - 80) / metrics.length;
+
+  metrics.forEach((m, i) => {
+    const x = 40 + i * barW;
+    const pct = Math.min(m.val / 100, 1);
+    const barH = pct * (H - 70);
+    const y = H - 50 - barH;
+
+    ctx.fillStyle = m.color + '22';
+    ctx.fillRect(x + 8, H - 50, barW - 16, -(H - 70));
+    ctx.fillStyle = m.color + '88';
+    ctx.fillRect(x + 8, y, barW - 16, barH);
+    ctx.fillStyle = m.color;
+    ctx.fillRect(x + 8, y, barW - 16, 3);
+
+    ctx.fillStyle = m.color; ctx.font = 'bold 11px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText(m.val.toFixed(m.unit.includes('step') ? 1 : 0) + m.unit, x + barW / 2, y - 8);
+    ctx.fillStyle = C.text2; ctx.font = '8px Space Mono';
+    ctx.fillText(m.label, x + barW / 2, H - 30);
+    ctx.fillText(m.target + m.unit, x + barW / 2, H - 16);
+    ctx.fillStyle = C.border; ctx.font = '7px Space Mono';
+    ctx.fillText('target', x + barW / 2, H - 4);
+  });
+}
+
+function resetAnalytics() {
+  const ctx = getCtx('analyticsCanvas');
+  if (!ctx) return;
+  drawAnalyticsBars(ctx, [
+    { label: 'Throughput', val: 0, target: 87, color: C.accent, unit: 'K ops/s' },
+    { label: 'Lock Efficiency', val: 0, target: 96, color: C.accent4, unit: '%' },
+    { label: 'Contention', val: 0, target: 12, color: C.accent3, unit: '%' },
+    { label: 'Avg Search', val: 0, target: 6.2, color: C.accent2, unit: ' steps' },
+  ]);
+}
+
+// ════════════════════════════════════════════════════════
+// SECTION 15 — ADVANCED (RANGE QUERY + SNAPSHOT)
+// ════════════════════════════════════════════════════════
+const advNodes = [10, 20, 30, 40, 50, 60, 70, 80];
+
+async function runRangeQuery() {
+  const ctx = getCtx('advCanvas');
+  if (!ctx) return;
+  const info = document.getElementById('advInfo');
+  const lo = 15, hi = 55;
+  const inRange = advNodes.filter(k => k >= lo && k <= hi);
+
+  for (let i = 0; i < advNodes.length; i++) {
+    drawAdvList(ctx, advNodes, lo, hi, i, 'scan');
+    info.textContent = `Scanning key ${advNodes[i]}... ${advNodes[i] >= lo && advNodes[i] <= hi ? '✅ in range' : '⏭ out of range'}`;
+    await sleep(350);
+  }
+  drawAdvList(ctx, advNodes, lo, hi, -1, 'done');
+  info.textContent = `✅ Range [${lo}, ${hi}] → Keys: [${inRange.join(', ')}]`;
+}
+
+async function runSnapshot() {
+  const ctx = getCtx('advCanvas');
+  if (!ctx) return;
+  const info = document.getElementById('advInfo');
+  info.textContent = 'Acquiring global lock for snapshot...';
+  drawAdvList(ctx, advNodes, -1, -1, -1, 'snapshot');
+  await sleep(400);
+  info.textContent = `📸 Snapshot taken: [${advNodes.join(', ')}]. Lock released.`;
+}
+
+function drawAdvList(ctx, nodes, lo, hi, scanIdx, phase) {
+  const { W, H } = ctx;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  const y = H / 2;
+  const nW = (W - 100) / (nodes.length + 1);
+
+  // range highlight band
+  if (lo >= 0) {
+    const loIdx = nodes.findIndex(k => k >= lo);
+    const hiIdx = nodes.findIndex(k => k > hi) - 1;
+    if (loIdx >= 0 && hiIdx >= loIdx) {
+      const x1 = 70 + loIdx * nW - nW / 4;
+      const x2 = 70 + hiIdx * nW + nW * 3 / 4;
+      ctx.fillStyle = 'rgba(57,255,126,0.06)';
+      ctx.beginPath(); ctx.roundRect(x1, y - 30, x2 - x1, 60, 8); ctx.fill();
+    }
+  }
+
+  ctx.fillStyle = C.text2; ctx.font = '9px Space Mono'; ctx.textAlign = 'left';
+  ctx.fillText('L0', 8, y + 4);
+  drawNode(ctx, 42, y, 'H', '#1a2a1a', C.accent4, 16);
+  let prevX = 58;
+
+  for (let i = 0; i < nodes.length; i++) {
+    const x = 70 + i * nW;
+    const inR = nodes[i] >= lo && nodes[i] <= hi && lo >= 0;
+    const isScan = i === scanIdx;
+    const isSnap = phase === 'snapshot';
+
+    const col = isSnap ? '#1a1a2a' : inR && phase === 'done' ? '#1a2a1a' : C.node;
+    const brd = isSnap ? C.accent2 : isScan ? C.accent : inR ? C.accent4 : C.nodeBorder;
+    drawNode(ctx, x, y, nodes[i], col, brd, 20);
+    drawArrow(ctx, prevX, y, x - 22, y, C.border);
+    prevX = x + 22;
+  }
+  ctx.fillStyle = C.text2; ctx.textAlign = 'center'; ctx.font = '9px Space Mono';
+  ctx.fillText('NULL', prevX + 16, y + 4);
+
+  if (lo >= 0) {
+    ctx.fillStyle = C.accent4 + '88'; ctx.font = '8px Space Mono'; ctx.textAlign = 'center';
+    ctx.fillText(`Range [${lo} .. ${hi}]`, W / 2, y + 42);
+  }
+}
+
+function resetAdv() {
+  const ctx = getCtx('advCanvas');
+  if (!ctx) return;
+  drawAdvList(ctx, advNodes, -1, -1, -1, 'idle');
+  document.getElementById('advInfo').textContent = 'Click a button above to run an advanced operation.';
+}
+
+// ════════════════════════════════════════════════════════
+// INIT ALL VISIBLE SECTION VISUALIZATIONS
+// ════════════════════════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function initVizForSection(idx) {
+  switch(idx) {
+    case 0: vizInit(); break;
+    case 1: drawSkipList(getCtx('insertCanvas'), insertedKeys, null, 'idle'); break;
+    case 2: {
+      const ctx = getCtx('deleteCanvas');
+      if (ctx) drawDeleteList(ctx, deleteKeys, null, 'done');
+      break;
+    }
+    case 3: resetSearch(); break;
+    case 4: {
+      const ctx = getCtx('syncCanvas');
+      if (ctx) { ctx.fillStyle = C.bg; ctx.fillRect(0,0,ctx.W,ctx.H); }
+      break;
+    }
+    case 7: resetTraversal(); break;
+    case 8: resetLevelViz(); break;
+    case 13: resetAnalytics(); break;
+    case 14: resetAdv(); break;
+  }
+}
+
+// Boot
+window.addEventListener('load', () => {
+  setTimeout(() => vizInit(), 200);
+});
+</script>
+</body>
+</html>

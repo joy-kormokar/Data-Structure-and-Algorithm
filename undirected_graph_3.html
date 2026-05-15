@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Undirected Graph — Incidence Matrix Masterclass</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0c14;
+  --surface:#111422;
+  --card:#161928;
+  --border:#1e2438;
+  --accent:#00e5ff;
+  --accent2:#7c3aed;
+  --accent3:#10b981;
+  --accent4:#f59e0b;
+  --danger:#ef4444;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --code-bg:#0d1117;
+  --radius:12px;
+  --font:'Sora',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:280px;
+  background:var(--surface);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:100;
+  display:flex;flex-direction:column;
+  transition:transform .3s;
+}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.sidebar-logo{
+  padding:24px 20px 16px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo h1{font-size:1.1rem;font-weight:800;color:var(--accent);letter-spacing:-.02em}
+.sidebar-logo p{font-size:.7rem;color:var(--muted);margin-top:2px}
+.sidebar-nav{padding:12px 0;flex:1}
+.nav-group-label{
+  padding:8px 20px 4px;
+  font-size:.65rem;font-weight:700;letter-spacing:.12em;
+  color:var(--muted);text-transform:uppercase;
+}
+.nav-item{
+  display:block;padding:8px 20px;
+  font-size:.78rem;color:var(--muted);
+  text-decoration:none;cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all .2s;
+}
+.nav-item:hover,.nav-item.active{
+  color:var(--accent);background:rgba(0,229,255,.05);
+  border-left-color:var(--accent);
+}
+.nav-sub{padding-left:32px;font-size:.73rem}
+
+/* ── MAIN ── */
+#main{margin-left:280px;min-height:100vh;padding:40px 48px}
+.page-hero{
+  margin-bottom:48px;
+  padding-bottom:32px;
+  border-bottom:1px solid var(--border);
+}
+.page-hero .badge{
+  display:inline-block;padding:4px 12px;
+  background:rgba(0,229,255,.1);color:var(--accent);
+  border:1px solid rgba(0,229,255,.2);
+  border-radius:99px;font-size:.72rem;font-weight:600;letter-spacing:.06em;
+  margin-bottom:16px;
+}
+.page-hero h1{font-size:3rem;font-weight:800;letter-spacing:-.04em;line-height:1.1}
+.page-hero h1 span{color:var(--accent)}
+.page-hero p{margin-top:12px;color:var(--muted);max-width:640px;line-height:1.7;font-size:.95rem}
+
+/* ── SECTIONS ── */
+.section{margin-bottom:72px}
+.section-header{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:28px;padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.section-num{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);
+  font-size:.8rem;font-weight:700;color:var(--accent);flex-shrink:0;
+}
+.section-header h2{font-size:1.5rem;font-weight:700;letter-spacing:-.02em}
+.section-tag{
+  margin-left:auto;padding:3px 10px;
+  border-radius:99px;font-size:.65rem;font-weight:700;letter-spacing:.06em;
+}
+.tag-beginner{background:rgba(16,185,129,.1);color:var(--accent3);border:1px solid rgba(16,185,129,.2)}
+.tag-intermediate{background:rgba(245,158,11,.1);color:var(--accent4);border:1px solid rgba(245,158,11,.2)}
+.tag-advanced{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+
+/* ── CARDS ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:20px;
+}
+.card h3{font-size:1rem;font-weight:700;margin-bottom:10px;color:var(--text)}
+.card p,.card li{font-size:.88rem;color:#94a3b8;line-height:1.75}
+.card ul{padding-left:18px}
+.card li{margin-bottom:4px}
+.analogy-card{
+  background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(0,229,255,.04));
+  border-color:rgba(124,58,237,.3);
+}
+.analogy-card h3{color:var(--accent2)}
+.analogy-card .emoji{font-size:1.5rem;margin-bottom:8px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+/* ── CODE ── */
+.code-block{
+  background:var(--code-bg);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;margin:16px 0;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;background:#0f1319;border-bottom:1px solid var(--border);
+}
+.code-header span{font-size:.72rem;color:var(--muted);font-family:var(--mono)}
+.copy-btn{
+  font-size:.68rem;padding:3px 10px;background:rgba(0,229,255,.1);
+  color:var(--accent);border:1px solid rgba(0,229,255,.2);
+  border-radius:4px;cursor:pointer;font-family:var(--font);
+  transition:all .2s;
+}
+.copy-btn:hover{background:rgba(0,229,255,.2)}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.8}
+.kw{color:#ff79c6}
+.fn{color:#50fa7b}
+.cm{color:#6272a4;font-style:italic}
+.st{color:#f1fa8c}
+.nm{color:#bd93f9}
+.ty{color:#8be9fd}
+.pp{color:#ffb86c}
+
+/* ── VIZ ── */
+.viz-box{
+  background:var(--code-bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;margin:16px 0;
+}
+.viz-box h4{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
+canvas{display:block;border-radius:8px;max-width:100%;background:transparent}
+
+/* MATRIX TABLE */
+.matrix-wrap{overflow-x:auto;margin:12px 0}
+.matrix-table{border-collapse:collapse;font-family:var(--mono);font-size:.78rem}
+.matrix-table th,.matrix-table td{
+  padding:7px 14px;border:1px solid var(--border);text-align:center;
+}
+.matrix-table th{background:rgba(0,229,255,.08);color:var(--accent);font-weight:700}
+.matrix-table td{color:var(--text)}
+.matrix-table td.one{color:var(--accent3);font-weight:700}
+.matrix-table td.zero{color:var(--muted)}
+.matrix-table .row-head{background:rgba(124,58,237,.06);color:var(--accent2);font-weight:700}
+
+/* CONTROLS */
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.btn{
+  padding:8px 18px;border-radius:8px;font-family:var(--font);
+  font-size:.78rem;font-weight:600;cursor:pointer;border:none;
+  transition:all .2s;
+}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#00bcd4}
+.btn-secondary{background:rgba(0,229,255,.1);color:var(--accent);border:1px solid rgba(0,229,255,.2)}
+.btn-secondary:hover{background:rgba(0,229,255,.2)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+.btn-green{background:rgba(16,185,129,.1);color:var(--accent3);border:1px solid rgba(16,185,129,.2)}
+.btn-green:hover{background:rgba(16,185,129,.2)}
+
+input[type=text],input[type=number],select{
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:6px;padding:7px 12px;
+  font-family:var(--font);font-size:.8rem;outline:none;
+  transition:border .2s;
+}
+input:focus,select:focus{border-color:var(--accent)}
+label{font-size:.78rem;color:var(--muted);margin-right:4px}
+
+.output-box{
+  background:rgba(0,0,0,.3);border:1px solid var(--border);
+  border-radius:8px;padding:14px;font-family:var(--mono);
+  font-size:.78rem;color:var(--accent3);min-height:60px;
+  white-space:pre-wrap;word-break:break-word;
+}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:10px;margin:12px 0}
+.step{
+  display:flex;gap:14px;align-items:flex-start;
+  background:rgba(255,255,255,.02);border:1px solid var(--border);
+  border-radius:8px;padding:12px 14px;
+}
+.step-num{
+  min-width:26px;height:26px;border-radius:50%;
+  background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:700;color:var(--accent);
+}
+.step p{font-size:.83rem;color:#94a3b8;line-height:1.6}
+
+/* HIGHLIGHT */
+.hl{color:var(--accent);font-weight:600}
+.hl2{color:var(--accent3);font-weight:600}
+.hl3{color:var(--accent4);font-weight:600}
+
+/* MOBILE */
+#menu-toggle{display:none;position:fixed;top:16px;left:16px;z-index:200;
+  background:var(--accent);color:#000;border:none;border-radius:8px;
+  width:38px;height:38px;cursor:pointer;font-size:1.1rem;align-items:center;justify-content:center}
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0;padding:24px 20px;padding-top:64px}
+  #menu-toggle{display:flex}
+  .two-col{grid-template-columns:1fr}
+  .three-col{grid-template-columns:1fr 1fr}
+}
+@media(max-width:540px){
+  .three-col{grid-template-columns:1fr}
+  .page-hero h1{font-size:2rem}
+}
+
+/* TOC progress */
+.progress-bar{height:2px;background:var(--accent);position:fixed;top:0;left:0;z-index:999;transition:width .2s}
+</style>
+</head>
+<body>
+<div class="progress-bar" id="progress"></div>
+<button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h1>Graph Academy</h1>
+    <p>Undirected Graph · Incidence Matrix</p>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-group-label">Foundation</div>
+    <a class="nav-item" onclick="goTo('s0')">🗂 Introduction</a>
+    <a class="nav-item" onclick="goTo('s1')">📊 Representation</a>
+
+    <div class="nav-group-label">Vertex Operations</div>
+    <a class="nav-item nav-sub" onclick="goTo('s2')">➕ Insert Vertex</a>
+    <a class="nav-item nav-sub" onclick="goTo('s3')">➖ Delete Vertex</a>
+    <a class="nav-item nav-sub" onclick="goTo('s4')">🔍 Search Vertex</a>
+    <a class="nav-item nav-sub" onclick="goTo('s5')">✏️ Update Vertex</a>
+
+    <div class="nav-group-label">Edge Operations</div>
+    <a class="nav-item nav-sub" onclick="goTo('s6')">➕ Insert Edge</a>
+    <a class="nav-item nav-sub" onclick="goTo('s7')">➖ Delete Edge</a>
+    <a class="nav-item nav-sub" onclick="goTo('s8')">🔍 Search Edge</a>
+    <a class="nav-item nav-sub" onclick="goTo('s9')">✏️ Update Edge</a>
+
+    <div class="nav-group-label">Traversal</div>
+    <a class="nav-item nav-sub" onclick="goTo('s10')">🌊 BFS</a>
+    <a class="nav-item nav-sub" onclick="goTo('s11')">🌀 DFS</a>
+
+    <div class="nav-group-label">Path Operations</div>
+    <a class="nav-item nav-sub" onclick="goTo('s12')">🗺 Find Path</a>
+    <a class="nav-item nav-sub" onclick="goTo('s13')">⚡ Shortest Path</a>
+    <a class="nav-item nav-sub" onclick="goTo('s14')">🔀 All Paths</a>
+
+    <div class="nav-group-label">Connectivity</div>
+    <a class="nav-item nav-sub" onclick="goTo('s15')">🔗 Connected Check</a>
+    <a class="nav-item nav-sub" onclick="goTo('s16')">🧩 Components</a>
+    <a class="nav-item nav-sub" onclick="goTo('s17')">🏝 Isolation Check</a>
+
+    <div class="nav-group-label">Cycles & Degrees</div>
+    <a class="nav-item nav-sub" onclick="goTo('s18')">🔁 Detect Cycle</a>
+    <a class="nav-item nav-sub" onclick="goTo('s19')">📐 Degree Analysis</a>
+
+    <div class="nav-group-label">Advanced</div>
+    <a class="nav-item nav-sub" onclick="goTo('s20')">🌲 MST</a>
+    <a class="nav-item nav-sub" onclick="goTo('s21')">🎨 Graph Coloring</a>
+    <a class="nav-item nav-sub" onclick="goTo('s22')">⚖️ Bipartite Check</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- HERO -->
+<div class="page-hero">
+  <div class="badge">Complete Masterclass · C Language</div>
+  <h1>Undirected Graph<br><span>via Incidence Matrix</span></h1>
+  <p>Master every concept — from basic representation to advanced algorithms — with interactive visualizations, step-by-step C code, and real-world analogies.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 0: INTRODUCTION -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s0">
+  <div class="section-header">
+    <div class="section-num">0</div>
+    <h2>Introduction to Undirected Graphs</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>What is an Undirected Graph?</h3>
+      <p>A graph is a collection of <span class="hl">vertices (nodes)</span> connected by <span class="hl2">edges (links)</span>. In an <strong>undirected</strong> graph, every edge is bidirectional — if A is connected to B, then B is also connected to A. There is no "direction" to the connection.</p>
+      <ul style="margin-top:10px">
+        <li><strong>Vertices (V)</strong>: The objects/entities (e.g., cities, computers)</li>
+        <li><strong>Edges (E)</strong>: The connections between them (e.g., roads, cables)</li>
+        <li>Edge between A and B is written as {A, B} or (A, B)</li>
+        <li>Degree of a vertex = number of edges touching it</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🏙️</div>
+      <h3>Real-Life Analogy</h3>
+      <p>Think of a <strong>city road map</strong>. Each intersection is a vertex. Each two-way road is an edge. If you can drive from intersection A to B on a road, you can also drive from B to A on the same road — that's undirected!</p>
+      <p style="margin-top:10px">Other examples: Facebook friends (if you're my friend, I'm yours), electrical circuits, and computer networks.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Interactive Graph Canvas</h4>
+    <canvas id="introCanvas" width="600" height="240"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>Key Terminology</h3>
+    <div class="three-col">
+      <div><p><span class="hl">Adjacent</span><br/>Two vertices connected by an edge are called adjacent (neighbors).</p></div>
+      <div><p><span class="hl2">Path</span><br/>A sequence of vertices where each consecutive pair is connected by an edge.</p></div>
+      <div><p><span class="hl3">Cycle</span><br/>A path that starts and ends at the same vertex without repeating edges.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 1: REPRESENTATION — INCIDENCE MATRIX -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <h2>Representation — Incidence Matrix</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>What is an Incidence Matrix?</h3>
+      <p>The Incidence Matrix is a 2D array of size <span class="hl">V × E</span> (vertices × edges). Each cell <code>[i][j]</code> is <span class="hl2">1</span> if vertex <em>i</em> is an endpoint of edge <em>j</em>, and <span class="hl">0</span> otherwise.</p>
+      <ul style="margin-top:10px">
+        <li>Rows represent <strong>vertices</strong></li>
+        <li>Columns represent <strong>edges</strong></li>
+        <li>Each column has <strong>exactly two 1s</strong> (since each edge connects two vertices)</li>
+        <li>Row sum = <strong>degree</strong> of that vertex</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">📋</div>
+      <h3>Analogy: Club Membership List</h3>
+      <p>Imagine a school where students (vertices) join clubs (edges). Each club has exactly 2 members. The incidence matrix is a sign-in sheet: rows = students, columns = clubs. A "1" means that student is in that club.</p>
+      <p style="margin-top:10px">Looking at a row tells you which clubs a student is in (their degree). Looking at a column tells you which two students share that club (the edge).</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Example: 4 Vertices, 4 Edges</h4>
+    <div id="incMatrixViz"></div>
+    <div style="margin-top:12px;font-size:.78rem;color:var(--muted)">
+      Graph: V0-V1 (e0), V1-V2 (e1), V2-V3 (e2), V0-V3 (e3)
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Comparison: Why Incidence Matrix?</h3>
+    <div class="three-col">
+      <div>
+        <p><strong>Incidence Matrix</strong><br/>
+        ✅ Shows edge–vertex relationships clearly<br/>
+        ✅ Easy to list all edges<br/>
+        ❌ More memory (V×E)<br/>
+        ❌ Slower adjacency check</p>
+      </div>
+      <div>
+        <p><strong>Adjacency Matrix</strong><br/>
+        ✅ Fast O(1) adjacency check<br/>
+        ❌ V² space always<br/>
+        ❌ Hard to find all edges fast</p>
+      </div>
+      <div>
+        <p><strong>Adjacency List</strong><br/>
+        ✅ Space-efficient<br/>
+        ✅ Fast neighbor iteration<br/>
+        ❌ Slower edge lookup<br/>
+        ❌ Less intuitive for some ops</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span>graph.c — Structure Definition</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="pp">#define MAX_V 10</span>   <span class="cm">/* Maximum number of vertices */</span>
+<span class="pp">#define MAX_E 20</span>   <span class="cm">/* Maximum number of edges    */</span>
+
+<span class="cm">/* Graph structure using Incidence Matrix */</span>
+<span class="kw">typedef struct</span> {
+    <span class="ty">int</span> matrix[MAX_V][MAX_E]; <span class="cm">/* incMatrix[vertex][edge] = 0 or 1 */</span>
+    <span class="ty">int</span> numVertices;          <span class="cm">/* current number of vertices        */</span>
+    <span class="ty">int</span> numEdges;             <span class="cm">/* current number of edges           */</span>
+    <span class="ty">char</span> vertexLabel[MAX_V][20]; <span class="cm">/* optional: label for each vertex */</span>
+} Graph;
+
+<span class="cm">/* Initialize an empty graph */</span>
+<span class="ty">void</span> <span class="fn">initGraph</span>(Graph *g) {
+    g->numVertices = <span class="nm">0</span>;
+    g->numEdges    = <span class="nm">0</span>;
+    <span class="cm">/* Set entire matrix to 0 */</span>
+    memset(g->matrix, <span class="nm">0</span>, <span class="kw">sizeof</span>(g->matrix));
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 2: INSERT VERTEX -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <h2>Insert Vertex</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Inserting a vertex adds a new <strong>row</strong> to the incidence matrix. The new row is initially all zeros because the new vertex has no edges yet.</p>
+      <div class="steps" style="margin-top:10px">
+        <div class="step"><div class="step-num">1</div><p>Check if max vertices limit is reached.</p></div>
+        <div class="step"><div class="step-num">2</div><p>Assign the next available row index to the new vertex.</p></div>
+        <div class="step"><div class="step-num">3</div><p>Fill that row with zeros (no connections yet).</p></div>
+        <div class="step"><div class="step-num">4</div><p>Increment <code>numVertices</code> by 1.</p></div>
+      </div>
+      <p style="margin-top:10px"><strong>Time Complexity:</strong> O(E) to zero out the new row &nbsp;|&nbsp; <strong>Space:</strong> One new row added.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🏙️</div>
+      <h3>Analogy</h3>
+      <p>Adding a new intersection to a city map. Initially it has no roads (edges). You mark it on the map but draw no roads from it yet.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Interactive: Insert Vertex</h4>
+    <div class="controls">
+      <label>Vertex Name:</label>
+      <input type="text" id="insVLabel" placeholder="e.g. V4" style="width:80px"/>
+      <button class="btn btn-primary" onclick="insertVertexViz()">Insert Vertex</button>
+      <button class="btn btn-danger" onclick="resetGraphViz()">Reset</button>
+    </div>
+    <div id="insVMatrix" class="matrix-wrap" style="margin-top:10px"></div>
+    <div class="output-box" id="insVOutput">Ready. Start by inserting vertices...</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>insert_vertex.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Insert a new vertex into the graph */</span>
+<span class="ty">int</span> <span class="fn">insertVertex</span>(Graph *g, <span class="kw">const</span> <span class="ty">char</span> *label) {
+    <span class="kw">if</span> (g->numVertices >= MAX_V) {
+        printf(<span class="st">"Error: Maximum vertex limit reached!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="ty">int</span> v = g->numVertices;  <span class="cm">/* new vertex index */</span>
+
+    <span class="cm">/* Zero out the new row (no edges yet) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        g->matrix[v][e] = <span class="nm">0</span>;
+    }
+
+    <span class="cm">/* Store optional label */</span>
+    <span class="kw">if</span> (label != NULL) {
+        strncpy(g->vertexLabel[v], label, <span class="nm">19</span>);
+        g->vertexLabel[v][<span class="nm">19</span>] = <span class="st">'\0'</span>;
+    }
+
+    g->numVertices++;
+    printf(<span class="st">"Vertex %s inserted at index %d\n"</span>, label, v);
+    <span class="kw">return</span> v;  <span class="cm">/* return the new vertex index */</span>
+}
+
+<span class="cm">/* Usage Example */</span>
+<span class="ty">int</span> <span class="fn">main</span>() {
+    Graph g;
+    <span class="fn">initGraph</span>(&amp;g);
+    <span class="fn">insertVertex</span>(&amp;g, <span class="st">"V0"</span>);
+    <span class="fn">insertVertex</span>(&amp;g, <span class="st">"V1"</span>);
+    <span class="fn">insertVertex</span>(&amp;g, <span class="st">"V2"</span>);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 3: DELETE VERTEX -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <h2>Delete Vertex</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Deleting a vertex is more complex. We must:</p>
+      <div class="steps" style="margin-top:10px">
+        <div class="step"><div class="step-num">1</div><p>Find all edges that connect to this vertex (where <code>matrix[v][e] == 1</code>).</p></div>
+        <div class="step"><div class="step-num">2</div><p>Delete all those edges first (remove their columns).</p></div>
+        <div class="step"><div class="step-num">3</div><p>Remove the vertex's row by shifting all subsequent rows up by one.</p></div>
+        <div class="step"><div class="step-num">4</div><p>Decrement <code>numVertices</code>.</p></div>
+      </div>
+      <p style="margin-top:8px"><strong>Time:</strong> O(V × E) — must scan and shift the matrix.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🏗️</div>
+      <h3>Analogy</h3>
+      <p>Demolishing a city intersection. Before you can remove the intersection, all roads connecting to it must be closed (edges deleted). Then you renumber remaining intersections.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>delete_vertex.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Remove all edges incident to vertex v */</span>
+<span class="ty">void</span> <span class="fn">removeIncidentEdges</span>(Graph *g, <span class="ty">int</span> v) {
+    <span class="ty">int</span> e = <span class="nm">0</span>;
+    <span class="kw">while</span> (e &lt; g->numEdges) {
+        <span class="kw">if</span> (g->matrix[v][e] == <span class="nm">1</span>) {
+            <span class="cm">/* Shift columns left to remove edge e */</span>
+            <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+                <span class="kw">for</span> (<span class="ty">int</span> j = e; j &lt; g->numEdges - <span class="nm">1</span>; j++) {
+                    g->matrix[i][j] = g->matrix[i][j + <span class="nm">1</span>];
+                }
+            }
+            g->numEdges--;
+            <span class="cm">/* Don't increment e — re-check same column */</span>
+        } <span class="kw">else</span> {
+            e++;
+        }
+    }
+}
+
+<span class="ty">int</span> <span class="fn">deleteVertex</span>(Graph *g, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (v &lt; <span class="nm">0</span> || v >= g->numVertices) {
+        printf(<span class="st">"Error: Invalid vertex index!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="cm">/* Step 1: Remove all edges connected to v */</span>
+    <span class="fn">removeIncidentEdges</span>(g, v);
+
+    <span class="cm">/* Step 2: Shift rows up to fill the gap */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = v; i &lt; g->numVertices - <span class="nm">1</span>; i++) {
+        <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+            g->matrix[i][e] = g->matrix[i + <span class="nm">1</span>][e];
+        }
+        strcpy(g->vertexLabel[i], g->vertexLabel[i + <span class="nm">1</span>]);
+    }
+    g->numVertices--;
+    printf(<span class="st">"Vertex %d deleted successfully.\n"</span>, v);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 4: SEARCH VERTEX -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <h2>Search Vertex</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Searching for a vertex by label means scanning the <code>vertexLabel[]</code> array. We can also retrieve all edges connected to a vertex by scanning its row in the incidence matrix.</p>
+      <p style="margin-top:8px"><strong>Time:</strong> O(V) for label search, O(E) to list edges.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🔍</div>
+      <h3>Analogy</h3>
+      <p>Looking up a person in a directory, then checking which clubs (edges) they belong to by scanning their row in the membership sheet.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>search_vertex.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Search vertex by label; returns index or -1 */</span>
+<span class="ty">int</span> <span class="fn">searchVertex</span>(Graph *g, <span class="kw">const</span> <span class="ty">char</span> *label) {
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+        <span class="kw">if</span> (strcmp(g->vertexLabel[v], label) == <span class="nm">0</span>) {
+            printf(<span class="st">"Found '%s' at index %d\n"</span>, label, v);
+            <span class="kw">return</span> v;
+        }
+    }
+    printf(<span class="st">"Vertex '%s' not found.\n"</span>, label);
+    <span class="kw">return</span> -<span class="nm">1</span>;
+}
+
+<span class="cm">/* Print all edges connected to vertex v */</span>
+<span class="ty">void</span> <span class="fn">getEdgesOfVertex</span>(Graph *g, <span class="ty">int</span> v) {
+    printf(<span class="st">"Edges of vertex %s:\n"</span>, g->vertexLabel[v]);
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        <span class="kw">if</span> (g->matrix[v][e] == <span class="nm">1</span>) {
+            printf(<span class="st">"  Edge e%d\n"</span>, e);
+        }
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 5: UPDATE VERTEX -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <h2>Update Vertex</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Updating a vertex means changing its label/data. The structure of the incidence matrix (rows and columns) stays the same — we only update the label array.</p>
+      <p style="margin-top:8px"><strong>Time:</strong> O(1) if we know the index, O(V) if searching by label first.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">📝</div>
+      <h3>Analogy</h3>
+      <p>Renaming a city — the roads (edges) remain the same, only the name on the map changes.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>update_vertex.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Update label of vertex at given index */</span>
+<span class="ty">int</span> <span class="fn">updateVertex</span>(Graph *g, <span class="ty">int</span> v, <span class="kw">const</span> <span class="ty">char</span> *newLabel) {
+    <span class="kw">if</span> (v &lt; <span class="nm">0</span> || v >= g->numVertices) {
+        printf(<span class="st">"Error: Invalid vertex index!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    printf(<span class="st">"Updated vertex %d: '%s' → '%s'\n"</span>,
+           v, g->vertexLabel[v], newLabel);
+    strncpy(g->vertexLabel[v], newLabel, <span class="nm">19</span>);
+    g->vertexLabel[v][<span class="nm">19</span>] = <span class="st">'\0'</span>;
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 6: INSERT EDGE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <h2>Insert Edge</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Inserting an edge adds a new <strong>column</strong> to the incidence matrix. In that column, exactly two cells are set to 1 — the rows corresponding to the two connected vertices.</p>
+      <div class="steps" style="margin-top:10px">
+        <div class="step"><div class="step-num">1</div><p>Check that max edges limit is not exceeded.</p></div>
+        <div class="step"><div class="step-num">2</div><p>Verify both vertex indices are valid.</p></div>
+        <div class="step"><div class="step-num">3</div><p>Add a new column (index = <code>numEdges</code>).</p></div>
+        <div class="step"><div class="step-num">4</div><p>Set <code>matrix[u][newEdge] = 1</code> and <code>matrix[v][newEdge] = 1</code>.</p></div>
+        <div class="step"><div class="step-num">5</div><p>Increment <code>numEdges</code>.</p></div>
+      </div>
+      <p style="margin-top:8px"><strong>Time:</strong> O(V) to initialize new column | <strong>Self-loops:</strong> If u == v, only one row gets set to 1.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🛣️</div>
+      <h3>Analogy</h3>
+      <p>Building a new two-way road (edge) between two city intersections (vertices). The membership sheet gets a new club column, and exactly the two members who join that club are marked.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Interactive: Build Graph with Edges</h4>
+    <div class="controls">
+      <label>From V:</label>
+      <input type="number" id="edgeFrom" min="0" max="9" value="0" style="width:55px"/>
+      <label>To V:</label>
+      <input type="number" id="edgeTo" min="0" max="9" value="1" style="width:55px"/>
+      <button class="btn btn-primary" onclick="insertEdgeViz()">Insert Edge</button>
+      <button class="btn btn-danger" onclick="resetEdgeViz()">Reset</button>
+    </div>
+    <div id="edgeMatrix" class="matrix-wrap" style="margin-top:10px"></div>
+    <canvas id="edgeCanvas" width="560" height="220" style="margin-top:10px"></canvas>
+    <div class="output-box" id="edgeOutput" style="margin-top:8px">Add vertices first (V0..V4 auto-loaded). Insert edges above.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>insert_edge.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Insert edge between vertices u and v */</span>
+<span class="ty">int</span> <span class="fn">insertEdge</span>(Graph *g, <span class="ty">int</span> u, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (g->numEdges >= MAX_E) {
+        printf(<span class="st">"Error: Maximum edge limit reached!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="kw">if</span> (u &lt; <span class="nm">0</span> || u >= g->numVertices ||
+        v &lt; <span class="nm">0</span> || v >= g->numVertices) {
+        printf(<span class="st">"Error: Invalid vertex index!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="ty">int</span> e = g->numEdges;  <span class="cm">/* new edge column index */</span>
+
+    <span class="cm">/* Initialize the column to 0 */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+        g->matrix[i][e] = <span class="nm">0</span>;
+    }
+
+    <span class="cm">/* Mark the two endpoints */</span>
+    g->matrix[u][e] = <span class="nm">1</span>;
+    g->matrix[v][e] = <span class="nm">1</span>;  <span class="cm">/* same row if self-loop (u==v) */</span>
+
+    g->numEdges++;
+    printf(<span class="st">"Edge e%d inserted: V%d -- V%d\n"</span>, e, u, v);
+    <span class="kw">return</span> e;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 7: DELETE EDGE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <h2>Delete Edge</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Deleting an edge removes a <strong>column</strong> from the incidence matrix. All subsequent columns shift one position to the left to fill the gap.</p>
+      <p style="margin-top:8px"><strong>Time:</strong> O(V × E) due to column shifting.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🚧</div>
+      <h3>Analogy</h3>
+      <p>Permanently closing a road between two intersections. The road is removed from the map and all subsequent roads are re-indexed.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>delete_edge.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Delete edge at column index e */</span>
+<span class="ty">int</span> <span class="fn">deleteEdge</span>(Graph *g, <span class="ty">int</span> e) {
+    <span class="kw">if</span> (e &lt; <span class="nm">0</span> || e >= g->numEdges) {
+        printf(<span class="st">"Error: Invalid edge index!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="cm">/* Shift all columns after e to the left */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> j = e; j &lt; g->numEdges - <span class="nm">1</span>; j++) {
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+            g->matrix[i][j] = g->matrix[i][j + <span class="nm">1</span>];
+        }
+    }
+    g->numEdges--;
+    printf(<span class="st">"Edge e%d deleted.\n"</span>, e);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="cm">/* Find edge between two vertices (returns edge index or -1) */</span>
+<span class="ty">int</span> <span class="fn">findEdgeIndex</span>(Graph *g, <span class="ty">int</span> u, <span class="ty">int</span> v) {
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        <span class="kw">if</span> (g->matrix[u][e] == <span class="nm">1</span> &amp;&amp; g->matrix[v][e] == <span class="nm">1</span>) {
+            <span class="kw">return</span> e;  <span class="cm">/* found! */</span>
+        }
+    }
+    <span class="kw">return</span> -<span class="nm">1</span>;  <span class="cm">/* not found */</span>
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 8: SEARCH EDGE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <h2>Search Edge</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>To check if an edge exists between vertices u and v, scan all columns and look for one where both <code>matrix[u][e] == 1</code> and <code>matrix[v][e] == 1</code>.</p>
+      <p style="margin-top:8px"><strong>Time:</strong> O(E) — scan all edge columns.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🗺️</div>
+      <h3>Analogy</h3>
+      <p>Checking if a direct road exists between two cities — scan through all roads and check if both cities appear as endpoints of that road.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>search_edge.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Check if edge exists between u and v */</span>
+<span class="ty">int</span> <span class="fn">searchEdge</span>(Graph *g, <span class="ty">int</span> u, <span class="ty">int</span> v) {
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        <span class="cm">/* Both u and v must be endpoints of edge e */</span>
+        <span class="kw">if</span> (g->matrix[u][e] == <span class="nm">1</span> &amp;&amp; g->matrix[v][e] == <span class="nm">1</span>) {
+            printf(<span class="st">"Edge found: V%d -- V%d (edge e%d)\n"</span>, u, v, e);
+            <span class="kw">return</span> e;
+        }
+    }
+    printf(<span class="st">"No edge between V%d and V%d.\n"</span>, u, v);
+    <span class="kw">return</span> -<span class="nm">1</span>;
+}
+
+<span class="cm">/* Print all edges in the graph */</span>
+<span class="ty">void</span> <span class="fn">printAllEdges</span>(Graph *g) {
+    printf(<span class="st">"All edges:\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        printf(<span class="st">"  e%d: "</span>, e);
+        <span class="ty">int</span> count = <span class="nm">0</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+            <span class="kw">if</span> (g->matrix[v][e] == <span class="nm">1</span>) {
+                <span class="kw">if</span> (count > <span class="nm">0</span>) printf(<span class="st">" -- "</span>);
+                printf(<span class="st">"V%d"</span>, v);
+                count++;
+            }
+        }
+        printf(<span class="st">"\n"</span>);
+    }
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 9: UPDATE EDGE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">9</div>
+    <h2>Update Edge</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Updating an edge means changing its endpoints. This is equivalent to deleting the old edge and inserting a new one. In the incidence matrix, we find the column, zero it out, and set new rows to 1.</p>
+      <p style="margin-top:8px"><strong>Use case:</strong> Rerouting a connection from one node to another.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🔄</div>
+      <h3>Analogy</h3>
+      <p>Rerouting a road — instead of connecting city A and B, you change it to connect city A and C. The road number (edge index) stays the same.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>update_edge.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Update edge e to now connect newU and newV */</span>
+<span class="ty">int</span> <span class="fn">updateEdge</span>(Graph *g, <span class="ty">int</span> e, <span class="ty">int</span> newU, <span class="ty">int</span> newV) {
+    <span class="kw">if</span> (e &lt; <span class="nm">0</span> || e >= g->numEdges) {
+        printf(<span class="st">"Error: Invalid edge index!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="kw">if</span> (newU &lt; <span class="nm">0</span> || newU >= g->numVertices ||
+        newV &lt; <span class="nm">0</span> || newV >= g->numVertices) {
+        printf(<span class="st">"Error: Invalid vertex index!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="cm">/* Clear the entire column for this edge */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+        g->matrix[i][e] = <span class="nm">0</span>;
+    }
+    <span class="cm">/* Set the new endpoints */</span>
+    g->matrix[newU][e] = <span class="nm">1</span>;
+    g->matrix[newV][e] = <span class="nm">1</span>;
+    printf(<span class="st">"Edge e%d updated: now V%d -- V%d\n"</span>, e, newU, newV);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 10: BFS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <h2>Breadth-First Search (BFS)</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>BFS explores the graph <strong>level by level</strong>. Starting from a source vertex, it first visits all direct neighbors (distance 1), then their neighbors (distance 2), and so on.</p>
+      <ul style="margin-top:10px">
+        <li>Uses a <strong>Queue</strong> (FIFO) data structure</li>
+        <li>Marks vertices as <strong>visited</strong> to avoid revisiting</li>
+        <li>Finds <strong>shortest path</strong> in unweighted graphs</li>
+        <li><strong>Time:</strong> O(V + E) &nbsp;|&nbsp; <strong>Space:</strong> O(V)</li>
+      </ul>
+      <p style="margin-top:10px">In the incidence matrix, to find neighbors of vertex <em>v</em>: scan each edge column — if <code>matrix[v][e] == 1</code>, find the other endpoint in that column.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🌊</div>
+      <h3>Analogy</h3>
+      <p>Imagine dropping a stone in water. The ripples spread outward in concentric circles — first the immediate neighbors, then neighbors of neighbors. BFS is exactly this wave propagation.</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Finding the shortest route on Google Maps (unweighted), social network friend suggestions, web crawlers.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>BFS Visualization</h4>
+    <div class="controls">
+      <label>Start Vertex:</label>
+      <input type="number" id="bfsStart" min="0" max="4" value="0" style="width:55px"/>
+      <button class="btn btn-primary" onclick="runBFS()">Run BFS</button>
+      <button class="btn btn-secondary" onclick="resetBFSViz()">Reset</button>
+    </div>
+    <canvas id="bfsCanvas" width="560" height="240" style="margin-top:12px"></canvas>
+    <div class="output-box" id="bfsOutput" style="margin-top:8px">Click "Run BFS" to see the traversal order.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>bfs.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="pp">#define MAX_V 10</span>
+
+<span class="cm">/* Get neighbors of vertex v using incidence matrix */</span>
+<span class="ty">int</span> <span class="fn">getNeighbors</span>(Graph *g, <span class="ty">int</span> v, <span class="ty">int</span> *nbrs) {
+    <span class="ty">int</span> count = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        <span class="kw">if</span> (g->matrix[v][e] == <span class="nm">1</span>) {
+            <span class="cm">/* Find the other endpoint of this edge */</span>
+            <span class="kw">for</span> (<span class="ty">int</span> u = <span class="nm">0</span>; u &lt; g->numVertices; u++) {
+                <span class="kw">if</span> (u != v &amp;&amp; g->matrix[u][e] == <span class="nm">1</span>) {
+                    nbrs[count++] = u;
+                }
+            }
+        }
+    }
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* BFS traversal from start vertex */</span>
+<span class="ty">void</span> <span class="fn">bfs</span>(Graph *g, <span class="ty">int</span> start) {
+    <span class="ty">int</span> visited[MAX_V] = {<span class="nm">0</span>};  <span class="cm">/* 0 = not visited */</span>
+    <span class="ty">int</span> queue[MAX_V];            <span class="cm">/* simple array queue */</span>
+    <span class="ty">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+    <span class="ty">int</span> nbrs[MAX_V];
+
+    <span class="cm">/* Enqueue starting vertex */</span>
+    queue[rear++] = start;
+    visited[start] = <span class="nm">1</span>;
+    printf(<span class="st">"BFS order: "</span>);
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="ty">int</span> v = queue[front++];  <span class="cm">/* Dequeue */</span>
+        printf(<span class="st">"V%d "</span>, v);
+
+        <span class="ty">int</span> numNbrs = <span class="fn">getNeighbors</span>(g, v, nbrs);
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; numNbrs; i++) {
+            <span class="kw">if</span> (!visited[nbrs[i]]) {
+                visited[nbrs[i]] = <span class="nm">1</span>;
+                queue[rear++] = nbrs[i];
+            }
+        }
+    }
+    printf(<span class="st">"\n"</span>);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 11: DFS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <h2>Depth-First Search (DFS)</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>DFS explores as deep as possible along each branch before backtracking. It uses a <strong>Stack</strong> (or recursion, which uses the call stack implicitly).</p>
+      <ul style="margin-top:10px">
+        <li>Goes deep into one path before exploring others</li>
+        <li>Uses <strong>visited[]</strong> array to avoid cycles</li>
+        <li>Used for: cycle detection, topological sort, finding connected components</li>
+        <li><strong>Time:</strong> O(V + E) &nbsp;|&nbsp; <strong>Space:</strong> O(V) recursion stack</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🌀</div>
+      <h3>Analogy</h3>
+      <p>Exploring a maze: you always keep going forward (deeper) until you hit a dead end, then backtrack to the last junction and try a different path. You mark every room you visit.</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Solving puzzles/mazes, detecting cycles, checking if a graph is connected, finding strongly connected components.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>DFS Visualization</h4>
+    <div class="controls">
+      <label>Start Vertex:</label>
+      <input type="number" id="dfsStart" min="0" max="4" value="0" style="width:55px"/>
+      <button class="btn btn-primary" onclick="runDFS()">Run DFS</button>
+      <button class="btn btn-secondary" onclick="resetDFSViz()">Reset</button>
+    </div>
+    <canvas id="dfsCanvas" width="560" height="240" style="margin-top:12px"></canvas>
+    <div class="output-box" id="dfsOutput" style="margin-top:8px">Click "Run DFS" to see the traversal order.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>dfs.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">int</span> visited[MAX_V];  <span class="cm">/* global visited array */</span>
+
+<span class="ty">void</span> <span class="fn">dfsHelper</span>(Graph *g, <span class="ty">int</span> v) {
+    visited[v] = <span class="nm">1</span>;
+    printf(<span class="st">"V%d "</span>, v);  <span class="cm">/* process this vertex */</span>
+
+    <span class="ty">int</span> nbrs[MAX_V];
+    <span class="ty">int</span> numNbrs = <span class="fn">getNeighbors</span>(g, v, nbrs);
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; numNbrs; i++) {
+        <span class="kw">if</span> (!visited[nbrs[i]]) {
+            <span class="fn">dfsHelper</span>(g, nbrs[i]);  <span class="cm">/* recurse deeper */</span>
+        }
+    }
+    <span class="cm">/* Backtrack automatically when function returns */</span>
+}
+
+<span class="ty">void</span> <span class="fn">dfs</span>(Graph *g, <span class="ty">int</span> start) {
+    memset(visited, <span class="nm">0</span>, <span class="kw">sizeof</span>(visited));
+    printf(<span class="st">"DFS order: "</span>);
+    <span class="fn">dfsHelper</span>(g, start);
+    printf(<span class="st">"\n"</span>);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 12: FIND PATH -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <h2>Find Path</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Finding whether a path exists between two vertices uses DFS (or BFS). We recursively explore from the source; if we reach the destination, a path exists.</p>
+      <ul style="margin-top:10px">
+        <li>Track the path using a <strong>parent[]</strong> array</li>
+        <li>Reconstruct path by backtracking from destination to source</li>
+        <li><strong>Time:</strong> O(V + E)</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🗺️</div>
+      <h3>Analogy</h3>
+      <p>GPS navigation finding if there's any route from your home to a destination — not the shortest, just any route. You follow roads, marking visited intersections, until you reach the destination.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>find_path.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">int</span> parent[MAX_V];   <span class="cm">/* to reconstruct path */</span>
+<span class="ty">int</span> pathVisited[MAX_V];
+
+<span class="ty">int</span> <span class="fn">dfsPath</span>(Graph *g, <span class="ty">int</span> cur, <span class="ty">int</span> dest) {
+    pathVisited[cur] = <span class="nm">1</span>;
+    <span class="kw">if</span> (cur == dest) <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* Found! */</span>
+
+    <span class="ty">int</span> nbrs[MAX_V];
+    <span class="ty">int</span> count = <span class="fn">getNeighbors</span>(g, cur, nbrs);
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; count; i++) {
+        <span class="kw">if</span> (!pathVisited[nbrs[i]]) {
+            parent[nbrs[i]] = cur;
+            <span class="kw">if</span> (<span class="fn">dfsPath</span>(g, nbrs[i], dest)) <span class="kw">return</span> <span class="nm">1</span>;
+        }
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* not found from this branch */</span>
+}
+
+<span class="ty">void</span> <span class="fn">findPath</span>(Graph *g, <span class="ty">int</span> src, <span class="ty">int</span> dest) {
+    memset(pathVisited, <span class="nm">0</span>, <span class="kw">sizeof</span>(pathVisited));
+    memset(parent, -<span class="nm">1</span>, <span class="kw">sizeof</span>(parent));
+    parent[src] = src;
+
+    <span class="kw">if</span> (!<span class="fn">dfsPath</span>(g, src, dest)) {
+        printf(<span class="st">"No path from V%d to V%d\n"</span>, src, dest);
+        <span class="kw">return</span>;
+    }
+    <span class="cm">/* Reconstruct path from dest back to src */</span>
+    <span class="ty">int</span> path[MAX_V], len = <span class="nm">0</span>, cur = dest;
+    <span class="kw">while</span> (cur != src) { path[len++] = cur; cur = parent[cur]; }
+    path[len++] = src;
+    printf(<span class="st">"Path: "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i = len - <span class="nm">1</span>; i >= <span class="nm">0</span>; i--)
+        printf(<span class="st">"V%d%s"</span>, path[i], (i > <span class="nm">0</span> ? <span class="st">" -> "</span> : <span class="st">"\n"</span>));
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 13: SHORTEST PATH -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <h2>Shortest Path (BFS-based)</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>For <strong>unweighted</strong> graphs, BFS naturally finds the shortest path. Each level of BFS represents one "hop". The first time BFS reaches the destination, it has taken the minimum number of edges.</p>
+      <ul style="margin-top:10px">
+        <li>Use a <code>dist[]</code> array initialized to -1 (unvisited)</li>
+        <li><code>dist[src] = 0</code>, then each neighbor gets <code>dist[v] + 1</code></li>
+        <li>Track <code>parent[]</code> to reconstruct the path</li>
+        <li><strong>Time:</strong> O(V + E)</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">⚡</div>
+      <h3>Analogy</h3>
+      <p>Finding the fewest bus stops between two stations. BFS expands outward hop by hop — the first time you reach your destination, you've used the minimum number of stops (edges).</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Shortest route in a simple network, minimum hops in routing protocols, friend-of-friend distance in social networks.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>shortest_path.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">void</span> <span class="fn">shortestPath</span>(Graph *g, <span class="ty">int</span> src, <span class="ty">int</span> dest) {
+    <span class="ty">int</span> dist[MAX_V], par[MAX_V];
+    <span class="ty">int</span> queue[MAX_V];
+    <span class="ty">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    <span class="cm">/* Initialize all distances to -1 (unvisited) */</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+        dist[i] = -<span class="nm">1</span>;
+        par[i]  = -<span class="nm">1</span>;
+    }
+
+    dist[src] = <span class="nm">0</span>;
+    queue[rear++] = src;
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="ty">int</span> v = queue[front++];
+        <span class="ty">int</span> nbrs[MAX_V];
+        <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, v, nbrs);
+
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+            <span class="kw">if</span> (dist[nbrs[i]] == -<span class="nm">1</span>) {  <span class="cm">/* not visited */</span>
+                dist[nbrs[i]] = dist[v] + <span class="nm">1</span>;
+                par[nbrs[i]]  = v;
+                queue[rear++] = nbrs[i];
+            }
+        }
+    }
+
+    <span class="kw">if</span> (dist[dest] == -<span class="nm">1</span>) {
+        printf(<span class="st">"No path from V%d to V%d\n"</span>, src, dest);
+        <span class="kw">return</span>;
+    }
+    printf(<span class="st">"Shortest distance: %d hops\n"</span>, dist[dest]);
+
+    <span class="cm">/* Reconstruct path */</span>
+    <span class="ty">int</span> path[MAX_V], len = <span class="nm">0</span>, cur = dest;
+    <span class="kw">while</span> (cur != -<span class="nm">1</span>) { path[len++] = cur; cur = par[cur]; }
+    printf(<span class="st">"Path: "</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> i = len-<span class="nm">1</span>; i >= <span class="nm">0</span>; i--)
+        printf(<span class="st">"V%d%s"</span>, path[i], (i > <span class="nm">0</span> ? <span class="st">" -> "</span> : <span class="st">"\n"</span>));
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 14: ALL PATHS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <h2>All Paths Between Two Vertices</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>Finding all paths requires <strong>backtracking DFS</strong>. We must un-mark visited nodes after backtracking so other paths can use them.</p>
+      <ul style="margin-top:10px">
+        <li>Maintain a <code>path[]</code> array and <code>pathLen</code></li>
+        <li>When we reach destination, print current path</li>
+        <li>Mark as visited before recursing, <strong>un-mark after</strong> (backtrack)</li>
+        <li><strong>Time:</strong> O(V!) in worst case — exponential</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🔀</div>
+      <h3>Analogy</h3>
+      <p>Finding all possible driving routes between two cities — you try every possible combination of roads. Used in network analysis to find all routes for redundancy planning.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>all_paths.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">int</span> apVisited[MAX_V];
+<span class="ty">int</span> apPath[MAX_V];
+<span class="ty">int</span> apPathLen = <span class="nm">0</span>;
+
+<span class="ty">void</span> <span class="fn">printPath</span>(<span class="ty">int</span> len) {
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; len; i++)
+        printf(<span class="st">"V%d%s"</span>, apPath[i], (i &lt; len-<span class="nm">1</span> ? <span class="st">" -> "</span> : <span class="st">"\n"</span>));
+}
+
+<span class="ty">void</span> <span class="fn">allPaths</span>(Graph *g, <span class="ty">int</span> cur, <span class="ty">int</span> dest) {
+    apVisited[cur] = <span class="nm">1</span>;
+    apPath[apPathLen++] = cur;
+
+    <span class="kw">if</span> (cur == dest) {
+        <span class="fn">printPath</span>(apPathLen);  <span class="cm">/* found a complete path */</span>
+    } <span class="kw">else</span> {
+        <span class="ty">int</span> nbrs[MAX_V];
+        <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, cur, nbrs);
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+            <span class="kw">if</span> (!apVisited[nbrs[i]]) {
+                <span class="fn">allPaths</span>(g, nbrs[i], dest);
+            }
+        }
+    }
+    <span class="cm">/* BACKTRACK: un-mark so other paths can use this node */</span>
+    apPathLen--;
+    apVisited[cur] = <span class="nm">0</span>;
+}
+
+<span class="cm">/* Call like this: */</span>
+<span class="ty">void</span> <span class="fn">findAllPaths</span>(Graph *g, <span class="ty">int</span> src, <span class="ty">int</span> dest) {
+    memset(apVisited, <span class="nm">0</span>, <span class="kw">sizeof</span>(apVisited));
+    apPathLen = <span class="nm">0</span>;
+    printf(<span class="st">"All paths from V%d to V%d:\n"</span>, src, dest);
+    <span class="fn">allPaths</span>(g, src, dest);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 15: CONNECTED CHECK -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s15">
+  <div class="section-header">
+    <div class="section-num">15</div>
+    <h2>Connectivity Check</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>A graph is <strong>connected</strong> if there is a path between every pair of vertices. To check: run BFS/DFS from any vertex. If all vertices get visited, the graph is connected.</p>
+      <ul style="margin-top:10px">
+        <li>Run DFS/BFS from vertex 0</li>
+        <li>Count how many vertices were visited</li>
+        <li>If <code>count == numVertices</code> → connected</li>
+        <li><strong>Time:</strong> O(V + E)</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🔗</div>
+      <h3>Analogy</h3>
+      <p>Checking if every city in a country can be reached from the capital. If you can drive from the capital to every other city following roads, the road network is connected.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>connectivity.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">int</span> <span class="fn">isConnected</span>(Graph *g) {
+    <span class="kw">if</span> (g->numVertices == <span class="nm">0</span>) <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* empty is trivially connected */</span>
+
+    <span class="ty">int</span> vis[MAX_V] = {<span class="nm">0</span>};
+    <span class="ty">int</span> queue[MAX_V];
+    <span class="ty">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+    <span class="ty">int</span> count = <span class="nm">0</span>;
+
+    queue[rear++] = <span class="nm">0</span>;  <span class="cm">/* start BFS from vertex 0 */</span>
+    vis[<span class="nm">0</span>] = <span class="nm">1</span>;
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="ty">int</span> v = queue[front++];
+        count++;
+        <span class="ty">int</span> nbrs[MAX_V];
+        <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, v, nbrs);
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+            <span class="kw">if</span> (!vis[nbrs[i]]) {
+                vis[nbrs[i]] = <span class="nm">1</span>;
+                queue[rear++] = nbrs[i];
+            }
+        }
+    }
+    <span class="kw">return</span> (count == g->numVertices);
+}
+
+<span class="cm">/* Usage */</span>
+<span class="kw">if</span> (<span class="fn">isConnected</span>(&amp;g))
+    printf(<span class="st">"Graph is CONNECTED\n"</span>);
+<span class="kw">else</span>
+    printf(<span class="st">"Graph is DISCONNECTED\n"</span>);</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 16: COMPONENTS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s16">
+  <div class="section-header">
+    <div class="section-num">16</div>
+    <h2>Connected Components</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>A <strong>connected component</strong> is a maximal subgraph where every vertex is reachable from every other vertex. To find all components:</p>
+      <div class="steps" style="margin-top:10px">
+        <div class="step"><div class="step-num">1</div><p>Start from vertex 0. Run DFS/BFS. Mark all reachable vertices as component 0.</p></div>
+        <div class="step"><div class="step-num">2</div><p>Find the next unvisited vertex. Run DFS/BFS again — this is component 1.</p></div>
+        <div class="step"><div class="step-num">3</div><p>Repeat until all vertices are visited. Count = number of components.</p></div>
+      </div>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🧩</div>
+      <h3>Analogy</h3>
+      <p>Islands in an ocean. Each island (component) is a group of cities connected by roads. There are no roads between islands. The number of islands = number of components.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>components.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">void</span> <span class="fn">dfsComponent</span>(Graph *g, <span class="ty">int</span> v, <span class="ty">int</span> *visited, <span class="ty">int</span> compId) {
+    visited[v] = compId;
+    <span class="ty">int</span> nbrs[MAX_V];
+    <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, v, nbrs);
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="kw">if</span> (visited[nbrs[i]] == -<span class="nm">1</span>)
+            <span class="fn">dfsComponent</span>(g, nbrs[i], visited, compId);
+    }
+}
+
+<span class="ty">int</span> <span class="fn">findComponents</span>(Graph *g) {
+    <span class="ty">int</span> visited[MAX_V];
+    memset(visited, -<span class="nm">1</span>, <span class="kw">sizeof</span>(visited));  <span class="cm">/* -1 = unvisited */</span>
+    <span class="ty">int</span> numComponents = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+        <span class="kw">if</span> (visited[v] == -<span class="nm">1</span>) {
+            <span class="fn">dfsComponent</span>(g, v, visited, numComponents);
+            numComponents++;
+        }
+    }
+
+    printf(<span class="st">"Number of components: %d\n"</span>, numComponents);
+    <span class="kw">for</span> (<span class="ty">int</span> c = <span class="nm">0</span>; c &lt; numComponents; c++) {
+        printf(<span class="st">"Component %d: "</span>, c);
+        <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+            <span class="kw">if</span> (visited[v] == c) printf(<span class="st">"V%d "</span>, v);
+        }
+        printf(<span class="st">"\n"</span>);
+    }
+    <span class="kw">return</span> numComponents;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 17: ISOLATION CHECK -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s17">
+  <div class="section-header">
+    <div class="section-num">17</div>
+    <h2>Isolation Check</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>An <strong>isolated vertex</strong> is a vertex with degree 0 — it has no edges connecting it to any other vertex. In the incidence matrix, its entire row is all zeros.</p>
+      <p style="margin-top:8px"><strong>Time:</strong> O(E) per vertex — scan the row for any 1.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🏝️</div>
+      <h3>Analogy</h3>
+      <p>A city with no roads at all — no connections to any other city. It exists on the map but is completely unreachable from anywhere else.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>isolation.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Check if vertex v is isolated (degree = 0) */</span>
+<span class="ty">int</span> <span class="fn">isIsolated</span>(Graph *g, <span class="ty">int</span> v) {
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        <span class="kw">if</span> (g->matrix[v][e] == <span class="nm">1</span>) <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* has an edge */</span>
+    }
+    <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* no edges found — isolated! */</span>
+}
+
+<span class="cm">/* Print all isolated vertices */</span>
+<span class="ty">void</span> <span class="fn">findIsolatedVertices</span>(Graph *g) {
+    printf(<span class="st">"Isolated vertices: "</span>);
+    <span class="ty">int</span> found = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+        <span class="kw">if</span> (<span class="fn">isIsolated</span>(g, v)) {
+            printf(<span class="st">"V%d "</span>, v);
+            found = <span class="nm">1</span>;
+        }
+    }
+    <span class="kw">if</span> (!found) printf(<span class="st">"none"</span>);
+    printf(<span class="st">"\n"</span>);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 18: DETECT CYCLE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s18">
+  <div class="section-header">
+    <div class="section-num">18</div>
+    <h2>Detect Cycle</h2>
+    <span class="section-tag tag-intermediate">Intermediate</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>A <strong>cycle</strong> exists if DFS encounters an already-visited vertex that is not the parent of the current vertex. In undirected graphs, we track the parent to avoid false positives.</p>
+      <ul style="margin-top:10px">
+        <li>Run DFS tracking <code>parent[]</code></li>
+        <li>If we see a visited neighbor that's NOT our parent → cycle found</li>
+        <li><strong>Time:</strong> O(V + E)</li>
+      </ul>
+      <p style="margin-top:8px"><strong>Note:</strong> A graph with V vertices and ≥ V edges always contains a cycle.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🔁</div>
+      <h3>Analogy</h3>
+      <p>Walking on roads: if you can start from a city, keep walking, and return to where you started without going back on any road — you've found a cycle!</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Detecting deadlocks in operating systems, finding circular dependencies in build systems.</p>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span>detect_cycle.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">int</span> <span class="fn">dfsCycle</span>(Graph *g, <span class="ty">int</span> v, <span class="ty">int</span> par, <span class="ty">int</span> *visited) {
+    visited[v] = <span class="nm">1</span>;
+    <span class="ty">int</span> nbrs[MAX_V];
+    <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, v, nbrs);
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+        <span class="ty">int</span> nb = nbrs[i];
+        <span class="kw">if</span> (!visited[nb]) {
+            <span class="kw">if</span> (<span class="fn">dfsCycle</span>(g, nb, v, visited)) <span class="kw">return</span> <span class="nm">1</span>;
+        } <span class="kw">else if</span> (nb != par) {
+            <span class="cm">/* visited neighbor that's not our parent = CYCLE! */</span>
+            <span class="kw">return</span> <span class="nm">1</span>;
+        }
+    }
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="ty">int</span> <span class="fn">hasCycle</span>(Graph *g) {
+    <span class="ty">int</span> visited[MAX_V] = {<span class="nm">0</span>};
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+        <span class="kw">if</span> (!visited[v]) {
+            <span class="kw">if</span> (<span class="fn">dfsCycle</span>(g, v, -<span class="nm">1</span>, visited)) {
+                printf(<span class="st">"Cycle DETECTED in graph!\n"</span>);
+                <span class="kw">return</span> <span class="nm">1</span>;
+            }
+        }
+    }
+    printf(<span class="st">"No cycle found.\n"</span>);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 19: DEGREE ANALYSIS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s19">
+  <div class="section-header">
+    <div class="section-num">19</div>
+    <h2>Degree Analysis</h2>
+    <span class="section-tag tag-beginner">Beginner</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>The <strong>degree</strong> of a vertex is the number of edges connected to it. In the incidence matrix:</p>
+      <ul style="margin-top:10px">
+        <li><strong>Degree of vertex v</strong> = sum of row v = count of 1s in that row</li>
+        <li><strong>Handshaking Lemma</strong>: Sum of all degrees = 2 × number of edges</li>
+        <li>Vertex with degree 0 → isolated</li>
+        <li>Vertex with degree 1 → leaf (pendant)</li>
+        <li><strong>Time:</strong> O(E) per vertex, O(V×E) total</li>
+      </ul>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">📐</div>
+      <h3>Analogy</h3>
+      <p>The degree of a city intersection is the number of roads meeting at it. A 3-way stop has degree 3. A dead-end has degree 1. A city with no roads has degree 0.</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Network analysis (finding hubs), social network influence measurement (who has the most friends?), protein interaction networks.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Degree Analysis Visualizer</h4>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="showDegreeAnalysis()">Analyze Degrees</button>
+    </div>
+    <canvas id="degreeCanvas" width="560" height="220" style="margin-top:12px"></canvas>
+    <div id="degreeOutput" class="output-box" style="margin-top:8px">Click "Analyze Degrees" to see degree of each vertex.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>degree.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Get degree of vertex v = sum of its row */</span>
+<span class="ty">int</span> <span class="fn">getDegree</span>(Graph *g, <span class="ty">int</span> v) {
+    <span class="ty">int</span> degree = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="ty">int</span> e = <span class="nm">0</span>; e &lt; g->numEdges; e++) {
+        degree += g->matrix[v][e];  <span class="cm">/* add 1 for each edge */</span>
+    }
+    <span class="kw">return</span> degree;
+}
+
+<span class="cm">/* Full degree analysis of graph */</span>
+<span class="ty">void</span> <span class="fn">degreeAnalysis</span>(Graph *g) {
+    <span class="ty">int</span> totalDeg = <span class="nm">0</span>;
+    <span class="ty">int</span> maxDeg = <span class="nm">0</span>, minDeg = MAX_E;
+
+    printf(<span class="st">"Degree of each vertex:\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+        <span class="ty">int</span> d = <span class="fn">getDegree</span>(g, v);
+        printf(<span class="st">"  V%d (%s): degree = %d\n"</span>,
+               v, g->vertexLabel[v], d);
+        totalDeg += d;
+        <span class="kw">if</span> (d > maxDeg) maxDeg = d;
+        <span class="kw">if</span> (d &lt; minDeg) minDeg = d;
+    }
+    printf(<span class="st">"Sum of all degrees = %d (= 2 × %d edges)\n"</span>,
+           totalDeg, g->numEdges);
+    printf(<span class="st">"Max degree = %d, Min degree = %d\n"</span>, maxDeg, minDeg);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 20: MST -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s20">
+  <div class="section-header">
+    <div class="section-num">20</div>
+    <h2>Minimum Spanning Tree (MST)</h2>
+    <span class="section-tag tag-advanced">Advanced</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>A <strong>Spanning Tree</strong> connects all vertices with V-1 edges and no cycles. The <strong>Minimum</strong> Spanning Tree has the smallest total edge weight.</p>
+      <p style="margin-top:8px"><strong>Kruskal's Algorithm</strong> (used here):</p>
+      <div class="steps" style="margin-top:10px">
+        <div class="step"><div class="step-num">1</div><p>Sort all edges by weight (ascending).</p></div>
+        <div class="step"><div class="step-num">2</div><p>Pick the smallest edge. Add it if it doesn't form a cycle (use Union-Find).</p></div>
+        <div class="step"><div class="step-num">3</div><p>Repeat until V-1 edges are selected.</p></div>
+      </div>
+      <p style="margin-top:8px"><strong>Time:</strong> O(E log E) for sorting + O(E α(V)) for union-find.</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🌲</div>
+      <h3>Analogy</h3>
+      <p>A telecom company must connect all cities with cables at minimum cost. They sort all possible cables by cost, add the cheapest ones that don't create redundant loops, until all cities are connected.</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Laying electrical cables/fiber optic lines, designing road networks, clustering algorithms.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>MST Visualization (Kruskal's)</h4>
+    <canvas id="mstCanvas" width="560" height="260"></canvas>
+    <div class="controls" style="margin-top:10px">
+      <button class="btn btn-primary" onclick="runMST()">Run Kruskal's MST</button>
+      <button class="btn btn-secondary" onclick="resetMST()">Reset</button>
+    </div>
+    <div class="output-box" id="mstOutput" style="margin-top:8px">Click "Run Kruskal's MST" to compute the minimum spanning tree.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>mst_kruskal.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cm">/* Extend graph to store edge weights */</span>
+<span class="ty">int</span> edgeWeight[MAX_E];  <span class="cm">/* weight of each edge column */</span>
+
+<span class="cm">/* Union-Find: find root of vertex v */</span>
+<span class="ty">int</span> <span class="fn">find</span>(<span class="ty">int</span> *parent, <span class="ty">int</span> v) {
+    <span class="kw">if</span> (parent[v] != v)
+        parent[v] = <span class="fn">find</span>(parent, parent[v]);  <span class="cm">/* path compression */</span>
+    <span class="kw">return</span> parent[v];
+}
+
+<span class="cm">/* Union-Find: merge two sets */</span>
+<span class="ty">void</span> <span class="fn">unionSets</span>(<span class="ty">int</span> *parent, <span class="ty">int</span> *rank, <span class="ty">int</span> a, <span class="ty">int</span> b) {
+    <span class="ty">int</span> ra = <span class="fn">find</span>(parent, a);
+    <span class="ty">int</span> rb = <span class="fn">find</span>(parent, b);
+    <span class="kw">if</span> (rank[ra] &lt; rank[rb]) parent[ra] = rb;
+    <span class="kw">else if</span> (rank[ra] > rank[rb]) parent[rb] = ra;
+    <span class="kw">else</span> { parent[rb] = ra; rank[ra]++; }
+}
+
+<span class="ty">void</span> <span class="fn">kruskalMST</span>(Graph *g) {
+    <span class="cm">/* Sort edges by weight using simple bubble sort */</span>
+    <span class="ty">int</span> order[MAX_E];
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numEdges; i++) order[i] = i;
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numEdges - <span class="nm">1</span>; i++) {
+        <span class="kw">for</span> (<span class="ty">int</span> j = <span class="nm">0</span>; j &lt; g->numEdges - i - <span class="nm">1</span>; j++) {
+            <span class="kw">if</span> (edgeWeight[order[j]] > edgeWeight[order[j+<span class="nm">1</span>]]) {
+                <span class="ty">int</span> tmp = order[j]; order[j] = order[j+<span class="nm">1</span>]; order[j+<span class="nm">1</span>] = tmp;
+            }
+        }
+    }
+
+    <span class="ty">int</span> parent[MAX_V], rnk[MAX_V];
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+        parent[i] = i; rnk[i] = <span class="nm">0</span>;
+    }
+
+    <span class="ty">int</span> mstWeight = <span class="nm">0</span>, edgesUsed = <span class="nm">0</span>;
+    printf(<span class="st">"MST edges:\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> k = <span class="nm">0</span>; k &lt; g->numEdges &amp;&amp; edgesUsed &lt; g->numVertices-<span class="nm">1</span>; k++) {
+        <span class="ty">int</span> e = order[k];
+        <span class="cm">/* Find the two endpoints of edge e */</span>
+        <span class="ty">int</span> u = -<span class="nm">1</span>, v = -<span class="nm">1</span>;
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; g->numVertices; i++) {
+            <span class="kw">if</span> (g->matrix[i][e] == <span class="nm">1</span>) {
+                <span class="kw">if</span> (u == -<span class="nm">1</span>) u = i; <span class="kw">else</span> v = i;
+            }
+        }
+        <span class="kw">if</span> (<span class="fn">find</span>(parent, u) != <span class="fn">find</span>(parent, v)) {
+            <span class="fn">unionSets</span>(parent, rnk, u, v);
+            printf(<span class="st">"  V%d -- V%d  weight=%d\n"</span>, u, v, edgeWeight[e]);
+            mstWeight += edgeWeight[e];
+            edgesUsed++;
+        }
+    }
+    printf(<span class="st">"Total MST weight = %d\n"</span>, mstWeight);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 21: GRAPH COLORING -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s21">
+  <div class="section-header">
+    <div class="section-num">21</div>
+    <h2>Graph Coloring</h2>
+    <span class="section-tag tag-advanced">Advanced</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p><strong>Graph Coloring</strong> assigns a color to each vertex such that no two adjacent vertices share the same color. The minimum number of colors needed is the <strong>chromatic number χ(G)</strong>.</p>
+      <p style="margin-top:8px"><strong>Greedy Coloring Algorithm:</strong></p>
+      <div class="steps" style="margin-top:10px">
+        <div class="step"><div class="step-num">1</div><p>Assign color 0 to the first vertex.</p></div>
+        <div class="step"><div class="step-num">2</div><p>For each remaining vertex, find the smallest color not used by any of its neighbors.</p></div>
+        <div class="step"><div class="step-num">3</div><p>Assign that color.</p></div>
+      </div>
+      <p style="margin-top:8px"><strong>Note:</strong> Greedy doesn't always give the minimum, but is efficient: O(V + E).</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">🎨</div>
+      <h3>Analogy</h3>
+      <p>Coloring a map so no two neighboring countries share the same color. The famous "Four Color Theorem" states any planar map needs at most 4 colors.</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Register allocation in compilers (variables ↔ colors, interference ↔ edges), timetable scheduling, frequency assignment in wireless networks.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Graph Coloring Visualization</h4>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="runColoring()">Color Graph</button>
+      <button class="btn btn-secondary" onclick="resetColoring()">Reset</button>
+    </div>
+    <canvas id="colorCanvas" width="560" height="240" style="margin-top:12px"></canvas>
+    <div class="output-box" id="colorOutput" style="margin-top:8px">Click "Color Graph" to apply greedy coloring.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>graph_coloring.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">void</span> <span class="fn">greedyColoring</span>(Graph *g) {
+    <span class="ty">int</span> color[MAX_V];
+    memset(color, -<span class="nm">1</span>, <span class="kw">sizeof</span>(color));  <span class="cm">/* -1 = uncolored */</span>
+
+    color[<span class="nm">0</span>] = <span class="nm">0</span>;  <span class="cm">/* assign first color to first vertex */</span>
+
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">1</span>; v &lt; g->numVertices; v++) {
+        <span class="cm">/* Track which colors are used by neighbors */</span>
+        <span class="ty">int</span> usedColors[MAX_V] = {<span class="nm">0</span>};  <span class="cm">/* usedColors[c]=1 if color c is taken */</span>
+
+        <span class="ty">int</span> nbrs[MAX_V];
+        <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, v, nbrs);
+        <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+            <span class="kw">if</span> (color[nbrs[i]] != -<span class="nm">1</span>) {
+                usedColors[color[nbrs[i]]] = <span class="nm">1</span>;
+            }
+        }
+
+        <span class="cm">/* Assign the smallest available color */</span>
+        <span class="ty">int</span> c = <span class="nm">0</span>;
+        <span class="kw">while</span> (usedColors[c]) c++;
+        color[v] = c;
+    }
+
+    <span class="cm">/* Find chromatic number (max color used + 1) */</span>
+    <span class="ty">int</span> maxColor = <span class="nm">0</span>;
+    printf(<span class="st">"Coloring result:\n"</span>);
+    <span class="kw">for</span> (<span class="ty">int</span> v = <span class="nm">0</span>; v &lt; g->numVertices; v++) {
+        printf(<span class="st">"  V%d → color %d\n"</span>, v, color[v]);
+        <span class="kw">if</span> (color[v] > maxColor) maxColor = color[v];
+    }
+    printf(<span class="st">"Chromatic number (greedy) = %d\n"</span>, maxColor + <span class="nm">1</span>);
+}</pre>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- SECTION 22: BIPARTITE CHECK -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="section" id="s22">
+  <div class="section-header">
+    <div class="section-num">22</div>
+    <h2>Bipartite Check</h2>
+    <span class="section-tag tag-advanced">Advanced</span>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Theory</h3>
+      <p>A graph is <strong>bipartite</strong> if its vertices can be split into two groups (sets A and B) such that every edge connects a vertex in A to one in B — no edges within the same group.</p>
+      <p style="margin-top:8px"><strong>Key fact:</strong> A graph is bipartite if and only if it has <strong>no odd-length cycles</strong>.</p>
+      <p style="margin-top:8px"><strong>Algorithm:</strong> BFS 2-coloring — color vertices alternately 0 and 1. If any neighbor has the same color as current → not bipartite.</p>
+      <p style="margin-top:8px"><strong>Time:</strong> O(V + E)</p>
+    </div>
+    <div class="card analogy-card">
+      <div class="emoji">⚖️</div>
+      <h3>Analogy</h3>
+      <p>A dating app where only men can match with women (and vice versa). Men = set A, Women = set B. Matches (edges) only go between sets. If two men somehow match each other, it's not bipartite.</p>
+      <p style="margin-top:8px"><strong>Real use:</strong> Matching problems (job assignments, student-project pairing), checking if a network can be 2-colored (frequency assignment), stable marriage problem.</p>
+    </div>
+  </div>
+
+  <div class="viz-box">
+    <h4>Bipartite Check Visualization</h4>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="runBipartite()">Check Bipartite</button>
+      <button class="btn btn-secondary" onclick="resetBipartite()">Reset</button>
+    </div>
+    <canvas id="bipartiteCanvas" width="560" height="240" style="margin-top:12px"></canvas>
+    <div class="output-box" id="bipartiteOutput" style="margin-top:8px">Click "Check Bipartite" to test if the graph is bipartite.</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span>bipartite.c</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="ty">int</span> <span class="fn">isBipartite</span>(Graph *g) {
+    <span class="ty">int</span> color[MAX_V];
+    memset(color, -<span class="nm">1</span>, <span class="kw">sizeof</span>(color));  <span class="cm">/* -1 = unvisited */</span>
+    <span class="ty">int</span> queue[MAX_V];
+    <span class="ty">int</span> front, rear;
+
+    <span class="kw">for</span> (<span class="ty">int</span> start = <span class="nm">0</span>; start &lt; g->numVertices; start++) {
+        <span class="kw">if</span> (color[start] != -<span class="nm">1</span>) <span class="kw">continue</span>;  <span class="cm">/* already colored */</span>
+
+        front = rear = <span class="nm">0</span>;
+        color[start] = <span class="nm">0</span>;  <span class="cm">/* assign first color */</span>
+        queue[rear++] = start;
+
+        <span class="kw">while</span> (front &lt; rear) {
+            <span class="ty">int</span> v = queue[front++];
+            <span class="ty">int</span> nbrs[MAX_V];
+            <span class="ty">int</span> cnt = <span class="fn">getNeighbors</span>(g, v, nbrs);
+
+            <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; cnt; i++) {
+                <span class="ty">int</span> nb = nbrs[i];
+                <span class="kw">if</span> (color[nb] == -<span class="nm">1</span>) {
+                    color[nb] = <span class="nm">1</span> - color[v]; <span class="cm">/* flip color: 0→1, 1→0 */</span>
+                    queue[rear++] = nb;
+                } <span class="kw">else if</span> (color[nb] == color[v]) {
+                    <span class="cm">/* Same color as current = NOT bipartite */</span>
+                    printf(<span class="st">"NOT bipartite: V%d and V%d "
+                           "same color and adjacent!\n"</span>, v, nb);
+                    <span class="kw">return</span> <span class="nm">0</span>;
+                }
+            }
+        }
+    }
+    printf(<span class="st">"Graph IS bipartite!\n"</span>);
+    printf(<span class="st">"Set A: vertices with color 0\n"</span>);
+    printf(<span class="st">"Set B: vertices with color 1\n"</span>);
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</pre>
+  </div>
+
+  <!-- FINAL SUMMARY -->
+  <div class="card" style="margin-top:32px;background:linear-gradient(135deg,rgba(0,229,255,.06),rgba(124,58,237,.06));border-color:rgba(0,229,255,.2)">
+    <h3 style="color:var(--accent)">🎓 Complete Reference: Time Complexities</h3>
+    <div class="matrix-wrap">
+      <table class="matrix-table">
+        <tr><th>Operation</th><th>Time</th><th>Space</th></tr>
+        <tr><td>Insert Vertex</td><td class="one">O(E)</td><td class="one">O(1) row</td></tr>
+        <tr><td>Delete Vertex</td><td class="one">O(V×E)</td><td class="zero">O(1)</td></tr>
+        <tr><td>Search Vertex</td><td class="one">O(V)</td><td class="zero">O(1)</td></tr>
+        <tr><td>Insert Edge</td><td class="one">O(V)</td><td class="one">O(1) col</td></tr>
+        <tr><td>Delete Edge</td><td class="one">O(V×E)</td><td class="zero">O(1)</td></tr>
+        <tr><td>Search Edge</td><td class="one">O(E)</td><td class="zero">O(1)</td></tr>
+        <tr><td>BFS / DFS</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+        <tr><td>Shortest Path</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+        <tr><td>All Paths</td><td class="one">O(V!)</td><td class="one">O(V)</td></tr>
+        <tr><td>Connected Check</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+        <tr><td>Components</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+        <tr><td>Detect Cycle</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+        <tr><td>Degree Analysis</td><td class="one">O(V×E)</td><td class="zero">O(1)</td></tr>
+        <tr><td>MST (Kruskal)</td><td class="one">O(E log E)</td><td class="one">O(V)</td></tr>
+        <tr><td>Graph Coloring</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+        <tr><td>Bipartite Check</td><td class="one">O(V×E)</td><td class="one">O(V)</td></tr>
+      </table>
+    </div>
+    <p style="margin-top:12px;font-size:.8rem;color:var(--muted)">Note: Complexities for incidence matrix are O(V×E) for neighbor lookup — costlier than adjacency list O(degree). Adjacency list is preferred for traversal-heavy algorithms.</p>
+  </div>
+</div>
+
+</main><!-- /main -->
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+// ── UTILITY ──────────────────────────────
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function goTo(id){
+  document.getElementById(id).scrollIntoView({behavior:'smooth'});
+  document.getElementById('sidebar').classList.remove('open');
+}
+function copyCode(btn){
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText);
+  btn.textContent='Copied!';
+  setTimeout(()=>btn.textContent='Copy',1800);
+}
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('progress');
+  const h=document.documentElement;
+  const pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+  p.style.width=pct+'%';
+});
+
+// ── COLORS ──
+const C={
+  accent:'#00e5ff',accent2:'#7c3aed',accent3:'#10b981',
+  accent4:'#f59e0b',danger:'#ef4444',
+  muted:'#64748b',text:'#e2e8f0',border:'#1e2438',bg:'#0d1117'
+};
+
+// ── DRAW HELPERS ──────────────────────────
+function drawVertex(ctx,x,y,label,fill='#00e5ff',textColor='#000'){
+  ctx.beginPath();ctx.arc(x,y,22,0,Math.PI*2);
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=C.border;ctx.lineWidth=2;ctx.stroke();
+  ctx.fillStyle=textColor;ctx.font='bold 11px JetBrains Mono';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,y);
+}
+function drawEdge(ctx,x1,y1,x2,y2,color='#1e2438',width=2,label=''){
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+  ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();
+  if(label){
+    const mx=(x1+x2)/2,my=(y1+y2)/2;
+    ctx.fillStyle=C.accent4;ctx.font='10px JetBrains Mono';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(label,mx,my-10);
+  }
+}
+function clearCanvas(canvas){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+// ── SECTION 0: INTRO CANVAS ──────────────
+(function(){
+  const c=document.getElementById('introCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  const verts=[{x:80,y:120,l:'A'},{x:200,y:50,l:'B'},{x:320,y:120,l:'C'},
+               {x:200,y:190,l:'D'},{x:440,y:80,l:'E'},{x:520,y:160,l:'F'}];
+  const edges=[[0,1],[1,2],[2,3],[3,0],[2,4],[4,5],[1,3]];
+  edges.forEach(([a,b])=>drawEdge(ctx,verts[a].x,verts[a].y,verts[b].x,verts[b].y,'#1e2438',2));
+  verts.forEach(v=>drawVertex(ctx,v.x,v.y,v.l,'#00e5ff','#000'));
+  ctx.fillStyle=C.muted;ctx.font='12px Sora';
+  ctx.textAlign='left';ctx.fillText('6 vertices, 7 edges — undirected',10,230);
+})();
+
+// ── SECTION 1: INCIDENCE MATRIX VIZ ─────
+(function(){
+  const mat=[[1,0,0,1],[1,1,0,0],[0,1,1,0],[0,0,1,1]];
+  const vLabels=['V0','V1','V2','V3'];
+  const eLabels=['e0','e1','e2','e3'];
+  let html=`<table class="matrix-table"><tr><th>V\\E</th>`;
+  eLabels.forEach(e=>html+=`<th>${e}</th>`);
+  html+=`</tr>`;
+  mat.forEach((row,i)=>{
+    html+=`<tr><td class="row-head">${vLabels[i]}</td>`;
+    row.forEach(v=>html+=`<td class="${v===1?'one':'zero'}">${v}</td>`);
+    html+=`</tr>`;
+  });
+  html+=`</table>`;
+  document.getElementById('incMatrixViz').innerHTML=html;
+})();
+
+// ── SECTION 2: INSERT VERTEX VIZ ─────────
+let ivGraph={verts:[],edges:[]};
+function renderInsVMatrix(){
+  const el=document.getElementById('insVMatrix');
+  if(!el)return;
+  if(ivGraph.verts.length===0){el.innerHTML='<p style="color:var(--muted);font-size:.8rem">No vertices yet.</p>';return;}
+  let html=`<table class="matrix-table"><tr><th>V\\E</th>`;
+  ivGraph.edges.forEach((_,i)=>html+=`<th>e${i}</th>`);
+  html+=`</tr>`;
+  ivGraph.verts.forEach((v,vi)=>{
+    html+=`<tr><td class="row-head">${v}</td>`;
+    ivGraph.edges.forEach((_,ei)=>{
+      const val=0;html+=`<td class="zero">${val}</td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</table>`;
+  el.innerHTML=html;
+}
+function insertVertexViz(){
+  const lbl=document.getElementById('insVLabel').value.trim()||`V${ivGraph.verts.length}`;
+  if(ivGraph.verts.length>=8){document.getElementById('insVOutput').textContent='Max 8 vertices for demo.';return;}
+  ivGraph.verts.push(lbl);
+  document.getElementById('insVOutput').textContent=`✅ Inserted vertex "${lbl}" at index ${ivGraph.verts.length-1}. New row added (all zeros — no edges yet).`;
+  document.getElementById('insVLabel').value='';
+  renderInsVMatrix();
+}
+function resetGraphViz(){ivGraph={verts:[],edges:[]};document.getElementById('insVOutput').textContent='Reset. Start inserting vertices.';renderInsVMatrix();}
+renderInsVMatrix();
+
+// ── SECTION 6: INSERT EDGE VIZ ───────────
+let eg={verts:['V0','V1','V2','V3','V4'],matrix:[],numEdges:0,edgePairs:[]};
+for(let i=0;i<5;i++){eg.matrix.push(new Array(15).fill(0));}
+function renderEdgeMatrix(){
+  const el=document.getElementById('edgeMatrix');
+  if(!el)return;
+  if(eg.numEdges===0){el.innerHTML='<p style="color:var(--muted);font-size:.8rem">No edges yet. Use controls above.</p>';drawEdgeGraph();return;}
+  let html=`<table class="matrix-table"><tr><th>V\\E</th>`;
+  for(let i=0;i<eg.numEdges;i++)html+=`<th>e${i}</th>`;
+  html+=`</tr>`;
+  eg.verts.forEach((v,vi)=>{
+    html+=`<tr><td class="row-head">${v}</td>`;
+    for(let ei=0;ei<eg.numEdges;ei++){html+=`<td class="${eg.matrix[vi][ei]===1?'one':'zero'}">${eg.matrix[vi][ei]}</td>`;}
+    html+=`</tr>`;
+  });
+  html+=`</table>`;
+  el.innerHTML=html;drawEdgeGraph();
+}
+function drawEdgeGraph(){
+  const c=document.getElementById('edgeCanvas');if(!c)return;
+  const ctx=c.getContext('2d');clearCanvas(c);
+  const pos=[{x:100,y:110},{x:220,y:40},{x:340,y:110},{x:280,y:200},{x:160,y:200}];
+  eg.edgePairs.forEach(([a,b])=>drawEdge(ctx,pos[a].x,pos[a].y,pos[b].x,pos[b].y,C.accent,2));
+  eg.verts.forEach((v,i)=>drawVertex(ctx,pos[i].x,pos[i].y,v,'#00e5ff','#000'));
+}
+function insertEdgeViz(){
+  const u=parseInt(document.getElementById('edgeFrom').value);
+  const v=parseInt(document.getElementById('edgeTo').value);
+  if(isNaN(u)||isNaN(v)||u>=5||v>=5||u<0||v<0){document.getElementById('edgeOutput').textContent='Invalid vertices (0-4 only).';return;}
+  if(eg.numEdges>=12){document.getElementById('edgeOutput').textContent='Max edges reached for demo.';return;}
+  const e=eg.numEdges;
+  eg.matrix[u][e]=1;eg.matrix[v][e]=1;
+  eg.edgePairs.push([u,v]);eg.numEdges++;
+  document.getElementById('edgeOutput').textContent=`✅ Edge e${e}: ${eg.verts[u]} -- ${eg.verts[v]} added. Column e${e} now has 1s at rows ${u} (${eg.verts[u]}) and ${v} (${eg.verts[v]}).`;
+  renderEdgeMatrix();
+}
+function resetEdgeViz(){
+  eg={verts:['V0','V1','V2','V3','V4'],matrix:[],numEdges:0,edgePairs:[]};
+  for(let i=0;i<5;i++){eg.matrix.push(new Array(15).fill(0));}
+  document.getElementById('edgeOutput').textContent='Reset.';
+  renderEdgeMatrix();
+}
+renderEdgeMatrix();
+
+// ── BFS / DFS SHARED GRAPH ───────────────
+const traversalGraph={
+  verts:['V0','V1','V2','V3','V4'],
+  edges:[[0,1],[0,2],[1,3],[2,3],[3,4],[1,4]],
+  pos:[{x:80,y:120},{x:200,y:50},{x:200,y:190},{x:330,y:120},{x:460,y:120}]
+};
+function getNeighbors(v){
+  const nbrs=[];
+  traversalGraph.edges.forEach(([a,b])=>{if(a===v)nbrs.push(b);else if(b===v)nbrs.push(a);});
+  return nbrs;
+}
+function drawTraversalGraph(canvas,visited,queue_set,colors){
+  const ctx=canvas.getContext('2d');clearCanvas(canvas);
+  const g=traversalGraph;
+  g.edges.forEach(([a,b])=>drawEdge(ctx,g.pos[a].x,g.pos[a].y,g.pos[b].x,g.pos[b].y,'#1e2438',2));
+  g.verts.forEach((v,i)=>{
+    let fill='#1e2438',tc='#94a3b8';
+    if(colors&&colors[i]){fill=colors[i];tc='#000';}
+    else if(visited&&visited[i]===2){fill=C.accent3;tc='#000';}
+    else if(visited&&visited[i]===1){fill=C.accent;tc='#000';}
+    drawVertex(ctx,g.pos[i].x,g.pos[i].y,v,fill,tc);
+  });
+}
+
+// ── BFS ──────────────────────────────────
+let bfsState={visited:null,order:[]};
+function resetBFSViz(){bfsState={visited:null,order:[]};drawTraversalGraph(document.getElementById('bfsCanvas'),null);document.getElementById('bfsOutput').textContent='Click "Run BFS" to see the traversal order.';}
+function runBFS(){
+  const start=parseInt(document.getElementById('bfsStart').value)||0;
+  const visited=new Array(5).fill(0);
+  const order=[];const queue=[start];visited[start]=1;
+  while(queue.length){
+    const v=queue.shift();order.push(v);visited[v]=2;
+    getNeighbors(v).forEach(nb=>{if(!visited[nb]){visited[nb]=1;queue.push(nb);}});
+  }
+  const canvas=document.getElementById('bfsCanvas');
+  let i=0;
+  const vis2=new Array(5).fill(0);
+  function step(){
+    if(i>=order.length){document.getElementById('bfsOutput').textContent='BFS Complete! Order: '+order.map(x=>'V'+x).join(' → ');return;}
+    vis2[order[i]]=2;
+    drawTraversalGraph(canvas,vis2);
+    document.getElementById('bfsOutput').textContent=`Visiting V${order[i]} (step ${i+1}/${order.length})\nOrder so far: `+order.slice(0,i+1).map(x=>'V'+x).join(' → ');
+    i++;setTimeout(step,700);
+  }
+  step();
+}
+
+// ── DFS ──────────────────────────────────
+function resetDFSViz(){drawTraversalGraph(document.getElementById('dfsCanvas'),null);document.getElementById('dfsOutput').textContent='Click "Run DFS" to see the traversal order.';}
+function runDFS(){
+  const start=parseInt(document.getElementById('dfsStart').value)||0;
+  const visited=new Array(5).fill(false);
+  const order=[];
+  function dfs(v){visited[v]=true;order.push(v);getNeighbors(v).forEach(nb=>{if(!visited[nb])dfs(nb);});}
+  dfs(start);
+  const canvas=document.getElementById('dfsCanvas');
+  let i=0;const vis2=new Array(5).fill(0);
+  function step(){
+    if(i>=order.length){document.getElementById('dfsOutput').textContent='DFS Complete! Order: '+order.map(x=>'V'+x).join(' → ');return;}
+    vis2[order[i]]=2;
+    drawTraversalGraph(canvas,vis2);
+    document.getElementById('dfsOutput').textContent=`Visiting V${order[i]} (step ${i+1}/${order.length})\nOrder so far: `+order.slice(0,i+1).map(x=>'V'+x).join(' → ');
+    i++;setTimeout(step,700);
+  }
+  step();
+}
+resetBFSViz();resetDFSViz();
+
+// ── DEGREE ANALYSIS ───────────────────────
+const degGraph={
+  verts:['V0','V1','V2','V3','V4'],
+  edges:[[0,1],[0,2],[1,3],[2,3],[3,4],[1,4],[0,3]],
+  pos:[{x:80,y:120},{x:210,y:50},{x:210,y:190},{x:340,y:120},{x:470,y:120}]
+};
+function showDegreeAnalysis(){
+  const canvas=document.getElementById('degreeCanvas');
+  const ctx=canvas.getContext('2d');clearCanvas(canvas);
+  const degrees=new Array(5).fill(0);
+  degGraph.edges.forEach(([a,b])=>{degrees[a]++;degrees[b]++;});
+  degGraph.edges.forEach(([a,b])=>drawEdge(ctx,degGraph.pos[a].x,degGraph.pos[a].y,degGraph.pos[b].x,degGraph.pos[b].y,'#1e2438',2));
+  const maxDeg=Math.max(...degrees);
+  degGraph.verts.forEach((v,i)=>{
+    const ratio=degrees[i]/maxDeg;
+    const r=Math.round(255*ratio),g2=Math.round(229*(1-ratio));
+    const fill=`rgb(${r},${g2},255)`;
+    drawVertex(ctx,degGraph.pos[i].x,degGraph.pos[i].y,v,fill,'#000');
+    ctx.fillStyle=C.accent4;ctx.font='bold 10px JetBrains Mono';
+    ctx.textAlign='center';ctx.fillText('deg='+degrees[i],degGraph.pos[i].x,degGraph.pos[i].y+36);
+  });
+  const total=degrees.reduce((a,b)=>a+b,0);
+  document.getElementById('degreeOutput').textContent=
+    `Degrees: ${degrees.map((d,i)=>'V'+i+'='+d).join(', ')}\nSum = ${total} = 2 × ${degGraph.edges.length} edges ✅\nMax degree: V${degrees.indexOf(maxDeg)} (deg=${maxDeg})`;
+}
+(function(){const c=document.getElementById('degreeCanvas');if(c){const ctx=c.getContext('2d');degGraph.edges.forEach(([a,b])=>drawEdge(ctx,degGraph.pos[a].x,degGraph.pos[a].y,degGraph.pos[b].x,degGraph.pos[b].y,'#1e2438',2));degGraph.verts.forEach((v,i)=>drawVertex(ctx,degGraph.pos[i].x,degGraph.pos[i].y,v,'#1e2438','#94a3b8'));}})();
+
+// ── MST ───────────────────────────────────
+const mstGraph={
+  verts:['V0','V1','V2','V3','V4'],
+  edges:[{u:0,v:1,w:4},{u:0,v:2,w:3},{u:1,v:2,w:1},{u:1,v:3,w:2},{u:2,v:3,w:4},{u:3,v:4,w:2},{u:2,v:4,w:5}],
+  pos:[{x:80,y:130},{x:210,y:50},{x:210,y:210},{x:360,y:130},{x:490,y:130}]
+};
+let mstSelected=[];
+function drawMSTGraph(selected){
+  const c=document.getElementById('mstCanvas');if(!c)return;
+  const ctx=c.getContext('2d');clearCanvas(c);
+  mstGraph.edges.forEach((e,i)=>{
+    const isSel=selected&&selected.includes(i);
+    drawEdge(ctx,mstGraph.pos[e.u].x,mstGraph.pos[e.u].y,mstGraph.pos[e.v].x,mstGraph.pos[e.v].y,isSel?C.accent3:'#1e2438',isSel?3:2,'w='+e.w);
+  });
+  mstGraph.verts.forEach((v,i)=>drawVertex(ctx,mstGraph.pos[i].x,mstGraph.pos[i].y,v,'#00e5ff','#000'));
+}
+function resetMST(){mstSelected=[];drawMSTGraph([]);document.getElementById('mstOutput').textContent='Click "Run Kruskal\'s MST" to compute the minimum spanning tree.';}
+function runMST(){
+  const sorted=[...mstGraph.edges.map((e,i)=>({...e,i}))].sort((a,b)=>a.w-b.w);
+  const parent=mstGraph.verts.map((_,i)=>i);
+  const rank=new Array(5).fill(0);
+  function find(v){if(parent[v]!==v)parent[v]=find(parent[v]);return parent[v];}
+  function union(a,b){const ra=find(a),rb=find(b);if(ra===rb)return false;if(rank[ra]<rank[rb])parent[ra]=rb;else if(rank[ra]>rank[rb])parent[rb]=ra;else{parent[rb]=ra;rank[ra]++;}return true;}
+  const mstEdges=[];let totalW=0;
+  for(const e of sorted){if(union(e.u,e.v)){mstEdges.push(e.i);totalW+=e.w;}}
+  let step=0;
+  function animStep(){
+    if(step>mstEdges.length){return;}
+    drawMSTGraph(mstEdges.slice(0,step));
+    const info=mstEdges.slice(0,step).map(i=>{const e=mstGraph.edges[i];return `V${e.u}--V${e.v}(w=${e.w})`;}).join(', ');
+    document.getElementById('mstOutput').textContent=step<mstEdges.length
+      ?`Step ${step+1}: Added edge V${mstGraph.edges[mstEdges[step-1]]?.u??''} -- V${mstGraph.edges[mstEdges[step-1]]?.v??''}\nMST so far: ${info}`
+      :`✅ MST complete!\nEdges: ${info}\nTotal weight: ${totalW}`;
+    step++;if(step<=mstEdges.length)setTimeout(animStep,800);
+  }
+  step=1;animStep();
+}
+resetMST();
+
+// ── GRAPH COLORING ────────────────────────
+const colorPalette=['#00e5ff','#f59e0b','#10b981','#ef4444','#7c3aed','#f97316'];
+const colorGraph={
+  verts:['V0','V1','V2','V3','V4'],
+  edges:[[0,1],[0,2],[1,2],[1,3],[2,4],[3,4]],
+  pos:[{x:90,y:120},{x:220,y:50},{x:220,y:190},{x:360,y:50},{x:360,y:190}]
+};
+function drawColorGraph(colors){
+  const c=document.getElementById('colorCanvas');if(!c)return;
+  const ctx=c.getContext('2d');clearCanvas(c);
+  colorGraph.edges.forEach(([a,b])=>drawEdge(ctx,colorGraph.pos[a].x,colorGraph.pos[a].y,colorGraph.pos[b].x,colorGraph.pos[b].y,'#1e2438',2));
+  colorGraph.verts.forEach((v,i)=>{
+    const fill=colors?colorPalette[colors[i]]||'#1e2438':'#1e2438';
+    drawVertex(ctx,colorGraph.pos[i].x,colorGraph.pos[i].y,v,fill,fill==='#1e2438'?'#94a3b8':'#000');
+  });
+}
+function resetColoring(){drawColorGraph(null);document.getElementById('colorOutput').textContent='Click "Color Graph" to apply greedy coloring.';}
+function runColoring(){
+  const n=5;const color=new Array(n).fill(-1);color[0]=0;
+  for(let v=1;v<n;v++){
+    const used=new Set();
+    colorGraph.edges.forEach(([a,b])=>{if(a===v&&color[b]>=0)used.add(color[b]);if(b===v&&color[a]>=0)used.add(color[a]);});
+    let c=0;while(used.has(c))c++;color[v]=c;
+  }
+  let step=0;
+  const show=new Array(n).fill(-1);
+  function step2(){
+    if(step>=n){document.getElementById('colorOutput').textContent=`✅ Coloring complete!\n${color.map((c,i)=>`V${i} → color${c} (${colorPalette[c]})`).join('\n')}\nChromatic number = ${Math.max(...color)+1}`;return;}
+    show[step]=color[step];
+    drawColorGraph([...show]);
+    document.getElementById('colorOutput').textContent=`Coloring V${step} → Color ${color[step]}`;
+    step++;setTimeout(step2,600);
+  }
+  step2();
+}
+resetColoring();
+
+// ── BIPARTITE ─────────────────────────────
+const biGraph={
+  verts:['V0','V1','V2','V3','V4','V5'],
+  edges:[[0,3],[0,4],[1,3],[1,5],[2,4],[2,5]],
+  pos:[{x:90,y:80},{x:90,y:160},{x:90,y:240},{x:450,y:80},{x:450,y:160},{x:450,y:240}]
+};
+function drawBiGraph(colors){
+  const c=document.getElementById('bipartiteCanvas');if(!c)return;
+  const ctx=c.getContext('2d');clearCanvas(c);
+  ctx.fillStyle='rgba(0,229,255,.04)';ctx.fillRect(50,30,120,240);
+  ctx.fillStyle='rgba(124,58,237,.04)';ctx.fillRect(390,30,120,240);
+  ctx.fillStyle=C.muted;ctx.font='11px Sora';ctx.textAlign='center';
+  ctx.fillText('Set A',110,20);ctx.fillText('Set B',450,20);
+  biGraph.edges.forEach(([a,b])=>drawEdge(ctx,biGraph.pos[a].x,biGraph.pos[a].y,biGraph.pos[b].x,biGraph.pos[b].y,'#1e2438',2));
+  biGraph.verts.forEach((v,i)=>{
+    const fill=colors?[C.accent,C.accent2][colors[i]]:'#1e2438';
+    drawVertex(ctx,biGraph.pos[i].x,biGraph.pos[i].y,v,fill,fill==='#1e2438'?'#94a3b8':'#fff');
+  });
+}
+function resetBipartite(){drawBiGraph(null);document.getElementById('bipartiteOutput').textContent='Click "Check Bipartite" to test if the graph is bipartite.';}
+function runBipartite(){
+  const n=6;const color=new Array(n).fill(-1);
+  const queue=[0];color[0]=0;let isBi=true;
+  while(queue.length&&isBi){
+    const v=queue.shift();
+    biGraph.edges.forEach(([a,b])=>{
+      const nb=a===v?b:b===v?a:-1;
+      if(nb<0)return;
+      if(color[nb]===-1){color[nb]=1-color[v];queue.push(nb);}
+      else if(color[nb]===color[v])isBi=false;
+    });
+  }
+  drawBiGraph(color);
+  const setA=color.map((c,i)=>c===0?`V${i}`:'').filter(Boolean);
+  const setB=color.map((c,i)=>c===1?`V${i}`:'').filter(Boolean);
+  document.getElementById('bipartiteOutput').textContent=isBi
+    ?`✅ Graph IS Bipartite!\nSet A (cyan): ${setA.join(', ')}\nSet B (purple): ${setB.join(', ')}\nAll edges go between Set A and Set B.`
+    :`❌ Graph is NOT Bipartite!\nAn odd-length cycle was found.`;
+}
+resetBipartite();
+
+// ── NAV ACTIVE HIGHLIGHT ─────────────────
+const sections=document.querySelectorAll('.section');
+const navItems=document.querySelectorAll('.nav-item');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(s.getBoundingClientRect().top<200)cur=s.id;});
+  navItems.forEach(n=>{
+    n.classList.remove('active');
+    if(n.getAttribute('onclick')&&n.getAttribute('onclick').includes(cur))n.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Array-Based Doubly Linked List — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1e2b;--bg4:#212638;
+  --border:#2a2f45;--border2:#3a4060;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --blue:#4f8ef7;--blue2:#6ba3ff;--blue3:#1e3a6e;
+  --cyan:#22d3ee;--cyan2:#67e8f9;--cyan3:#083344;
+  --green:#22c55e;--green2:#4ade80;--green3:#052e16;
+  --amber:#f59e0b;--amber2:#fbbf24;--amber3:#3f2400;
+  --red:#ef4444;--red2:#f87171;--red3:#3b0000;
+  --purple:#a78bfa;--purple2:#c4b5fd;--purple3:#2e1065;
+  --pink:#f472b6;--pink2:#f9a8d4;
+  --r:8px;--r2:12px;--r3:16px;
+  --font:'Space Grotesk',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --sidebar:280px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ─── LAYOUT ─── */
+#app{display:flex;min-height:100vh;}
+
+/* ─── SIDEBAR ─── */
+#sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  position:fixed;top:0;left:0;height:100vh;
+  overflow-y:auto;z-index:100;
+  display:flex;flex-direction:column;
+}
+#sidebar-header{
+  padding:20px 20px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);
+  position:sticky;top:0;z-index:1;
+}
+#sidebar-header h1{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;}
+#sidebar-header p{font-size:11px;color:var(--text3);margin-top:3px;}
+.nav-group{padding:8px 0;}
+.nav-group-title{
+  font-size:10px;font-weight:600;color:var(--text3);
+  letter-spacing:.12em;text-transform:uppercase;
+  padding:8px 20px 4px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 20px;font-size:13px;color:var(--text2);
+  cursor:pointer;transition:.15s;
+  border-left:2px solid transparent;
+}
+.nav-item:hover{color:var(--text);background:var(--bg3);}
+.nav-item.active{color:var(--cyan);background:var(--cyan3);border-left-color:var(--cyan);}
+.nav-item .nav-num{
+  font-size:10px;color:var(--text3);
+  background:var(--bg4);padding:1px 5px;
+  border-radius:3px;font-family:var(--mono);min-width:22px;text-align:center;
+}
+
+/* ─── MAIN ─── */
+#main{margin-left:var(--sidebar);flex:1;padding:0;}
+.page-header{
+  background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);
+  border-bottom:1px solid var(--border);
+  padding:40px 48px 32px;
+}
+.page-header h2{font-size:28px;font-weight:700;color:var(--text);}
+.page-header p{color:var(--text2);margin-top:8px;font-size:15px;max-width:640px;}
+.badge{
+  display:inline-block;font-size:11px;font-weight:600;
+  padding:3px 10px;border-radius:20px;letter-spacing:.05em;margin-top:12px;
+}
+.badge-cyan{background:var(--cyan3);color:var(--cyan);}
+.badge-blue{background:var(--blue3);color:var(--blue2);}
+.badge-green{background:var(--green3);color:var(--green2);}
+.badge-amber{background:var(--amber3);color:var(--amber2);}
+.badge-red{background:var(--red3);color:var(--red2);}
+.badge-purple{background:var(--purple3);color:var(--purple2);}
+
+/* ─── SECTIONS ─── */
+.section{padding:40px 48px;border-bottom:1px solid var(--border);}
+.section:last-child{border-bottom:none;}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.section-num{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--bg4);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:var(--cyan);font-family:var(--mono);
+  flex-shrink:0;
+}
+.section h3{font-size:20px;font-weight:600;color:var(--text);}
+.section h4{font-size:15px;font-weight:600;color:var(--text);margin:24px 0 10px;}
+.section p{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:12px;}
+
+/* ─── CARDS ─── */
+.card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r2);padding:20px;margin-bottom:16px;
+}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:900px){.card-grid{grid-template-columns:1fr;}}
+
+/* ─── CODE ─── */
+.code-block{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin:16px 0;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px;background:var(--bg4);border-bottom:1px solid var(--border);
+}
+.code-label{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.code-lang{font-size:10px;background:var(--blue3);color:var(--blue2);padding:2px 8px;border-radius:3px;font-weight:600;}
+pre{padding:20px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7;}
+.kw{color:var(--blue2);}
+.ty{color:var(--cyan);}
+.cm{color:var(--text3);font-style:italic;}
+.st{color:var(--green2);}
+.nm{color:var(--amber2);}
+.fn{color:var(--purple2);}
+.op{color:var(--pink2);}
+.num{color:var(--amber);}
+
+/* ─── VIZ ─── */
+.viz-container{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--r2);padding:20px;margin:16px 0;
+  overflow:hidden;
+}
+.viz-title{font-size:12px;color:var(--text3);margin-bottom:16px;font-family:var(--mono);}
+canvas{display:block;}
+.viz-controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn{
+  padding:7px 14px;border-radius:var(--r);border:1px solid var(--border2);
+  background:var(--bg3);color:var(--text);font-size:13px;
+  cursor:pointer;font-family:var(--font);transition:.15s;font-weight:500;
+}
+.btn:hover{background:var(--bg4);border-color:var(--cyan);color:var(--cyan);}
+.btn-cyan{background:var(--cyan3);border-color:var(--cyan);color:var(--cyan);}
+.btn-cyan:hover{background:var(--cyan);color:var(--bg);}
+.btn-red{background:var(--red3);border-color:var(--red);color:var(--red2);}
+.btn-red:hover{background:var(--red);color:#fff;}
+.btn-green{background:var(--green3);border-color:var(--green);color:var(--green2);}
+.btn-green:hover{background:var(--green);color:#fff;}
+.btn-amber{background:var(--amber3);border-color:var(--amber);color:var(--amber2);}
+.btn-amber:hover{background:var(--amber);color:#000;}
+input[type=text],input[type=number]{
+  padding:7px 12px;background:var(--bg4);border:1px solid var(--border2);
+  border-radius:var(--r);color:var(--text);font-size:13px;
+  font-family:var(--font);outline:none;width:80px;
+}
+input[type=text]:focus,input[type=number]:focus{border-color:var(--cyan);}
+
+/* ─── ANALOGY ─── */
+.analogy{
+  background:linear-gradient(135deg,var(--amber3),var(--bg3));
+  border:1px solid var(--amber);border-radius:var(--r2);padding:16px 20px;margin-top:16px;
+}
+.analogy-title{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.analogy p{color:var(--text2);font-size:13px;margin:0;}
+
+/* ─── TABLE ─── */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;}
+th{text-align:left;padding:8px 12px;background:var(--bg4);color:var(--text3);font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
+td{padding:8px 12px;border-top:1px solid var(--border);color:var(--text2);}
+td code{font-family:var(--mono);font-size:11px;color:var(--cyan);background:var(--bg4);padding:1px 6px;border-radius:3px;}
+
+/* ─── STATUS ─── */
+.status-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;background:var(--bg4);border-radius:var(--r);
+  font-size:12px;color:var(--text2);font-family:var(--mono);margin-top:8px;
+}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+.info-box{
+  background:var(--bg3);border-left:3px solid var(--blue);
+  border-radius:0 var(--r) var(--r) 0;padding:12px 16px;margin:12px 0;
+  font-size:13px;color:var(--text2);line-height:1.6;
+}
+.warn-box{
+  background:var(--bg3);border-left:3px solid var(--amber);
+  border-radius:0 var(--r) var(--r) 0;padding:12px 16px;margin:12px 0;
+  font-size:13px;color:var(--text2);
+}
+
+/* ─── HIGHLIGHT ─── */
+.op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:12px 0;}
+.op-card{
+  background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 14px;
+}
+.op-card h5{font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:4px;}
+.op-card p{font-size:11px;color:var(--text3);margin:0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ─── SIDEBAR ─── -->
+<nav id="sidebar">
+  <div id="sidebar-header">
+    <h1>Array Doubly Linked List</h1>
+    <p>Beginner → Advanced · C Language</p>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Foundation</div>
+    <div class="nav-item active" onclick="scrollTo('s1')"><span class="nav-num">01</span>Basic Operations</div>
+    <div class="nav-item" onclick="scrollTo('s2')"><span class="nav-num">02</span>Insertion</div>
+    <div class="nav-item" onclick="scrollTo('s3')"><span class="nav-num">03</span>Deletion</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Navigation</div>
+    <div class="nav-item" onclick="scrollTo('s4')"><span class="nav-num">04</span>Traversal</div>
+    <div class="nav-item" onclick="scrollTo('s5')"><span class="nav-num">05</span>Searching</div>
+    <div class="nav-item" onclick="scrollTo('s6')"><span class="nav-num">06</span>Update</div>
+    <div class="nav-item" onclick="scrollTo('s7')"><span class="nav-num">07</span>Access</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Structure</div>
+    <div class="nav-item" onclick="scrollTo('s8')"><span class="nav-num">08</span>Count Elements</div>
+    <div class="nav-item" onclick="scrollTo('s9')"><span class="nav-num">09</span>Link Management</div>
+    <div class="nav-item" onclick="scrollTo('s10')"><span class="nav-num">10</span>Utility Ops</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Advanced</div>
+    <div class="nav-item" onclick="scrollTo('s11')"><span class="nav-num">11</span>Sorting</div>
+    <div class="nav-item" onclick="scrollTo('s12')"><span class="nav-num">12</span>Merge &amp; Split</div>
+    <div class="nav-item" onclick="scrollTo('s13')"><span class="nav-num">13</span>Recursive Ops</div>
+    <div class="nav-item" onclick="scrollTo('s14')"><span class="nav-num">14</span>Iterative Ops</div>
+  </div>
+</nav>
+
+<!-- ─── MAIN ─── -->
+<main id="main">
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <h2>Array-Based Doubly Linked List</h2>
+  <p>A complete visual learning guide covering every operation — from creating your first list to advanced sorting, merging, and recursive algorithms. Every concept explained with theory, interactive visualization, and working C code.</p>
+  <span class="badge badge-cyan">C Language</span>
+  <span class="badge badge-blue">14 Categories</span>
+  <span class="badge badge-green">Interactive Visualizations</span>
+</div>
+
+<!-- ══════════════════════════════════
+     SECTION 1 — BASIC OPERATIONS
+══════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <h3>Basic Operations</h3>
+    <span class="badge badge-cyan">Foundation</span>
+  </div>
+
+  <p>An <strong>array-based doubly linked list</strong> stores node data inside a fixed-size array. Each element holds a <em>data value</em>, an index pointing to the <em>next</em> node, and an index pointing to the <em>previous</em> node — instead of memory pointers, we use array indices. The special value <code>-1</code> means "no link" (like NULL in pointer-based lists).</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--cyan)">What is a Doubly Linked List?</h4>
+      <p>A linked list where each node connects to <em>both</em> its neighbor in front and behind. This lets us travel in both directions — forward and backward — unlike singly linked lists.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--blue2)">Why Array-Based?</h4>
+      <p>Instead of dynamic memory allocation (malloc/free), nodes live in a fixed array. The array indices act as "pointers". This avoids memory fragmentation and is cache-friendly.</p>
+    </div>
+  </div>
+
+  <h4>Node Structure (The Building Block)</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">node_structure.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* Maximum number of nodes our list can hold */</span>
+<span class="kw">#define</span> <span class="nm">MAX</span> <span class="num">10</span>
+
+<span class="cm">/* Each node has 3 fields: data, next-index, prev-index */</span>
+<span class="kw">struct</span> <span class="ty">Node</span> {
+    <span class="ty">int</span> data;   <span class="cm">/* The value stored in this node        */</span>
+    <span class="ty">int</span> next;   <span class="cm">/* Index of next node (-1 = no next)   */</span>
+    <span class="ty">int</span> prev;   <span class="cm">/* Index of prev node (-1 = no prev)   */</span>
+};
+
+<span class="cm">/* The whole list lives in a single array! */</span>
+<span class="kw">struct</span> <span class="ty">Node</span> list[<span class="nm">MAX</span>];
+<span class="ty">int</span> head = <span class="op">-</span><span class="num">1</span>;  <span class="cm">/* Index of first node (-1 = empty)    */</span>
+<span class="ty">int</span> size =  <span class="num">0</span>;  <span class="cm">/* How many nodes are currently used   */</span></pre>
+  </div>
+
+  <!-- Viz: Structure diagram -->
+  <div class="viz-container">
+    <div class="viz-title">▸ STRUCTURE VISUALIZATION — Array layout with links</div>
+    <canvas id="cv-struct" width="700" height="160"></canvas>
+  </div>
+
+  <h4>1.1 Create List — Allocate the array</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">create_list.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* createList() — Sets up the list for first use */</span>
+<span class="kw">void</span> <span class="fn">createList</span>() {
+    head = <span class="op">-</span><span class="num">1</span>;   <span class="cm">/* No nodes yet; head points to nothing */</span>
+    size =  <span class="num">0</span>;   <span class="cm">/* List starts empty                     */</span>
+    <span class="cm">/* Note: the array memory already exists globally  */</span>
+    <span class="cm">/* We just mark everything as unused               */</span>
+    <span class="fn">printf</span>(<span class="st">"List created successfully!\n"</span>);
+}</pre>
+  </div>
+
+  <h4>1.2 Initialize List — Mark all slots as free</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">init_list.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* initList() — Resets every slot so none looks "in use" */</span>
+<span class="kw">void</span> <span class="fn">initList</span>() {
+    <span class="ty">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; <span class="nm">MAX</span>; i++) {
+        list[i].data = <span class="num">0</span>;
+        list[i].next = <span class="op">-</span><span class="num">1</span>;  <span class="cm">/* -1 means "no link" */</span>
+        list[i].prev = <span class="op">-</span><span class="num">1</span>;
+    }
+    head = <span class="op">-</span><span class="num">1</span>;
+    size = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="st">"List initialized.\n"</span>);
+}</pre>
+  </div>
+
+  <h4>1.3 Check Empty &amp; 1.4 Check Full</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">check_ops.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* isEmpty() — Returns 1 if list has no nodes */</span>
+<span class="ty">int</span> <span class="fn">isEmpty</span>() {
+    <span class="kw">return</span> (head == <span class="op">-</span><span class="num">1</span>);   <span class="cm">/* head=-1 means no first node */</span>
+}
+
+<span class="cm">/* isFull() — Returns 1 if array is completely used */</span>
+<span class="ty">int</span> <span class="fn">isFull</span>() {
+    <span class="kw">return</span> (size == <span class="nm">MAX</span>);  <span class="cm">/* size=MAX means no free slots */</span>
+}
+
+<span class="cm">/* How to use them: */</span>
+<span class="kw">void</span> <span class="fn">demo</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>())  <span class="fn">printf</span>(<span class="st">"List is empty!\n"</span>);
+    <span class="kw">if</span> (<span class="fn">isFull</span>())   <span class="fn">printf</span>(<span class="st">"List is full! Cannot insert.\n"</span>);
+}</pre>
+  </div>
+
+  <!-- Interactive demo -->
+  <div class="viz-container">
+    <div class="viz-title">▸ INTERACTIVE — Create, Initialize, and Check your list</div>
+    <canvas id="cv-basic" width="700" height="120"></canvas>
+    <div class="viz-controls">
+      <button class="btn btn-cyan" onclick="basicCreate()">Create List</button>
+      <button class="btn" onclick="basicInit()">Initialize</button>
+      <button class="btn" onclick="basicCheckEmpty()">Check Empty</button>
+      <button class="btn" onclick="basicCheckFull()">Check Full</button>
+    </div>
+    <div class="status-bar"><div class="status-dot" id="dot-basic"></div><span id="msg-basic">Click "Create List" to begin</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🚂 Real-Life Analogy — Train with Assigned Seats</div>
+    <p>Think of a train where seats are numbered 0–9. Each seat (array slot) can hold one passenger (data). Every passenger knows the seat number of the person in front of them (next) and behind them (prev). If there's no one in front, they say "seat −1" meaning "nobody". The conductor (head) knows which seat has the first passenger.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 2 — INSERTION
+══════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <h3>Insertion Operations</h3>
+    <span class="badge badge-blue">4 Methods</span>
+  </div>
+
+  <p>Insertion adds a new node into the list. In an array-based DLL, we must find an unused array slot, put the data there, then update the <code>next</code> and <code>prev</code> links of the neighboring nodes.</p>
+
+  <div class="info-box">💡 <strong>Golden Rule:</strong> Before inserting, always check if the list is full using <code>isFull()</code>. If size == MAX, no more nodes can be added.</div>
+
+  <h4>2.1 Insert at Front</h4>
+  <p>The new node becomes the new head. Its <code>next</code> points to the old head. The old head's <code>prev</code> now points back to the new node.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">insert_front.c</span><span class="code-lang">C</span></div>
+    <pre><span class="kw">void</span> <span class="fn">insertFront</span>(<span class="ty">int</span> value) {
+    <span class="kw">if</span> (<span class="fn">isFull</span>()) { <span class="fn">printf</span>(<span class="st">"List is full!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="ty">int</span> slot = size;           <span class="cm">/* Use next available slot */</span>
+    list[slot].data = value;
+
+    <span class="kw">if</span> (head == <span class="op">-</span><span class="num">1</span>) {         <span class="cm">/* List was empty */</span>
+        list[slot].next = <span class="op">-</span><span class="num">1</span>;
+        list[slot].prev = <span class="op">-</span><span class="num">1</span>;
+        head = slot;
+    } <span class="kw">else</span> {                  <span class="cm">/* List had nodes */</span>
+        list[slot].next = head; <span class="cm">/* New → old head */</span>
+        list[slot].prev = <span class="op">-</span><span class="num">1</span>; <span class="cm">/* New has no prev */</span>
+        list[head].prev = slot; <span class="cm">/* Old head ← New */</span>
+        head = slot;            <span class="cm">/* New is now head */</span>
+    }
+    size++;
+    <span class="fn">printf</span>(<span class="st">"Inserted %d at front.\n"</span>, value);
+}</pre>
+  </div>
+
+  <h4>2.2 Insert at Rear</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">insert_rear.c</span><span class="code-lang">C</span></div>
+    <pre><span class="kw">void</span> <span class="fn">insertRear</span>(<span class="ty">int</span> value) {
+    <span class="kw">if</span> (<span class="fn">isFull</span>()) { <span class="fn">printf</span>(<span class="st">"List is full!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="ty">int</span> slot = size;
+    list[slot].data = value;
+    list[slot].next = <span class="op">-</span><span class="num">1</span>;  <span class="cm">/* Rear has no next */</span>
+
+    <span class="kw">if</span> (head == <span class="op">-</span><span class="num">1</span>) {      <span class="cm">/* Empty list */</span>
+        list[slot].prev = <span class="op">-</span><span class="num">1</span>;
+        head = slot;
+    } <span class="kw">else</span> {
+        <span class="cm">/* Walk to the last node */</span>
+        <span class="ty">int</span> cur = head;
+        <span class="kw">while</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>)
+            cur = list[cur].next;
+
+        list[cur].next  = slot; <span class="cm">/* Last → New      */</span>
+        list[slot].prev = cur;  <span class="cm">/* New ← Last      */</span>
+    }
+    size++;
+    <span class="fn">printf</span>(<span class="st">"Inserted %d at rear.\n"</span>, value);
+}</pre>
+  </div>
+
+  <h4>2.3 Insert Before Position &amp; 2.4 Insert After Position</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">insert_position.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* Insert AFTER the node at given position (0-based) */</span>
+<span class="kw">void</span> <span class="fn">insertAfter</span>(<span class="ty">int</span> pos, <span class="ty">int</span> value) {
+    <span class="kw">if</span> (<span class="fn">isFull</span>()) { <span class="fn">printf</span>(<span class="st">"Full!\n"</span>); <span class="kw">return</span>; }
+    <span class="kw">if</span> (pos &lt; <span class="num">0</span> || pos &gt;= size) { <span class="fn">printf</span>(<span class="st">"Bad position!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cm">/* Step 1: Navigate to the target position */</span>
+    <span class="ty">int</span> cur = head, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos; i++) cur = list[cur].next;
+
+    <span class="cm">/* Step 2: Put new node in a free slot */</span>
+    <span class="ty">int</span> slot = size;
+    list[slot].data = value;
+
+    <span class="cm">/* Step 3: Link new node between cur and cur's next */</span>
+    list[slot].next = list[cur].next;
+    list[slot].prev = cur;
+
+    <span class="kw">if</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>)
+        list[list[cur].next].prev = slot; <span class="cm">/* next ← new */</span>
+
+    list[cur].next = slot;  <span class="cm">/* cur → new */</span>
+    size++;
+}
+
+<span class="cm">/* Insert BEFORE: navigate to pos, then insertAfter(pos-1) */</span>
+<span class="kw">void</span> <span class="fn">insertBefore</span>(<span class="ty">int</span> pos, <span class="ty">int</span> value) {
+    <span class="kw">if</span> (pos == <span class="num">0</span>) { <span class="fn">insertFront</span>(value); <span class="kw">return</span>; }
+    <span class="fn">insertAfter</span>(pos <span class="op">-</span> <span class="num">1</span>, value);
+}</pre>
+  </div>
+
+  <!-- Interactive Insertion Viz -->
+  <div class="viz-container">
+    <div class="viz-title">▸ INTERACTIVE — Insert nodes and see links update in real time</div>
+    <canvas id="cv-insert" width="700" height="140"></canvas>
+    <div class="viz-controls">
+      <input type="number" id="ins-val" placeholder="Value" value="42" min="1" max="99"/>
+      <button class="btn btn-cyan" onclick="vizInsertFront()">Insert Front</button>
+      <button class="btn btn-blue" onclick="vizInsertRear()">Insert Rear</button>
+      <button class="btn btn-red" onclick="vizReset('insert')">Reset</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-insert">Enter a value and click Insert Front or Rear</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">📚 Real-Life Analogy — Adding Books to a Shelf</div>
+    <p>Imagine a numbered shelf (array). Adding a book at the front means sliding everything's "next shelf" sign forward, then placing the new book and tagging it with the old front's number. Rear insertion just finds the last book and puts a new one right after it. Position-based insertion is like inserting a bookmark between specific pages.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 3 — DELETION
+══════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <h3>Deletion Operations</h3>
+    <span class="badge badge-red">4 Methods</span>
+  </div>
+
+  <p>Deletion removes a node from the list and re-connects the neighboring nodes so the list stays intact. In array-based DLL, we don't free memory — instead we "shift" the remaining nodes to keep the array compact (or mark slots as free).</p>
+
+  <div class="warn-box">⚠️ <strong>Always check:</strong> call <code>isEmpty()</code> before any deletion. Deleting from an empty list causes logical errors.</div>
+
+  <h4>3.1 Delete Front Element</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">delete_front.c</span><span class="code-lang">C</span></div>
+    <pre><span class="kw">void</span> <span class="fn">deleteFront</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"List is empty!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="ty">int</span> deleted_val = list[head].data;
+    <span class="ty">int</span> new_head    = list[head].next;
+
+    <span class="kw">if</span> (new_head != <span class="op">-</span><span class="num">1</span>)
+        list[new_head].prev = <span class="op">-</span><span class="num">1</span>; <span class="cm">/* New head has no prev */</span>
+
+    <span class="cm">/* Shift array: move each node one index back */</span>
+    <span class="ty">int</span> i, j;
+    <span class="kw">for</span> (i = head; i &lt; size <span class="op">-</span> <span class="num">1</span>; i++) {
+        list[i] = list[i <span class="op">+</span> <span class="num">1</span>];
+        <span class="cm">/* Fix references that pointed to i+1 */</span>
+        <span class="kw">if</span> (list[i].next != <span class="op">-</span><span class="num">1</span>) list[list[i].next].prev = i;
+        <span class="kw">if</span> (list[i].prev != <span class="op">-</span><span class="num">1</span>) list[list[i].prev].next = i;
+    }
+    head = (size > <span class="num">1</span>) ? <span class="num">0</span> : <span class="op">-</span><span class="num">1</span>;
+    size--;
+    <span class="fn">printf</span>(<span class="st">"Deleted %d from front.\n"</span>, deleted_val);
+}</pre>
+  </div>
+
+  <h4>3.2 Delete Rear Element</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">delete_rear.c</span><span class="code-lang">C</span></div>
+    <pre><span class="kw">void</span> <span class="fn">deleteRear</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"List is empty!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cm">/* Walk to the last node */</span>
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>)
+        cur = list[cur].next;
+
+    <span class="ty">int</span> prev_idx = list[cur].prev;
+    <span class="kw">if</span> (prev_idx != <span class="op">-</span><span class="num">1</span>)
+        list[prev_idx].next = <span class="op">-</span><span class="num">1</span>; <span class="cm">/* Second-to-last now ends the list */</span>
+    <span class="kw">else</span>
+        head = <span class="op">-</span><span class="num">1</span>;                  <span class="cm">/* List had only one node */</span>
+
+    size--;
+    <span class="fn">printf</span>(<span class="st">"Deleted rear node.\n"</span>);
+}</pre>
+  </div>
+
+  <h4>3.3 Delete by Value &amp; 3.4 Delete Specific Position</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">delete_value_pos.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* Delete first node that has matching value */</span>
+<span class="kw">void</span> <span class="fn">deleteByValue</span>(<span class="ty">int</span> value) {
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">if</span> (list[cur].data == value) {
+            <span class="cm">/* Unlink this node */</span>
+            <span class="kw">if</span> (list[cur].prev != <span class="op">-</span><span class="num">1</span>)
+                list[list[cur].prev].next = list[cur].next;
+            <span class="kw">else</span>
+                head = list[cur].next; <span class="cm">/* Was the head */</span>
+
+            <span class="kw">if</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>)
+                list[list[cur].next].prev = list[cur].prev;
+
+            size--;
+            <span class="fn">printf</span>(<span class="st">"Deleted node with value %d.\n"</span>, value);
+            <span class="kw">return</span>;
+        }
+        cur = list[cur].next;
+    }
+    <span class="fn">printf</span>(<span class="st">"Value %d not found!\n"</span>, value);
+}
+
+<span class="cm">/* Delete node at specific position (0-based) */</span>
+<span class="kw">void</span> <span class="fn">deletePosition</span>(<span class="ty">int</span> pos) {
+    <span class="kw">if</span> (pos == <span class="num">0</span>) { <span class="fn">deleteFront</span>(); <span class="kw">return</span>; }
+    <span class="ty">int</span> cur = head, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos &amp;&amp; cur != <span class="op">-</span><span class="num">1</span>; i++) cur = list[cur].next;
+    <span class="kw">if</span> (cur == <span class="op">-</span><span class="num">1</span>) { <span class="fn">printf</span>(<span class="st">"Position out of range!\n"</span>); <span class="kw">return</span>; }
+    <span class="fn">deleteByValue</span>(list[cur].data); <span class="cm">/* Reuse deleteByValue */</span>
+}</pre>
+  </div>
+
+  <!-- Deletion viz -->
+  <div class="viz-container">
+    <div class="viz-title">▸ INTERACTIVE — Delete nodes from the list</div>
+    <canvas id="cv-delete" width="700" height="140"></canvas>
+    <div class="viz-controls">
+      <button class="btn btn-red" onclick="vizDeleteFront()">Delete Front</button>
+      <button class="btn btn-amber" onclick="vizDeleteRear()">Delete Rear</button>
+      <input type="number" id="del-val" placeholder="Value" value="2" min="1" max="99"/>
+      <button class="btn" onclick="vizDeleteVal()">Delete by Value</button>
+      <button class="btn btn-cyan" onclick="vizReset('delete')">Reset</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-delete">List has 5 nodes. Try deleting!</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🚌 Real-Life Analogy — Removing Passengers from a Bus</div>
+    <p>Picture a bus with passengers sitting in a row. Each passenger knows who's in front and behind them. Removing the front passenger (bus driver's seat) means the next person becomes "first". Removing from the rear just removes the last person. Removing someone in the middle means the person behind says "my new front neighbor is now two seats forward."</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 4 — TRAVERSAL
+══════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <h3>Traversal Operations</h3>
+    <span class="badge badge-green">3 Methods</span>
+  </div>
+
+  <p>Traversal means visiting every node in the list, one by one. The superpower of a doubly linked list is that we can go <em>both ways</em> — forward from head, or backward from tail.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--green2)">Forward Traversal</h4>
+      <p>Start at <code>head</code>, keep following <code>.next</code> until you reach <code>-1</code>. This visits every node left to right.</p>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--blue2)">Backward Traversal</h4>
+      <p>First find the tail (last node), then keep following <code>.prev</code> until you reach <code>-1</code>. Visits right to left.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">traversal.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 4.1 Forward Traversal — head → tail */</span>
+<span class="kw">void</span> <span class="fn">forwardTraverse</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"List is empty!\n"</span>); <span class="kw">return</span>; }
+    <span class="ty">int</span> cur = head;
+    <span class="fn">printf</span>(<span class="st">"Forward: "</span>);
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="st">"%d"</span>, list[cur].data);
+        <span class="kw">if</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>) <span class="fn">printf</span>(<span class="st">" ↔ "</span>);
+        cur = list[cur].next;       <span class="cm">/* Move to next node */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* 4.2 Backward Traversal — tail → head */</span>
+<span class="kw">void</span> <span class="fn">backwardTraverse</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"List is empty!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cm">/* Step 1: Go to the very last node */</span>
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>) cur = list[cur].next;
+
+    <span class="cm">/* Step 2: Walk backward using .prev */</span>
+    <span class="fn">printf</span>(<span class="st">"Backward: "</span>);
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="st">"%d"</span>, list[cur].data);
+        <span class="kw">if</span> (list[cur].prev != <span class="op">-</span><span class="num">1</span>) <span class="fn">printf</span>(<span class="st">" ↔ "</span>);
+        cur = list[cur].prev;       <span class="cm">/* Move to previous node */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* 4.3 Loop-Based Traversal (count iterations) */</span>
+<span class="kw">void</span> <span class="fn">loopTraverse</span>() {
+    <span class="ty">int</span> cur = head, step = <span class="num">0</span>;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="st">"Step %d → data=%d\n"</span>, step, list[cur].data);
+        cur = list[cur].next;
+        step++;
+    }
+}</pre>
+  </div>
+
+  <!-- Traversal animated viz -->
+  <div class="viz-container">
+    <div class="viz-title">▸ ANIMATED TRAVERSAL — Watch the pointer move through nodes</div>
+    <canvas id="cv-traverse" width="700" height="130"></canvas>
+    <div class="viz-controls">
+      <button class="btn btn-green" onclick="startTraverse('fwd')">▶ Forward</button>
+      <button class="btn btn-blue" onclick="startTraverse('bwd')">◀ Backward</button>
+      <button class="btn" onclick="stopTraverse()">⏹ Stop</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-traverse">Click Forward or Backward to animate traversal</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🎵 Real-Life Analogy — Music Playlist</div>
+    <p>A doubly linked list is like a music playlist. Forward traversal plays songs from track 1 to the end. Backward traversal plays them in reverse. You can jump to the next song (<code>.next</code>) or the previous song (<code>.prev</code>) at any time. The "Now Playing" indicator is like the current pointer.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 5 — SEARCHING
+══════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <h3>Searching Operations</h3>
+    <span class="badge badge-purple">3 Methods</span>
+  </div>
+
+  <p>Searching finds a specific value (or position) in the list. With a doubly linked list, we can search from either end, which can be faster if we know roughly where the item is.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">search.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 5.1 Forward Search — search from head toward tail */</span>
+<span class="ty">int</span> <span class="fn">forwardSearch</span>(<span class="ty">int</span> value) {
+    <span class="ty">int</span> cur = head, pos = <span class="num">0</span>;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">if</span> (list[cur].data == value) {
+            <span class="fn">printf</span>(<span class="st">"Found %d at position %d\n"</span>, value, pos);
+            <span class="kw">return</span> pos;
+        }
+        cur = list[cur].next;
+        pos++;
+    }
+    <span class="fn">printf</span>(<span class="st">"%d not found!\n"</span>, value);
+    <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>;
+}
+
+<span class="cm">/* 5.2 Backward Search — search from tail toward head */</span>
+<span class="ty">int</span> <span class="fn">backwardSearch</span>(<span class="ty">int</span> value) {
+    <span class="cm">/* First go to the tail */</span>
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span> &amp;&amp; list[cur].next != <span class="op">-</span><span class="num">1</span>)
+        cur = list[cur].next;
+
+    <span class="ty">int</span> pos = size <span class="op">-</span> <span class="num">1</span>;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">if</span> (list[cur].data == value) {
+            <span class="fn">printf</span>(<span class="st">"Found %d at position %d (from rear)\n"</span>, value, pos);
+            <span class="kw">return</span> pos;
+        }
+        cur = list[cur].prev;
+        pos--;
+    }
+    <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>;
+}
+
+<span class="cm">/* 5.3 Search by Position — get value at position n */</span>
+<span class="ty">int</span> <span class="fn">searchByPosition</span>(<span class="ty">int</span> pos) {
+    <span class="kw">if</span> (pos &lt; <span class="num">0</span> || pos &gt;= size) { <span class="fn">printf</span>(<span class="st">"Invalid!\n"</span>); <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>; }
+    <span class="ty">int</span> cur = head, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos; i++) cur = list[cur].next;
+    <span class="fn">printf</span>(<span class="st">"Position %d has value %d\n"</span>, pos, list[cur].data);
+    <span class="kw">return</span> list[cur].data;
+}</pre>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▸ INTERACTIVE — Search for a value and watch the pointer scan</div>
+    <canvas id="cv-search" width="700" height="130"></canvas>
+    <div class="viz-controls">
+      <input type="number" id="srch-val" placeholder="Search value" value="30" min="1" max="99"/>
+      <button class="btn btn-cyan" onclick="vizSearch('fwd')">Forward Search</button>
+      <button class="btn btn-purple" onclick="vizSearch('bwd')">Backward Search</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-search">Enter a value and click to search</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">📖 Real-Life Analogy — Finding a Page in a Book</div>
+    <p>Forward search is like reading a book from page 1 until you find the chapter you want. Backward search starts from the last page and goes backward. If you know the chapter is near the end, backward search is faster. Search by position is like flipping directly to page N.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 6 — UPDATE
+══════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <h3>Update Operations</h3>
+    <span class="badge badge-amber">3 Methods</span>
+  </div>
+
+  <p>Update operations modify existing node data without changing the list structure. The links remain exactly the same — only data values change.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">update.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 6.1 Replace Value — find old_val, replace with new_val */</span>
+<span class="kw">void</span> <span class="fn">replaceValue</span>(<span class="ty">int</span> old_val, <span class="ty">int</span> new_val) {
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">if</span> (list[cur].data == old_val) {
+            list[cur].data = new_val;
+            <span class="fn">printf</span>(<span class="st">"Replaced %d with %d\n"</span>, old_val, new_val);
+            <span class="kw">return</span>;
+        }
+        cur = list[cur].next;
+    }
+    <span class="fn">printf</span>(<span class="st">"%d not found!\n"</span>, old_val);
+}
+
+<span class="cm">/* 6.2 Modify Data — update node at position pos */</span>
+<span class="kw">void</span> <span class="fn">modifyData</span>(<span class="ty">int</span> pos, <span class="ty">int</span> new_val) {
+    <span class="kw">if</span> (pos &lt; <span class="num">0</span> || pos &gt;= size) { <span class="fn">printf</span>(<span class="st">"Bad position!\n"</span>); <span class="kw">return</span>; }
+    <span class="ty">int</span> cur = head, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos; i++) cur = list[cur].next;
+    list[cur].data = new_val;
+    <span class="fn">printf</span>(<span class="st">"Position %d updated to %d\n"</span>, pos, new_val);
+}
+
+<span class="cm">/* 6.3 Swap Nodes — exchange data of two positions */</span>
+<span class="kw">void</span> <span class="fn">swapNodes</span>(<span class="ty">int</span> pos1, <span class="ty">int</span> pos2) {
+    <span class="ty">int</span> a = head, b = head, i, temp;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos1; i++) a = list[a].next;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos2; i++) b = list[b].next;
+    temp = list[a].data;   <span class="cm">/* Classic swap */</span>
+    list[a].data = list[b].data;
+    list[b].data = temp;
+    <span class="fn">printf</span>(<span class="st">"Swapped positions %d and %d\n"</span>, pos1, pos2);
+}</pre>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">📝 Real-Life Analogy — Editing a Spreadsheet</div>
+    <p>Think of the list as spreadsheet rows. Replace Value finds a cell with a specific number and changes it. Modify Data jumps straight to row N and edits it. Swap Nodes exchanges the contents of two rows — like cut-paste between cells — without moving the rows themselves.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 7 — ACCESS
+══════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <h3>Access Operations</h3>
+    <span class="badge badge-cyan">3 Methods</span>
+  </div>
+
+  <p>Access operations retrieve values without modifying the list. They are read-only "peek" operations.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">access.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 7.1 Peek Front — see first element without removing */</span>
+<span class="ty">int</span> <span class="fn">peekFront</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"Empty!\n"</span>); <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>; }
+    <span class="fn">printf</span>(<span class="st">"Front value: %d\n"</span>, list[head].data);
+    <span class="kw">return</span> list[head].data;
+}
+
+<span class="cm">/* 7.2 Peek Rear — see last element without removing */</span>
+<span class="ty">int</span> <span class="fn">peekRear</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"Empty!\n"</span>); <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>; }
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>) cur = list[cur].next;
+    <span class="fn">printf</span>(<span class="st">"Rear value: %d\n"</span>, list[cur].data);
+    <span class="kw">return</span> list[cur].data;
+}
+
+<span class="cm">/* 7.3 Get Element by Position */</span>
+<span class="ty">int</span> <span class="fn">getElement</span>(<span class="ty">int</span> pos) {
+    <span class="kw">if</span> (pos &lt; <span class="num">0</span> || pos &gt;= size) { <span class="fn">printf</span>(<span class="st">"Out of bounds!\n"</span>); <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>; }
+    <span class="ty">int</span> cur = head, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos; i++) cur = list[cur].next;
+    <span class="fn">printf</span>(<span class="st">"Element at %d = %d\n"</span>, pos, list[cur].data);
+    <span class="kw">return</span> list[cur].data;
+}</pre>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🍽️ Real-Life Analogy — Restaurant Order Queue</div>
+    <p>Peek Front is like a kitchen display showing the next order to prepare — you can see it without removing it. Peek Rear is checking the last order placed. Get Element by Position is the manager looking at order number 3 in the queue without disturbing any others.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 8 — COUNT / STRUCTURAL
+══════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <h3>Structural Operations — Count Elements</h3>
+    <span class="badge badge-green">3 Methods</span>
+  </div>
+
+  <p>These operations measure the list — how many nodes exist, counted from either direction (both should give the same answer for a correct list).</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">count.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 8.1 Count Elements — use the size variable (O(1) fast!) */</span>
+<span class="ty">int</span> <span class="fn">countElements</span>() {
+    <span class="fn">printf</span>(<span class="st">"Total elements: %d\n"</span>, size);
+    <span class="kw">return</span> size;
+}
+
+<span class="cm">/* 8.2 Count Forward — traverse and count (verifies integrity) */</span>
+<span class="ty">int</span> <span class="fn">countForward</span>() {
+    <span class="ty">int</span> cur = head, count = <span class="num">0</span>;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        count++;
+        cur = list[cur].next;
+    }
+    <span class="fn">printf</span>(<span class="st">"Forward count: %d\n"</span>, count);
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* 8.3 Count Backward — traverse backward and count */</span>
+<span class="ty">int</span> <span class="fn">countBackward</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="ty">int</span> cur = head, count = <span class="num">0</span>;
+    <span class="cm">/* Go to tail first */</span>
+    <span class="kw">while</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>) cur = list[cur].next;
+    <span class="cm">/* Walk backward counting */</span>
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) { count++; cur = list[cur].prev; }
+    <span class="fn">printf</span>(<span class="st">"Backward count: %d\n"</span>, count);
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Integrity check: both counts must match! */</span>
+<span class="kw">void</span> <span class="fn">integrityCheck</span>() {
+    <span class="ty">int</span> fwd = <span class="fn">countForward</span>();
+    <span class="ty">int</span> bwd = <span class="fn">countBackward</span>();
+    <span class="kw">if</span> (fwd == bwd) <span class="fn">printf</span>(<span class="st">"✓ List is consistent!\n"</span>);
+    <span class="kw">else</span>           <span class="fn">printf</span>(<span class="st">"✗ List is CORRUPTED!\n"</span>);
+}</pre>
+  </div>
+
+  <div class="info-box">💡 <strong>Pro Tip:</strong> Always maintain a <code>size</code> variable updated on every insert/delete. This makes <code>countElements()</code> O(1) — instant! <code>countForward()</code> and <code>countBackward()</code> are O(n) traversals used mainly for debugging.</div>
+
+  <div class="analogy">
+    <div class="analogy-title">🧮 Real-Life Analogy — Counting People in a Line</div>
+    <p>Count Elements is like the queue manager's counter — they always know how many are in line (they update it every time someone joins or leaves). Count Forward is a security guard walking front-to-back counting heads. Count Backward is the guard walking back-to-front. Both should give the same number — if they don't, someone sneaked in!</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 9 — LINK MANAGEMENT
+══════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">9</div>
+    <h3>Link Management Operations</h3>
+    <span class="badge badge-blue">3 Methods</span>
+  </div>
+
+  <p>These low-level operations directly manipulate the <code>next</code> and <code>prev</code> indices. They are the building blocks used by insertion, deletion, and other higher-level operations.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">link_management.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 9.1 Update Previous Link — set node[idx].prev = new_prev */</span>
+<span class="kw">void</span> <span class="fn">updatePrevLink</span>(<span class="ty">int</span> idx, <span class="ty">int</span> new_prev) {
+    <span class="kw">if</span> (idx &lt; <span class="num">0</span> || idx &gt;= size) { <span class="fn">printf</span>(<span class="st">"Invalid index!\n"</span>); <span class="kw">return</span>; }
+    list[idx].prev = new_prev;
+    <span class="fn">printf</span>(<span class="st">"Node[%d].prev updated to %d\n"</span>, idx, new_prev);
+}
+
+<span class="cm">/* 9.2 Update Next Link — set node[idx].next = new_next */</span>
+<span class="kw">void</span> <span class="fn">updateNextLink</span>(<span class="ty">int</span> idx, <span class="ty">int</span> new_next) {
+    <span class="kw">if</span> (idx &lt; <span class="num">0</span> || idx &gt;= size) { <span class="fn">printf</span>(<span class="st">"Invalid index!\n"</span>); <span class="kw">return</span>; }
+    list[idx].next = new_next;
+    <span class="fn">printf</span>(<span class="st">"Node[%d].next updated to %d\n"</span>, idx, new_next);
+}
+
+<span class="cm">/* 9.3 Relink Nodes — connect node A → C, bypassing B
+   Before: A ↔ B ↔ C
+   After:  A ↔ C (B removed from chain)             */</span>
+<span class="kw">void</span> <span class="fn">relinkNodes</span>(<span class="ty">int</span> idxA, <span class="ty">int</span> idxC) {
+    <span class="kw">if</span> (idxA != <span class="op">-</span><span class="num">1</span>) list[idxA].next = idxC; <span class="cm">/* A → C */</span>
+    <span class="kw">if</span> (idxC != <span class="op">-</span><span class="num">1</span>) list[idxC].prev = idxA; <span class="cm">/* A ← C */</span>
+    <span class="fn">printf</span>(<span class="st">"Relinked: node %d now connects to node %d\n"</span>, idxA, idxC);
+}
+
+<span class="cm">/* How relinkNodes is used inside deletion:
+   To delete node B between A and C:
+   1. idxA = list[B].prev
+   2. idxC = list[B].next
+   3. relinkNodes(idxA, idxC)    ← skips B       */</span></pre>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🔗 Real-Life Analogy — Changing Contacts in a Phone Chain</div>
+    <p>Imagine a "phone chain" where each person has the number of the next and previous person to call during an emergency. Update Previous Link is changing who calls you. Update Next Link is changing who you call. Relink Nodes is removing someone from the chain — you now call the person they used to call, and that person now waits for your call instead.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 10 — UTILITY
+══════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <h3>Utility Operations</h3>
+    <span class="badge badge-amber">3 Methods</span>
+  </div>
+
+  <p>Utility operations perform structural changes on the whole list — clearing it, making a copy, or reversing the order of nodes.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">utility.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 10.1 Clear List — remove all nodes */</span>
+<span class="kw">void</span> <span class="fn">clearList</span>() {
+    <span class="ty">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; <span class="nm">MAX</span>; i++) {
+        list[i].data = <span class="num">0</span>;
+        list[i].next = <span class="op">-</span><span class="num">1</span>;
+        list[i].prev = <span class="op">-</span><span class="num">1</span>;
+    }
+    head = <span class="op">-</span><span class="num">1</span>;
+    size = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="st">"List cleared!\n"</span>);
+}
+
+<span class="cm">/* 10.2 Clone List — copy all nodes into a second list */</span>
+<span class="kw">void</span> <span class="fn">cloneList</span>(<span class="kw">struct</span> <span class="ty">Node</span> dest[], <span class="ty">int</span> *dest_head, <span class="ty">int</span> *dest_size) {
+    <span class="ty">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; size; i++) dest[i] = list[i]; <span class="cm">/* Copy all slots */</span>
+    *dest_head = head;
+    *dest_size = size;
+    <span class="fn">printf</span>(<span class="st">"List cloned! %d nodes copied.\n"</span>, size);
+}
+
+<span class="cm">/* 10.3 Reverse List — flip the direction of all links */</span>
+<span class="kw">void</span> <span class="fn">reverseList</span>() {
+    <span class="ty">int</span> cur = head, temp;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="cm">/* Swap next and prev for every node */</span>
+        temp           = list[cur].next;
+        list[cur].next = list[cur].prev;
+        list[cur].prev = temp;
+
+        <span class="cm">/* Move to what was next (now stored in temp) */</span>
+        cur = temp;
+    }
+    <span class="cm">/* Head is now the old tail — find it */</span>
+    <span class="ty">int</span> t = head;
+    <span class="kw">if</span> (t != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">while</span> (list[t].prev != <span class="op">-</span><span class="num">1</span>) t = list[t].prev;
+        head = t;
+    }
+    <span class="fn">printf</span>(<span class="st">"List reversed!\n"</span>);
+}</pre>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▸ INTERACTIVE — Reverse the list and watch links flip</div>
+    <canvas id="cv-utility" width="700" height="140"></canvas>
+    <div class="viz-controls">
+      <button class="btn btn-amber" onclick="vizReverse()">Reverse List</button>
+      <button class="btn btn-red" onclick="vizClear()">Clear List</button>
+      <button class="btn btn-cyan" onclick="vizReset('utility')">Reset</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-utility">Click Reverse to flip the list direction</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🃏 Real-Life Analogy — Deck of Cards</div>
+    <p>Clear List is throwing away the whole deck. Clone List is making a perfect copy of the deck to give to a friend. Reverse List is flipping the deck upside down — the card that was on top is now on the bottom, and every card's "above/below" relationships are swapped.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 11 — SORTING
+══════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <h3>Sorting Operations</h3>
+    <span class="badge badge-purple">3 Algorithms</span>
+  </div>
+
+  <p>Sorting arranges the list's values in ascending (or descending) order. For array-based DLL, we swap <em>data values</em> (not node positions) for simplicity. All three classic O(n²) sorting algorithms are covered here.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--cyan)">Time Complexity</h4>
+      <table>
+        <tr><th>Algorithm</th><th>Best</th><th>Worst</th></tr>
+        <tr><td>Bubble Sort</td><td>O(n)</td><td>O(n²)</td></tr>
+        <tr><td>Selection Sort</td><td>O(n²)</td><td>O(n²)</td></tr>
+        <tr><td>Insertion Sort</td><td>O(n)</td><td>O(n²)</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h4 style="margin-top:0;color:var(--blue2)">When to Use Each</h4>
+      <p><strong>Bubble Sort:</strong> Easy to understand, good for nearly-sorted data.</p>
+      <p><strong>Selection Sort:</strong> Minimal swaps, good when writing is expensive.</p>
+      <p><strong>Insertion Sort:</strong> Best for small or nearly-sorted lists.</p>
+    </div>
+  </div>
+
+  <h4>11.1 Bubble Sort</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">bubble_sort.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* Bubble Sort — repeatedly swap adjacent elements if out of order */</span>
+<span class="kw">void</span> <span class="fn">bubbleSort</span>() {
+    <span class="ty">int</span> i, j, temp, swapped;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; size <span class="op">-</span> <span class="num">1</span>; i++) {
+        swapped = <span class="num">0</span>;
+        <span class="ty">int</span> cur = head;
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; size <span class="op">-</span> i <span class="op">-</span> <span class="num">1</span>; j++) {
+            <span class="ty">int</span> nxt = list[cur].next;
+            <span class="kw">if</span> (list[cur].data &gt; list[nxt].data) {
+                <span class="cm">/* Swap the data values, not the nodes */</span>
+                temp = list[cur].data;
+                list[cur].data = list[nxt].data;
+                list[nxt].data = temp;
+                swapped = <span class="num">1</span>;
+            }
+            cur = list[cur].next;
+        }
+        <span class="kw">if</span> (!swapped) <span class="kw">break</span>; <span class="cm">/* Already sorted — stop early! */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"Bubble Sort done.\n"</span>);
+}</pre>
+  </div>
+
+  <h4>11.2 Selection Sort</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">selection_sort.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* Selection Sort — find minimum, put it at front, repeat */</span>
+<span class="kw">void</span> <span class="fn">selectionSort</span>() {
+    <span class="ty">int</span> i, j, temp;
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="ty">int</span> min_idx = cur;          <span class="cm">/* Assume current is min */</span>
+        <span class="ty">int</span> scan = list[cur].next;
+
+        <span class="kw">while</span> (scan != <span class="op">-</span><span class="num">1</span>) {
+            <span class="kw">if</span> (list[scan].data &lt; list[min_idx].data)
+                min_idx = scan;     <span class="cm">/* Found a smaller one */</span>
+            scan = list[scan].next;
+        }
+
+        <span class="kw">if</span> (min_idx != cur) {
+            <span class="cm">/* Swap data between cur and min_idx */</span>
+            temp = list[cur].data;
+            list[cur].data = list[min_idx].data;
+            list[min_idx].data = temp;
+        }
+        cur = list[cur].next;       <span class="cm">/* Move forward one step */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"Selection Sort done.\n"</span>);
+}</pre>
+  </div>
+
+  <h4>11.3 Insertion Sort</h4>
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">insertion_sort.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* Insertion Sort — take one node, insert it in sorted position */</span>
+<span class="kw">void</span> <span class="fn">insertionSort</span>() {
+    <span class="ty">int</span> cur = list[head].next;   <span class="cm">/* Start from 2nd element */</span>
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="ty">int</span> key = list[cur].data;
+        <span class="ty">int</span> prev = list[cur].prev;
+
+        <span class="cm">/* Shift larger elements one step right */</span>
+        <span class="kw">while</span> (prev != <span class="op">-</span><span class="num">1</span> &amp;&amp; list[prev].data &gt; key) {
+            list[list[prev].next].data = list[prev].data;
+            prev = list[prev].prev;
+        }
+
+        <span class="cm">/* Place key in its correct spot */</span>
+        <span class="kw">if</span> (prev == <span class="op">-</span><span class="num">1</span>)
+            list[head].data = key;      <span class="cm">/* Goes to front */</span>
+        <span class="kw">else</span>
+            list[list[prev].next].data = key;
+
+        cur = list[cur].next;
+    }
+    <span class="fn">printf</span>(<span class="st">"Insertion Sort done.\n"</span>);
+}</pre>
+  </div>
+
+  <!-- Sorting animated viz -->
+  <div class="viz-container">
+    <div class="viz-title">▸ ANIMATED SORTING — Watch the algorithm sort step by step</div>
+    <canvas id="cv-sort" width="700" height="160"></canvas>
+    <div class="viz-controls">
+      <button class="btn btn-cyan" onclick="vizSort('bubble')">Bubble Sort</button>
+      <button class="btn btn-blue" onclick="vizSort('selection')">Selection Sort</button>
+      <button class="btn btn-purple" onclick="vizSort('insertion')">Insertion Sort</button>
+      <button class="btn btn-red" onclick="vizReset('sort')">Shuffle &amp; Reset</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-sort">Click a sorting algorithm to begin</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🃏 Real-Life Analogy — Sorting Playing Cards in Hand</div>
+    <p><strong>Bubble Sort:</strong> Keep swapping adjacent cards that are out of order until no swaps are needed. <strong>Selection Sort:</strong> Each round, find the lowest remaining card and put it in the correct spot. <strong>Insertion Sort:</strong> Pick cards one by one from the unsorted pile and slide each into the right position in your sorted hand — exactly how most people sort cards naturally!</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 12 — MERGE & SPLIT
+══════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <h3>Merge &amp; Split Operations</h3>
+    <span class="badge badge-red">3 Methods</span>
+  </div>
+
+  <p>Merge combines two lists into one. Split divides one list into two. Concatenate appends one list to the end of another. These are powerful structural operations that require careful link management.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">merge_split.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 12.1 Merge Lists — merge two sorted lists into one sorted list */</span>
+<span class="kw">void</span> <span class="fn">mergeLists</span>(<span class="kw">struct</span> <span class="ty">Node</span> listB[], <span class="ty">int</span> headB, <span class="ty">int</span> sizeB,
+                <span class="kw">struct</span> <span class="ty">Node</span> result[], <span class="ty">int</span> *res_head) {
+    <span class="ty">int</span> a = head, b = headB, r = <span class="op">-</span><span class="num">1</span>, prev_r = <span class="op">-</span><span class="num">1</span>, idx = <span class="num">0</span>;
+    <span class="kw">while</span> (a != <span class="op">-</span><span class="num">1</span> &amp;&amp; b != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">if</span> (list[a].data &lt;= listB[b].data) {
+            result[idx].data = list[a].data; a = list[a].next;
+        } <span class="kw">else</span> {
+            result[idx].data = listB[b].data; b = listB[b].next;
+        }
+        result[idx].prev = prev_r;
+        <span class="kw">if</span> (prev_r != <span class="op">-</span><span class="num">1</span>) result[prev_r].next = idx;
+        <span class="kw">else</span> *res_head = idx;
+        result[idx].next = <span class="op">-</span><span class="num">1</span>;
+        prev_r = idx++;
+    }
+    <span class="cm">/* Copy remaining nodes from either list */</span>
+    <span class="kw">while</span> (a != <span class="op">-</span><span class="num">1</span>) { result[idx].data = list[a].data;   result[idx].prev = prev_r; result[prev_r].next = idx; result[idx].next = <span class="op">-</span><span class="num">1</span>; prev_r = idx++; a = list[a].next; }
+    <span class="kw">while</span> (b != <span class="op">-</span><span class="num">1</span>) { result[idx].data = listB[b].data; result[idx].prev = prev_r; result[prev_r].next = idx; result[idx].next = <span class="op">-</span><span class="num">1</span>; prev_r = idx++; b = listB[b].next; }
+}
+
+<span class="cm">/* 12.2 Split List — divide at position pos into two lists */</span>
+<span class="kw">void</span> <span class="fn">splitList</span>(<span class="ty">int</span> pos, <span class="ty">int</span> *head2, <span class="ty">int</span> *size2) {
+    <span class="ty">int</span> cur = head, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; pos <span class="op">-</span> <span class="num">1</span>; i++) cur = list[cur].next;
+    *head2 = list[cur].next;        <span class="cm">/* Second list starts here */</span>
+    <span class="kw">if</span> (*head2 != <span class="op">-</span><span class="num">1</span>) list[*head2].prev = <span class="op">-</span><span class="num">1</span>;
+    list[cur].next = <span class="op">-</span><span class="num">1</span>;            <span class="cm">/* First list ends here   */</span>
+    *size2 = size <span class="op">-</span> pos;
+    size   = pos;
+    <span class="fn">printf</span>(<span class="st">"Split at pos %d. List1: %d nodes, List2: %d nodes\n"</span>, pos, size, *size2);
+}
+
+<span class="cm">/* 12.3 Concatenate Lists — append listB to end of list */</span>
+<span class="kw">void</span> <span class="fn">concatenateLists</span>(<span class="kw">struct</span> <span class="ty">Node</span> listB[], <span class="ty">int</span> headB, <span class="ty">int</span> sizeB) {
+    <span class="kw">if</span> (headB == <span class="op">-</span><span class="num">1</span>) <span class="kw">return</span>; <span class="cm">/* listB is empty */</span>
+    <span class="ty">int</span> tail = head;
+    <span class="kw">while</span> (list[tail].next != <span class="op">-</span><span class="num">1</span>) tail = list[tail].next;
+    <span class="cm">/* Copy listB nodes into our array starting at slot 'size' */</span>
+    <span class="ty">int</span> b = headB, offset = size;
+    <span class="kw">while</span> (b != <span class="op">-</span><span class="num">1</span>) {
+        list[offset] = listB[b];
+        <span class="kw">if</span> (listB[b].next != <span class="op">-</span><span class="num">1</span>) list[offset].next = listB[b].next + offset;
+        <span class="kw">if</span> (listB[b].prev != <span class="op">-</span><span class="num">1</span>) list[offset].prev = listB[b].prev + offset;
+        <span class="kw">else</span> { list[offset].prev = tail; list[tail].next = offset; }
+        b = listB[b].next; offset++;
+    }
+    size += sizeB;
+}</pre>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🚂 Real-Life Analogy — Combining Train Carriages</div>
+    <p><strong>Concatenate:</strong> Couple train B to the end of train A — they become one long train. <strong>Split:</strong> Uncouple carriage number 5, creating two separate trains. <strong>Merge (sorted):</strong> Like merging two queues at a theme park by always taking the person with a shorter wait time — the result is one ordered queue.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 13 — RECURSIVE
+══════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <h3>Recursive Operations</h3>
+    <span class="badge badge-green">3 Methods</span>
+  </div>
+
+  <p>Recursion solves a problem by having a function call itself with a smaller version of the same problem. For linked lists, this means: process current node, then recurse on the rest of the list.</p>
+
+  <div class="info-box">💡 <strong>Key Concept:</strong> Every recursive function must have a <em>base case</em> (when to stop) and a <em>recursive case</em> (call itself on a smaller problem). Without a base case, you get infinite recursion and a stack overflow crash!</div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">recursive.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 13.1 Recursive Traversal — print all nodes recursively */</span>
+<span class="kw">void</span> <span class="fn">recursiveTraverse</span>(<span class="ty">int</span> cur) {
+    <span class="kw">if</span> (cur == <span class="op">-</span><span class="num">1</span>) <span class="kw">return</span>;          <span class="cm">/* Base case: end of list */</span>
+
+    <span class="fn">printf</span>(<span class="st">"%d "</span>, list[cur].data);   <span class="cm">/* Process current node */</span>
+    <span class="fn">recursiveTraverse</span>(list[cur].next); <span class="cm">/* Recurse on rest    */</span>
+}
+<span class="cm">/* Call: recursiveTraverse(head);
+   Trace for list [10→20→30]:
+     recursiveTraverse(0) → print 10 → recursiveTraverse(1)
+       recursiveTraverse(1) → print 20 → recursiveTraverse(2)
+         recursiveTraverse(2) → print 30 → recursiveTraverse(-1)
+           recursiveTraverse(-1) → BASE CASE → return              */</span>
+
+<span class="cm">/* 13.2 Recursive Search */</span>
+<span class="ty">int</span> <span class="fn">recursiveSearch</span>(<span class="ty">int</span> cur, <span class="ty">int</span> value) {
+    <span class="kw">if</span> (cur == <span class="op">-</span><span class="num">1</span>) <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>;        <span class="cm">/* Base: not found */</span>
+    <span class="kw">if</span> (list[cur].data == value) {
+        <span class="fn">printf</span>(<span class="st">"Found at index %d!\n"</span>, cur);
+        <span class="kw">return</span> cur;                  <span class="cm">/* Base: found it! */</span>
+    }
+    <span class="kw">return</span> <span class="fn">recursiveSearch</span>(list[cur].next, value); <span class="cm">/* Recurse */</span>
+}
+<span class="cm">/* Call: recursiveSearch(head, 20); */</span>
+
+<span class="cm">/* 13.3 Recursive Count */</span>
+<span class="ty">int</span> <span class="fn">recursiveCount</span>(<span class="ty">int</span> cur) {
+    <span class="kw">if</span> (cur == <span class="op">-</span><span class="num">1</span>) <span class="kw">return</span> <span class="num">0</span>;         <span class="cm">/* Base: empty list = 0 */</span>
+    <span class="kw">return</span> <span class="num">1</span> <span class="op">+</span> <span class="fn">recursiveCount</span>(list[cur].next);  <span class="cm">/* 1 + rest */</span>
+}
+<span class="cm">/* Count trace for [10→20→30]:
+   count(0) = 1 + count(1)
+            = 1 + 1 + count(2)
+            = 1 + 1 + 1 + count(-1)
+            = 1 + 1 + 1 + 0 = 3 ✓    */</span></pre>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🪞 Real-Life Analogy — Russian Nesting Dolls (Matryoshka)</div>
+    <p>Each doll calls out what's inside it, then tells the next doll to do the same. "I'm doll 1, I contain doll 2 — hey doll 2, what do you contain?" Doll 2 reports itself and asks doll 3. The last (smallest) doll says "I'm empty — I'm done!" This is exactly how recursion works: each call handles the current item and delegates the rest.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SECTION 14 — ITERATIVE
+══════════════════════════════════ -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <h3>Iterative Operations</h3>
+    <span class="badge badge-blue">3 Methods</span>
+  </div>
+
+  <p>Iterative operations use loops instead of function calls (no recursion). They are generally more memory-efficient because they don't use the call stack. In C, iteration is usually preferred for linked list traversal to avoid stack overflow on large lists.</p>
+
+  <table>
+    <tr><th>Feature</th><th>Recursive</th><th>Iterative</th></tr>
+    <tr><td>Memory use</td><td>O(n) stack space</td><td>O(1) — just one variable</td></tr>
+    <tr><td>Readability</td><td>Often cleaner code</td><td>Slightly more code</td></tr>
+    <tr><td>Risk</td><td>Stack overflow on huge lists</td><td>No risk</td></tr>
+    <tr><td>Speed</td><td>Slightly slower (function calls)</td><td>Slightly faster</td></tr>
+  </table>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-label">iterative.c</span><span class="code-lang">C</span></div>
+    <pre><span class="cm">/* 14.1 Iterative Traversal — same as forwardTraverse() */</span>
+<span class="kw">void</span> <span class="fn">iterativeTraverse</span>() {
+    <span class="ty">int</span> cur = head;  <span class="cm">/* cur = "current" pointer */</span>
+    <span class="fn">printf</span>(<span class="st">"Iterative: "</span>);
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {        <span class="cm">/* Loop until end */</span>
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, list[cur].data);
+        cur = list[cur].next;   <span class="cm">/* Advance manually */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* 14.2 Iterative Search */</span>
+<span class="ty">int</span> <span class="fn">iterativeSearch</span>(<span class="ty">int</span> value) {
+    <span class="ty">int</span> cur = head, pos = <span class="num">0</span>;
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="kw">if</span> (list[cur].data == value) {
+            <span class="fn">printf</span>(<span class="st">"Found %d at position %d\n"</span>, value, pos);
+            <span class="kw">return</span> pos;
+        }
+        cur = list[cur].next;
+        pos++;
+    }
+    <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>; <span class="cm">/* Not found */</span>
+}
+
+<span class="cm">/* 14.3 Reverse Iteration — tail to head, using .prev links */</span>
+<span class="kw">void</span> <span class="fn">reverseIteration</span>() {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>()) { <span class="fn">printf</span>(<span class="st">"Empty!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cm">/* Step 1: Go to the tail using a while loop */</span>
+    <span class="ty">int</span> cur = head;
+    <span class="kw">while</span> (list[cur].next != <span class="op">-</span><span class="num">1</span>)
+        cur = list[cur].next;
+
+    <span class="cm">/* Step 2: Walk backward using .prev links */</span>
+    <span class="fn">printf</span>(<span class="st">"Reverse: "</span>);
+    <span class="kw">while</span> (cur != <span class="op">-</span><span class="num">1</span>) {
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, list[cur].data);
+        cur = list[cur].prev;   <span class="cm">/* Go backward */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}</pre>
+  </div>
+
+  <!-- Full interactive demo -->
+  <div class="viz-container">
+    <div class="viz-title">▸ FULL INTERACTIVE LIST — Build your own list and test all operations</div>
+    <canvas id="cv-full" width="700" height="140"></canvas>
+    <div class="viz-controls">
+      <input type="number" id="full-val" placeholder="Value" value="7" min="1" max="99" style="width:70px"/>
+      <button class="btn btn-cyan" onclick="fullInsertFront()">Front</button>
+      <button class="btn btn-blue" onclick="fullInsertRear()">Rear</button>
+      <button class="btn btn-red" onclick="fullDeleteFront()">Del Front</button>
+      <button class="btn btn-amber" onclick="fullDeleteRear()">Del Rear</button>
+      <button class="btn btn-purple" onclick="fullReverse()">Reverse</button>
+      <button class="btn" onclick="vizReset('full')">Reset</button>
+    </div>
+    <div class="status-bar"><div class="status-dot"></div><span id="msg-full">Build your list — add values and try all operations!</span></div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-title">🔄 Real-Life Analogy — Conveyor Belt vs Factory Robot Arm</div>
+    <p>Iterative traversal is like a conveyor belt — items pass by one at a time in a steady loop until the belt ends. Recursive traversal is like a robot arm that picks up an item, processes it, then calls an identical robot arm to handle the rest of the belt. The loop (conveyor) is simpler and doesn't require dozens of robot arms stacked on top of each other.</p>
+  </div>
+
+  <!-- Summary Table -->
+  <div style="margin-top:32px;">
+    <h4>📊 Complete Operation Reference</h4>
+    <table>
+      <tr><th>Operation</th><th>Time Complexity</th><th>Space</th><th>Category</th></tr>
+      <tr><td>Create / Init</td><td><code>O(n)</code></td><td>O(1)</td><td>Basic</td></tr>
+      <tr><td>isEmpty / isFull</td><td><code>O(1)</code></td><td>O(1)</td><td>Basic</td></tr>
+      <tr><td>Insert Front</td><td><code>O(1)</code></td><td>O(1)</td><td>Insertion</td></tr>
+      <tr><td>Insert Rear</td><td><code>O(n)</code></td><td>O(1)</td><td>Insertion</td></tr>
+      <tr><td>Insert at Position</td><td><code>O(n)</code></td><td>O(1)</td><td>Insertion</td></tr>
+      <tr><td>Delete Front</td><td><code>O(1)</code></td><td>O(1)</td><td>Deletion</td></tr>
+      <tr><td>Delete Rear</td><td><code>O(n)</code></td><td>O(1)</td><td>Deletion</td></tr>
+      <tr><td>Delete by Value</td><td><code>O(n)</code></td><td>O(1)</td><td>Deletion</td></tr>
+      <tr><td>Forward / Backward Traverse</td><td><code>O(n)</code></td><td>O(1)</td><td>Traversal</td></tr>
+      <tr><td>Search (any)</td><td><code>O(n)</code></td><td>O(1)</td><td>Search</td></tr>
+      <tr><td>Count (via size var)</td><td><code>O(1)</code></td><td>O(1)</td><td>Structural</td></tr>
+      <tr><td>Bubble / Selection / Insertion Sort</td><td><code>O(n²)</code></td><td>O(1)</td><td>Sorting</td></tr>
+      <tr><td>Merge Lists</td><td><code>O(n+m)</code></td><td>O(n+m)</td><td>Merge/Split</td></tr>
+      <tr><td>Recursive Count/Search</td><td><code>O(n)</code></td><td>O(n) stack</td><td>Recursive</td></tr>
+    </table>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+<script>
+// ── SHARED LIST STATE ────────────────────────────
+const MAX = 10;
+
+function makeNode(data, next=-1, prev=-1){return{data,next,prev};}
+
+function makeList(vals){
+  const nodes=[];
+  vals.forEach((v,i)=>{
+    nodes.push(makeNode(v,i<vals.length-1?i+1:-1,i>0?i-1:-1));
+  });
+  return{nodes,head:vals.length?0:-1,size:vals.length};
+}
+
+// ── DRAWING HELPERS ─────────────────────────────
+const COLORS={
+  node:'#1a1e2b',nodeBorder:'#3a4060',
+  head:'#22d3ee',tail:'#4f8ef7',
+  active:'#22c55e',search:'#f59e0b',
+  deleted:'#ef4444',
+  text:'#e2e8f0',text2:'#94a3b8',
+  arrow:'#4f8ef7',arrowRev:'#f472b6',
+  link:'#2a2f45',linkActive:'#22d3ee'
+};
+
+function drawList(canvasId, L, opts={}){
+  const cv=document.getElementById(canvasId);
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+
+  const {nodes,head,size}=L;
+  if(size===0){
+    ctx.fillStyle='#64748b';ctx.font='14px Space Grotesk';ctx.textAlign='center';
+    ctx.fillText('(empty list)',cv.width/2,cv.height/2);
+    return;
+  }
+
+  const NW=80,NH=50,GAP=32,startX=30;
+  const y=opts.y||(cv.height/2-NH/2);
+  const highlight=opts.highlight||[];
+  const searching=opts.searching||-1;
+
+  // Draw connections first
+  let cur=head,x=startX;
+  while(cur!==-1&&list_x(cur,L,NW,GAP,startX)!==null){
+    const nx=list_x(cur,L,NW,GAP,startX);
+    const cx2=list_x(list_node(nodes,cur).next,L,NW,GAP,startX);
+    if(cx2!==null){
+      // forward arrow
+      const ax1=nx+NW,ay=y+NH/2-6,ax2=cx2,ay2=ay;
+      drawArrow(ctx,ax1,ay,ax2,ay2,COLORS.arrow);
+      // backward arrow
+      drawArrow(ctx,cx2,ay+12,nx+NW,ay+12,COLORS.arrowRev,true);
+    }
+    cur=nodes[cur]?.next??-1;
+  }
+
+  // Draw nodes
+  cur=head;x=startX;
+  while(cur!==-1){
+    const n=nodes[cur];
+    if(!n)break;
+    let fill=COLORS.node,border=COLORS.nodeBorder,tcolor=COLORS.text;
+    if(opts.deleted===cur){fill='#3b0000';border=COLORS.deleted;tcolor='#f87171';}
+    else if(cur===searching){fill='#3f2400';border=COLORS.search;tcolor=COLORS.search;}
+    else if(highlight.includes(cur)){fill='#052e16';border=COLORS.active;tcolor=COLORS.active;}
+    else if(cur===head){border=COLORS.head;}
+
+    roundRect(ctx,x,y,NW,NH,8,fill,border);
+
+    // index label (top)
+    ctx.fillStyle='#64748b';ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('['+cur+']',x+NW/2,y-4);
+
+    // data
+    ctx.fillStyle=tcolor;ctx.font='bold 16px Space Grotesk';
+    ctx.fillText(n.data,x+NW/2,y+NH/2+1);
+
+    // HEAD label
+    if(cur===head){
+      ctx.fillStyle=COLORS.head;ctx.font='10px Space Grotesk';
+      ctx.fillText('HEAD',x+NW/2,y+NH+14);
+    }
+
+    x+=NW+GAP;
+    cur=n.next;
+    if(x>cv.width-20)break;
+  }
+}
+
+function list_x(idx,L,NW,GAP,startX){
+  if(idx===-1)return null;
+  let cur=L.head,i=0;
+  while(cur!==-1&&cur!==idx){cur=L.nodes[cur]?.next??-1;i++;}
+  if(cur===-1)return null;
+  return startX+i*(NW+GAP);
+}
+function list_node(nodes,idx){return idx===-1?null:nodes[idx]||null;}
+
+function roundRect(ctx,x,y,w,h,r,fill,stroke){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();
+}
+
+function drawArrow(ctx,x1,y1,x2,y2,color,reverse=false){
+  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const angle=Math.atan2(y2-y1,x2-x1);
+  const tip=reverse?{x:x1,y:y1}:{x:x2,y:y2};
+  const ang=reverse?angle+Math.PI:angle;
+  ctx.beginPath();
+  ctx.moveTo(tip.x,tip.y);
+  ctx.lineTo(tip.x-8*Math.cos(ang-0.4),tip.y-8*Math.sin(ang-0.4));
+  ctx.lineTo(tip.x-8*Math.cos(ang+0.4),tip.y-8*Math.sin(ang+0.4));
+  ctx.closePath();ctx.fill();
+}
+
+function setMsg(id,msg,color='#94a3b8'){
+  const el=document.getElementById('msg-'+id);
+  if(el){el.textContent=msg;el.style.color=color;}
+}
+
+// ── SECTION 1: BASIC ────────────────────────────
+let basicList=makeList([]);
+function basicCreate(){basicList=makeList([]);drawList('cv-basic',basicList);setMsg('basic','✓ List created! head=-1, size=0',COLORS.active);}
+function basicInit(){basicList=makeList([]);drawList('cv-basic',basicList);setMsg('basic','✓ Initialized: all nodes reset, head=-1');}
+function basicCheckEmpty(){setMsg('basic',basicList.size===0?'✓ isEmpty() → TRUE: list has no nodes':'✗ isEmpty() → FALSE: list has '+basicList.size+' nodes',basicList.size===0?COLORS.active:COLORS.search);}
+function basicCheckFull(){setMsg('basic',basicList.size>=MAX?'✗ isFull() → TRUE: cannot insert more!':'✓ isFull() → FALSE: '+basicList.size+'/'+MAX+' slots used',basicList.size>=MAX?COLORS.deleted:COLORS.active);}
+
+// Draw structure diagram
+(function drawStructure(){
+  const cv=document.getElementById('cv-struct');
+  if(!cv)return;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,700,160);
+  const NW=100,NH=52,y=40;
+  const labels=['prev','data','next'];
+  const colors=['#083344','#13161e','#1e3a6e'];
+  const texts=['-1','42','1'];
+  const txts=['#67e8f9','#e2e8f0','#6ba3ff'];
+  // Draw the array as 10 slots
+  for(let i=0;i<6;i++){
+    roundRect(ctx,20+i*106,y,100,NH,6,i===0?'#0d1928':'#13161e',i===0?COLORS.head:'#2a2f45');
+    ctx.fillStyle=i===0?COLORS.head:'#64748b';ctx.font='10px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('['+i+']',20+i*106+50,y-5);
+    if(i===0){
+      // Show structure breakdown
+      const fw=33;
+      ['prev','data','next'].forEach((l,j)=>{
+        roundRect(ctx,20+j*fw,y,fw,NH,0,colors[j],COLORS.border);
+        ctx.fillStyle=txts[j];ctx.font='9px JetBrains Mono';ctx.fillText(l,20+j*fw+fw/2,y+16);
+        ctx.font='bold 13px Space Grotesk';ctx.fillText(texts[j],20+j*fw+fw/2,y+34);
+      });
+    } else if(i<=3){
+      const sample=[{p:-1,d:42,n:1},{p:0,d:15,n:2},{p:1,d:73,n:3},{p:2,d:8,n:-1}];
+      const s=sample[i-1]||{p:-1,d:0,n:-1};
+      ctx.fillStyle=COLORS.text2;ctx.font='11px JetBrains Mono';
+      ctx.fillText(s.p+' | '+s.d+' | '+s.n,20+i*106+50,y+NH/2+4);
+    } else {
+      ctx.fillStyle='#3a4060';ctx.font='11px Space Grotesk';
+      ctx.fillText('unused',20+i*106+50,y+NH/2+4);
+    }
+  }
+  // Arrows
+  drawArrow(ctx,120+6,y+14,126,y+14,COLORS.head);
+  ctx.fillStyle='#22d3ee';ctx.font='10px Space Grotesk';ctx.textAlign='left';
+  ctx.fillText('head=0',4,y+NH+16);
+  ctx.fillStyle='#64748b';ctx.font='10px Space Grotesk';
+  ctx.fillText('Array index →',20,y+NH+30);
+})();
+
+// ── SECTION 2: INSERT ───────────────────────────
+let insertList=makeList([10,20,30]);
+drawList('cv-insert',insertList);
+
+function vizInsertFront(){
+  const v=parseInt(document.getElementById('ins-val').value)||42;
+  if(insertList.size>=MAX){setMsg('insert','✗ List is FULL (MAX='+MAX+')',COLORS.deleted);return;}
+  const slot=insertList.size;
+  const newNode=makeNode(v,insertList.head,-1);
+  if(insertList.head!==-1)insertList.nodes[insertList.head].prev=slot;
+  insertList.nodes.push(newNode);
+  insertList.head=slot;insertList.size++;
+  drawList('cv-insert',insertList,{highlight:[slot]});
+  setMsg('insert','✓ Inserted '+v+' at front → new head=['+slot+']',COLORS.active);
+}
+function vizInsertRear(){
+  const v=parseInt(document.getElementById('ins-val').value)||42;
+  if(insertList.size>=MAX){setMsg('insert','✗ List is FULL',COLORS.deleted);return;}
+  const slot=insertList.size;
+  if(insertList.head===-1){insertList.nodes.push(makeNode(v));insertList.head=slot;}
+  else{
+    let cur=insertList.head;
+    while(insertList.nodes[cur].next!==-1)cur=insertList.nodes[cur].next;
+    insertList.nodes.push(makeNode(v,-1,cur));
+    insertList.nodes[cur].next=slot;
+  }
+  insertList.size++;
+  drawList('cv-insert',insertList,{highlight:[slot]});
+  setMsg('insert','✓ Inserted '+v+' at rear → slot=['+slot+']',COLORS.active);
+}
+
+// ── SECTION 3: DELETE ───────────────────────────
+let deleteList=makeList([5,10,20,30,45]);
+drawList('cv-delete',deleteList);
+
+function vizDeleteFront(){
+  if(deleteList.size===0){setMsg('delete','✗ List is empty!',COLORS.deleted);return;}
+  const old=deleteList.nodes[deleteList.head].data;
+  const nh=deleteList.nodes[deleteList.head].next;
+  deleteList.nodes.splice(deleteList.head,1);
+  // reindex
+  deleteList=reindexList(deleteList.nodes.map(n=>n.data));
+  drawList('cv-delete',deleteList,{highlight:[0]});
+  setMsg('delete','✓ Deleted '+old+' from front. New head='+deleteList.head,COLORS.active);
+}
+function vizDeleteRear(){
+  if(deleteList.size===0){setMsg('delete','✗ List is empty!',COLORS.deleted);return;}
+  let cur=deleteList.head,prev=-1;
+  while(deleteList.nodes[cur].next!==-1){prev=cur;cur=deleteList.nodes[cur].next;}
+  const old=deleteList.nodes[cur].data;
+  if(prev!==-1)deleteList.nodes[prev].next=-1;
+  else deleteList.head=-1;
+  deleteList.nodes.splice(cur,1);
+  deleteList=reindexList(deleteList.nodes.map(n=>n.data));
+  drawList('cv-delete',deleteList);
+  setMsg('delete','✓ Deleted '+old+' from rear.',COLORS.active);
+}
+function vizDeleteVal(){
+  const v=parseInt(document.getElementById('del-val').value)||2;
+  const vals=[];let cur=deleteList.head;
+  while(cur!==-1){vals.push(deleteList.nodes[cur].data);cur=deleteList.nodes[cur].next;}
+  const idx=vals.indexOf(v);
+  if(idx===-1){setMsg('delete','✗ Value '+v+' not found!',COLORS.deleted);return;}
+  vals.splice(idx,1);
+  deleteList=reindexList(vals);
+  drawList('cv-delete',deleteList);
+  setMsg('delete','✓ Deleted node with value '+v,COLORS.active);
+}
+
+function reindexList(vals){return makeList(vals);}
+
+// ── SECTION 4: TRAVERSAL ─────────────────────────
+let traverseList=makeList([12,25,37,48,56]);
+drawList('cv-traverse',traverseList);
+let traverseTimer=null;
+let traverseStep=0;let traverseDir='fwd';let traversePath=[];
+
+function getPath(L,dir){
+  const path=[];let cur=L.head;
+  while(cur!==-1){path.push(cur);cur=L.nodes[cur].next;}
+  return dir==='bwd'?[...path].reverse():path;
+}
+function startTraverse(dir){
+  stopTraverse();
+  traverseDir=dir;
+  traversePath=getPath(traverseList,dir);
+  traverseStep=0;
+  setMsg('traverse',(dir==='fwd'?'▶ Forward':'◀ Backward')+' traversal started...');
+  traverseTimer=setInterval(()=>{
+    if(traverseStep>=traversePath.length){stopTraverse();setMsg('traverse','✓ Traversal complete!',COLORS.active);return;}
+    const cur=traversePath[traverseStep];
+    drawList('cv-traverse',traverseList,{searching:cur});
+    setMsg('traverse',(dir==='fwd'?'→':'←')+' Visiting node ['+cur+'] = '+traverseList.nodes[cur].data+' (step '+(traverseStep+1)+'/'+traversePath.length+')',COLORS.search);
+    traverseStep++;
+  },600);
+}
+function stopTraverse(){if(traverseTimer){clearInterval(traverseTimer);traverseTimer=null;}drawList('cv-traverse',traverseList);}
+
+// ── SECTION 5: SEARCH ───────────────────────────
+let searchList=makeList([10,20,30,40,50]);
+drawList('cv-search',searchList);
+let searchTimer=null;
+
+function vizSearch(dir){
+  if(searchTimer)clearInterval(searchTimer);
+  const target=parseInt(document.getElementById('srch-val').value)||30;
+  const path=getPath(searchList,dir);
+  let step=0;
+  searchTimer=setInterval(()=>{
+    if(step>=path.length){
+      clearInterval(searchTimer);
+      setMsg('search','✗ Value '+target+' not found after checking all nodes.',COLORS.deleted);
+      drawList('cv-search',searchList);return;
+    }
+    const cur=path[step];
+    drawList('cv-search',searchList,{searching:cur});
+    if(searchList.nodes[cur].data===target){
+      clearInterval(searchTimer);
+      drawList('cv-search',searchList,{highlight:[cur]});
+      setMsg('search','✓ Found '+target+' at index ['+cur+'] after '+(step+1)+' step(s)!',COLORS.active);
+      return;
+    }
+    setMsg('search','Checking ['+cur+']='+searchList.nodes[cur].data+' ... not a match',COLORS.text2);
+    step++;
+  },500);
+}
+
+// ── SECTION 10: UTILITY ─────────────────────────
+let utilityList=makeList([11,22,33,44,55]);
+drawList('cv-utility',utilityList);
+
+function vizReverse(){
+  // Reverse the linked order by swapping data array position conceptually
+  const vals=[];let cur=utilityList.head;
+  while(cur!==-1){vals.push(utilityList.nodes[cur].data);cur=utilityList.nodes[cur].next;}
+  vals.reverse();
+  utilityList=makeList(vals);
+  drawList('cv-utility',utilityList,{highlight:utilityList.nodes.map((_,i)=>i)});
+  setMsg('utility','✓ List reversed! Head now = '+utilityList.nodes[0].data,COLORS.active);
+}
+function vizClear(){utilityList=makeList([]);drawList('cv-utility',utilityList);setMsg('utility','✓ List cleared! size=0, head=-1',COLORS.deleted);}
+
+// ── SECTION 11: SORTING ─────────────────────────
+let sortList=makeList([64,25,12,22,11]);
+drawList('cv-sort',sortList);
+let sortTimer=null;
+
+function vizSort(algo){
+  if(sortTimer)clearInterval(sortTimer);
+  // Get values, sort step by step
+  const vals=[];let cur=sortList.head;
+  while(cur!==-1){vals.push(sortList.nodes[cur].data);cur=sortList.nodes[cur].next;}
+  const steps=getSortSteps(algo,[...vals]);
+  let i=0;
+  sortTimer=setInterval(()=>{
+    if(i>=steps.length){
+      clearInterval(sortTimer);
+      setMsg('sort','✓ '+algo.charAt(0).toUpperCase()+algo.slice(1)+' Sort complete!',COLORS.active);
+      drawList('cv-sort',sortList,{highlight:sortList.nodes.map((_,k)=>k)});return;
+    }
+    const s=steps[i];
+    sortList=makeList(s.arr);
+    drawList('cv-sort',sortList,{highlight:s.swapped||[],searching:s.compare||-1});
+    setMsg('sort','Step '+(i+1)+'/'+steps.length+': '+s.msg,COLORS.search);
+    i++;
+  },400);
+}
+
+function getSortSteps(algo,arr){
+  const steps=[];
+  if(algo==='bubble'){
+    for(let i=0;i<arr.length-1;i++){
+      let sw=false;
+      for(let j=0;j<arr.length-i-1;j++){
+        if(arr[j]>arr[j+1]){
+          [arr[j],arr[j+1]]=[arr[j+1],arr[j]];sw=true;
+          steps.push({arr:[...arr],swapped:[j,j+1],msg:'Swapped '+arr[j]+' ↔ '+arr[j+1]});
+        }else{
+          steps.push({arr:[...arr],compare:j,msg:'No swap needed: '+arr[j]+' ≤ '+arr[j+1]});
+        }
+      }
+      if(!sw)break;
+    }
+  } else if(algo==='selection'){
+    for(let i=0;i<arr.length-1;i++){
+      let minIdx=i;
+      for(let j=i+1;j<arr.length;j++){if(arr[j]<arr[minIdx])minIdx=j;}
+      if(minIdx!==i){[arr[i],arr[minIdx]]=[arr[minIdx],arr[i]];steps.push({arr:[...arr],swapped:[i,minIdx],msg:'Min='+arr[i]+' placed at position '+i});}
+    }
+  } else {
+    for(let i=1;i<arr.length;i++){
+      const key=arr[i];let j=i-1;
+      while(j>=0&&arr[j]>key){arr[j+1]=arr[j];steps.push({arr:[...arr],compare:j,msg:'Shifting '+arr[j]+' right'});j--;}
+      arr[j+1]=key;steps.push({arr:[...arr],highlight:[j+1],msg:'Inserted '+key+' at position '+(j+1)});
+    }
+  }
+  return steps;
+}
+
+// ── FULL INTERACTIVE ─────────────────────────────
+let fullList=makeList([10,20,30]);
+drawList('cv-full',fullList);
+
+function fullInsertFront(){
+  const v=parseInt(document.getElementById('full-val').value)||7;
+  if(fullList.size>=MAX){setMsg('full','✗ List full!',COLORS.deleted);return;}
+  const slot=fullList.size;
+  if(fullList.head!==-1)fullList.nodes[fullList.head].prev=slot;
+  fullList.nodes.push(makeNode(v,fullList.head,-1));
+  fullList.head=slot;fullList.size++;
+  drawList('cv-full',fullList,{highlight:[slot]});
+  setMsg('full','✓ Inserted '+v+' at front. Size='+fullList.size,COLORS.active);
+}
+function fullInsertRear(){
+  const v=parseInt(document.getElementById('full-val').value)||7;
+  if(fullList.size>=MAX){setMsg('full','✗ List full!',COLORS.deleted);return;}
+  const slot=fullList.size;
+  if(fullList.head===-1){fullList.nodes.push(makeNode(v));fullList.head=slot;}
+  else{let cur=fullList.head;while(fullList.nodes[cur].next!==-1)cur=fullList.nodes[cur].next;fullList.nodes.push(makeNode(v,-1,cur));fullList.nodes[cur].next=slot;}
+  fullList.size++;
+  drawList('cv-full',fullList,{highlight:[slot]});
+  setMsg('full','✓ Inserted '+v+' at rear. Size='+fullList.size,COLORS.active);
+}
+function fullDeleteFront(){
+  if(fullList.size===0){setMsg('full','✗ Empty!',COLORS.deleted);return;}
+  const old=fullList.nodes[fullList.head].data;
+  const vals=[];let cur=fullList.head;
+  while(cur!==-1){vals.push(fullList.nodes[cur].data);cur=fullList.nodes[cur].next;}
+  vals.shift();fullList=reindexList(vals);
+  drawList('cv-full',fullList);
+  setMsg('full','✓ Deleted '+old+' from front.',COLORS.active);
+}
+function fullDeleteRear(){
+  if(fullList.size===0){setMsg('full','✗ Empty!',COLORS.deleted);return;}
+  const vals=[];let cur=fullList.head;
+  while(cur!==-1){vals.push(fullList.nodes[cur].data);cur=fullList.nodes[cur].next;}
+  const old=vals.pop();fullList=reindexList(vals);
+  drawList('cv-full',fullList);
+  setMsg('full','✓ Deleted '+old+' from rear.',COLORS.active);
+}
+function fullReverse(){
+  const vals=[];let cur=fullList.head;
+  while(cur!==-1){vals.push(fullList.nodes[cur].data);cur=fullList.nodes[cur].next;}
+  fullList=makeList(vals.reverse());
+  drawList('cv-full',fullList,{highlight:fullList.nodes.map((_,i)=>i)});
+  setMsg('full','✓ List reversed!',COLORS.active);
+}
+
+// ── GLOBAL RESET ──────────────────────────────────
+function vizReset(which){
+  if(which==='insert'){insertList=makeList([10,20,30]);drawList('cv-insert',insertList);setMsg('insert','Reset to [10, 20, 30]');}
+  if(which==='delete'){deleteList=makeList([5,10,20,30,45]);drawList('cv-delete',deleteList);setMsg('delete','Reset to [5, 10, 20, 30, 45]');}
+  if(which==='utility'){utilityList=makeList([11,22,33,44,55]);drawList('cv-utility',utilityList);setMsg('utility','Reset to [11, 22, 33, 44, 55]');}
+  if(which==='sort'){sortList=makeList([64,25,12,22,11]);drawList('cv-sort',sortList);setMsg('sort','Shuffled! Click a sort algorithm.');}
+  if(which==='full'){fullList=makeList([10,20,30]);drawList('cv-full',fullList);setMsg('full','Reset to [10, 20, 30]');}
+}
+
+// ── NAV ───────────────────────────────────────────
+function scrollTo(id){
+  const el=document.getElementById(id);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const idx={'s1':0,'s2':1,'s3':2,'s4':3,'s5':4,'s6':5,'s7':6,'s8':7,'s9':8,'s10':9,'s11':10,'s12':11,'s13':12,'s14':13};
+  const items=document.querySelectorAll('.nav-item');
+  if(items[idx[id]])items[idx[id]].classList.add('active');
+}
+
+// ── INTERSECTION OBSERVER FOR NAV ─────────────────
+const sections=document.querySelectorAll('section[id]');
+const navItems=document.querySelectorAll('.nav-item');
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const id=e.target.id;
+      const idx={'s1':0,'s2':1,'s3':2,'s4':3,'s5':4,'s6':5,'s7':6,'s8':7,'s9':8,'s10':9,'s11':10,'s12':11,'s13':12,'s14':13};
+      navItems.forEach(n=>n.classList.remove('active'));
+      if(navItems[idx[id]])navItems[idx[id]].classList.add('active');
+    }
+  });
+},{threshold:0.3});
+sections.forEach(s=>obs.observe(s));
+
+// Initial renders
+drawList('cv-basic',basicList);
+</script>
+</body>
+</html>

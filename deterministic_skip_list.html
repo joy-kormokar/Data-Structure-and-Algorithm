@@ -1,0 +1,2939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deterministic Skip List — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c14;
+  --bg2: #0d1320;
+  --bg3: #121929;
+  --card: #0f1826;
+  --border: #1e2d45;
+  --accent: #00e5ff;
+  --accent2: #7c3aff;
+  --accent3: #00ff8c;
+  --warn: #ff6b35;
+  --text: #d0e4f7;
+  --text2: #7a9bbf;
+  --text3: #3d5875;
+  --code-bg: #070b11;
+  --node: #1a2e45;
+  --node-border: #2a4a6a;
+  --highlight: #00e5ff;
+  --promote: #7c3aff;
+  --delete-col: #ff4444;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Syne',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+/* ─── SIDEBAR ─── */
+#sidebar{
+  width:280px;
+  min-width:280px;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  position:fixed;
+  top:0;left:0;
+  height:100vh;
+  overflow-y:auto;
+  z-index:100;
+  transition:transform .3s;
+}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sidebar-header{
+  padding:24px 20px 16px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;
+  background:var(--bg2);
+  z-index:10;
+}
+.sidebar-title{
+  font-size:13px;font-weight:700;
+  color:var(--accent);
+  letter-spacing:2px;text-transform:uppercase;
+  line-height:1.4;
+}
+.sidebar-sub{font-size:11px;color:var(--text3);margin-top:4px;font-family:'JetBrains Mono',monospace;}
+nav ul{list-style:none;padding:12px 0 24px}
+nav ul li a{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 20px;
+  font-size:13px;color:var(--text2);
+  text-decoration:none;
+  transition:all .2s;
+  border-left:2px solid transparent;
+  font-family:'JetBrains Mono',monospace;
+}
+nav ul li a:hover,nav ul li a.active{
+  color:var(--accent);
+  background:rgba(0,229,255,.05);
+  border-left-color:var(--accent);
+}
+nav ul li a .num{
+  font-size:10px;color:var(--text3);
+  min-width:18px;
+}
+/* ─── MAIN ─── */
+#main{
+  margin-left:280px;
+  flex:1;
+  max-width:calc(100vw - 280px);
+  padding:0;
+}
+/* ─── HERO ─── */
+#hero{
+  padding:64px 56px 48px;
+  background:linear-gradient(135deg,#080c14 0%,#0d1828 50%,#0a0f1c 100%);
+  border-bottom:1px solid var(--border);
+  position:relative;
+  overflow:hidden;
+}
+#hero::before{
+  content:'';
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 50% at 80% 50%,rgba(124,58,255,.12) 0%,transparent 70%);
+}
+#hero::after{
+  content:'';
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 40% 60% at 20% 80%,rgba(0,229,255,.08) 0%,transparent 60%);
+}
+.hero-tag{
+  display:inline-block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--accent);
+  background:rgba(0,229,255,.08);
+  border:1px solid rgba(0,229,255,.2);
+  padding:4px 10px;border-radius:4px;
+  letter-spacing:1px;margin-bottom:20px;
+  position:relative;z-index:1;
+}
+.hero-title{
+  font-size:clamp(32px,4vw,52px);
+  font-weight:800;line-height:1.1;
+  background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--accent2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  position:relative;z-index:1;
+  margin-bottom:16px;
+}
+.hero-desc{
+  font-size:16px;color:var(--text2);
+  max-width:600px;line-height:1.7;
+  position:relative;z-index:1;
+  margin-bottom:28px;
+}
+.hero-badges{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1;}
+.badge{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;padding:5px 12px;border-radius:20px;
+  font-weight:600;
+}
+.badge-c{background:rgba(0,229,255,.1);color:var(--accent);border:1px solid rgba(0,229,255,.25);}
+.badge-d{background:rgba(124,58,255,.1);color:#a78bfa;border:1px solid rgba(124,58,255,.25);}
+.badge-b{background:rgba(0,255,140,.1);color:var(--accent3);border:1px solid rgba(0,255,140,.25);}
+/* ─── SECTIONS ─── */
+.section{
+  padding:48px 56px;
+  border-bottom:1px solid var(--border);
+}
+.section:last-child{border-bottom:none}
+.section-header{margin-bottom:32px;}
+.section-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--accent);
+  letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:8px;
+}
+.section-title{
+  font-size:28px;font-weight:800;
+  color:#fff;margin-bottom:8px;
+}
+.section-subtitle{
+  font-size:14px;color:var(--text2);
+  font-family:'JetBrains Mono',monospace;
+}
+/* ─── TABS ─── */
+.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--border);}
+.tab{
+  padding:10px 20px;
+  font-size:13px;font-weight:600;
+  color:var(--text3);cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .2s;
+  font-family:'JetBrains Mono',monospace;
+  letter-spacing:.5px;
+}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+/* ─── THEORY CARD ─── */
+.theory-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:28px;
+  margin-bottom:20px;
+  line-height:1.8;
+  font-size:15px;
+  color:var(--text);
+}
+.theory-card h4{
+  color:var(--accent);font-size:16px;font-weight:700;
+  margin-bottom:10px;margin-top:20px;
+}
+.theory-card h4:first-child{margin-top:0;}
+.theory-card p{margin-bottom:12px;}
+.theory-card ul{padding-left:20px;margin-bottom:12px;}
+.theory-card ul li{margin-bottom:6px;}
+.theory-card .formula{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  padding:12px 16px;border-radius:6px;
+  font-size:13px;color:var(--accent3);
+  margin:12px 0;display:block;
+}
+.ops-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.op-card{
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px;
+}
+.op-card .op-title{color:var(--accent);font-size:13px;font-weight:700;margin-bottom:6px;}
+.op-card .op-list{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);line-height:1.8;}
+/* ─── CODE BLOCK ─── */
+.code-block{
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  margin-bottom:20px;
+  font-size:13px;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;
+  background:rgba(255,255,255,.02);
+  border-bottom:1px solid var(--border);
+}
+.code-lang{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--accent);
+  letter-spacing:1px;
+}
+.code-title{font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.code-body{
+  padding:20px;
+  overflow-x:auto;
+}
+.code-body pre{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  line-height:1.7;
+  color:var(--text);
+  white-space:pre;
+}
+/* syntax highlight */
+.kw{color:#7c3aff;font-weight:600;}
+.ty{color:#00e5ff;}
+.fn{color:#00ff8c;}
+.cm{color:#3d5875;font-style:italic;}
+.st{color:#ff9f43;}
+.nm{color:#fd9644;}
+.pp{color:#ffd93d;}
+/* ─── ANALOGY CARD ─── */
+.analogy-card{
+  background:linear-gradient(135deg,rgba(124,58,255,.08) 0%,rgba(0,229,255,.05) 100%);
+  border:1px solid rgba(124,58,255,.25);
+  border-radius:12px;
+  padding:24px;
+  margin-bottom:20px;
+}
+.analogy-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:#a78bfa;
+  letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:10px;
+}
+.analogy-text{font-size:15px;line-height:1.7;color:var(--text);}
+/* ─── VISUALIZATION ─── */
+.viz-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  margin-bottom:20px;
+}
+.viz-header{
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.viz-title{font-size:13px;font-weight:700;color:var(--text2);}
+.viz-body{padding:20px;}
+canvas{display:block;width:100%;border-radius:6px;}
+.viz-controls{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-top:14px;
+}
+.btn{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;padding:8px 16px;
+  border-radius:6px;cursor:pointer;
+  border:none;font-weight:600;
+  transition:all .2s;
+  letter-spacing:.5px;
+}
+.btn-accent{background:var(--accent);color:#000;}
+.btn-accent:hover{background:#00b8d4;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-warn{background:rgba(255,68,68,.15);color:#ff6b6b;border:1px solid rgba(255,68,68,.3);}
+.btn-warn:hover{background:rgba(255,68,68,.25);}
+.btn-green{background:rgba(0,255,140,.12);color:var(--accent3);border:1px solid rgba(0,255,140,.25);}
+.btn-green:hover{background:rgba(0,255,140,.2);}
+input[type=number],input[type=text]{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:8px 12px;border-radius:6px;
+  width:80px;
+  outline:none;
+}
+input:focus{border-color:var(--accent);}
+.log{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px 14px;
+  color:var(--accent3);
+  margin-top:10px;
+  min-height:32px;
+  max-height:80px;
+  overflow-y:auto;
+}
+.log .err{color:#ff6b6b;}
+/* ─── COMPLEXITY TABLE ─── */
+.complexity-table{
+  width:100%;border-collapse:collapse;
+  font-size:13px;margin-bottom:20px;
+}
+.complexity-table th{
+  background:rgba(0,229,255,.06);
+  color:var(--accent);
+  padding:10px 14px;text-align:left;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:1px;text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+}
+.complexity-table td{
+  padding:10px 14px;
+  border-bottom:1px solid rgba(30,45,69,.5);
+  color:var(--text2);
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+}
+.complexity-table tr:hover td{background:rgba(255,255,255,.02);}
+td.good{color:var(--accent3);}td.ok{color:var(--warn);}
+/* ─── STEP LIST ─── */
+.steps{padding-left:0;list-style:none;margin:12px 0;}
+.steps li{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:10px 0;border-bottom:1px solid rgba(30,45,69,.5);
+  font-size:14px;line-height:1.6;
+}
+.steps li:last-child{border-bottom:none;}
+.step-num{
+  min-width:24px;height:24px;
+  border-radius:50%;
+  background:var(--accent);color:#000;
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:2px;
+  font-family:'JetBrains Mono',monospace;
+}
+/* ─── INFO GRID ─── */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:16px 0;}
+.info-tile{
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  border-radius:8px;padding:16px;
+  text-align:center;
+}
+.info-tile .val{
+  font-size:28px;font-weight:800;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--accent);
+}
+.info-tile .lbl{font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+/* ─── MOBILE TOGGLE ─── */
+#menuToggle{
+  display:none;
+  position:fixed;top:16px;left:16px;z-index:200;
+  background:var(--accent);color:#000;
+  border:none;border-radius:6px;padding:8px 12px;
+  font-size:16px;cursor:pointer;font-weight:700;
+}
+/* ─── PROGRESS BAR ─── */
+#progress{
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  z-index:999;transition:width .1s;
+  width:0%;
+}
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%);}
+  #sidebar.open{transform:translateX(0);}
+  #main{margin-left:0;max-width:100vw;}
+  .section{padding:32px 20px;}
+  #hero{padding:32px 20px;}
+  #menuToggle{display:block;}
+  .ops-grid{grid-template-columns:1fr;}
+  .hero-title{font-size:28px;}
+}
+/* ─── TOOLTIP ─── */
+.tooltip{
+  position:absolute;
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:6px 10px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--text);
+  pointer-events:none;
+  z-index:50;
+  display:none;
+}
+/* ─── SUBOP PILLS ─── */
+.subop-list{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+.subop{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  background:rgba(0,229,255,.06);
+  border:1px solid rgba(0,229,255,.15);
+  color:var(--text2);
+  padding:4px 10px;border-radius:20px;
+}
+.subop:hover{border-color:var(--accent);color:var(--accent);}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<button id="menuToggle" onclick="toggleSidebar()">☰</button>
+
+<!-- ─────────── SIDEBAR ─────────── -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">Skip List<br>Dashboard</div>
+    <div class="sidebar-sub">// deterministic edition</div>
+  </div>
+  <nav>
+    <ul id="navList">
+      <li><a href="#s0"><span class="num">00</span>Introduction</a></li>
+      <li><a href="#s1"><span class="num">01</span>Initialization</a></li>
+      <li><a href="#s2"><span class="num">02</span>Insertion</a></li>
+      <li><a href="#s3"><span class="num">03</span>Deletion</a></li>
+      <li><a href="#s4"><span class="num">04</span>Search</a></li>
+      <li><a href="#s5"><span class="num">05</span>Update</a></li>
+      <li><a href="#s6"><span class="num">06</span>Traversal</a></li>
+      <li><a href="#s7"><span class="num">07</span>Level Management</a></li>
+      <li><a href="#s8"><span class="num">08</span>Deterministic Promotion</a></li>
+      <li><a href="#s9"><span class="num">09</span>Pointer Management</a></li>
+      <li><a href="#s10"><span class="num">10</span>Rebalancing</a></li>
+      <li><a href="#s11"><span class="num">11</span>Utility Ops</a></li>
+      <li><a href="#s12"><span class="num">12</span>Memory Management</a></li>
+      <li><a href="#s13"><span class="num">13</span>Analytical Ops</a></li>
+      <li><a href="#s14"><span class="num">14</span>Iterator Ops</a></li>
+      <li><a href="#s15"><span class="num">15</span>Advanced Ops</a></li>
+    </ul>
+  </nav>
+</aside>
+
+<!-- ─────────── MAIN ─────────── -->
+<main id="main">
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-tag">DATA STRUCTURES · C PROGRAMMING · BEGINNER → ADVANCED</div>
+  <h1 class="hero-title">Deterministic<br>Skip List</h1>
+  <p class="hero-desc">A probabilistic-free, structurally predictable linked data structure offering O(log n) search, insertion, and deletion — without randomness.</p>
+  <div class="hero-badges">
+    <span class="badge badge-c">C Language</span>
+    <span class="badge badge-d">O(log n) Operations</span>
+    <span class="badge badge-b">15 Operation Groups</span>
+  </div>
+</section>
+
+<!-- ════════ SECTION 0: INTRO ════════ -->
+<section class="section" id="s0">
+  <div class="section-header">
+    <div class="section-num">// 00 — INTRODUCTION</div>
+    <h2 class="section-title">What Is a Deterministic Skip List?</h2>
+    <div class="section-subtitle">the foundation before we build anything</div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s0t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s0v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s0c')">C Struct</div>
+    <div class="tab" onclick="switchTab(this,'s0a')">Analogy</div>
+  </div>
+  <div id="s0t" class="tab-content active">
+    <div class="theory-card">
+      <h4>📚 The Problem with Regular Linked Lists</h4>
+      <p>A simple linked list lets you insert easily, but searching requires scanning every node from front to back — <strong>O(n)</strong> time. If you have 1 million items, you might check all 1 million.</p>
+      <h4>🚀 Skip Lists — Express Lanes</h4>
+      <p>A skip list adds extra layers above the base linked list. Higher layers are <em>express lanes</em> that skip over many nodes at once. Like a highway that skips small towns and only stops at cities.</p>
+      <h4>🎲 Random vs Deterministic</h4>
+      <p>Classic skip lists use a coin flip to decide which nodes get promoted. <strong>Deterministic skip lists</strong> use a fixed mathematical rule instead — typically <em>every k-th node</em> gets promoted to the next level. This gives predictable performance and structure.</p>
+      <h4>⚡ Why Deterministic?</h4>
+      <ul>
+        <li>No randomness = reproducible structure every time</li>
+        <li>Guaranteed worst-case O(log n) performance</li>
+        <li>Easier to analyze, debug, and reason about</li>
+        <li>Used in databases and file systems for reliable indexing</li>
+      </ul>
+      <div class="info-grid">
+        <div class="info-tile"><div class="val">O(log n)</div><div class="lbl">Search Time</div></div>
+        <div class="info-tile"><div class="val">O(log n)</div><div class="lbl">Insert / Delete</div></div>
+        <div class="info-tile"><div class="val">O(n)</div><div class="lbl">Space Used</div></div>
+        <div class="info-tile"><div class="val">k=2</div><div class="lbl">Typical Promotion Rule</div></div>
+      </div>
+      <table class="complexity-table" style="margin-top:16px">
+        <thead><tr><th>Operation</th><th>Avg Case</th><th>Worst Case</th></tr></thead>
+        <tbody>
+          <tr><td>Search</td><td class="good">O(log n)</td><td class="good">O(log n)</td></tr>
+          <tr><td>Insert</td><td class="good">O(log n)</td><td class="good">O(log n)</td></tr>
+          <tr><td>Delete</td><td class="good">O(log n)</td><td class="good">O(log n)</td></tr>
+          <tr><td>Traverse</td><td class="ok">O(n)</td><td class="ok">O(n)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="s0v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Static Skip List Structure (k=2 promotion)</span></div>
+      <div class="viz-body">
+        <canvas id="introCanvas" height="220"></canvas>
+        <div class="log" id="introLog">↑ This shows a static skip list with keys [3, 6, 9, 12, 15, 18]. Level 0 = all nodes. Higher levels = promoted nodes.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s0c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Core Skip List Structures</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Maximum levels in our skip list ─── */</span>
+<span class="pp">#define</span> MAX_LEVEL <span class="nm">6</span>
+<span class="pp">#define</span> K_PROMOTE <span class="nm">2</span>   <span class="cm">/* Every 2nd node gets promoted */</span>
+
+<span class="cm">/* ─── A single node in the skip list ─── */</span>
+<span class="kw">typedef struct</span> <span class="ty">Node</span> {
+    <span class="kw">int</span>   key;                         <span class="cm">/* the value stored */</span>
+    <span class="kw">int</span>   value;                       <span class="cm">/* satellite data */</span>
+    <span class="kw">int</span>   level;                       <span class="cm">/* how many levels this node spans */</span>
+    <span class="kw">struct</span> <span class="ty">Node</span> *forward[MAX_LEVEL];  <span class="cm">/* array of next-pointers */</span>
+} <span class="ty">Node</span>;
+
+<span class="cm">/* ─── The skip list itself ─── */</span>
+<span class="kw">typedef struct</span> <span class="ty">SkipList</span> {
+    <span class="ty">Node</span> *header;        <span class="cm">/* sentinel head node */</span>
+    <span class="kw">int</span>   currentLevel;  <span class="cm">/* highest active level */</span>
+    <span class="kw">int</span>   size;          <span class="cm">/* total number of elements */</span>
+    <span class="kw">int</span>   insertCount;   <span class="cm">/* used to determine promotion */</span>
+    <span class="kw">int</span>   k;             <span class="cm">/* promotion rule: every k-th node */</span>
+} <span class="ty">SkipList</span>;
+
+<span class="cm">/* ─── Helper: create a new node ─── */</span>
+<span class="ty">Node</span>* <span class="fn">createNode</span>(<span class="kw">int</span> key, <span class="kw">int</span> value, <span class="kw">int</span> level) {
+    <span class="ty">Node</span> *n = (<span class="ty">Node</span>*) malloc(<span class="kw">sizeof</span>(<span class="ty">Node</span>));
+    n->key   = key;
+    n->value = value;
+    n->level = level;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; MAX_LEVEL; i++)
+        n->forward[i] = <span class="nm">NULL</span>;
+    <span class="kw">return</span> n;
+}</pre></div>
+    </div>
+  </div>
+  <div id="s0a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Think of a city highway system:</strong><br><br>
+        🏘️ <strong>Level 0</strong> — Every house on every street (all elements)<br>
+        🏙️ <strong>Level 1</strong> — Main city roads (every 2nd important stop)<br>
+        🛣️ <strong>Level 2</strong> — Express highways (every 4th major hub)<br>
+        ✈️ <strong>Level 3</strong> — Air routes (every 8th major city)<br><br>
+        To travel from one end to another, you use highways first to cover large distances fast, then take local streets for the final stretch. A deterministic skip list does exactly this — it plans the "express lanes" in a predictable, formula-based way, not by flipping a coin.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 1: INITIALIZATION ════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">// 01 — INITIALIZATION OPERATIONS</div>
+    <h2 class="section-title">Setting Up the Skip List</h2>
+    <div class="section-subtitle">Create · Initialize · Configure</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Create Deterministic Skip List<br>• Initialize Head Node<br>• Set Maximum Level<br>• Define Promotion Rule</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Allocate Header Node<br>• Initialize Forward Pointers<br>• Set Current Level<br>• Assign NULL References<br>• Configure Deterministic Policy</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s1t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s1v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s1c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s1a')">Analogy</div>
+  </div>
+  <div id="s1t" class="tab-content active">
+    <div class="theory-card">
+      <h4>What Happens During Initialization?</h4>
+      <p>Before any data is stored, we must create the "skeleton" of the skip list. This involves three key steps:</p>
+      <ul>
+        <li><strong>Allocate Header:</strong> A special sentinel node that acts as the entry point. It has the smallest possible key (−∞) and is never removed.</li>
+        <li><strong>Initialize Forward Pointers:</strong> Every level of the header points to NULL — meaning the list is empty.</li>
+        <li><strong>Set Configuration:</strong> Define MAX_LEVEL (usually ⌊log₂ n⌋ + 1), current level (starts at 0), size (0), and the deterministic rule (k=2).</li>
+      </ul>
+      <span class="formula">currentLevel = 0 | size = 0 | header→forward[i] = NULL for all i</span>
+      <h4>Why a Header Node?</h4>
+      <p>The header is a "dummy" node — it simplifies the code because we never have to handle an empty list as a special case. Insertions and searches always start from the header.</p>
+    </div>
+  </div>
+  <div id="s1v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Empty Skip List Structure</span></div>
+      <div class="viz-body">
+        <canvas id="initCanvas" height="200"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="drawInitViz()">Reset View</button>
+        </div>
+        <div class="log">An empty skip list: Header node on the left, all 6 forward pointers set to NULL (shown as —∅)</div>
+      </div>
+    </div>
+  </div>
+  <div id="s1c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">createSkipList() — Initialization</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Step 1: Create and return an empty skip list ─── */</span>
+<span class="ty">SkipList</span>* <span class="fn">createSkipList</span>(<span class="kw">int</span> k) {
+    <span class="cm">/* Allocate memory for the skip list control struct */</span>
+    <span class="ty">SkipList</span> *sl = (<span class="ty">SkipList</span>*) malloc(<span class="kw">sizeof</span>(<span class="ty">SkipList</span>));
+
+    <span class="cm">/* ─── Allocate the header/sentinel node ─── */</span>
+    sl->header = <span class="fn">createNode</span>(-<span class="nm">99999</span>, <span class="nm">0</span>, MAX_LEVEL - <span class="nm">1</span>);
+
+    <span class="cm">/* ─── Initialize all forward pointers to NULL ─── */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; MAX_LEVEL; i++)
+        sl->header->forward[i] = <span class="nm">NULL</span>;
+
+    <span class="cm">/* ─── Set initial state ─── */</span>
+    sl->currentLevel = <span class="nm">0</span>;     <span class="cm">/* no active levels yet */</span>
+    sl->size         = <span class="nm">0</span>;     <span class="cm">/* no elements */</span>
+    sl->insertCount  = <span class="nm">0</span>;     <span class="cm">/* counter for promotion rule */</span>
+    sl->k            = k;      <span class="cm">/* promotion rule (e.g., k=2) */</span>
+
+    <span class="kw">return</span> sl;
+}
+
+<span class="cm">/* ─── Usage ─── */</span>
+<span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="ty">SkipList</span> *sl = <span class="fn">createSkipList</span>(<span class="nm">2</span>); <span class="cm">/* k=2: every 2nd promoted */</span>
+    printf(<span class="st">"Skip list created! Size: %d\n"</span>, sl->size); <span class="cm">/* → 0 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre></div>
+    </div>
+  </div>
+  <div id="s1a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like setting up a new library before any books arrive:</strong><br><br>
+        📚 You first build empty bookshelves (initialize forward pointers to NULL).<br>
+        🏷️ You place a "START" sign at the entrance (header node with key = −∞).<br>
+        📋 You decide the shelving rule in advance: "Fiction every 2nd shelf gets a summary card" (define promotion rule k=2).<br>
+        📊 You write "0 books" in the catalog (size = 0).<br><br>
+        The library is ready — no books yet, but the infrastructure is perfectly set up.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 2: INSERTION ════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">// 02 — INSERTION OPERATIONS</div>
+    <h2 class="section-title">Inserting Elements</h2>
+    <div class="section-subtitle">Insert · Search Position · Promote Deterministically</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Insert Element<br>• Insert Key-Value Pair</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Search Insert Position<br>• Traverse Levels Top to Bottom<br>• Maintain Update Array<br>• Determine Node Level Deterministically<br>• Create New Node<br>• Update Forward Pointers<br>• Promote Nodes by Rule<br>• Adjust Current Level<br>• Increase Node Count</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s2t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s2v')">Interactive Viz</div>
+    <div class="tab" onclick="switchTab(this,'s2c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s2a')">Analogy</div>
+  </div>
+  <div id="s2t" class="tab-content active">
+    <div class="theory-card">
+      <h4>How Insertion Works — Step by Step</h4>
+      <ol class="steps">
+        <li><span class="step-num">1</span><div><strong>Find Insert Position:</strong> Start from the highest active level, move right while the next key is smaller than target, then drop down. Record the predecessor at each level in an <code>update[]</code> array.</div></li>
+        <li><span class="step-num">2</span><div><strong>Determine Node Level (Deterministically):</strong> Use the insertion count. If insertCount % k == 0, promote one more level. If insertCount % k² == 0, promote two levels, etc.</div></li>
+        <li><span class="step-num">3</span><div><strong>Create New Node:</strong> Allocate memory and set the key/value.</div></li>
+        <li><span class="step-num">4</span><div><strong>Splice In the Node:</strong> For each level 0 to nodeLevel, set:<br> <code>newNode→forward[i] = update[i]→forward[i]</code><br><code>update[i]→forward[i] = newNode</code></div></li>
+        <li><span class="step-num">5</span><div><strong>Update currentLevel</strong> if the new node's level is higher than current.</div></li>
+      </ol>
+      <h4>The Update Array</h4>
+      <p>The <code>update[]</code> array is crucial — it stores the rightmost node at each level whose key is less than the new key. These are the "insertion points" where we splice in the new node.</p>
+      <span class="formula">nodeLevel = floor(log_k(insertCount)) capped at MAX_LEVEL</span>
+    </div>
+  </div>
+  <div id="s2v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Interactive Insertion — Click Insert to add nodes</span></div>
+      <div class="viz-body">
+        <canvas id="insertCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <input type="number" id="insertKey" placeholder="key" value="7" min="1" max="99">
+          <button class="btn btn-accent" onclick="insertNode()">Insert</button>
+          <button class="btn btn-warn" onclick="resetInsert()">Reset</button>
+          <button class="btn btn-ghost" onclick="insertAuto()">Auto Fill</button>
+        </div>
+        <div class="log" id="insertLog">Ready — enter a key (1–99) and click Insert.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s2c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">insert() — Full Insertion with Deterministic Promotion</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Determine level deterministically based on insert count ─── */</span>
+<span class="kw">int</span> <span class="fn">getNodeLevel</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">int</span> level = <span class="nm">0</span>;
+    <span class="kw">int</span> count = sl->insertCount;
+    <span class="cm">/* Promote if perfectly divisible by k, k², k³... */</span>
+    <span class="kw">while</span> (level &lt; MAX_LEVEL - <span class="nm">1</span> &amp;&amp; count % sl->k == <span class="nm">0</span>) {
+        level++;
+        count /= sl->k;
+    }
+    <span class="kw">return</span> level;
+}
+
+<span class="cm">/* ─── Main insert function ─── */</span>
+<span class="kw">void</span> <span class="fn">insert</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> key, <span class="kw">int</span> value) {
+    <span class="ty">Node</span> *update[MAX_LEVEL];   <span class="cm">/* predecessors at each level */</span>
+    <span class="ty">Node</span> *curr = sl->header;
+
+    <span class="cm">/* ─── Step 1: Traverse top-to-bottom to find position ─── */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr->forward[i] != <span class="nm">NULL</span> &amp;&amp;
+               curr->forward[i]->key &lt; key) {
+            curr = curr->forward[i];  <span class="cm">/* move forward */</span>
+        }
+        update[i] = curr;  <span class="cm">/* record predecessor */</span>
+    }
+
+    <span class="cm">/* ─── Skip if duplicate key ─── */</span>
+    curr = curr->forward[<span class="nm">0</span>];
+    <span class="kw">if</span> (curr != <span class="nm">NULL</span> &amp;&amp; curr->key == key) {
+        curr->value = value;  <span class="cm">/* update existing */</span>
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* ─── Step 2: Determine level deterministically ─── */</span>
+    sl->insertCount++;
+    <span class="kw">int</span> newLevel = <span class="fn">getNodeLevel</span>(sl);
+
+    <span class="cm">/* ─── Extend update array if new level is higher ─── */</span>
+    <span class="kw">if</span> (newLevel &gt; sl->currentLevel) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel + <span class="nm">1</span>; i &lt;= newLevel; i++)
+            update[i] = sl->header;
+        sl->currentLevel = newLevel;
+    }
+
+    <span class="cm">/* ─── Step 3: Create new node ─── */</span>
+    <span class="ty">Node</span> *newNode = <span class="fn">createNode</span>(key, value, newLevel);
+
+    <span class="cm">/* ─── Step 4: Splice new node into each level ─── */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt;= newLevel; i++) {
+        newNode->forward[i]  = update[i]->forward[i];
+        update[i]->forward[i] = newNode;
+    }
+
+    sl->size++;  <span class="cm">/* increment element count */</span>
+    printf(<span class="st">"Inserted key=%d at level=%d\n"</span>, key, newLevel);
+}</pre></div>
+    </div>
+  </div>
+  <div id="s2a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like inserting a new employee into a company hierarchy:</strong><br><br>
+        👷 Every employee starts on the <strong>ground floor</strong> (Level 0).<br>
+        🏆 Every 2nd employee hired also gets a <strong>Team Lead badge</strong> (Level 1).<br>
+        👑 Every 4th hire gets a <strong>Manager title</strong> (Level 2).<br>
+        🎖️ Every 8th hire becomes a <strong>Director</strong> (Level 3).<br><br>
+        When a new employee joins, HR first finds the right team (search position), assigns the right title based on hire number (deterministic promotion), and updates all org charts (splice forward pointers).
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 3: DELETION ════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">// 03 — DELETION OPERATIONS</div>
+    <h2 class="section-title">Deleting Elements</h2>
+    <div class="section-subtitle">Delete · Unlink · Rebalance</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Delete Element<br>• Delete Key</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Search Target Node<br>• Traverse Levels<br>• Maintain Update Array<br>• Remove Forward Links<br>• Rebalance Levels<br>• Delete Node Memory<br>• Reduce Current Level<br>• Decrease Node Count</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s3t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s3v')">Interactive Viz</div>
+    <div class="tab" onclick="switchTab(this,'s3c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s3a')">Analogy</div>
+  </div>
+  <div id="s3t" class="tab-content active">
+    <div class="theory-card">
+      <h4>How Deletion Works</h4>
+      <p>Deletion is the reverse of insertion. We must "unlink" the target node from all levels it participates in, then free its memory.</p>
+      <ol class="steps">
+        <li><span class="step-num">1</span><div><strong>Find Predecessors:</strong> Traverse top-to-bottom, building the <code>update[]</code> array of nodes that point to (or past) the target.</div></li>
+        <li><span class="step-num">2</span><div><strong>Verify Target Exists:</strong> Check that <code>update[0]→forward[0]</code> is the target key. If not, the key doesn't exist — return.</div></li>
+        <li><span class="step-num">3</span><div><strong>Remove Forward Links:</strong> For each level from 0 upward, if <code>update[i]→forward[i]</code> is our target, redirect it: <code>update[i]→forward[i] = target→forward[i]</code></div></li>
+        <li><span class="step-num">4</span><div><strong>Reduce Current Level:</strong> After removal, shrink <code>currentLevel</code> if top levels are now empty (header points to NULL).</div></li>
+        <li><span class="step-num">5</span><div><strong>Free Memory:</strong> Call <code>free()</code> on the removed node. Decrease <code>size</code>.</div></li>
+      </ol>
+    </div>
+  </div>
+  <div id="s3v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Interactive Deletion — Pre-loaded list, delete any key</span></div>
+      <div class="viz-body">
+        <canvas id="deleteCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <input type="number" id="deleteKey" placeholder="key" value="9" min="1" max="99">
+          <button class="btn btn-warn" onclick="deleteNode()">Delete</button>
+          <button class="btn btn-ghost" onclick="resetDelete()">Reset List</button>
+        </div>
+        <div class="log" id="deleteLog">Pre-loaded list ready. Enter a key and click Delete.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s3c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">delete() — Unlinking a Node from All Levels</span></div>
+      <div class="code-body"><pre><span class="kw">void</span> <span class="fn">deleteNode</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> key) {
+    <span class="ty">Node</span> *update[MAX_LEVEL];
+    <span class="ty">Node</span> *curr = sl->header;
+
+    <span class="cm">/* ─── Step 1: Build the update array ─── */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr->forward[i] != <span class="nm">NULL</span> &amp;&amp;
+               curr->forward[i]->key &lt; key) {
+            curr = curr->forward[i];
+        }
+        update[i] = curr;
+    }
+
+    <span class="cm">/* ─── Step 2: Get candidate node ─── */</span>
+    <span class="ty">Node</span> *target = update[<span class="nm">0</span>]->forward[<span class="nm">0</span>];
+
+    <span class="cm">/* ─── Step 3: Verify it exists with matching key ─── */</span>
+    <span class="kw">if</span> (target == <span class="nm">NULL</span> || target->key != key) {
+        printf(<span class="st">"Key %d not found.\n"</span>, key);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* ─── Step 4: Remove forward links level by level ─── */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt;= sl->currentLevel; i++) {
+        <span class="kw">if</span> (update[i]->forward[i] != target) <span class="kw">break</span>;
+        update[i]->forward[i] = target->forward[i];
+    }
+
+    <span class="cm">/* ─── Step 5: Reduce currentLevel if top levels empty ─── */</span>
+    <span class="kw">while</span> (sl->currentLevel &gt; <span class="nm">0</span> &amp;&amp;
+           sl->header->forward[sl->currentLevel] == <span class="nm">NULL</span>) {
+        sl->currentLevel--;
+    }
+
+    <span class="cm">/* ─── Step 6: Free memory and update count ─── */</span>
+    free(target);
+    sl->size--;
+    printf(<span class="st">"Deleted key=%d successfully.\n"</span>, key);
+}</pre></div>
+    </div>
+  </div>
+  <div id="s3a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like removing a stop from a bus route network:</strong><br><br>
+        🚌 Imagine a city with express buses, local buses, and walking paths (3 levels).<br>
+        If you close a bus stop:<br>
+        1. Update the <strong>express routes</strong> to skip that stop (remove from level 2)<br>
+        2. Update the <strong>local routes</strong> to skip it (remove from level 1)<br>
+        3. Remove the stop from the <strong>walking path</strong> too (level 0)<br>
+        4. If the express route now has no stops, <strong>cancel the express route</strong> (reduce current level)<br>
+        5. <strong>Demolish the physical stop</strong> (free memory)<br>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 4: SEARCH ════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">// 04 — SEARCH OPERATIONS</div>
+    <h2 class="section-title">Searching for Keys</h2>
+    <div class="section-subtitle">Top-Down Fast Path · Compare · Return</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Search Key<br>• Search Value</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Start from Highest Level<br>• Move Forward in Current Level<br>• Drop to Lower Level<br>• Compare Keys<br>• Detect Key Found<br>• Detect Missing Key<br>• Return Node/Data</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s4t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s4v')">Interactive Viz</div>
+    <div class="tab" onclick="switchTab(this,'s4c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s4a')">Analogy</div>
+  </div>
+  <div id="s4t" class="tab-content active">
+    <div class="theory-card">
+      <h4>The Search Algorithm</h4>
+      <p>This is the core operation. Start at the top level (the fastest "highway") and work your way down:</p>
+      <ol class="steps">
+        <li><span class="step-num">1</span><div><strong>Start at Top Level:</strong> Begin at <code>header→forward[currentLevel]</code>.</div></li>
+        <li><span class="step-num">2</span><div><strong>Move Forward:</strong> While the next node's key is less than the target, advance forward on the current level.</div></li>
+        <li><span class="step-num">3</span><div><strong>Drop Down:</strong> When you can't move forward (next key ≥ target), drop to the level below.</div></li>
+        <li><span class="step-num">4</span><div><strong>Repeat:</strong> Continue until you reach Level 0 and can no longer move forward.</div></li>
+        <li><span class="step-num">5</span><div><strong>Check:</strong> The next node at Level 0 is either our target (found!) or a larger key (not found).</div></li>
+      </ol>
+      <h4>Why is it O(log n)?</h4>
+      <p>Each level skips approximately k nodes. With k=2, Level 1 skips 2 nodes, Level 2 skips 4, etc. So the total comparisons across all levels is about log₂(n).</p>
+    </div>
+  </div>
+  <div id="s4v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Search Path Visualization — Watch the algorithm traverse</span></div>
+      <div class="viz-body">
+        <canvas id="searchCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <input type="number" id="searchKey" placeholder="key" value="12" min="1" max="99">
+          <button class="btn btn-green" onclick="searchNode()">Search</button>
+          <button class="btn btn-ghost" onclick="resetSearch()">Reset</button>
+        </div>
+        <div class="log" id="searchLog">Enter a key and click Search to animate the search path.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s4c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">search() — Top-Down Skip List Search</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Returns pointer to node if found, NULL otherwise ─── */</span>
+<span class="ty">Node</span>* <span class="fn">search</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> key) {
+    <span class="ty">Node</span> *curr = sl->header;
+
+    <span class="cm">/* ─── Start from the highest active level ─── */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--) {
+
+        <span class="cm">/* ─── Move forward while next key is smaller ─── */</span>
+        <span class="kw">while</span> (curr->forward[i] != <span class="nm">NULL</span> &amp;&amp;
+               curr->forward[i]->key &lt; key) {
+            curr = curr->forward[i];
+            printf(<span class="st">"  Level %d: moved to key %d\n"</span>, i, curr->key);
+        }
+        <span class="cm">/* Drop to lower level when can't go forward */</span>
+        printf(<span class="st">"  Dropping from level %d to %d\n"</span>, i, i-<span class="nm">1</span>);
+    }
+
+    <span class="cm">/* ─── Check the node at Level 0 ─── */</span>
+    curr = curr->forward[<span class="nm">0</span>];
+
+    <span class="kw">if</span> (curr != <span class="nm">NULL</span> &amp;&amp; curr->key == key) {
+        printf(<span class="st">"FOUND: key=%d, value=%d\n"</span>, curr->key, curr->value);
+        <span class="kw">return</span> curr;
+    }
+
+    printf(<span class="st">"NOT FOUND: key=%d\n"</span>, key);
+    <span class="kw">return</span> <span class="nm">NULL</span>;
+}
+
+<span class="cm">/* ─── Usage example ─── */</span>
+<span class="ty">Node</span> *result = <span class="fn">search</span>(sl, <span class="nm">42</span>);
+<span class="kw">if</span> (result) printf(<span class="st">"Value: %d\n"</span>, result->value);
+<span class="kw">else</span>        printf(<span class="st">"Key not in list.\n"</span>);</pre></div>
+    </div>
+  </div>
+  <div id="s4a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like looking up a word in a dictionary using index tabs:</strong><br><br>
+        📖 The dictionary has <strong>alphabet tabs</strong> (top level — jump to 'M' section instantly).<br>
+        📑 Then <strong>chapter dividers</strong> inside 'M' (level 1 — 'Ma', 'Me', 'Mi'...).<br>
+        📝 Then <strong>individual pages</strong> (level 0 — every word).<br><br>
+        You don't start at page 1. You start at the highest-level tab that gets you close, then drill down. Skip lists do the same — they always start at the top and work downward, skipping massive swaths of data at higher levels.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 5: UPDATE ════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">// 05 — UPDATE OPERATIONS</div>
+    <h2 class="section-title">Updating Existing Values</h2>
+    <div class="section-subtitle">Search · Validate · Replace</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Update Existing Value<br>• Replace Data</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Search Target Node<br>• Modify Stored Value<br>• Validate Key Existence<br>• Replace Old Data</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s5t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s5v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s5c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s5a')">Analogy</div>
+  </div>
+  <div id="s5t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Why Update is Simple</h4>
+      <p>In a skip list, <strong>keys are immutable</strong> — once a node is placed, its position in the sorted order is fixed. Only the <em>value</em> (satellite data) can change. This means we just need to find the node and overwrite its value field.</p>
+      <h4>Update Process</h4>
+      <ol class="steps">
+        <li><span class="step-num">1</span><div><strong>Search:</strong> Run the normal search algorithm to find the node with the given key.</div></li>
+        <li><span class="step-num">2</span><div><strong>Validate:</strong> If the key doesn't exist, return an error. Don't insert a new node.</div></li>
+        <li><span class="step-num">3</span><div><strong>Overwrite:</strong> Set <code>node→value = newValue</code>. No pointer changes needed — the node stays in the same position at all levels.</div></li>
+      </ol>
+      <h4>Important Note</h4>
+      <p>If you need to change the key (not the value), you must <strong>delete the old node and insert a new one</strong>, since keys determine position in the sorted structure.</p>
+    </div>
+  </div>
+  <div id="s5v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Update Value Visualization</span></div>
+      <div class="viz-body">
+        <canvas id="updateCanvas" height="220"></canvas>
+        <div class="viz-controls">
+          <input type="number" id="updateKey" placeholder="key" value="6" min="1" max="99">
+          <input type="number" id="updateVal" placeholder="val" value="99" min="1" max="999">
+          <button class="btn btn-accent" onclick="updateNode()">Update</button>
+          <button class="btn btn-ghost" onclick="resetUpdate()">Reset</button>
+        </div>
+        <div class="log" id="updateLog">Enter a key and new value, then click Update.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s5c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">update() — Modify a Node's Value In-Place</span></div>
+      <div class="code-body"><pre><span class="kw">int</span> <span class="fn">update</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> key, <span class="kw">int</span> newValue) {
+    <span class="cm">/* ─── Search for the node ─── */</span>
+    <span class="ty">Node</span> *target = <span class="fn">search</span>(sl, key);
+
+    <span class="cm">/* ─── Validate: does the key exist? ─── */</span>
+    <span class="kw">if</span> (target == <span class="nm">NULL</span>) {
+        printf(<span class="st">"Update failed: key %d not found.\n"</span>, key);
+        <span class="kw">return</span> -<span class="nm">1</span>;  <span class="cm">/* error code */</span>
+    }
+
+    <span class="cm">/* ─── Replace old data with new value ─── */</span>
+    <span class="kw">int</span> oldValue = target->value;
+    target->value = newValue;
+
+    printf(<span class="st">"Updated key=%d: %d → %d\n"</span>, key, oldValue, newValue);
+    <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* success */</span>
+}
+
+<span class="cm">/* ─── If you want to change the KEY itself: ─── */</span>
+<span class="kw">void</span> <span class="fn">updateKey</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> oldKey,
+                <span class="kw">int</span> newKey, <span class="kw">int</span> value) {
+    <span class="fn">deleteNode</span>(sl, oldKey);  <span class="cm">/* remove old position */</span>
+    <span class="fn">insert</span>(sl, newKey, value);  <span class="cm">/* insert at new position */</span>
+}</pre></div>
+    </div>
+  </div>
+  <div id="s5a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like updating a student's grade in a sorted grade book:</strong><br><br>
+        📒 The grade book is sorted by student ID (the key — never changes).<br>
+        ✏️ The grade is the value — it changes every exam.<br><br>
+        You don't re-sort the whole book just to update a grade. You find the student's row (search by ID), erase the old grade, write the new one. Done — the student stays in the same row. That's exactly what update does in a skip list.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 6: TRAVERSAL ════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">// 06 — TRAVERSAL OPERATIONS</div>
+    <h2 class="section-title">Traversing the Skip List</h2>
+    <div class="section-subtitle">Sequential Visit · Level-wise Display</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Traverse Entire Skip List<br>• Traverse Specific Level</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Visit Nodes Sequentially<br>• Move Through Forward Links<br>• Print Keys<br>• Print Values<br>• Display Level-wise Structure</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s6t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s6v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s6c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s6a')">Analogy</div>
+  </div>
+  <div id="s6t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Traversal is Always at Level 0</h4>
+      <p>Level 0 contains <strong>all</strong> nodes in sorted order. A full traversal simply follows the forward[0] pointers from header to the last node. This is O(n).</p>
+      <h4>Level-wise Traversal</h4>
+      <p>To display the entire structure, we traverse each level separately. This is useful for debugging and understanding the skip list's shape. Each level shows a sparser subset of nodes.</p>
+      <h4>When is Traversal Used?</h4>
+      <ul>
+        <li>Printing all elements in sorted order</li>
+        <li>Serializing the skip list to disk</li>
+        <li>Range queries (print all keys between A and B)</li>
+        <li>Debugging the structure</li>
+      </ul>
+    </div>
+  </div>
+  <div id="s6v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Level-wise Traversal Animation</span></div>
+      <div class="viz-body">
+        <canvas id="traverseCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="startTraversal()">Animate Level 0</button>
+          <button class="btn btn-ghost" onclick="traverseAllLevels()">Show All Levels</button>
+          <button class="btn btn-ghost" onclick="resetTraverse()">Reset</button>
+        </div>
+        <div class="log" id="traverseLog">Click "Animate Level 0" to watch the traversal.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s6c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">traverse() — Level 0 and Level-wise Display</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Full traversal at Level 0 (all nodes in order) ─── */</span>
+<span class="kw">void</span> <span class="fn">traverse</span>(<span class="ty">SkipList</span> *sl) {
+    printf(<span class="st">"Skip List (Level 0, all elements):\n"</span>);
+    <span class="ty">Node</span> *curr = sl->header->forward[<span class="nm">0</span>];
+
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        printf(<span class="st">"  [key=%d | val=%d]\n"</span>, curr->key, curr->value);
+        curr = curr->forward[<span class="nm">0</span>];  <span class="cm">/* follow Level 0 links */</span>
+    }
+    printf(<span class="st">"Total: %d elements\n"</span>, sl->size);
+}
+
+<span class="cm">/* ─── Level-wise display (shows skip list structure) ─── */</span>
+<span class="kw">void</span> <span class="fn">displayLevelwise</span>(<span class="ty">SkipList</span> *sl) {
+    printf(<span class="st">"\n=== Skip List Structure ===\n"</span>);
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--) {
+        printf(<span class="st">"Level %d: HEAD"</span>, i);
+        <span class="ty">Node</span> *curr = sl->header->forward[i];
+
+        <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+            printf(<span class="st">" --&gt; [%d]"</span>, curr->key);
+            curr = curr->forward[i];
+        }
+        printf(<span class="st">" --&gt; NULL\n"</span>);
+    }
+}
+
+<span class="cm">/* ─── Traverse a specific level only ─── */</span>
+<span class="kw">void</span> <span class="fn">traverseLevel</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> level) {
+    <span class="kw">if</span> (level &lt; <span class="nm">0</span> || level &gt; sl->currentLevel) {
+        printf(<span class="st">"Invalid level.\n"</span>);
+        <span class="kw">return</span>;
+    }
+    printf(<span class="st">"Level %d nodes: "</span>, level);
+    <span class="ty">Node</span> *curr = sl->header->forward[level];
+    <span class="kw">while</span> (curr) {
+        printf(<span class="st">"%d "</span>, curr->key);
+        curr = curr->forward[level];
+    }
+    printf(<span class="st">"\n"</span>);
+}</pre></div>
+    </div>
+  </div>
+  <div id="s6a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like reading different editions of the same newspaper:</strong><br><br>
+        📰 <strong>Level 0 traversal</strong> = Reading every single article in the full paper, page by page.<br>
+        📑 <strong>Level 1 traversal</strong> = Only reading section headlines.<br>
+        📋 <strong>Level 2 traversal</strong> = Only reading the top 5 most important stories.<br><br>
+        All levels tell the same story — but with different levels of detail and speed. The skip list lets you choose how deep you want to go.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 7: LEVEL MANAGEMENT ════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">// 07 — LEVEL MANAGEMENT OPERATIONS</div>
+    <h2 class="section-title">Managing Levels</h2>
+    <div class="section-subtitle">Promote · Demote · Remove Empty Levels</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Manage Levels<br>• Maintain Balanced Levels</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Promote Nodes<br>• Demote Nodes<br>• Remove Empty Levels<br>• Increase Current Level<br>• Decrease Current Level<br>• Maintain Deterministic Height Rule</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s7t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s7v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s7c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s7a')">Analogy</div>
+  </div>
+  <div id="s7t" class="tab-content active">
+    <div class="theory-card">
+      <h4>What Are Levels?</h4>
+      <p>Each node spans one or more levels. A node at level L has forward pointers for levels 0, 1, ..., L. <code>currentLevel</code> tracks the highest level that has any node in it.</p>
+      <h4>Promotion Rule (Deterministic)</h4>
+      <p>With k=2: After inserting n nodes, the distribution should be:</p>
+      <ul>
+        <li>Level 0: all n nodes</li>
+        <li>Level 1: every 2nd node → ~n/2 nodes</li>
+        <li>Level 2: every 4th node → ~n/4 nodes</li>
+        <li>Level L: ~n/2^L nodes</li>
+      </ul>
+      <span class="formula">max useful level = ⌊log_k(n)⌋</span>
+      <h4>Empty Level Removal</h4>
+      <p>After deletion, if the top level's header forward pointer becomes NULL, that level is empty. We decrement <code>currentLevel</code> — this keeps searches efficient by not scanning useless empty levels.</p>
+    </div>
+  </div>
+  <div id="s7v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Level Distribution — Nodes per Level</span></div>
+      <div class="viz-body">
+        <canvas id="levelCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="showLevelDist()">Show Distribution</button>
+          <button class="btn btn-ghost" onclick="resetLevel()">Reset</button>
+        </div>
+        <div class="log" id="levelLog">Shows how many nodes reside at each level.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s7c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Level Management Functions</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Check and reduce empty top levels ─── */</span>
+<span class="kw">void</span> <span class="fn">removeEmptyLevels</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">while</span> (sl->currentLevel &gt; <span class="nm">0</span> &amp;&amp;
+           sl->header->forward[sl->currentLevel] == <span class="nm">NULL</span>) {
+        sl->currentLevel--;
+        printf(<span class="st">"Removed empty level. Current: %d\n"</span>,
+               sl->currentLevel);
+    }
+}
+
+<span class="cm">/* ─── Increase current level when adding tall node ─── */</span>
+<span class="kw">void</span> <span class="fn">increaseLevel</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> newLevel,
+                   <span class="ty">Node</span> *update[]) {
+    <span class="kw">if</span> (newLevel &gt; sl->currentLevel) {
+        <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel + <span class="nm">1</span>; i &lt;= newLevel; i++)
+            update[i] = sl->header;  <span class="cm">/* header is predecessor */</span>
+        sl->currentLevel = newLevel;
+    }
+}
+
+<span class="cm">/* ─── Determine ideal max level for n elements ─── */</span>
+<span class="kw">int</span> <span class="fn">idealMaxLevel</span>(<span class="kw">int</span> n, <span class="kw">int</span> k) {
+    <span class="kw">int</span> level = <span class="nm">0</span>;
+    <span class="kw">int</span> count = n;
+    <span class="kw">while</span> (count &gt; <span class="nm">1</span>) {
+        count /= k;
+        level++;
+    }
+    <span class="kw">return</span> level;
+}
+<span class="cm">/* For n=16, k=2: idealMaxLevel = 4 */</span>
+<span class="cm">/* For n=8,  k=2: idealMaxLevel = 3 */</span></pre></div>
+    </div>
+  </div>
+  <div id="s7a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like managing floors in a hotel:</strong><br><br>
+        🏨 When guests check in, some get assigned to higher floors (promoted nodes).<br>
+        🛗 If the top floor has zero guests, you don't power its elevator (remove empty level).<br>
+        📈 When the hotel grows and fills up, you open new floors (increase currentLevel).<br>
+        📉 When guests leave and floors empty out, you close those floors to save energy.<br><br>
+        The hotel's currentLevel is always the highest floor that currently has at least one guest.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 8: DETERMINISTIC PROMOTION ════════ -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">// 08 — DETERMINISTIC PROMOTION OPERATIONS</div>
+    <h2 class="section-title">The Promotion Engine</h2>
+    <div class="section-subtitle">Rules · Conditions · Balanced Spacing</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Apply Promotion Rule<br>• Maintain Node Distribution</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Check Promotion Condition<br>• Promote Every k-th Node<br>• Maintain Balanced Spacing<br>• Enforce Structural Constraints</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s8t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s8v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s8c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s8a')">Analogy</div>
+  </div>
+  <div id="s8t" class="tab-content active">
+    <div class="theory-card">
+      <h4>The Heart of Determinism</h4>
+      <p>This is what makes a <em>deterministic</em> skip list special. Instead of flipping a coin, we use the insertion sequence number to decide a node's level.</p>
+      <h4>Promotion Rule (k=2)</h4>
+      <ul>
+        <li>1st insert: count=1 → 1%2≠0 → Level 0</li>
+        <li>2nd insert: count=2 → 2%2=0 → Level 1; 2%4≠0 → stops</li>
+        <li>3rd insert: count=3 → 3%2≠0 → Level 0</li>
+        <li>4th insert: count=4 → 4%2=0 → Level 1; 4%4=0 → Level 2; 4%8≠0 → stops</li>
+        <li>8th insert: → Level 0,1,2,3</li>
+      </ul>
+      <span class="formula">level(insertCount) = v₂(insertCount) where v₂ = 2-adic valuation</span>
+      <h4>Why This Works</h4>
+      <p>The 2-adic valuation (number of times 2 divides n) gives exactly the binary tree structure we need. Every 2nd element gets 1 extra level, every 4th gets 2 extra, etc. — perfectly balanced.</p>
+    </div>
+  </div>
+  <div id="s8v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Promotion Rule Simulator — see which nodes get promoted</span></div>
+      <div class="viz-body">
+        <canvas id="promoCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <input type="number" id="promoK" placeholder="k" value="2" min="2" max="4" style="width:50px">
+          <button class="btn btn-accent" onclick="runPromoSim()">Simulate 16 Inserts</button>
+          <button class="btn btn-ghost" onclick="resetPromo()">Reset</button>
+        </div>
+        <div class="log" id="promoLog">Click Simulate to see which inserts get promoted at k=2.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s8c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Promotion Rule — Deterministic Level Assignment</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── 2-adic valuation: count how many times k divides n ─── */</span>
+<span class="kw">int</span> <span class="fn">kAdicValuation</span>(<span class="kw">int</span> n, <span class="kw">int</span> k) {
+    <span class="kw">int</span> level = <span class="nm">0</span>;
+    <span class="kw">while</span> (n % k == <span class="nm">0</span> &amp;&amp; level &lt; MAX_LEVEL - <span class="nm">1</span>) {
+        level++;
+        n /= k;
+    }
+    <span class="kw">return</span> level;
+}
+
+<span class="cm">/* ─── Apply the promotion rule before each insert ─── */</span>
+<span class="kw">int</span> <span class="fn">applyPromotionRule</span>(<span class="ty">SkipList</span> *sl) {
+    sl->insertCount++;  <span class="cm">/* increment before deciding */</span>
+    <span class="kw">int</span> level = <span class="fn">kAdicValuation</span>(sl->insertCount, sl->k);
+    printf(<span class="st">"Insert #%d → Level %d\n"</span>, sl->insertCount, level);
+    <span class="kw">return</span> level;
+}
+
+<span class="cm">/* ─── Enforce structural constraints ─── */</span>
+<span class="kw">int</span> <span class="fn">checkPromotionCondition</span>(<span class="kw">int</span> insertCount, <span class="kw">int</span> k, <span class="kw">int</span> level) {
+    <span class="cm">/* Can this node be at 'level'? */</span>
+    <span class="kw">int</span> required = <span class="nm">1</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; level; i++) required *= k;
+    <span class="kw">return</span> (insertCount % required == <span class="nm">0</span>) ? <span class="nm">1</span> : <span class="nm">0</span>;
+}
+
+<span class="cm">/* ─── Example output for k=2:
+   Insert  1 → Level 0  (1 is odd)
+   Insert  2 → Level 1  (2 = 2¹)
+   Insert  3 → Level 0
+   Insert  4 → Level 2  (4 = 2²)
+   Insert  5 → Level 0
+   Insert  6 → Level 1  (6 = 2×3)
+   Insert  8 → Level 3  (8 = 2³) ─── */</span></pre></div>
+    </div>
+  </div>
+  <div id="s8a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like military rank assignments by service number:</strong><br><br>
+        🪖 Every soldier starts as Private (Level 0).<br>
+        ⭐ Every 2nd soldier in service gets a Corporal stripe (Level 1).<br>
+        ⭐⭐ Every 4th (2²) gets Sergeant rank (Level 2).<br>
+        ⭐⭐⭐ Every 8th (2³) gets Lieutenant (Level 3).<br>
+        🎖️ Every 16th (2⁴) gets Captain (Level 4).<br><br>
+        No politics, no coin flip — your rank is determined entirely by your service number. This predictable system (k-adic valuation) is exactly how deterministic skip lists assign levels.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 9: POINTER MANAGEMENT ════════ -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">// 09 — POINTER MANAGEMENT OPERATIONS</div>
+    <h2 class="section-title">Managing Forward Pointers</h2>
+    <div class="section-subtitle">Update · Redirect · Remove Broken Links</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Maintain Forward Pointers</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Update Pointer Links<br>• Redirect References<br>• Remove Broken Links<br>• Initialize Pointer Arrays</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s9t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s9v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s9c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s9a')">Analogy</div>
+  </div>
+  <div id="s9t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Forward Pointer Arrays</h4>
+      <p>Each node has a <code>forward[]</code> array of size MAX_LEVEL. <code>forward[0]</code> links to the next node at the base level (like a regular linked list). <code>forward[i]</code> links to the next node that is also at level i or above.</p>
+      <h4>Key Pointer Operations</h4>
+      <ul>
+        <li><strong>Insert Splice:</strong> <code>new→forward[i] = update[i]→forward[i]; update[i]→forward[i] = new;</code></li>
+        <li><strong>Delete Redirect:</strong> <code>update[i]→forward[i] = deleted→forward[i];</code></li>
+        <li><strong>Broken Links:</strong> A NULL pointer means "end of list at this level". Never dereference a NULL forward pointer.</li>
+        <li><strong>Initialization:</strong> All pointers start as NULL at allocation time.</li>
+      </ul>
+      <h4>Common Pointer Bugs</h4>
+      <ul>
+        <li>Forgetting to update a level (partial unlinking)</li>
+        <li>Dereferencing NULL (check before accessing)</li>
+        <li>Not initializing all MAX_LEVEL entries (use memset or a loop)</li>
+      </ul>
+    </div>
+  </div>
+  <div id="s9v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Forward Pointer Diagram — each node's pointer array</span></div>
+      <div class="viz-body">
+        <canvas id="ptrCanvas" height="260"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="drawPointerViz()">Show Pointer Arrays</button>
+        </div>
+        <div class="log" id="ptrLog">Shows each node and its forward[] pointer array contents.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s9c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Pointer Management Utilities</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Safely initialize all pointers in a node ─── */</span>
+<span class="kw">void</span> <span class="fn">initPointers</span>(<span class="ty">Node</span> *node) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; MAX_LEVEL; i++)
+        node->forward[i] = <span class="nm">NULL</span>;
+}
+
+<span class="cm">/* ─── Splice node in at level i (insert) ─── */</span>
+<span class="kw">void</span> <span class="fn">spliceIn</span>(<span class="ty">Node</span> *pred, <span class="ty">Node</span> *newNode, <span class="kw">int</span> level) {
+    newNode->forward[level] = pred->forward[level];
+    pred->forward[level]    = newNode;
+}
+
+<span class="cm">/* ─── Redirect pointer around deleted node ─── */</span>
+<span class="kw">void</span> <span class="fn">redirectPointer</span>(<span class="ty">Node</span> *pred, <span class="ty">Node</span> *deleted, <span class="kw">int</span> level) {
+    <span class="kw">if</span> (pred->forward[level] == deleted)
+        pred->forward[level] = deleted->forward[level];
+}
+
+<span class="cm">/* ─── Check for and log any broken links ─── */</span>
+<span class="kw">void</span> <span class="fn">validatePointers</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt;= sl->currentLevel; i++) {
+        <span class="ty">Node</span> *curr = sl->header->forward[i];
+        <span class="ty">Node</span> *prev = sl->header;
+        <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+            <span class="kw">if</span> (prev->key &gt;= curr->key) {
+                printf(<span class="st">"BROKEN LINK at level %d!\n"</span>, i);
+            }
+            prev = curr;
+            curr = curr->forward[i];
+        }
+    }
+    printf(<span class="st">"Pointer validation complete.\n"</span>);
+}</pre></div>
+    </div>
+  </div>
+  <div id="s9a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like train track switches at a rail junction:</strong><br><br>
+        🚆 Each node is a train station. <code>forward[i]</code> is the track switch for the Level-i express train.<br>
+        ➕ <strong>Inserting a new station:</strong> Set new station's track to point to the next station, then redirect the previous station's track to new one.<br>
+        ➖ <strong>Removing a station:</strong> Redirect the previous station's track to bypass the removed one — train still runs smoothly.<br>
+        🔴 <strong>Broken link:</strong> A switch pointing to a non-existent station — train derails. That's a NULL dereference bug in C.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 10: REBALANCING ════════ -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">// 10 — REBALANCING OPERATIONS</div>
+    <h2 class="section-title">Rebalancing the Structure</h2>
+    <div class="section-subtitle">Reorganize · Redistribute · Restore Determinism</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Rebalance Skip List</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Reorganize Levels<br>• Redistribute Nodes<br>• Adjust Node Heights<br>• Restore Deterministic Structure</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s10t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s10v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s10c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s10a')">Analogy</div>
+  </div>
+  <div id="s10t" class="tab-content active">
+    <div class="theory-card">
+      <h4>When Is Rebalancing Needed?</h4>
+      <p>After many deletions, the skip list may lose its balance — the upper levels might become sparse or unbalanced, making searches slower than O(log n). Rebalancing rebuilds the structure from scratch.</p>
+      <h4>Rebalancing Strategy</h4>
+      <ol class="steps">
+        <li><span class="step-num">1</span><div><strong>Collect All Keys:</strong> Traverse Level 0 and store all keys in an array (in sorted order).</div></li>
+        <li><span class="step-num">2</span><div><strong>Clear the List:</strong> Reset all pointers, levels, and counters.</div></li>
+        <li><span class="step-num">3</span><div><strong>Re-insert with Fresh Counts:</strong> Insert each key back, resetting insertCount to 0. This reassigns levels deterministically based on position, not history.</div></li>
+      </ol>
+      <h4>Note on Deterministic Skip Lists</h4>
+      <p>Well-maintained deterministic skip lists rarely need full rebalancing — if insertions follow the promotion rule faithfully, the structure stays balanced automatically. Rebalancing is mainly needed after bulk deletions or manual structural modifications.</p>
+    </div>
+  </div>
+  <div id="s10v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Before/After Rebalancing</span></div>
+      <div class="viz-body">
+        <canvas id="rebalCanvas" height="260"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-warn" onclick="makeUnbalanced()">Make Unbalanced</button>
+          <button class="btn btn-green" onclick="doRebalance()">Rebalance</button>
+          <button class="btn btn-ghost" onclick="resetRebal()">Reset</button>
+        </div>
+        <div class="log" id="rebalLog">Click "Make Unbalanced" to see a degraded structure, then Rebalance to fix it.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s10c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">rebalance() — Full Structural Rebuild</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Rebalance by rebuilding from Level 0 ─── */</span>
+<span class="kw">void</span> <span class="fn">rebalance</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="cm">/* Step 1: Collect all keys from Level 0 */</span>
+    <span class="kw">int</span> keys[<span class="nm">1000</span>], vals[<span class="nm">1000</span>], count = <span class="nm">0</span>;
+    <span class="ty">Node</span> *curr = sl->header->forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        keys[count] = curr->key;
+        vals[count] = curr->value;
+        count++;
+        curr = curr->forward[<span class="nm">0</span>];
+    }
+
+    <span class="cm">/* Step 2: Fully clear the skip list */</span>
+    <span class="fn">clearSkipList</span>(sl);  <span class="cm">/* see Utility Operations */</span>
+    sl->insertCount = <span class="nm">0</span>;
+    sl->currentLevel = <span class="nm">0</span>;
+    sl->size = <span class="nm">0</span>;
+
+    <span class="cm">/* Step 3: Re-insert all keys (fresh promotion counts) */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; count; i++) {
+        <span class="fn">insert</span>(sl, keys[i], vals[i]);
+    }
+    printf(<span class="st">"Rebalanced. %d nodes re-inserted.\n"</span>, count);
+}
+
+<span class="cm">/* ─── Redistribute nodes after bulk deletion ─── */</span>
+<span class="kw">void</span> <span class="fn">adjustNodeHeights</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="cm">/* Verify each node's level matches promotion rule */</span>
+    <span class="kw">int</span> count = <span class="nm">1</span>;
+    <span class="ty">Node</span> *curr = sl->header->forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="kw">int</span> expectedLevel = <span class="fn">kAdicValuation</span>(count, sl->k);
+        <span class="kw">if</span> (curr->level != expectedLevel)
+            printf(<span class="st">"Node %d: level %d, expected %d\n"</span>,
+                   curr->key, curr->level, expectedLevel);
+        count++;
+        curr = curr->forward[<span class="nm">0</span>];
+    }
+}</pre></div>
+    </div>
+  </div>
+  <div id="s10a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like reorganizing a filing cabinet after many removals:</strong><br><br>
+        🗂️ After pulling out dozens of folders, the remaining ones may be unevenly distributed — some drawers (levels) have too many, others too few.<br>
+        📦 You empty everything out (collect all keys at Level 0).<br>
+        🧹 Wipe the cabinet clean (clear the list).<br>
+        📁 Re-file everything using the proper rules (re-insert with fresh counts).<br><br>
+        The result is a perfectly organized cabinet where folders are evenly distributed across drawers again.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 11: UTILITY ════════ -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num">// 11 — UTILITY OPERATIONS</div>
+    <h2 class="section-title">Utility Functions</h2>
+    <div class="section-subtitle">isEmpty · getSize · Clear</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Check Empty List<br>• Get Size<br>• Clear Skip List</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Count Nodes<br>• Reset Levels<br>• Remove All Nodes<br>• Reinitialize Header</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s11t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s11c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s11a')">Analogy</div>
+  </div>
+  <div id="s11t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Essential Utility Functions</h4>
+      <p>Every data structure needs basic utility operations for checking state and maintenance:</p>
+      <ul>
+        <li><strong>isEmpty:</strong> Returns 1 if the skip list has zero elements. Simply checks <code>sl→size == 0</code> or <code>header→forward[0] == NULL</code>.</li>
+        <li><strong>getSize:</strong> Returns the count of elements. Since we maintain <code>sl→size</code>, this is O(1) — no traversal needed.</li>
+        <li><strong>clear:</strong> Removes all nodes and resets to initial state. Traverses Level 0 and frees all nodes except the header.</li>
+        <li><strong>countNodes:</strong> An alternative O(n) count by actually traversing — useful for debugging to verify the size counter is accurate.</li>
+      </ul>
+    </div>
+  </div>
+  <div id="s11c" class="tab-content active">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Utility Functions — isEmpty, getSize, clear</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Check if skip list is empty ─── */</span>
+<span class="kw">int</span> <span class="fn">isEmpty</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">return</span> (sl->size == <span class="nm">0</span>);  <span class="cm">/* O(1) */</span>
+}
+
+<span class="cm">/* ─── Get number of elements ─── */</span>
+<span class="kw">int</span> <span class="fn">getSize</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">return</span> sl->size;  <span class="cm">/* O(1) - maintained by insert/delete */</span>
+}
+
+<span class="cm">/* ─── Count nodes by traversal (for verification) ─── */</span>
+<span class="kw">int</span> <span class="fn">countNodes</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">int</span> count = <span class="nm">0</span>;
+    <span class="ty">Node</span> *curr = sl->header->forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        count++;
+        curr = curr->forward[<span class="nm">0</span>];
+    }
+    <span class="kw">return</span> count;  <span class="cm">/* O(n) - for debugging */</span>
+}
+
+<span class="cm">/* ─── Clear skip list (remove all data nodes) ─── */</span>
+<span class="kw">void</span> <span class="fn">clearSkipList</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="ty">Node</span> *curr = sl->header->forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="ty">Node</span> *next = curr->forward[<span class="nm">0</span>];
+        free(curr);    <span class="cm">/* free the node */</span>
+        curr = next;
+    }
+    <span class="cm">/* Reinitialize header */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; MAX_LEVEL; i++)
+        sl->header->forward[i] = <span class="nm">NULL</span>;
+    sl->currentLevel = <span class="nm">0</span>;
+    sl->size = <span class="nm">0</span>;
+    sl->insertCount = <span class="nm">0</span>;
+    printf(<span class="st">"Skip list cleared.\n"</span>);
+}</pre></div>
+    </div>
+  </div>
+  <div id="s11a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like managing a shopping cart:</strong><br><br>
+        🛒 <strong>isEmpty()</strong> = "Is my cart empty?" — a quick visual check, O(1).<br>
+        🔢 <strong>getSize()</strong> = Reading the "12 items" counter on the cart handle — instantly available, O(1).<br>
+        🧮 <strong>countNodes()</strong> = Counting each item manually — accurate but takes time, O(n).<br>
+        🗑️ <strong>clear()</strong> = Putting every item back on shelves, one by one, then returning the empty cart to the entrance (reinitialize header).<br>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 12: MEMORY MANAGEMENT ════════ -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num">// 12 — MEMORY MANAGEMENT OPERATIONS</div>
+    <h2 class="section-title">Memory Allocation & Deallocation</h2>
+    <div class="section-subtitle">malloc · free · Leak Prevention</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Allocate Memory<br>• Deallocate Memory</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Create Node<br>• Free Single Node<br>• Free Entire Skip List<br>• Prevent Memory Leak</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s12t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s12c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s12a')">Analogy</div>
+  </div>
+  <div id="s12t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Memory in C — The Developer's Responsibility</h4>
+      <p>Unlike Python or Java, C has no garbage collector. Every byte you allocate with <code>malloc()</code> must be explicitly released with <code>free()</code>. Failing to do so causes a <strong>memory leak</strong>.</p>
+      <h4>Skip List Memory Layout</h4>
+      <ul>
+        <li>Each node: <code>sizeof(Node) = sizeof(int)*3 + sizeof(Node*)*MAX_LEVEL</code></li>
+        <li>For MAX_LEVEL=6 on 64-bit: 3×4 + 6×8 = 12 + 48 = 60 bytes per node</li>
+        <li>Total for n nodes: O(n) space</li>
+      </ul>
+      <h4>Memory Leak Prevention</h4>
+      <ul>
+        <li>Always save the pointer before redirecting it</li>
+        <li>Free nodes after deletion (<code>free(target)</code>)</li>
+        <li>Use a <code>freeSkipList()</code> function at program end</li>
+        <li>Use Valgrind to detect leaks during testing</li>
+      </ul>
+    </div>
+  </div>
+  <div id="s12c" class="tab-content active">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Memory Management — Allocate, Free, Prevent Leaks</span></div>
+      <div class="code-body"><pre><span class="pp">#include</span> <span class="st">&lt;stdlib.h&gt;</span>
+
+<span class="cm">/* ─── Allocate a new node ─── */</span>
+<span class="ty">Node</span>* <span class="fn">createNode</span>(<span class="kw">int</span> key, <span class="kw">int</span> value, <span class="kw">int</span> level) {
+    <span class="ty">Node</span> *n = (<span class="ty">Node</span>*) malloc(<span class="kw">sizeof</span>(<span class="ty">Node</span>));
+
+    <span class="kw">if</span> (n == <span class="nm">NULL</span>) {
+        printf(<span class="st">"ERROR: malloc failed!\n"</span>);
+        exit(<span class="nm">1</span>);  <span class="cm">/* out of memory */</span>
+    }
+
+    n->key   = key;
+    n->value = value;
+    n->level = level;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt; MAX_LEVEL; i++)
+        n->forward[i] = <span class="nm">NULL</span>;  <span class="cm">/* always init! */</span>
+    <span class="kw">return</span> n;
+}
+
+<span class="cm">/* ─── Free a single node ─── */</span>
+<span class="kw">void</span> <span class="fn">freeNode</span>(<span class="ty">Node</span> *node) {
+    <span class="kw">if</span> (node != <span class="nm">NULL</span>) free(node);
+}
+
+<span class="cm">/* ─── Free the entire skip list (no memory leaks!) ─── */</span>
+<span class="kw">void</span> <span class="fn">freeSkipList</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="ty">Node</span> *curr = sl->header;
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="ty">Node</span> *next = curr->forward[<span class="nm">0</span>];
+        free(curr);   <span class="cm">/* free this node */</span>
+        curr = next;  <span class="cm">/* move to next BEFORE freeing */</span>
+    }
+    free(sl);  <span class="cm">/* free the container struct */</span>
+    printf(<span class="st">"All memory released.\n"</span>);
+}
+
+<span class="cm">/* ─── BAD (memory leak!) ─── */</span>
+<span class="kw">void</span> <span class="fn">badDelete</span>(<span class="ty">SkipList</span> *sl, <span class="ty">Node</span> *target) {
+    <span class="cm">/* forgot to free — target's memory leaks! */</span>
+    update[<span class="nm">0</span>]->forward[<span class="nm">0</span>] = target->forward[<span class="nm">0</span>];
+}
+
+<span class="cm">/* ─── GOOD (no leak) ─── */</span>
+<span class="kw">void</span> <span class="fn">goodDelete</span>(<span class="ty">SkipList</span> *sl, <span class="ty">Node</span> *target) {
+    update[<span class="nm">0</span>]->forward[<span class="nm">0</span>] = target->forward[<span class="nm">0</span>];
+    free(target);  <span class="cm">/* always free the node! */</span>
+}</pre></div>
+    </div>
+  </div>
+  <div id="s12a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like renting hotel rooms:</strong><br><br>
+        🏨 <strong>malloc()</strong> = Checking into a hotel room. The room is reserved for you.<br>
+        🛎️ <strong>free()</strong> = Checking out and returning the key. The room is available again.<br>
+        🚫 <strong>Memory leak</strong> = You checked out but forgot to return the key. The room appears occupied forever. Over time, the hotel runs out of rooms — that's your program crashing with "out of memory".<br>
+        ✅ <strong>Good practice</strong> = Always check out properly. Use Valgrind (a tool) to find forgotten checkouts.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 13: ANALYTICAL ════════ -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num">// 13 — ANALYTICAL OPERATIONS</div>
+    <h2 class="section-title">Analyzing Structure & Performance</h2>
+    <div class="section-subtitle">Count Levels · Measure Complexity · Evaluate Balance</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Analyze Structure<br>• Analyze Performance</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Count Total Levels<br>• Measure Search Complexity<br>• Evaluate Node Distribution<br>• Check Balance Efficiency</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s13t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s13v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s13c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s13a')">Analogy</div>
+  </div>
+  <div id="s13t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Structural Analysis Metrics</h4>
+      <ul>
+        <li><strong>Total Levels:</strong> <code>currentLevel + 1</code>. For n nodes with k=2: ~log₂(n) levels.</li>
+        <li><strong>Nodes per Level:</strong> Level i should have ~n/kⁱ nodes for balanced distribution.</li>
+        <li><strong>Balance Ratio:</strong> (actual nodes at level i) / (n/kⁱ). Close to 1.0 = well balanced.</li>
+        <li><strong>Search Path Length:</strong> Count comparisons during a search. Should be ~log₂(n) × 2 comparisons.</li>
+      </ul>
+      <h4>Performance Analysis</h4>
+      <table class="complexity-table">
+        <thead><tr><th>n</th><th>k=2 levels</th><th>Max comparisons</th></tr></thead>
+        <tbody>
+          <tr><td>16</td><td class="good">4</td><td class="good">~8</td></tr>
+          <tr><td>256</td><td class="good">8</td><td class="good">~16</td></tr>
+          <tr><td>1,024</td><td class="good">10</td><td class="good">~20</td></tr>
+          <tr><td>1,000,000</td><td class="good">20</td><td class="good">~40</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div id="s13v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Balance Efficiency Chart</span></div>
+      <div class="viz-body">
+        <canvas id="analyzeCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="drawAnalysis()">Analyze Current List</button>
+        </div>
+        <div class="log" id="analyzeLog">Click Analyze to see node distribution across levels.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s13c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Analytical Functions — Structure & Performance</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Count nodes at each level ─── */</span>
+<span class="kw">void</span> <span class="fn">analyzeStructure</span>(<span class="ty">SkipList</span> *sl) {
+    printf(<span class="st">"=== Structure Analysis ===\n"</span>);
+    printf(<span class="st">"Total nodes: %d\n"</span>, sl->size);
+    printf(<span class="st">"Active levels: %d\n"</span>, sl->currentLevel + <span class="nm">1</span>);
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">int</span> count = <span class="nm">0</span>;
+        <span class="ty">Node</span> *curr = sl->header->forward[i];
+        <span class="kw">while</span> (curr) { count++; curr = curr->forward[i]; }
+
+        <span class="kw">double</span> expected = sl->size;
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nm">0</span>; j &lt; i; j++) expected /= sl->k;
+
+        printf(<span class="st">"  Level %d: %d nodes (expected: %.1f)\n"</span>,
+               i, count, expected);
+    }
+}
+
+<span class="cm">/* ─── Measure actual search path length ─── */</span>
+<span class="kw">int</span> <span class="fn">measureSearchComplexity</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> key) {
+    <span class="kw">int</span> comparisons = <span class="nm">0</span>;
+    <span class="ty">Node</span> *curr = sl->header;
+
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="kw">while</span> (curr->forward[i] != <span class="nm">NULL</span>) {
+            comparisons++;
+            <span class="kw">if</span> (curr->forward[i]->key &lt; key)
+                curr = curr->forward[i];
+            <span class="kw">else</span> <span class="kw">break</span>;
+        }
+    }
+    printf(<span class="st">"Search for %d: %d comparisons\n"</span>, key, comparisons);
+    <span class="kw">return</span> comparisons;
+}
+
+<span class="cm">/* ─── Check balance efficiency (ratio) ─── */</span>
+<span class="kw">double</span> <span class="fn">checkBalanceEfficiency</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">double</span> ideal = <span class="nm">0</span>, actual = <span class="nm">0</span>;
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="nm">0</span>; i &lt;= sl->currentLevel; i++) {
+        <span class="kw">double</span> exp = sl->size;
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="nm">0</span>; j &lt; i; j++) exp /= sl->k;
+        ideal += exp;
+        <span class="ty">Node</span> *c = sl->header->forward[i];
+        <span class="kw">while</span> (c) { actual++; c = c->forward[i]; }
+    }
+    <span class="kw">return</span> actual / ideal;  <span class="cm">/* 1.0 = perfectly balanced */</span>
+}</pre></div>
+    </div>
+  </div>
+  <div id="s13a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like a health checkup for your data structure:</strong><br><br>
+        🩺 <strong>Count Total Levels</strong> = Check your height — is it appropriate for your age (n)? A skip list with 1000 nodes should have ~10 levels.<br>
+        ⚖️ <strong>Node Distribution</strong> = Check weight distribution — are levels proportionally loaded, or is everything crammed at Level 0?<br>
+        🏃 <strong>Search Complexity</strong> = Speed test — how many steps to find an element? Should be close to log₂(n).<br>
+        💯 <strong>Balance Efficiency Ratio</strong> = Overall health score. 1.0 = perfect. Far from 1.0 = needs rebalancing.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 14: ITERATOR ════════ -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">// 14 — ITERATOR OPERATIONS</div>
+    <h2 class="section-title">Iterating Through the Skip List</h2>
+    <div class="section-subtitle">Move Next · Access Current · Reset</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Iterate Skip List</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Move to Next Node<br>• Access Current Node<br>• Reset Iterator<br>• Traverse Lowest Level</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s14t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s14v')">Visualization</div>
+    <div class="tab" onclick="switchTab(this,'s14c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s14a')">Analogy</div>
+  </div>
+  <div id="s14t" class="tab-content active">
+    <div class="theory-card">
+      <h4>What Is an Iterator?</h4>
+      <p>An iterator is an object (or struct in C) that keeps track of the current position in the skip list. It lets you visit nodes one by one without knowing the internal structure — clean and encapsulated.</p>
+      <h4>Iterator Design</h4>
+      <p>An iterator for a skip list is simple — it just holds a pointer to the current node at Level 0. Level 0 has all nodes in sorted order, so we always iterate at Level 0.</p>
+      <h4>Iterator Operations</h4>
+      <ul>
+        <li><strong>init:</strong> Point to the first real node (header→forward[0])</li>
+        <li><strong>hasNext:</strong> Return true if current pointer is not NULL</li>
+        <li><strong>next:</strong> Return current node, advance pointer to forward[0]</li>
+        <li><strong>reset:</strong> Point back to header→forward[0]</li>
+      </ul>
+    </div>
+  </div>
+  <div id="s14v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Iterator Animation — stepping through nodes</span></div>
+      <div class="viz-body">
+        <canvas id="iterCanvas" height="220"></canvas>
+        <div class="viz-controls">
+          <button class="btn btn-accent" onclick="iterNext()">Next →</button>
+          <button class="btn btn-ghost" onclick="iterReset()">Reset Iterator</button>
+        </div>
+        <div class="log" id="iterLog">Click Next to step through nodes one by one using the iterator.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s14c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Iterator Pattern — Struct-based Iterator in C</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── Iterator struct ─── */</span>
+<span class="kw">typedef struct</span> {
+    <span class="ty">Node</span> *current;   <span class="cm">/* points to current node */</span>
+    <span class="ty">Node</span> *start;     <span class="cm">/* first real node (for reset) */</span>
+} <span class="ty">Iterator</span>;
+
+<span class="cm">/* ─── Initialize iterator ─── */</span>
+<span class="ty">Iterator</span> <span class="fn">iteratorInit</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="ty">Iterator</span> it;
+    it.current = sl->header->forward[<span class="nm">0</span>]; <span class="cm">/* first real node */</span>
+    it.start   = sl->header->forward[<span class="nm">0</span>];
+    <span class="kw">return</span> it;
+}
+
+<span class="cm">/* ─── Check if there are more elements ─── */</span>
+<span class="kw">int</span> <span class="fn">hasNext</span>(<span class="ty">Iterator</span> *it) {
+    <span class="kw">return</span> (it->current != <span class="nm">NULL</span>);
+}
+
+<span class="cm">/* ─── Get current value and advance ─── */</span>
+<span class="ty">Node</span>* <span class="fn">iterNext</span>(<span class="ty">Iterator</span> *it) {
+    <span class="kw">if</span> (!<span class="fn">hasNext</span>(it)) <span class="kw">return</span> <span class="nm">NULL</span>;
+    <span class="ty">Node</span> *node  = it->current;
+    it->current = it->current->forward[<span class="nm">0</span>]; <span class="cm">/* advance */</span>
+    <span class="kw">return</span> node;
+}
+
+<span class="cm">/* ─── Reset to beginning ─── */</span>
+<span class="kw">void</span> <span class="fn">iterReset</span>(<span class="ty">Iterator</span> *it) {
+    it->current = it->start;
+}
+
+<span class="cm">/* ─── Usage example ─── */</span>
+<span class="ty">Iterator</span> it = <span class="fn">iteratorInit</span>(sl);
+<span class="kw">while</span> (<span class="fn">hasNext</span>(&amp;it)) {
+    <span class="ty">Node</span> *n = <span class="fn">iterNext</span>(&amp;it);
+    printf(<span class="st">"Key: %d, Value: %d\n"</span>, n->key, n->value);
+}</pre></div>
+    </div>
+  </div>
+  <div id="s14a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like a bookmark in a book:</strong><br><br>
+        🔖 The <strong>iterator struct</strong> is your bookmark — it remembers where you left off.<br>
+        📖 <strong>iterNext()</strong> = Turn to the next page and read, then move the bookmark forward.<br>
+        🔍 <strong>hasNext()</strong> = "Am I at the last page?" Check before turning.<br>
+        ↩️ <strong>iterReset()</strong> = Move the bookmark back to the first page.<br><br>
+        You can hand your bookmark to someone else, and they can continue reading from where you left off. That's the beauty of the iterator pattern — it separates "where we are" from "the book itself."
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ SECTION 15: ADVANCED ════════ -->
+<section class="section" id="s15">
+  <div class="section-header">
+    <div class="section-num">// 15 — ADVANCED STRUCTURAL OPERATIONS</div>
+    <h2 class="section-title">Advanced Operations</h2>
+    <div class="section-subtitle">Merge · Split · Range Query · Min/Max</div>
+  </div>
+  <div class="ops-grid" style="margin-bottom:20px">
+    <div class="op-card">
+      <div class="op-title">Main Operations</div>
+      <div class="op-list">• Merge Skip Lists<br>• Split Skip List<br>• Range Query<br>• Find Minimum / Maximum</div>
+    </div>
+    <div class="op-card">
+      <div class="op-title">Suboperations</div>
+      <div class="op-list">• Combine Levels<br>• Separate Node Ranges<br>• Maintain Sorted Order<br>• Search Range Values<br>• Access Boundary Nodes</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'s15t')">Theory</div>
+    <div class="tab" onclick="switchTab(this,'s15v')">Interactive Range Query</div>
+    <div class="tab" onclick="switchTab(this,'s15c')">C Code</div>
+    <div class="tab" onclick="switchTab(this,'s15a')">Analogy</div>
+  </div>
+  <div id="s15t" class="tab-content active">
+    <div class="theory-card">
+      <h4>Range Query — The Most Powerful Skip List Feature</h4>
+      <p>A range query finds all elements with keys between L (low) and H (high). This is where skip lists shine — search runs in O(log n) to find L, then traverse Level 0 to reach H in O(k) steps.</p>
+      <span class="formula">Range Query Time = O(log n + k) where k = number of results</span>
+      <h4>Min and Max — O(1) Access</h4>
+      <p>Since Level 0 is sorted: <strong>Minimum</strong> = <code>header→forward[0]</code> (first node). <strong>Maximum</strong> = traverse Level 0 to last node.</p>
+      <h4>Merge — Combining Two Skip Lists</h4>
+      <p>Merge by traversing both Level 0s simultaneously (like merge sort), inserting into a new skip list. Time: O((m+n) log(m+n)).</p>
+      <h4>Split — Dividing at a Key</h4>
+      <p>Split into two lists: one with keys &lt; splitKey, one with keys ≥ splitKey. Traverse Level 0, insert each node into the appropriate new list.</p>
+    </div>
+  </div>
+  <div id="s15v" class="tab-content">
+    <div class="viz-card">
+      <div class="viz-header"><span class="viz-title">Interactive Range Query</span></div>
+      <div class="viz-body">
+        <canvas id="rangeCanvas" height="240"></canvas>
+        <div class="viz-controls">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">Range:</span>
+          <input type="number" id="rangeLow" placeholder="low" value="5" min="1" max="99" style="width:60px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">to</span>
+          <input type="number" id="rangeHigh" placeholder="high" value="15" min="1" max="99" style="width:60px">
+          <button class="btn btn-green" onclick="doRangeQuery()">Query Range</button>
+          <button class="btn btn-ghost" onclick="resetRange()">Reset</button>
+        </div>
+        <div class="log" id="rangeLog">Enter a range and click Query Range. Highlighted nodes are in range.</div>
+      </div>
+    </div>
+  </div>
+  <div id="s15c" class="tab-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Advanced Operations — Range Query, Min, Max, Merge, Split</span></div>
+      <div class="code-body"><pre><span class="cm">/* ─── RANGE QUERY: find all keys in [low, high] ─── */</span>
+<span class="kw">void</span> <span class="fn">rangeQuery</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> low, <span class="kw">int</span> high) {
+    <span class="ty">Node</span> *curr = sl->header;
+    <span class="cm">/* Step 1: Use skip list search to jump to 'low' */</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--)
+        <span class="kw">while</span> (curr->forward[i] &amp;&amp; curr->forward[i]->key &lt; low)
+            curr = curr->forward[i];
+    curr = curr->forward[<span class="nm">0</span>];
+
+    <span class="cm">/* Step 2: Traverse Level 0 until key > high */</span>
+    printf(<span class="st">"Range [%d, %d]: "</span>, low, high);
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span> &amp;&amp; curr->key &lt;= high) {
+        printf(<span class="st">"%d "</span>, curr->key);
+        curr = curr->forward[<span class="nm">0</span>];
+    }
+    printf(<span class="st">"\n"</span>);
+}
+
+<span class="cm">/* ─── FIND MINIMUM (O(1)) ─── */</span>
+<span class="ty">Node</span>* <span class="fn">findMin</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="kw">return</span> sl->header->forward[<span class="nm">0</span>];  <span class="cm">/* first node */</span>
+}
+
+<span class="cm">/* ─── FIND MAXIMUM (O(log n) using top level) ─── */</span>
+<span class="ty">Node</span>* <span class="fn">findMax</span>(<span class="ty">SkipList</span> *sl) {
+    <span class="ty">Node</span> *curr = sl->header;
+    <span class="kw">for</span> (<span class="kw">int</span> i = sl->currentLevel; i &gt;= <span class="nm">0</span>; i--)
+        <span class="kw">while</span> (curr->forward[i] != <span class="nm">NULL</span>)
+            curr = curr->forward[i];
+    <span class="kw">return</span> (curr == sl->header) ? <span class="nm">NULL</span> : curr;
+}
+
+<span class="cm">/* ─── MERGE two skip lists into a new one ─── */</span>
+<span class="ty">SkipList</span>* <span class="fn">merge</span>(<span class="ty">SkipList</span> *a, <span class="ty">SkipList</span> *b) {
+    <span class="ty">SkipList</span> *result = <span class="fn">createSkipList</span>(a->k);
+    <span class="ty">Node</span> *pA = a->header->forward[<span class="nm">0</span>];
+    <span class="ty">Node</span> *pB = b->header->forward[<span class="nm">0</span>];
+
+    <span class="kw">while</span> (pA &amp;&amp; pB) {
+        <span class="kw">if</span> (pA->key &lt;= pB->key) {
+            <span class="fn">insert</span>(result, pA->key, pA->value);
+            pA = pA->forward[<span class="nm">0</span>];
+        } <span class="kw">else</span> {
+            <span class="fn">insert</span>(result, pB->key, pB->value);
+            pB = pB->forward[<span class="nm">0</span>];
+        }
+    }
+    <span class="kw">while</span> (pA) { <span class="fn">insert</span>(result, pA->key, pA->value); pA = pA->forward[<span class="nm">0</span>]; }
+    <span class="kw">while</span> (pB) { <span class="fn">insert</span>(result, pB->key, pB->value); pB = pB->forward[<span class="nm">0</span>]; }
+    <span class="kw">return</span> result;
+}
+
+<span class="cm">/* ─── SPLIT at splitKey ─── */</span>
+<span class="kw">void</span> <span class="fn">split</span>(<span class="ty">SkipList</span> *sl, <span class="kw">int</span> splitKey,
+            <span class="ty">SkipList</span> **left, <span class="ty">SkipList</span> **right) {
+    *left  = <span class="fn">createSkipList</span>(sl->k);
+    *right = <span class="fn">createSkipList</span>(sl->k);
+    <span class="ty">Node</span> *curr = sl->header->forward[<span class="nm">0</span>];
+    <span class="kw">while</span> (curr) {
+        <span class="kw">if</span> (curr->key &lt; splitKey)
+            <span class="fn">insert</span>(*left,  curr->key, curr->value);
+        <span class="kw">else</span>
+            <span class="fn">insert</span>(*right, curr->key, curr->value);
+        curr = curr->forward[<span class="nm">0</span>];
+    }
+}</pre></div>
+    </div>
+  </div>
+  <div id="s15a" class="tab-content">
+    <div class="analogy-card">
+      <div class="analogy-tag">💡 Real-Life Analogy</div>
+      <div class="analogy-text">
+        <strong>Like operations at a sorted warehouse:</strong><br><br>
+        🔍 <strong>Range Query</strong> = "Give me all products with prices between $10 and $50." Walk to the $10 shelf and collect everything until you hit $51.<br>
+        ⬇️ <strong>Find Min</strong> = "What's the cheapest item?" The first item on the shelf — always at the front, O(1).<br>
+        ⬆️ <strong>Find Max</strong> = "What's the most expensive?" Walk the fast highway to the very end.<br>
+        🔀 <strong>Merge</strong> = Combining two sorted warehouses into one, maintaining sort order.<br>
+        ✂️ <strong>Split</strong> = Dividing the warehouse at price $30 — everything under $30 goes to Store A, everything $30+ goes to Store B.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<section style="padding:48px 56px;background:var(--bg2);border-top:1px solid var(--border);">
+  <div style="max-width:700px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">// END OF CURRICULUM</div>
+    <h2 style="font-size:22px;font-weight:800;color:#fff;margin-bottom:12px">You've covered all 15 Operation Groups!</h2>
+    <p style="font-size:15px;color:var(--text2);line-height:1.7;margin-bottom:20px">From initialization to advanced structural operations — you now understand every facet of the Deterministic Skip List. Practice by implementing the full skip list in C using the code examples above.</p>
+    <div class="ops-grid">
+      <div class="op-card"><div class="op-title" style="color:var(--accent3)">✅ What You Learned</div>
+        <div class="op-list">• 15 operation groups covered<br>• C code for every operation<br>• Deterministic promotion rule<br>• O(log n) analysis & proof<br>• Memory management in C<br>• Advanced: merge, split, range</div>
+      </div>
+      <div class="op-card"><div class="op-title" style="color:var(--warn)">🚀 Next Steps</div>
+        <div class="op-list">• Implement the full list in C<br>• Test with Valgrind (no leaks!)<br>• Try k=3 promotion rule<br>• Compare with B-tree performance<br>• Study MemSQL/LevelDB usage<br>• Read Pugh's original 1990 paper</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// SHARED SKIP LIST ENGINE (JavaScript)
+// ═══════════════════════════════════════════
+class SkipNode {
+  constructor(key, value, level) {
+    this.key = key; this.value = value; this.level = level;
+    this.forward = new Array(level + 1).fill(null);
+  }
+}
+class DetSkipList {
+  constructor(k = 2, maxLevel = 6) {
+    this.k = k; this.maxLevel = maxLevel;
+    this.header = new SkipNode(-Infinity, null, maxLevel - 1);
+    this.currentLevel = 0; this.size = 0; this.insertCount = 0;
+  }
+  kAdicVal(n) {
+    let lv = 0, v = n;
+    while (v % this.k === 0 && lv < this.maxLevel - 1) { lv++; v = Math.floor(v / this.k); }
+    return lv;
+  }
+  insert(key, value) {
+    const update = new Array(this.maxLevel).fill(null);
+    let curr = this.header;
+    for (let i = this.currentLevel; i >= 0; i--) {
+      while (curr.forward[i] && curr.forward[i].key < key) curr = curr.forward[i];
+      update[i] = curr;
+    }
+    curr = curr.forward[0];
+    if (curr && curr.key === key) { curr.value = value; return; }
+    this.insertCount++;
+    let nl = this.kAdicVal(this.insertCount);
+    if (nl > this.currentLevel) {
+      for (let i = this.currentLevel + 1; i <= nl; i++) update[i] = this.header;
+      this.currentLevel = nl;
+    }
+    const nd = new SkipNode(key, value, nl);
+    for (let i = 0; i <= nl; i++) { nd.forward[i] = update[i].forward[i]; update[i].forward[i] = nd; }
+    this.size++;
+    return nd;
+  }
+  delete(key) {
+    const update = new Array(this.maxLevel).fill(null);
+    let curr = this.header;
+    for (let i = this.currentLevel; i >= 0; i--) {
+      while (curr.forward[i] && curr.forward[i].key < key) curr = curr.forward[i];
+      update[i] = curr;
+    }
+    const target = curr.forward[0];
+    if (!target || target.key !== key) return false;
+    for (let i = 0; i <= this.currentLevel; i++) {
+      if (update[i].forward[i] !== target) break;
+      update[i].forward[i] = target.forward[i];
+    }
+    while (this.currentLevel > 0 && !this.header.forward[this.currentLevel]) this.currentLevel--;
+    this.size--; return true;
+  }
+  search(key) {
+    let curr = this.header;
+    for (let i = this.currentLevel; i >= 0; i--)
+      while (curr.forward[i] && curr.forward[i].key < key) curr = curr.forward[i];
+    curr = curr.forward[0];
+    return (curr && curr.key === key) ? curr : null;
+  }
+  toArray() {
+    const arr = []; let c = this.header.forward[0];
+    while (c) { arr.push(c); c = c.forward[0]; } return arr;
+  }
+  getLevelArray() {
+    const res = [];
+    for (let i = 0; i <= this.currentLevel; i++) {
+      const row = []; let c = this.header.forward[i];
+      while (c) { row.push(c.key); c = c.forward[i]; } res.push(row);
+    }
+    return res;
+  }
+}
+
+// ── DRAWING HELPERS ──
+const C = { bg:'#080c14', bg2:'#0d1320', card:'#0f1826', border:'#1e2d45',
+  accent:'#00e5ff', accent2:'#7c3aff', accent3:'#00ff8c', warn:'#ff6b35',
+  text:'#d0e4f7', text2:'#7a9bbf', text3:'#3d5875', node:'#1a2e45', nodeB:'#2a4a6a',
+  hi:'#00e5ff', pr:'#7c3aff', del:'#ff4444', green:'#00ff8c'
+};
+
+function setupCanvas(id, h) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const dpr = window.devicePixelRatio || 1;
+  const w = el.parentElement.clientWidth - 40;
+  el.width = w * dpr; el.height = h * dpr;
+  el.style.width = w + 'px'; el.style.height = h + 'px';
+  const ctx = el.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#07111d'; ctx.fillRect(0, 0, w, h);
+  return { ctx, w, h };
+}
+
+function drawSkipList(ctx, sl, w, h, highlightKeys=[], highlightLevel=-1, pathNodes=null) {
+  ctx.fillStyle = '#07111d'; ctx.fillRect(0, 0, w, h);
+  const nodes = sl.toArray();
+  if (nodes.length === 0) {
+    ctx.fillStyle = C.text3; ctx.font = '13px JetBrains Mono';
+    ctx.textAlign = 'center'; ctx.fillText('(empty skip list)', w/2, h/2); return;
+  }
+  const maxLv = sl.currentLevel;
+  const rowH = Math.min(40, (h - 40) / (maxLv + 2));
+  const startX = 56, endX = w - 20;
+  const spacing = Math.min(70, (endX - startX) / (nodes.length));
+  const nodeW = Math.min(44, spacing - 8), nodeH = 24;
+  const getX = (i) => startX + i * spacing + spacing/2;
+  const getY = (lvl) => h - 28 - lvl * rowH;
+  const keyIndex = {};
+  nodes.forEach((n, i) => { keyIndex[n.key] = i; });
+
+  // Draw level labels
+  for (let lv = 0; lv <= maxLv; lv++) {
+    const y = getY(lv);
+    ctx.fillStyle = lv === 0 ? C.accent : C.text3;
+    ctx.font = `bold 10px JetBrains Mono`;
+    ctx.textAlign = 'right'; ctx.fillText('L' + lv, startX - 8, y + 5);
+    // level line
+    ctx.strokeStyle = lv === 0 ? 'rgba(0,229,255,0.08)' : 'rgba(30,45,69,0.4)';
+    ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(endX, y); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Draw header
+  const hx = 14, hy = getY(maxLv);
+  ctx.fillStyle = '#0d2035'; ctx.strokeStyle = C.accent2;
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, hx - 16, hy - nodeH/2, 32, nodeH, 4);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = C.accent2; ctx.font = 'bold 9px JetBrains Mono';
+  ctx.textAlign = 'center'; ctx.fillText('HEAD', hx, hy + 4);
+
+  // Draw horizontal arrows from header for each level
+  for (let lv = 0; lv <= maxLv; lv++) {
+    const y = getY(lv);
+    const firstAtLevel = sl.header.forward[lv];
+    if (firstAtLevel) {
+      const idx = keyIndex[firstAtLevel.key];
+      if (idx !== undefined) {
+        const nx = getX(idx);
+        drawArrow(ctx, hx + 16, y, nx - nodeW/2 - 2, y, C.text3);
+      }
+    }
+  }
+
+  // Draw nodes
+  nodes.forEach((node, i) => {
+    const bx = getX(i);
+    const isHi = highlightKeys.includes(node.key);
+    for (let lv = 0; lv <= node.level; lv++) {
+      const y = getY(lv);
+      const inPath = pathNodes && pathNodes.some(p => p.key === node.key && p.level === lv);
+      let fill = C.node, stroke = C.nodeB;
+      if (isHi) { fill = 'rgba(0,229,255,0.18)'; stroke = C.accent; }
+      if (inPath) { fill = 'rgba(124,58,255,0.25)'; stroke = C.accent2; }
+      if (lv === 0 && highlightLevel === 0) { fill = 'rgba(0,255,140,0.1)'; stroke = C.green; }
+      ctx.fillStyle = fill; ctx.strokeStyle = stroke; ctx.lineWidth = 1.5;
+      roundRect(ctx, bx - nodeW/2, y - nodeH/2, nodeW, nodeH, 5);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = isHi ? C.accent : C.text;
+      ctx.font = `bold 11px JetBrains Mono`;
+      ctx.textAlign = 'center';
+      ctx.fillText(node.key, bx, y + 4);
+      // Draw forward arrows
+      if (node.forward[lv]) {
+        const nIdx = keyIndex[node.forward[lv].key];
+        if (nIdx !== undefined) {
+          const nx = getX(nIdx);
+          const arrowColor = isHi ? C.accent : lv === 0 ? 'rgba(0,229,255,0.35)' : 'rgba(122,155,191,0.25)';
+          drawArrow(ctx, bx + nodeW/2 + 2, y, nx - nodeW/2 - 2, y, arrowColor);
+        }
+      }
+      // Vertical connections
+      if (lv < node.level) {
+        ctx.strokeStyle = 'rgba(30,45,69,0.6)'; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
+        ctx.beginPath(); ctx.moveTo(bx, y - nodeH/2); ctx.lineTo(bx, getY(lv+1) + nodeH/2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function drawArrow(ctx, x1, y1, x2, y2, color) {
+  if (x2 <= x1 + 4) return;
+  ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y1); ctx.stroke();
+  ctx.fillStyle = color; ctx.beginPath();
+  ctx.moveTo(x2 + 5, y1); ctx.lineTo(x2, y1 - 3); ctx.lineTo(x2, y1 + 3); ctx.closePath(); ctx.fill();
+}
+
+// ── SECTION INSTANCES ──
+let introSL, initSL, insertSL, deleteSL, searchSL, updateSL, traverseSL,
+    levelSL, promoSL, ptrSL, rebalSL, iterSL, rangeSL, analyzeSL;
+
+function makeSampleSL(keys=[3,6,9,12,15,18]) {
+  const sl = new DetSkipList(2, 6);
+  keys.forEach((k,i) => sl.insert(k, k*10));
+  return sl;
+}
+
+// ─── INTRO CANVAS ───
+function drawIntroViz() {
+  if (!introSL) introSL = makeSampleSL([3,6,9,12,15,18]);
+  const r = setupCanvas('introCanvas', 220); if (!r) return;
+  drawSkipList(r.ctx, introSL, r.w, r.h);
+}
+
+// ─── INIT CANVAS ───
+function drawInitViz() {
+  const r = setupCanvas('initCanvas', 200); if (!r) return;
+  const sl = new DetSkipList(2, 6);
+  const ctx = r.ctx; const {w, h} = r;
+  ctx.fillStyle = '#07111d'; ctx.fillRect(0,0,w,h);
+  const levels = 5; const rowH = (h-40) / (levels+1);
+  ctx.font = 'bold 10px JetBrains Mono'; ctx.textAlign = 'right';
+  for (let i = levels; i >= 0; i--) {
+    const y = h - 24 - i * rowH;
+    ctx.fillStyle = i === 0 ? C.accent : C.text3;
+    ctx.fillText('L' + i, 36, y + 4);
+    ctx.fillStyle = '#0d2035'; ctx.strokeStyle = i===0?C.accent2:C.text3; ctx.lineWidth=1.5;
+    roundRect(ctx, 40, y-12, 52, 24, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = i===0?C.accent2:C.text3; ctx.textAlign='center';
+    ctx.font='bold 9px JetBrains Mono'; ctx.fillText('HEAD', 66, y+4);
+    ctx.fillStyle = C.text3; ctx.font='11px JetBrains Mono'; ctx.textAlign='left';
+    ctx.fillText('──→ NULL', 100, y+4);
+  }
+  ctx.fillStyle='rgba(0,229,255,0.6)'; ctx.font='bold 11px JetBrains Mono'; ctx.textAlign='center';
+  ctx.fillText('Empty Skip List: All forward[] = NULL', w/2, 18);
+}
+
+// ─── INSERT CANVAS ───
+function initInsertSL() {
+  insertSL = new DetSkipList(2, 5);
+  [5,10,15].forEach(k => insertSL.insert(k, k));
+  redrawInsert();
+}
+function redrawInsert(hi=[]) {
+  const r = setupCanvas('insertCanvas', 240); if (!r) return;
+  drawSkipList(r.ctx, insertSL, r.w, r.h, hi);
+}
+function insertNode() {
+  const k = parseInt(document.getElementById('insertKey').value);
+  if (isNaN(k)||k<1||k>99) { document.getElementById('insertLog').textContent='⚠ Invalid key. Use 1-99.'; return; }
+  if (insertSL.search(k)) { document.getElementById('insertLog').textContent=`ℹ Key ${k} already exists.`; return; }
+  const lv = insertSL.kAdicVal(insertSL.insertCount + 1);
+  insertSL.insert(k, k * 10);
+  document.getElementById('insertLog').textContent = `✓ Inserted key=${k} at level=${lv}. Total nodes: ${insertSL.size}`;
+  redrawInsert([k]);
+  setTimeout(()=>redrawInsert([]), 1500);
+}
+function resetInsert() { initInsertSL(); document.getElementById('insertLog').textContent='List reset to [5, 10, 15].'; }
+function insertAuto() {
+  const keys = [2,4,7,8,11,13,16,18,20,22]; let i = 0;
+  const t = setInterval(() => {
+    if (i >= keys.length) { clearInterval(t); return; }
+    const k = keys[i++];
+    if (!insertSL.search(k)) {
+      insertSL.insert(k, k*10);
+      redrawInsert([k]);
+    }
+    document.getElementById('insertLog').textContent = `Auto-inserting ${k}... (${insertSL.size} nodes)`;
+  }, 500);
+}
+
+// ─── DELETE CANVAS ───
+function initDeleteSL() {
+  deleteSL = makeSampleSL([3,6,9,12,15,18,21,24]);
+  redrawDelete([]);
+}
+function redrawDelete(hi=[], delKeys=[]) {
+  const r = setupCanvas('deleteCanvas', 240); if (!r) return;
+  drawSkipList(r.ctx, deleteSL, r.w, r.h, hi);
+}
+function deleteNode() {
+  const k = parseInt(document.getElementById('deleteKey').value);
+  if (!deleteSL.search(k)) { document.getElementById('deleteLog').innerHTML='<span class="err">✗ Key '+k+' not found.</span>'; return; }
+  redrawDelete([k]);
+  setTimeout(() => {
+    deleteSL.delete(k);
+    redrawDelete([]);
+    document.getElementById('deleteLog').textContent = `✓ Deleted key=${k}. Remaining: ${deleteSL.size} nodes.`;
+  }, 800);
+}
+function resetDelete() { initDeleteSL(); document.getElementById('deleteLog').textContent='List reset to [3,6,9,12,15,18,21,24].'; }
+
+// ─── SEARCH CANVAS ───
+function initSearchSL() {
+  searchSL = makeSampleSL([3,6,9,12,15,18]);
+  redrawSearch([], []);
+}
+function redrawSearch(hi=[], path=[]) {
+  const r = setupCanvas('searchCanvas', 240); if (!r) return;
+  drawSkipList(r.ctx, searchSL, r.w, r.h, hi, -1, path);
+}
+function searchNode() {
+  const k = parseInt(document.getElementById('searchKey').value);
+  const found = searchSL.search(k);
+  let path = [];
+  // simulate path
+  let curr = searchSL.header;
+  for (let i = searchSL.currentLevel; i >= 0; i--) {
+    while (curr.forward[i] && curr.forward[i].key < k) {
+      curr = curr.forward[i]; path.push({key:curr.key, level:i});
+    }
+  }
+  redrawSearch(found?[k]:[], path);
+  const log = document.getElementById('searchLog');
+  if (found) log.textContent = `✓ Found key=${k}! Path visited ${path.length} nodes. O(log n) efficiency.`;
+  else log.innerHTML = `<span class="err">✗ Key ${k} not found.</span> Search terminated after ${path.length} comparisons.`;
+}
+function resetSearch() { initSearchSL(); document.getElementById('searchLog').textContent='List reset. Try searching for a key.'; }
+
+// ─── UPDATE CANVAS ───
+function initUpdateSL() {
+  updateSL = makeSampleSL([3,6,9,12,15,18]);
+  redrawUpdate([]);
+}
+function redrawUpdate(hi=[]) {
+  const r = setupCanvas('updateCanvas', 220); if (!r) return;
+  drawSkipList(r.ctx, updateSL, r.w, r.h, hi);
+}
+function updateNode() {
+  const k = parseInt(document.getElementById('updateKey').value);
+  const v = parseInt(document.getElementById('updateVal').value);
+  const node = updateSL.search(k);
+  const log = document.getElementById('updateLog');
+  if (!node) { log.innerHTML = `<span class="err">✗ Key ${k} not found. Cannot update.</span>`; return; }
+  const old = node.value;
+  node.value = v;
+  redrawUpdate([k]);
+  log.textContent = `✓ Updated key=${k}: value ${old} → ${v}`;
+  setTimeout(()=>redrawUpdate([]), 1500);
+}
+function resetUpdate() { initUpdateSL(); document.getElementById('updateLog').textContent='List reset. Enter key & new value to update.'; }
+
+// ─── TRAVERSE CANVAS ───
+let traverseIdx = 0, traverseNodes = [], traverseTimer = null;
+function initTraverseSL() {
+  traverseSL = makeSampleSL([2,4,6,8,10,12,14]);
+  const r = setupCanvas('traverseCanvas', 240); if (!r) return;
+  drawSkipList(r.ctx, traverseSL, r.w, r.h);
+}
+function startTraversal() {
+  if (traverseTimer) clearInterval(traverseTimer);
+  traverseNodes = traverseSL.toArray();
+  let i = 0;
+  const visited = [];
+  traverseTimer = setInterval(() => {
+    if (i >= traverseNodes.length) { clearInterval(traverseTimer); 
+      document.getElementById('traverseLog').textContent=`✓ Traversal complete. Visited ${traverseNodes.length} nodes in sorted order.`;
+      return; }
+    visited.push(traverseNodes[i].key);
+    const r = setupCanvas('traverseCanvas', 240);
+    if (r) drawSkipList(r.ctx, traverseSL, r.w, r.h, visited, 0);
+    document.getElementById('traverseLog').textContent = `Level 0 traversal: [${visited.join(', ')}]`;
+    i++;
+  }, 500);
+}
+function traverseAllLevels() {
+  if (traverseTimer) clearInterval(traverseTimer);
+  const allNodes = traverseSL.toArray().map(n=>n.key);
+  const r = setupCanvas('traverseCanvas', 240);
+  if (r) drawSkipList(r.ctx, traverseSL, r.w, r.h, allNodes);
+  document.getElementById('traverseLog').textContent = `All levels highlighted. Level 0: ${allNodes.join(' → ')}`;
+}
+function resetTraverse() {
+  if (traverseTimer) clearInterval(traverseTimer);
+  initTraverseSL();
+  document.getElementById('traverseLog').textContent='Click "Animate Level 0" to watch the traversal.';
+}
+
+// ─── LEVEL CANVAS ───
+function initLevelSL() {
+  levelSL = new DetSkipList(2, 6);
+  [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].forEach(k=>levelSL.insert(k,k));
+  showLevelDist();
+}
+function showLevelDist() {
+  if (!levelSL) { levelSL = new DetSkipList(2,6); [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].forEach(k=>levelSL.insert(k,k)); }
+  const r = setupCanvas('levelCanvas', 240); if (!r) return;
+  const {ctx, w, h} = r;
+  ctx.fillStyle='#07111d'; ctx.fillRect(0,0,w,h);
+  const levels = levelSL.currentLevel + 1;
+  const barW = Math.min(60, (w-80) / (levels + 1));
+  const maxCount = levelSL.size;
+  const maxH = h - 60;
+  for (let i = 0; i < levels; i++) {
+    let count = 0; let c = levelSL.header.forward[i];
+    while (c) { count++; c = c.forward[i]; }
+    const expected = levelSL.size / Math.pow(levelSL.k, i);
+    const x = 40 + i * (w - 60) / levels;
+    const barH = (count / maxCount) * maxH;
+    const expH = (expected / maxCount) * maxH;
+    // actual bar
+    ctx.fillStyle = `rgba(0,229,255,${0.7 - i * 0.08})`;
+    ctx.fillRect(x, h - 40 - barH, barW * 0.5, barH);
+    // expected line
+    ctx.strokeStyle = C.accent2; ctx.lineWidth = 2; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x, h-40-expH); ctx.lineTo(x+barW*0.5, h-40-expH); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = C.text; ctx.font = 'bold 10px JetBrains Mono'; ctx.textAlign = 'center';
+    ctx.fillText('L'+i, x + barW*0.25, h - 24);
+    ctx.fillStyle = C.accent; ctx.font = '9px JetBrains Mono';
+    ctx.fillText(count, x + barW*0.25, h - 42 - barH);
+  }
+  ctx.fillStyle = C.text3; ctx.font = '10px JetBrains Mono'; ctx.textAlign='left';
+  ctx.fillText('■ Actual nodes   — Expected (n/kⁱ)', 40, 16);
+  ctx.fillStyle = C.accent; ctx.fillRect(38, 9, 10, 8);
+  ctx.strokeStyle = C.accent2; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(120,13); ctx.lineTo(140,13); ctx.stroke();
+  document.getElementById('levelLog').textContent=`n=${levelSL.size} nodes, k=2. Levels: ${levels}. Ideal max: ${Math.ceil(Math.log2(levelSL.size))}`;
+}
+function resetLevel() { levelSL = null; initLevelSL(); }
+
+// ─── PROMO CANVAS ───
+function runPromoSim() {
+  const k = parseInt(document.getElementById('promoK').value) || 2;
+  const r = setupCanvas('promoCanvas', 240); if (!r) return;
+  const {ctx, w, h} = r;
+  ctx.fillStyle='#07111d'; ctx.fillRect(0,0,w,h);
+  const total = 16;
+  const cols = 8, rows = 2;
+  const cw = (w - 40) / cols, ch = (h - 40) / rows;
+  const maxLv = 5;
+  const colors = [C.text2, C.accent, C.accent2, C.green, C.warn, '#ff6b6b'];
+  for (let i = 1; i <= total; i++) {
+    let lv = 0, v = i;
+    while (v % k === 0 && lv < maxLv) { lv++; v = Math.floor(v/k); }
+    const col = (i-1) % cols, row = Math.floor((i-1)/cols);
+    const x = 20 + col * cw + cw/2, y = 30 + row * ch + ch/2;
+    ctx.fillStyle = colors[Math.min(lv, colors.length-1)];
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth=1;
+    const sz = 18 + lv * 5;
+    ctx.beginPath(); ctx.arc(x, y, sz/2, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = lv>0?'#000':'#000'; ctx.font='bold 11px JetBrains Mono'; ctx.textAlign='center';
+    ctx.fillText(i, x, y+4);
+    if (lv > 0) {
+      ctx.fillStyle = colors[Math.min(lv,colors.length-1)];
+      ctx.font='bold 9px JetBrains Mono';
+      ctx.fillText('L'+lv, x, y-sz/2-3);
+    }
+  }
+  ctx.fillStyle=C.text3; ctx.font='10px JetBrains Mono'; ctx.textAlign='left';
+  ctx.fillText(`k=${k} promotion: bigger circle = higher level assignment`, 10, h-8);
+  document.getElementById('promoLog').textContent=`k=${k}: 1→L0, 2→L1, 4→L2, 8→L3, etc. (circle size = level)`;
+}
+function resetPromo() {
+  const r = setupCanvas('promoCanvas', 240); if (!r) return;
+  r.ctx.fillStyle='#07111d'; r.ctx.fillRect(0,0,r.w,r.h);
+  document.getElementById('promoLog').textContent='Click Simulate to see which inserts get promoted.';
+}
+
+// ─── PTR CANVAS ───
+function drawPointerViz() {
+  if (!ptrSL) ptrSL = makeSampleSL([4,8,12,16]);
+  const r = setupCanvas('ptrCanvas', 260); if (!r) return;
+  const {ctx, w, h} = r;
+  ctx.fillStyle='#07111d'; ctx.fillRect(0,0,w,h);
+  const nodes = [ptrSL.header, ...ptrSL.toArray()];
+  const colW = (w - 20) / nodes.length;
+  const rowH = 28, topY = 40;
+  ctx.fillStyle=C.text2; ctx.font='bold 10px JetBrains Mono'; ctx.textAlign='center';
+  nodes.forEach((n,i)=>{
+    const x = 10 + i*colW + colW/2;
+    ctx.fillStyle = i===0 ? C.accent2 : C.accent;
+    ctx.fillText(i===0?'HEAD':('key='+n.key), x, 18);
+    for(let lv=0; lv<4; lv++){
+      const y = topY + lv * rowH;
+      const fwd = n.forward[lv];
+      ctx.fillStyle = fwd ? 'rgba(0,229,255,0.12)' : 'rgba(30,45,69,0.5)';
+      ctx.strokeStyle = fwd ? C.accent : C.text3; ctx.lineWidth=1;
+      roundRect(ctx, x-28, y-10, 56, 20, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = fwd ? C.accent : C.text3;
+      ctx.font='9px JetBrains Mono'; ctx.textAlign='center';
+      ctx.fillText(fwd ? '→'+fwd.key : 'NULL', x, y+4);
+      if(lv===0){ ctx.fillStyle=C.text3; ctx.font='9px JetBrains Mono'; ctx.textAlign='right'; ctx.fillText('fwd['+lv+']', x-30, y+4); }
+    }
+  });
+  ctx.fillStyle=C.text3; ctx.font='9px JetBrains Mono'; ctx.textAlign='right';
+  for(let lv=0;lv<4;lv++) ctx.fillText('fwd['+lv+']', 38, topY+lv*rowH+4);
+  document.getElementById('ptrLog').textContent='Each column = a node. Each cell = its forward[level] pointer value.';
+}
+
+// ─── REBAL CANVAS ───
+function makeUnbalanced() {
+  rebalSL = new DetSkipList(2, 5);
+  [5,10,15,20,25].forEach(k=>rebalSL.insert(k,k));
+  [8,9,11,12,13,14,16,17,18,19].forEach(k=>rebalSL.insert(k,k));
+  const r = setupCanvas('rebalCanvas', 260); if (!r) return;
+  drawSkipList(r.ctx, rebalSL, r.w, r.h);
+  document.getElementById('rebalLog').textContent='Unbalanced state created. Notice the skewed level distribution.';
+}
+function doRebalance() {
+  if (!rebalSL) { makeUnbalanced(); return; }
+  const keys = rebalSL.toArray().map(n=>n.key);
+  rebalSL = new DetSkipList(2,5);
+  keys.forEach(k=>rebalSL.insert(k,k));
+  const r = setupCanvas('rebalCanvas', 260); if (!r) return;
+  drawSkipList(r.ctx, rebalSL, r.w, r.h);
+  document.getElementById('rebalLog').textContent=`✓ Rebalanced! ${rebalSL.size} nodes re-inserted with fresh promotion counts.`;
+}
+function resetRebal() {
+  rebalSL = null;
+  const r = setupCanvas('rebalCanvas', 260); if(!r) return;
+  r.ctx.fillStyle='#07111d'; r.ctx.fillRect(0,0,r.w,r.h);
+  document.getElementById('rebalLog').textContent='Click "Make Unbalanced" to see a degraded structure.';
+}
+
+// ─── ITER CANVAS ───
+let iterIdx = 0, iterNodes = [];
+function initIterSL() {
+  iterSL = makeSampleSL([2,4,6,8,10,12]);
+  iterNodes = iterSL.toArray(); iterIdx = 0;
+  redrawIter(-1);
+}
+function redrawIter(idx) {
+  const r = setupCanvas('iterCanvas', 220); if (!r) return;
+  const hi = idx >= 0 && idx < iterNodes.length ? [iterNodes[idx].key] : [];
+  drawSkipList(r.ctx, iterSL, r.w, r.h, hi, 0);
+}
+function iterNext() {
+  if (iterIdx >= iterNodes.length) {
+    document.getElementById('iterLog').textContent='↩ End of list. Click Reset to start over.';
+    return;
+  }
+  const n = iterNodes[iterIdx];
+  redrawIter(iterIdx);
+  document.getElementById('iterLog').textContent=`Iterator at node #${iterIdx+1}: key=${n.key}, value=${n.value}`;
+  iterIdx++;
+}
+function iterReset() {
+  iterIdx = 0; redrawIter(-1);
+  document.getElementById('iterLog').textContent='Iterator reset to beginning. Click Next to step through.';
+}
+
+// ─── RANGE CANVAS ───
+function initRangeSL() {
+  rangeSL = makeSampleSL([2,4,6,8,10,12,14,16,18,20]);
+  redrawRange([]);
+}
+function redrawRange(hi=[]) {
+  const r = setupCanvas('rangeCanvas', 240); if (!r) return;
+  drawSkipList(r.ctx, rangeSL, r.w, r.h, hi);
+}
+function doRangeQuery() {
+  const lo = parseInt(document.getElementById('rangeLow').value);
+  const hi = parseInt(document.getElementById('rangeHigh').value);
+  if (isNaN(lo)||isNaN(hi)||lo>hi) { document.getElementById('rangeLog').innerHTML='<span class="err">⚠ Invalid range.</span>'; return; }
+  const results = [];
+  let c = rangeSL.header.forward[0];
+  // skip to lo
+  let curr2 = rangeSL.header;
+  for (let i = rangeSL.currentLevel; i >= 0; i--)
+    while (curr2.forward[i] && curr2.forward[i].key < lo) curr2 = curr2.forward[i];
+  c = curr2.forward[0];
+  while (c && c.key <= hi) { results.push(c.key); c = c.forward[0]; }
+  redrawRange(results);
+  document.getElementById('rangeLog').textContent=`Range [${lo},${hi}]: Found ${results.length} keys → [${results.join(', ')}]`;
+}
+function resetRange() { initRangeSL(); document.getElementById('rangeLog').textContent='Enter a range and click Query Range.'; }
+
+// ─── ANALYZE CANVAS ───
+function initAnalyzeSL() {
+  analyzeSL = new DetSkipList(2,6);
+  [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].forEach(k=>analyzeSL.insert(k,k));
+}
+function drawAnalysis() {
+  if (!analyzeSL) initAnalyzeSL();
+  levelSL = analyzeSL; showLevelDist();
+  const r = setupCanvas('analyzeCanvas', 240); if (!r) return;
+  // reuse level viz on analyze canvas
+  const {ctx, w, h} = r;
+  ctx.fillStyle='#07111d'; ctx.fillRect(0,0,w,h);
+  const sl = analyzeSL;
+  const levels = sl.currentLevel + 1;
+  const barW = (w - 80) / levels;
+  const maxH = h - 70;
+  for (let i = 0; i < levels; i++) {
+    let count = 0; let c = sl.header.forward[i];
+    while (c) { count++; c = c.forward[i]; }
+    const exp = sl.size / Math.pow(sl.k, i);
+    const x = 40 + i * barW;
+    const bh = (count / sl.size) * maxH;
+    const eh = (exp / sl.size) * maxH;
+    ctx.fillStyle = `rgba(0,229,255,${0.8 - i*0.1})`;
+    ctx.fillRect(x, h-40-bh, barW*0.6, bh);
+    ctx.fillStyle = C.accent;ctx.font='bold 10px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText(count, x+barW*0.3, h-44-bh);
+    ctx.strokeStyle='rgba(124,58,255,0.8)';ctx.lineWidth=2;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(x,h-40-eh);ctx.lineTo(x+barW*0.6,h-40-eh);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=C.text2;ctx.font='9px JetBrains Mono';ctx.textAlign='center';
+    ctx.fillText('L'+i, x+barW*0.3, h-24);
+  }
+  ctx.fillStyle=C.text3;ctx.font='10px JetBrains Mono';ctx.textAlign='left';
+  ctx.fillText(`n=${sl.size}, k=${sl.k} | ■ actual  — expected`, 10, 16);
+  document.getElementById('analyzeLog').textContent=`n=${sl.size} nodes across ${levels} levels. Max theoretical search path: ~${Math.ceil(Math.log2(sl.size)*2)} comparisons.`;
+}
+
+// ═══════════════════════════════════════════
+// UI CONTROLS
+// ═══════════════════════════════════════════
+function switchTab(tabEl, prefix) {
+  const section = tabEl.closest('.section') || tabEl.closest('section');
+  section.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  tabEl.classList.add('active');
+  const allContent = section.querySelectorAll('.tab-content');
+  allContent.forEach(c => c.classList.remove('active'));
+  const idx = Array.from(section.querySelectorAll('.tab')).indexOf(tabEl);
+  allContent[idx]?.classList.add('active');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Progress bar
+window.addEventListener('scroll', () => {
+  const el = document.getElementById('main');
+  const scrolled = window.scrollY;
+  const total = document.body.scrollHeight - window.innerHeight;
+  document.getElementById('progress').style.width = (scrolled / total * 100) + '%';
+  // Active nav highlight
+  document.querySelectorAll('section[id]').forEach(sec => {
+    const rect = sec.getBoundingClientRect();
+    if (rect.top <= 100 && rect.bottom >= 100) {
+      document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+      const link = document.querySelector(`nav a[href="#${sec.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+});
+
+// Close sidebar on link click (mobile)
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════
+// INITIALIZE ALL VISUALIZATIONS
+// ═══════════════════════════════════════════
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    drawIntroViz();
+    drawInitViz();
+    initInsertSL();
+    initDeleteSL();
+    initSearchSL();
+    initUpdateSL();
+    initTraverseSL();
+    initLevelSL();
+    drawPointerViz();
+    initIterSL();
+    initRangeSL();
+    initAnalyzeSL();
+  }, 100);
+});
+
+window.addEventListener('resize', () => {
+  drawIntroViz(); drawInitViz();
+  if(insertSL) redrawInsert([]);
+  if(deleteSL) redrawDelete([]);
+  if(searchSL) redrawSearch([],[]);
+  if(updateSL) redrawUpdate([]);
+  if(traverseSL) {const r=setupCanvas('traverseCanvas',240);if(r)drawSkipList(r.ctx,traverseSL,r.w,r.h);}
+  if(levelSL) showLevelDist();
+  if(ptrSL) drawPointerViz();
+  if(rebalSL){const r=setupCanvas('rebalCanvas',260);if(r)drawSkipList(r.ctx,rebalSL,r.w,r.h);}
+  if(iterSL) redrawIter(iterIdx-1);
+  if(rangeSL) redrawRange([]);
+  if(analyzeSL) drawAnalysis();
+});
+</script>
+</body>
+</html>

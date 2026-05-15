@@ -1,0 +1,3048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heap Tree Mastery — Array-Based Operations</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0d14;
+  --surface: #111520;
+  --surface2: #161c2e;
+  --border: #1e2a45;
+  --accent: #00e5ff;
+  --accent2: #ff6b35;
+  --accent3: #7c3aed;
+  --green: #00f5a0;
+  --yellow: #ffd166;
+  --red: #ff4757;
+  --text: #e8eaf6;
+  --text-muted: #8892b0;
+  --text-dim: #4a5568;
+  --card-bg: #0f1623;
+  --max-heap: #ff6b35;
+  --min-heap: #00e5ff;
+  --node-default: #1e3a5f;
+  --node-highlight: #ff6b35;
+  --node-swap: #00f5a0;
+  --node-compare: #7c3aed;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.hero {
+  position: relative;
+  padding: 60px 40px 50px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 60% -20%, rgba(0,229,255,0.08), transparent),
+              radial-gradient(ellipse 50% 80% at 100% 100%, rgba(124,58,237,0.06), transparent);
+}
+.hero-inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.hero-badge::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 4vw, 52px);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.hero-title span { color: var(--accent); }
+.hero-subtitle {
+  color: var(--text-muted);
+  font-size: 16px;
+  max-width: 520px;
+  margin-bottom: 24px;
+}
+.heap-type-toggle {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.htbtn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.htbtn.max { border-color: var(--max-heap); color: var(--max-heap); }
+.htbtn.min { border-color: var(--min-heap); color: var(--min-heap); }
+.hero-stats {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.stat {
+  text-align: center;
+}
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--accent);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 200px);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px 0;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.sidebar-section {
+  padding: 6px 16px;
+  margin-bottom: 2px;
+}
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  padding: 12px 16px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: all 0.15s;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active {
+  background: rgba(0,229,255,0.08);
+  border-color: rgba(0,229,255,0.2);
+  color: var(--accent);
+}
+.nav-item .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  min-width: 20px;
+}
+.nav-item.active .num { color: var(--accent); }
+.nav-item .tag {
+  margin-left: auto;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.tag-basic { background: rgba(0,245,160,0.1); color: var(--green); }
+.tag-mid { background: rgba(255,209,102,0.1); color: var(--yellow); }
+.tag-adv { background: rgba(255,71,87,0.1); color: var(--red); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;
+  padding: 40px;
+  overflow-x: hidden;
+}
+
+/* ── SECTION ── */
+.section {
+  margin-bottom: 80px;
+  scroll-margin-top: 30px;
+}
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(20px, 2.5vw, 30px);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.section-desc {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.level-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+.lv-basic { background: rgba(0,245,160,0.12); color: var(--green); border: 1px solid rgba(0,245,160,0.2); }
+.lv-mid { background: rgba(255,209,102,0.12); color: var(--yellow); border: 1px solid rgba(255,209,102,0.2); }
+.lv-adv { background: rgba(255,71,87,0.12); color: var(--red); border: 1px solid rgba(255,71,87,0.2); }
+
+/* ── CARDS ── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+}
+.card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card h4 .icon { font-size: 18px; }
+.card p { font-size: 14px; color: var(--text-muted); }
+.card ul { list-style: none; }
+.card ul li {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card ul li:last-child { border-bottom: none; }
+.card ul li::before { content: '→'; color: var(--accent); font-size: 11px; }
+
+.analogy-card {
+  background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(0,229,255,0.05));
+  border: 1px solid rgba(124,58,237,0.25);
+  border-radius: 14px;
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.analogy-icon { font-size: 32px; flex-shrink: 0; }
+.analogy-text h4 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 6px;
+  color: var(--accent3);
+}
+.analogy-text p { font-size: 14px; color: var(--text-muted); }
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background: #070b14;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  position: relative;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots span {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.code-dots span:nth-child(1) { background: #ff5f57; }
+.code-dots span:nth-child(2) { background: #fbb829; }
+.code-dots span:nth-child(3) { background: #28c941; }
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+.copy-btn {
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.2);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.2s;
+}
+.copy-btn:hover { background: rgba(0,229,255,0.15); }
+pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+}
+pre::-webkit-scrollbar { height: 4px; }
+pre::-webkit-scrollbar-track { background: transparent; }
+pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.kw { color: #ff79c6; }
+.ty { color: #8be9fd; }
+.fn { color: #50fa7b; }
+.cm { color: #6272a4; }
+.str { color: #f1fa8c; }
+.nm { color: #bd93f9; }
+.op { color: #ff79c6; }
+
+/* ── VISUALIZER ── */
+.viz-container {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.viz-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.viz-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+}
+.viz-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vbtn {
+  padding: 7px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+}
+.vbtn:hover, .vbtn.active { background: var(--surface2); color: var(--text); border-color: rgba(0,229,255,0.3); }
+.vbtn.primary {
+  background: rgba(0,229,255,0.1);
+  border-color: rgba(0,229,255,0.3);
+  color: var(--accent);
+}
+.vbtn.primary:hover { background: rgba(0,229,255,0.18); }
+.vbtn.danger {
+  background: rgba(255,71,87,0.08);
+  border-color: rgba(255,71,87,0.25);
+  color: var(--red);
+}
+.vbtn.success {
+  background: rgba(0,245,160,0.08);
+  border-color: rgba(0,245,160,0.25);
+  color: var(--green);
+}
+.viz-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-size: 13px;
+  width: 80px;
+  outline: none;
+  font-family: 'JetBrains Mono', monospace;
+}
+.viz-input:focus { border-color: rgba(0,229,255,0.4); }
+.viz-body {
+  padding: 24px;
+}
+.viz-legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ── CANVAS STYLING ── */
+.heap-canvas {
+  width: 100%;
+  height: 280px;
+  border-radius: 8px;
+  display: block;
+}
+.array-display {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  align-items: center;
+}
+.array-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.array-val {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--node-default);
+  border: 2px solid #2a4a7f;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.array-val.highlight { background: rgba(255,107,53,0.3); border-color: var(--max-heap); color: var(--max-heap); }
+.array-val.swap { background: rgba(0,245,160,0.2); border-color: var(--green); color: var(--green); }
+.array-val.compare { background: rgba(124,58,237,0.2); border-color: var(--accent3); color: var(--accent3); }
+.array-idx {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+/* ── STATUS BOX ── */
+.status-box {
+  background: rgba(0,229,255,0.05);
+  border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 12px;
+  min-height: 38px;
+}
+
+/* ── TABLE ── */
+.info-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+.info-table th {
+  background: var(--surface2);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+}
+.info-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(30,42,69,0.5);
+  color: var(--text-muted);
+}
+.info-table tr:last-child td { border-bottom: none; }
+.info-table tr:hover td { background: rgba(255,255,255,0.02); }
+.mono { font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+
+/* ── STEP TIMELINE ── */
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 24px;
+}
+.step-item {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+.step-item::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 36px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.step-item:last-child::before { display: none; }
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  flex-shrink: 0;
+  z-index: 1;
+}
+.step-content {
+  padding: 6px 0 20px;
+}
+.step-content h5 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.step-content p {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* ── COMPLEXITY BOX ── */
+.complexity-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.complexity-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.complexity-pill .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+.complexity-pill .value { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: var(--yellow); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { padding: 24px 16px; }
+}
+@media (max-width: 600px) {
+  .hero { padding: 40px 20px 30px; }
+  .hero-stats { margin-left: 0; }
+}
+
+/* ── INTRO SECTION ── */
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.intro-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.intro-card .big { font-size: 32px; margin-bottom: 8px; }
+.intro-card h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.intro-card p { font-size: 12px; color: var(--text-muted); }
+
+/* ── HEAP TYPE COMPARISON ── */
+.heap-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+@media (max-width: 600px) { .heap-compare { grid-template-columns: 1fr; } }
+.hc-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.hc-card.max { border-top: 3px solid var(--max-heap); }
+.hc-card.min { border-top: 3px solid var(--min-heap); }
+.hc-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; margin-bottom: 12px; }
+.hc-card.max .hc-title { color: var(--max-heap); }
+.hc-card.min .hc-title { color: var(--min-heap); }
+.hc-card ul { list-style: none; }
+.hc-card ul li { font-size: 13px; color: var(--text-muted); padding: 4px 0; }
+.hc-card ul li::before { content: '✓ '; color: var(--green); }
+
+/* ── FORMULA BOX ── */
+.formula-box {
+  background: rgba(124,58,237,0.06);
+  border: 1px solid rgba(124,58,237,0.2);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+.formula-box .formula-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent3); margin-bottom: 10px; }
+.formula-row { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; color: var(--text-muted); }
+.formula-row span { color: var(--accent); }
+
+/* ── SUBSECTION LABEL ── */
+.subsec {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent3);
+  margin-bottom: 10px;
+  margin-top: 28px;
+}
+
+/* ── SCROLL TO TOP ── */
+.scroll-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 44px;
+  height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 999;
+  font-size: 18px;
+  opacity: 0;
+}
+.scroll-top.visible { opacity: 1; }
+.scroll-top:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div style="flex:1;min-width:280px">
+      <div class="hero-badge">Data Structures · Array-Based Heap Tree</div>
+      <h1 class="hero-title">Heap Tree<br><span>Mastery</span></h1>
+      <p class="hero-subtitle">Learn every heap operation from scratch — with interactive visualizations, C code examples, and real-world analogies.</p>
+      <div class="heap-type-toggle">
+        <button class="htbtn max">Max Heap ↑ Root is Largest</button>
+        <button class="htbtn min">Min Heap ↓ Root is Smallest</button>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="stat-num">19</div><div class="stat-label">Operations</div></div>
+      <div class="stat"><div class="stat-num">C</div><div class="stat-label">Language</div></div>
+      <div class="stat"><div class="stat-num">O(log n)</div><div class="stat-label">Key Complexity</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-section-title">Fundamentals</div>
+  <a class="nav-item active" href="#s0"><span class="num">00</span> Introduction <span class="tag tag-basic">Basic</span></a>
+  <a class="nav-item" href="#s1"><span class="num">01</span> Create Heap <span class="tag tag-basic">Basic</span></a>
+  <a class="nav-item" href="#s2"><span class="num">02</span> Insert Element <span class="tag tag-basic">Basic</span></a>
+  <a class="nav-item" href="#s3"><span class="num">03</span> Delete Root <span class="tag tag-mid">Mid</span></a>
+  <a class="nav-item" href="#s4"><span class="num">04</span> Extract Max/Min <span class="tag tag-mid">Mid</span></a>
+  <div class="sidebar-section-title">Core Operations</div>
+  <a class="nav-item" href="#s5"><span class="num">05</span> Peek Root <span class="tag tag-basic">Basic</span></a>
+  <a class="nav-item" href="#s6"><span class="num">06</span> Heapify <span class="tag tag-mid">Mid</span></a>
+  <a class="nav-item" href="#s7"><span class="num">07</span> Build Heap <span class="tag tag-mid">Mid</span></a>
+  <a class="nav-item" href="#s8"><span class="num">08</span> Traverse Heap <span class="tag tag-basic">Basic</span></a>
+  <a class="nav-item" href="#s9"><span class="num">09</span> Search Element <span class="tag tag-basic">Basic</span></a>
+  <div class="sidebar-section-title">Advanced</div>
+  <a class="nav-item" href="#s10"><span class="num">10</span> Update Key <span class="tag tag-mid">Mid</span></a>
+  <a class="nav-item" href="#s11"><span class="num">11</span> Increase Key <span class="tag tag-mid">Mid</span></a>
+  <a class="nav-item" href="#s12"><span class="num">12</span> Decrease Key <span class="tag tag-mid">Mid</span></a>
+  <a class="nav-item" href="#s13"><span class="num">13</span> Replace Element <span class="tag tag-adv">Adv</span></a>
+  <a class="nav-item" href="#s14"><span class="num">14</span> Merge Heaps <span class="tag tag-adv">Adv</span></a>
+  <a class="nav-item" href="#s15"><span class="num">15</span> Heap Sort <span class="tag tag-adv">Adv</span></a>
+  <a class="nav-item" href="#s16"><span class="num">16</span> Delete Specific <span class="tag tag-adv">Adv</span></a>
+  <a class="nav-item" href="#s17"><span class="num">17</span> Min→Max Convert <span class="tag tag-adv">Adv</span></a>
+  <a class="nav-item" href="#s18"><span class="num">18</span> Clone Heap <span class="tag tag-basic">Basic</span></a>
+  <a class="nav-item" href="#s19"><span class="num">19</span> Clear Heap <span class="tag tag-basic">Basic</span></a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ════════════════════════════════════════════
+     SECTION 0 — INTRODUCTION
+════════════════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="section-header">
+    <div class="section-num">00</div>
+    <div>
+      <div class="section-title">What is a Heap Tree? <span class="level-badge lv-basic">Beginner</span></div>
+      <div class="section-desc">Understanding the foundation before writing a single line of code</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🏥</div>
+    <div class="analogy-text">
+      <h4>Real-Life Analogy: Hospital Emergency Room</h4>
+      <p>Imagine an ER where patients are treated by severity, not arrival time. The most critical patient (max heap) is always at the front. When one leaves, the next most critical takes their place automatically. That's exactly how a max heap works — the "most important" element always stays at the top.</p>
+    </div>
+  </div>
+
+  <div class="intro-grid">
+    <div class="intro-card">
+      <div class="big">🌳</div>
+      <h4>Complete Binary Tree</h4>
+      <p>A heap is stored as a complete binary tree — all levels filled left to right.</p>
+    </div>
+    <div class="intro-card">
+      <div class="big">📦</div>
+      <h4>Array Storage</h4>
+      <p>The entire tree lives inside a simple array. No pointers needed!</p>
+    </div>
+    <div class="intro-card">
+      <div class="big">📜</div>
+      <h4>Heap Property</h4>
+      <p>Every parent is ≥ its children (max heap) or ≤ its children (min heap).</p>
+    </div>
+    <div class="intro-card">
+      <div class="big">⚡</div>
+      <h4>O(log n) Operations</h4>
+      <p>Insert and delete in logarithmic time — extremely fast even for large data.</p>
+    </div>
+  </div>
+
+  <div class="heap-compare">
+    <div class="hc-card max">
+      <div class="hc-title">▲ Max Heap</div>
+      <ul>
+        <li>Root = Maximum element</li>
+        <li>Parent ≥ Both children always</li>
+        <li>Used in: Heap Sort, Priority Queue</li>
+        <li>Top element: arr[0] = largest</li>
+      </ul>
+    </div>
+    <div class="hc-card min">
+      <div class="hc-title">▼ Min Heap</div>
+      <ul>
+        <li>Root = Minimum element</li>
+        <li>Parent ≤ Both children always</li>
+        <li>Used in: Dijkstra's Algorithm, Scheduling</li>
+        <li>Top element: arr[0] = smallest</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="formula-box">
+    <div class="formula-title">📐 Array Index Formulas (0-based index)</div>
+    <div class="formula-row">For node at index <span>i</span>:</div>
+    <div class="formula-row">→ Parent index: <span>floor((i - 1) / 2)</span></div>
+    <div class="formula-row">→ Left child index: <span>(2 * i) + 1</span></div>
+    <div class="formula-row">→ Right child index: <span>(2 * i) + 2</span></div>
+  </div>
+
+  <!-- Interactive intro visualizer -->
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Interactive: Explore Heap Structure</div>
+      <div class="viz-controls">
+        <button class="vbtn primary" onclick="introShowMax()">Max Heap Example</button>
+        <button class="vbtn" onclick="introShowMin()">Min Heap Example</button>
+        <button class="vbtn" onclick="introShowFormulas()">Show Index Formulas</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="introCanvas" class="heap-canvas"></canvas>
+      <div id="introArrayDisplay" class="array-display"></div>
+      <div id="introStatus" class="status-box">Click a button above to explore! ☝️</div>
+      <div class="viz-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--max-heap)"></div>Root / Highlighted</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1e3a5f"></div>Regular Node</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Compared Node</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 1 — CREATE HEAP
+════════════════════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div>
+      <div class="section-title">Create Heap <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">Initialize the heap structure — set up the array, size, and choose heap type</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🏗️</div>
+    <div class="analogy-text">
+      <h4>Analogy: Building a Waiting Room</h4>
+      <p>Creating a heap is like setting up a waiting room. You decide the maximum capacity (MAX_SIZE), put up a sign saying "Max Priority" or "Min Priority", and start with zero people (size = 0). The room (array) is empty but ready!</p>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4><span class="icon">📋</span> Sub-Operations</h4>
+      <ul>
+        <li>Initialize array with MAX_SIZE</li>
+        <li>Set heap size to 0</li>
+        <li>Choose heap type (Max / Min)</li>
+        <li>Allocate memory for array</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="icon">💡</span> Key Points</h4>
+      <p style="margin-bottom:10px;">An empty heap is valid. We track size separately from capacity. The array is pre-allocated. Both max and min heaps use the same array structure — only the comparison changes!</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">heap_create.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === CREATE HEAP: Initialize a max heap === */</span>
+
+<span class="kw">#define</span> MAX_SIZE <span class="nm">100</span>  <span class="cm">/* Maximum elements heap can hold */</span>
+
+<span class="cm">/* Structure to represent our heap */</span>
+<span class="kw">struct</span> <span class="ty">Heap</span> {
+    <span class="ty">int</span> arr[MAX_SIZE];  <span class="cm">/* Array to store heap elements */</span>
+    <span class="ty">int</span> size;           <span class="cm">/* Current number of elements */</span>
+    <span class="ty">int</span> heapType;       <span class="cm">/* 1 = Max Heap, 0 = Min Heap */</span>
+};
+
+<span class="cm">/* Function to create and initialize a heap */</span>
+<span class="ty">void</span> <span class="fn">createHeap</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> type) {
+    h-&gt;size = <span class="nm">0</span>;       <span class="cm">/* Empty heap to start */</span>
+    h-&gt;heapType = type; <span class="cm">/* Set heap type */</span>
+    <span class="cm">/* Array memory is already reserved by the struct */</span>
+}
+
+<span class="cm">/* In main: */</span>
+<span class="ty">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="ty">Heap</span> myHeap;
+    <span class="fn">createHeap</span>(&amp;myHeap, <span class="nm">1</span>); <span class="cm">/* 1 = Max Heap */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Heap created! Type: %s, Size: %d\n"</span>,
+           myHeap.heapType ? <span class="str">"Max Heap"</span> : <span class="str">"Min Heap"</span>,
+           myHeap.size);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">Space Complexity</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Operation</div><div class="value">Initialize</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 2 — INSERT ELEMENT
+════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div>
+      <div class="section-title">Insert Element <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">Add a new value to the heap while maintaining the heap property</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🎟️</div>
+    <div class="analogy-text">
+      <h4>Analogy: Joining a Priority Queue</h4>
+      <p>A new patient enters the ER. They first sit at the last chair available (end of array). Then they're assessed — if more critical than the person ahead of them, they swap seats. They keep swapping until they reach the right priority level. This is "Bubble Up"!</p>
+    </div>
+  </div>
+
+  <div class="steps-list">
+    <div class="step-item"><div class="step-num">1</div><div class="step-content"><h5>Add at End</h5><p>Place new element at arr[size] and increment size by 1.</p></div></div>
+    <div class="step-item"><div class="step-num">2</div><div class="step-content"><h5>Find Parent</h5><p>Parent of node at index i is at index (i-1)/2.</p></div></div>
+    <div class="step-item"><div class="step-num">3</div><div class="step-content"><h5>Compare with Parent</h5><p>If new element > parent (for max heap), they violate heap property.</p></div></div>
+    <div class="step-item"><div class="step-num">4</div><div class="step-content"><h5>Swap if Needed</h5><p>Swap the new element with parent. Move index up to parent position.</p></div></div>
+    <div class="step-item"><div class="step-num">5</div><div class="step-content"><h5>Repeat</h5><p>Continue until element is ≤ parent (max heap) or reaches root (index 0).</p></div></div>
+  </div>
+
+  <!-- INSERT VISUALIZER -->
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Insert Element — Interactive Visualizer</div>
+      <div class="viz-controls">
+        <input type="number" class="viz-input" id="insertVal" placeholder="Value" min="1" max="99" value="45">
+        <button class="vbtn primary" onclick="insertStep()">Insert Step</button>
+        <button class="vbtn success" onclick="insertFast()">Insert All</button>
+        <button class="vbtn danger" onclick="resetInsert()">Reset</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="insertCanvas" class="heap-canvas"></canvas>
+      <div id="insertArrayDisplay" class="array-display"></div>
+      <div id="insertStatus" class="status-box">Enter a value and click "Insert Step" to animate the insertion! 👆</div>
+      <div class="viz-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--max-heap)"></div>New/Active Node</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Being Swapped</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Comparing</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">insert_element.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === INSERT ELEMENT into Max Heap === */</span>
+
+<span class="cm">/* Swap two integers using a temp variable */</span>
+<span class="ty">void</span> <span class="fn">swap</span>(<span class="ty">int</span> *a, <span class="ty">int</span> *b) {
+    <span class="ty">int</span> temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+<span class="cm">/* Bubble Up: move element up until heap is valid */</span>
+<span class="ty">void</span> <span class="fn">bubbleUp</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index) {
+    <span class="ty">int</span> parent = (index - <span class="nm">1</span>) / <span class="nm">2</span>; <span class="cm">/* Parent index formula */</span>
+
+    <span class="cm">/* Keep swapping while current > parent (max heap) */</span>
+    <span class="kw">while</span> (index &gt; <span class="nm">0</span> &amp;&amp; h-&gt;arr[index] &gt; h-&gt;arr[parent]) {
+        <span class="fn">swap</span>(&amp;h-&gt;arr[index], &amp;h-&gt;arr[parent]);
+        index = parent;              <span class="cm">/* Move up */</span>
+        parent = (index - <span class="nm">1</span>) / <span class="nm">2</span>; <span class="cm">/* Recalculate parent */</span>
+    }
+}
+
+<span class="cm">/* Insert element into heap */</span>
+<span class="ty">void</span> <span class="fn">insert</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> value) {
+    <span class="kw">if</span> (h-&gt;size &gt;= MAX_SIZE) {
+        <span class="fn">printf</span>(<span class="str">"Heap is full! Cannot insert %d\n"</span>, value);
+        <span class="kw">return</span>;
+    }
+    <span class="cm">/* Step 1: Add at end */</span>
+    h-&gt;arr[h-&gt;size] = value;
+    h-&gt;size++;
+
+    <span class="cm">/* Step 2-5: Bubble Up to fix heap property */</span>
+    <span class="fn">bubbleUp</span>(h, h-&gt;size - <span class="nm">1</span>);
+
+    <span class="fn">printf</span>(<span class="str">"Inserted %d. Heap size: %d\n"</span>, value, h-&gt;size);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Best Case</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">Worst Case</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Why log n?</div><div class="value">Tree Height</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 3 — DELETE ROOT
+════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div>
+      <div class="section-title">Delete Root <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">Remove the root node while restoring the heap property using Heapify Down</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🏆</div>
+    <div class="analogy-text">
+      <h4>Analogy: Champion Leaves, Last Player Fills In</h4>
+      <p>The champion (root) wins and exits. The last person in line is moved to champion's spot temporarily. Then we run a "tournament bracket" — they compete down the tree, swapping with the stronger child at each level, until they find the right position. This is Heapify Down (Bubble Down).</p>
+    </div>
+  </div>
+
+  <div class="steps-list">
+    <div class="step-item"><div class="step-num">1</div><div class="step-content"><h5>Save Root Value</h5><p>Store arr[0] to return it later. This is the element we're deleting.</p></div></div>
+    <div class="step-item"><div class="step-num">2</div><div class="step-content"><h5>Replace Root with Last</h5><p>Put the last element (arr[size-1]) into the root position (arr[0]).</p></div></div>
+    <div class="step-item"><div class="step-num">3</div><div class="step-content"><h5>Decrease Size</h5><p>Reduce heap size by 1 to "remove" the last element.</p></div></div>
+    <div class="step-item"><div class="step-num">4</div><div class="step-content"><h5>Heapify Down</h5><p>Compare root with its children. Swap with the larger child (max heap) if needed.</p></div></div>
+    <div class="step-item"><div class="step-num">5</div><div class="step-content"><h5>Repeat Until Fixed</h5><p>Continue swapping downward until heap property is restored.</p></div></div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Delete Root — Interactive Visualizer</div>
+      <div class="viz-controls">
+        <button class="vbtn primary" onclick="deleteRootStep()">Delete Root Step</button>
+        <button class="vbtn success" onclick="deleteRootFull()">Full Delete</button>
+        <button class="vbtn danger" onclick="resetDelete()">Reset Heap</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="deleteCanvas" class="heap-canvas"></canvas>
+      <div id="deleteArrayDisplay" class="array-display"></div>
+      <div id="deleteStatus" class="status-box">Click "Delete Root Step" to animate step by step! 👆</div>
+      <div class="viz-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Root (Being Deleted)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Last Element Moving Up</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Comparing Children</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">delete_root.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === DELETE ROOT from Max Heap (Heapify Down) === */</span>
+
+<span class="ty">void</span> <span class="fn">heapifyDown</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index) {
+    <span class="ty">int</span> largest = index;           <span class="cm">/* Assume current is largest */</span>
+    <span class="ty">int</span> left  = <span class="nm">2</span> * index + <span class="nm">1</span>;    <span class="cm">/* Left child index */</span>
+    <span class="ty">int</span> right = <span class="nm">2</span> * index + <span class="nm">2</span>;   <span class="cm">/* Right child index */</span>
+
+    <span class="cm">/* Check if left child is larger */</span>
+    <span class="kw">if</span> (left &lt; h-&gt;size &amp;&amp; h-&gt;arr[left] &gt; h-&gt;arr[largest])
+        largest = left;
+
+    <span class="cm">/* Check if right child is even larger */</span>
+    <span class="kw">if</span> (right &lt; h-&gt;size &amp;&amp; h-&gt;arr[right] &gt; h-&gt;arr[largest])
+        largest = right;
+
+    <span class="cm">/* If largest is not current, swap and recurse down */</span>
+    <span class="kw">if</span> (largest != index) {
+        <span class="fn">swap</span>(&amp;h-&gt;arr[index], &amp;h-&gt;arr[largest]);
+        <span class="fn">heapifyDown</span>(h, largest); <span class="cm">/* Recurse on affected subtree */</span>
+    }
+}
+
+<span class="cm">/* Delete the root element */</span>
+<span class="ty">int</span> <span class="fn">deleteRoot</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="kw">if</span> (h-&gt;size == <span class="nm">0</span>) {
+        <span class="fn">printf</span>(<span class="str">"Heap is empty!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="ty">int</span> root = h-&gt;arr[<span class="nm">0</span>];         <span class="cm">/* Step 1: Save root */</span>
+    h-&gt;arr[<span class="nm">0</span>] = h-&gt;arr[h-&gt;size-<span class="nm">1</span>]; <span class="cm">/* Step 2: Move last to root */</span>
+    h-&gt;size--;                     <span class="cm">/* Step 3: Shrink heap */</span>
+    <span class="fn">heapifyDown</span>(h, <span class="nm">0</span>);           <span class="cm">/* Step 4-5: Fix heap property */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Deleted root: %d\n"</span>, root);
+    <span class="kw">return</span> root;
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Space (recursive)</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Space (iterative)</div><div class="value">O(1)</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 4 — EXTRACT MAX/MIN
+════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div>
+      <div class="section-title">Extract Max / Extract Min <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">Access and remove the top priority element — the heart of priority queue operations</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🎰</div>
+    <div class="analogy-text">
+      <h4>Analogy: The Jackpot Machine</h4>
+      <p>Extract Max is like pulling the top prize from a jackpot machine — you get the best item, and the machine instantly reorganizes the remaining prizes so the next best is always ready at the top. You always know exactly which slot has the highest prize without searching!</p>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4><span class="icon">⬆️</span> Extract Max (from Max Heap)</h4>
+      <ul>
+        <li>Access arr[0] — always the maximum</li>
+        <li>Remove root (same as Delete Root)</li>
+        <li>Reheapify to restore heap</li>
+        <li>Return the extracted maximum value</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="icon">⬇️</span> Extract Min (from Min Heap)</h4>
+      <ul>
+        <li>Access arr[0] — always the minimum</li>
+        <li>Same process, different heap type</li>
+        <li>Reheapify using min comparison</li>
+        <li>Return the extracted minimum value</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">extract_max_min.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === EXTRACT MAX from Max Heap === */</span>
+
+<span class="ty">int</span> <span class="fn">extractMax</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="kw">if</span> (h-&gt;size == <span class="nm">0</span>) {
+        <span class="fn">printf</span>(<span class="str">"Error: Heap is empty!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="cm">/* Root always holds the maximum */</span>
+    <span class="ty">int</span> maxVal = h-&gt;arr[<span class="nm">0</span>];
+
+    <span class="cm">/* Remove root (reuses deleteRoot logic) */</span>
+    h-&gt;arr[<span class="nm">0</span>] = h-&gt;arr[h-&gt;size - <span class="nm">1</span>];
+    h-&gt;size--;
+    <span class="fn">heapifyDown</span>(h, <span class="nm">0</span>);  <span class="cm">/* Restore heap property */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Extracted Max: %d\n"</span>, maxVal);
+    <span class="kw">return</span> maxVal;  <span class="cm">/* Return the extracted value */</span>
+}
+
+<span class="cm">/* === EXTRACT MIN from Min Heap === */</span>
+<span class="cm">/* Note: heapifyDownMin uses &lt; instead of &gt; in comparisons */</span>
+
+<span class="ty">void</span> <span class="fn">heapifyDownMin</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index) {
+    <span class="ty">int</span> smallest = index;
+    <span class="ty">int</span> left  = <span class="nm">2</span> * index + <span class="nm">1</span>;
+    <span class="ty">int</span> right = <span class="nm">2</span> * index + <span class="nm">2</span>;
+
+    <span class="kw">if</span> (left &lt; h-&gt;size &amp;&amp; h-&gt;arr[left] &lt; h-&gt;arr[smallest])
+        smallest = left;
+    <span class="kw">if</span> (right &lt; h-&gt;size &amp;&amp; h-&gt;arr[right] &lt; h-&gt;arr[smallest])
+        smallest = right;
+
+    <span class="kw">if</span> (smallest != index) {
+        <span class="fn">swap</span>(&amp;h-&gt;arr[index], &amp;h-&gt;arr[smallest]);
+        <span class="fn">heapifyDownMin</span>(h, smallest);
+    }
+}
+
+<span class="ty">int</span> <span class="fn">extractMin</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="kw">if</span> (h-&gt;size == <span class="nm">0</span>) { <span class="fn">printf</span>(<span class="str">"Heap empty!\n"</span>); <span class="kw">return</span> -<span class="nm">1</span>; }
+    <span class="ty">int</span> minVal = h-&gt;arr[<span class="nm">0</span>];  <span class="cm">/* Root = minimum */</span>
+    h-&gt;arr[<span class="nm">0</span>] = h-&gt;arr[h-&gt;size - <span class="nm">1</span>];
+    h-&gt;size--;
+    <span class="fn">heapifyDownMin</span>(h, <span class="nm">0</span>);
+    <span class="kw">return</span> minVal;
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Space Complexity</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">Use Case</div><div class="value">Priority Queue</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 5 — PEEK ROOT
+════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div>
+      <div class="section-title">Peek Root <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">View the top element without removing it — the fastest heap operation!</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">👁️</div>
+    <div class="analogy-text">
+      <h4>Analogy: Checking Who's First in Line</h4>
+      <p>Peek is like walking to the front of a queue and looking at who's next — without actually taking them out. You just look. Nobody moves. The queue stays the same. In a heap, arr[0] is always the highest priority, and peeking costs nothing!</p>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Peek Root Demo</div>
+      <div class="viz-controls">
+        <button class="vbtn primary" onclick="peekDemo()">Peek Root!</button>
+        <button class="vbtn" onclick="buildPeekHeap()">Load Sample Heap</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="peekCanvas" class="heap-canvas"></canvas>
+      <div id="peekArrayDisplay" class="array-display"></div>
+      <div id="peekStatus" class="status-box">Click "Load Sample Heap" then "Peek Root"! 👆</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">peek_root.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === PEEK ROOT: View top element without removing === */</span>
+
+<span class="cm">/* Check if heap is empty */</span>
+<span class="ty">int</span> <span class="fn">isEmpty</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="kw">return</span> h-&gt;size == <span class="nm">0</span>;  <span class="cm">/* Returns 1 if empty, 0 if not */</span>
+}
+
+<span class="cm">/* Peek at the root without removing it */</span>
+<span class="ty">int</span> <span class="fn">peekRoot</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>(h)) {
+        <span class="fn">printf</span>(<span class="str">"Heap is empty! Nothing to peek.\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="cm">/* arr[0] is ALWAYS the root = max or min element */</span>
+    <span class="fn">printf</span>(<span class="str">"Root (top) element: %d\n"</span>, h-&gt;arr[<span class="nm">0</span>]);
+    <span class="kw">return</span> h-&gt;arr[<span class="nm">0</span>];  <span class="cm">/* No modification to heap! */</span>
+}
+
+<span class="cm">/* Usage: */</span>
+<span class="ty">int</span> top = <span class="fn">peekRoot</span>(&amp;myHeap); <span class="cm">/* O(1) — instant! */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">Modifies Heap?</div><div class="value">Never</div></div>
+    <div class="complexity-pill"><div class="label">Root Index</div><div class="value">arr[0]</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 6 — HEAPIFY
+════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div>
+      <div class="section-title">Heapify <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">The core algorithm — fix heap property by comparing parent and children, then swapping</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">⚖️</div>
+    <div class="analogy-text">
+      <h4>Analogy: The Referee's Job</h4>
+      <p>Think of heapify as a referee checking if the tournament bracket is fair. At each level, the referee checks: "Is the parent stronger than both children?" If not, swap the parent with the stronger child, then re-check that position. This cascades down the tree until everything is correct.</p>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4><span class="icon">⬆️</span> Heapify Up (Bubble Up)</h4>
+      <ul>
+        <li>Used after Insert</li>
+        <li>Starts from leaf, goes to root</li>
+        <li>Compares with parent</li>
+        <li>Stops when parent is larger</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="icon">⬇️</span> Heapify Down (Bubble Down)</h4>
+      <ul>
+        <li>Used after Delete Root</li>
+        <li>Starts from root, goes to leaf</li>
+        <li>Compares with both children</li>
+        <li>Swaps with larger child (max heap)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">heapify.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === HEAPIFY: Both directions === */</span>
+
+<span class="cm">/* ── HEAPIFY UP: Fix after insert (Recursive) ── */</span>
+<span class="ty">void</span> <span class="fn">heapifyUp</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index) {
+    <span class="cm">/* Base case: reached root */</span>
+    <span class="kw">if</span> (index == <span class="nm">0</span>) <span class="kw">return</span>;
+
+    <span class="ty">int</span> parent = (index - <span class="nm">1</span>) / <span class="nm">2</span>;
+
+    <span class="cm">/* If current node > parent, swap and recurse */</span>
+    <span class="kw">if</span> (h-&gt;arr[index] &gt; h-&gt;arr[parent]) {
+        <span class="fn">swap</span>(&amp;h-&gt;arr[index], &amp;h-&gt;arr[parent]);
+        <span class="fn">heapifyUp</span>(h, parent);  <span class="cm">/* Recurse upward */</span>
+    }
+}
+
+<span class="cm">/* ── HEAPIFY DOWN: Fix after delete (Iterative) ── */</span>
+<span class="ty">void</span> <span class="fn">heapifyDownIter</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index) {
+    <span class="kw">while</span> (<span class="nm">1</span>) {
+        <span class="ty">int</span> largest = index;
+        <span class="ty">int</span> left  = <span class="nm">2</span> * index + <span class="nm">1</span>;
+        <span class="ty">int</span> right = <span class="nm">2</span> * index + <span class="nm">2</span>;
+
+        <span class="kw">if</span> (left  &lt; h-&gt;size &amp;&amp; h-&gt;arr[left]  &gt; h-&gt;arr[largest])
+            largest = left;
+        <span class="kw">if</span> (right &lt; h-&gt;size &amp;&amp; h-&gt;arr[right] &gt; h-&gt;arr[largest])
+            largest = right;
+
+        <span class="kw">if</span> (largest == index) <span class="kw">break</span>; <span class="cm">/* Heap is valid, stop */</span>
+
+        <span class="fn">swap</span>(&amp;h-&gt;arr[index], &amp;h-&gt;arr[largest]);
+        index = largest;  <span class="cm">/* Move to child position */</span>
+    }
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Heapify Up</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Heapify Down</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Single Node</div><div class="value">O(1)</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 7 — BUILD HEAP
+════════════════════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div>
+      <div class="section-title">Build Heap <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">Convert an unsorted array into a valid heap — efficiently using Bottom-Up Heapify</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🏗️</div>
+    <div class="analogy-text">
+      <h4>Analogy: Organizing a Messy Office Building</h4>
+      <p>Imagine an office building where employees are randomly assigned floors. Start from the middle manager (not the CEO), fix their department first, then work up to higher managers. By the time you reach the CEO level, everything below is already organized. This is O(n) — much faster than inserting one by one!</p>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Build Heap from Unsorted Array</div>
+      <div class="viz-controls">
+        <button class="vbtn primary" onclick="buildHeapStep()">Next Step</button>
+        <button class="vbtn success" onclick="buildHeapFull()">Build Complete</button>
+        <button class="vbtn danger" onclick="resetBuild()">Randomize</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="buildCanvas" class="heap-canvas"></canvas>
+      <div id="buildArrayDisplay" class="array-display"></div>
+      <div id="buildStatus" class="status-box">Click "Next Step" to build heap step by step! 👆</div>
+      <div class="viz-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Currently Processing</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Already Fixed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">build_heap.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === BUILD HEAP from existing array (Bottom-Up) === */</span>
+<span class="cm">/* This is MORE efficient than inserting one by one! */</span>
+<span class="cm">/* Time: O(n)  vs  O(n log n) for repeated insert */</span>
+
+<span class="ty">void</span> <span class="fn">buildHeap</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> *input, <span class="ty">int</span> n) {
+    <span class="cm">/* Copy input array into heap */</span>
+    <span class="ty">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; n; i++) {
+        h-&gt;arr[i] = input[i];
+    }
+    h-&gt;size = n;
+
+    <span class="cm">/* Start from last non-leaf node and go up */</span>
+    <span class="cm">/* Last non-leaf = (n/2) - 1 */</span>
+    <span class="kw">for</span> (i = n / <span class="nm">2</span> - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="fn">heapifyDown</span>(h, i);  <span class="cm">/* Fix subtree rooted at i */</span>
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Heap built from %d elements!\n"</span>, n);
+}
+
+<span class="cm">/* Usage Example: */</span>
+<span class="ty">int</span> data[] = {<span class="nm">3</span>, <span class="nm">1</span>, <span class="nm">6</span>, <span class="nm">5</span>, <span class="nm">2</span>, <span class="nm">4</span>}; <span class="cm">/* Unsorted */</span>
+<span class="ty">int</span> n = <span class="kw">sizeof</span>(data) / <span class="kw">sizeof</span>(data[<span class="nm">0</span>]);
+<span class="fn">buildHeap</span>(&amp;myHeap, data, n);
+<span class="cm">/* Result: arr[0] = 6 (the maximum) */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Build Heap (this)</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">n Insertions</div><div class="value">O(n log n)</div></div>
+    <div class="complexity-pill"><div class="label">Start Index</div><div class="value">(n/2) - 1</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 8 — TRAVERSE HEAP
+════════════════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div>
+      <div class="section-title">Traverse Heap <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">Visit and display all elements — heaps are naturally stored for level-order traversal</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">📺</div>
+    <div class="analogy-text">
+      <h4>Analogy: Reading a Family Tree Top-Down</h4>
+      <p>Traversal is like reading a family tree starting from the grandparent, then all their children, then grandchildren — level by level. Since a heap is stored as an array, level-order traversal is just printing arr[0] through arr[size-1] in order!</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">traverse_heap.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === TRAVERSE HEAP: Print all elements === */</span>
+
+<span class="cm">/* Level-order traversal: just print the array! */</span>
+<span class="ty">void</span> <span class="fn">traverseHeap</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>(h)) {
+        <span class="fn">printf</span>(<span class="str">"Heap is empty!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="ty">int</span> i;
+    <span class="fn">printf</span>(<span class="str">"Heap elements (level-order): "</span>);
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; h-&gt;size; i++) {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, h-&gt;arr[i]);
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cm">/* Display as tree structure (visual) */</span>
+<span class="ty">void</span> <span class="fn">displayTree</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="ty">int</span> i = <span class="nm">0</span>, level = <span class="nm">1</span>, count = <span class="nm">0</span>;
+    <span class="kw">while</span> (i &lt; h-&gt;size) {
+        <span class="fn">printf</span>(<span class="str">"Level %d: "</span>, level);
+        <span class="kw">while</span> (count &lt; level &amp;&amp; i &lt; h-&gt;size) {
+            <span class="fn">printf</span>(<span class="str">"%d  "</span>, h-&gt;arr[i++]);
+            count++;
+        }
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+        level *= <span class="nm">2</span>;  <span class="cm">/* Each level has 2x nodes */</span>
+        count = <span class="nm">0</span>;
+    }
+}
+
+<span class="cm">/* Output example for [90,75,80,55,60,65,70]:
+   Level 1: 90
+   Level 2: 75  80
+   Level 3: 55  60  65  70 */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Space Complexity</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">Type</div><div class="value">Level Order</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 9 — SEARCH ELEMENT
+════════════════════════════════════════════ -->
+<section class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">09</div>
+    <div>
+      <div class="section-title">Search Element <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">Find a value in the heap — heaps aren't sorted, so we do a linear search</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🔍</div>
+    <div class="analogy-text">
+      <h4>Analogy: Looking for a Person in a Theater</h4>
+      <p>Heaps guarantee the best seat is always in row 1, but there's no guarantee about where everyone else sits. To find a specific person, you have to walk row by row (linear search). Unlike a sorted array, you can't "skip" rows — you must check each seat.</p>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Search Element Demo</div>
+      <div class="viz-controls">
+        <input type="number" class="viz-input" id="searchVal" placeholder="Search" value="55">
+        <button class="vbtn primary" onclick="searchHeap()">Search!</button>
+        <button class="vbtn" onclick="buildSearchHeap()">Load Heap</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="searchCanvas" class="heap-canvas"></canvas>
+      <div id="searchArrayDisplay" class="array-display"></div>
+      <div id="searchStatus" class="status-box">Load a heap, enter a value, and search! 🔍</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">search_element.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === SEARCH ELEMENT in Heap (Linear Search) === */</span>
+
+<span class="ty">int</span> <span class="fn">searchElement</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> target) {
+    <span class="ty">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; h-&gt;size; i++) {
+        <span class="kw">if</span> (h-&gt;arr[i] == target) {
+            <span class="fn">printf</span>(<span class="str">"Found %d at index %d\n"</span>, target, i);
+            <span class="kw">return</span> i;  <span class="cm">/* Return index if found */</span>
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"%d not found in heap.\n"</span>, target);
+    <span class="kw">return</span> -<span class="nm">1</span>;  <span class="cm">/* -1 means not found */</span>
+}
+
+<span class="cm">/* Usage: */</span>
+<span class="ty">int</span> idx = <span class="fn">searchElement</span>(&amp;myHeap, <span class="nm">55</span>);
+<span class="kw">if</span> (idx != -<span class="nm">1</span>)
+    <span class="fn">printf</span>(<span class="str">"Element is at position %d in array\n"</span>, idx);</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Why not O(log n)?</div><div class="value">No sorted order</div></div>
+    <div class="complexity-pill"><div class="label">Returns</div><div class="value">Index / -1</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 10 — UPDATE KEY
+════════════════════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div>
+      <div class="section-title">Update Key <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">Change a value at a given index and restore heap property in the right direction</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">✏️</div>
+    <div class="analogy-text">
+      <h4>Analogy: Changing a Patient's Priority</h4>
+      <p>A patient's condition changes. If they got worse (value increased in max heap), they move toward the front — bubble up. If they got better (value decreased), they move toward the back — bubble down. The system automatically adjusts their position!</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">update_key.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === UPDATE KEY at given index === */</span>
+
+<span class="ty">void</span> <span class="fn">updateKey</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index, <span class="ty">int</span> newVal) {
+    <span class="kw">if</span> (index &lt; <span class="nm">0</span> || index &gt;= h-&gt;size) {
+        <span class="fn">printf</span>(<span class="str">"Invalid index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="ty">int</span> oldVal = h-&gt;arr[index];
+    h-&gt;arr[index] = newVal;  <span class="cm">/* Modify value */</span>
+
+    <span class="kw">if</span> (newVal &gt; oldVal) {
+        <span class="cm">/* Value increased → bubble up (for max heap) */</span>
+        <span class="fn">heapifyUp</span>(h, index);
+    } <span class="kw">else</span> {
+        <span class="cm">/* Value decreased → bubble down */</span>
+        <span class="fn">heapifyDown</span>(h, index);
+    }
+    <span class="fn">printf</span>(<span class="str">"Updated index %d: %d → %d\n"</span>, index, oldVal, newVal);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Find Element</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Reheapify</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Total (with search)</div><div class="value">O(n)</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 11 — INCREASE KEY
+════════════════════════════════════════════ -->
+<section class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <div>
+      <div class="section-title">Increase Key <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">Increase a node's value — always requires Heapify Up to maintain max heap property</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">📈</div>
+    <div class="analogy-text">
+      <h4>Analogy: Employee Gets a Promotion</h4>
+      <p>An employee gets promoted (value increases). They now outrank some managers above them, so they swap positions upward until they reach their correct rank in the hierarchy. This is Heapify Up.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">increase_key.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === INCREASE KEY: value goes up → heapify up === */</span>
+
+<span class="ty">void</span> <span class="fn">increaseKey</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index, <span class="ty">int</span> newVal) {
+    <span class="kw">if</span> (index &lt; <span class="nm">0</span> || index &gt;= h-&gt;size) {
+        <span class="fn">printf</span>(<span class="str">"Invalid index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">if</span> (newVal &lt; h-&gt;arr[index]) {
+        <span class="fn">printf</span>(<span class="str">"Error: New value must be >= old value!\n"</span>);
+        <span class="kw">return</span>;  <span class="cm">/* Can't decrease in an increase operation */</span>
+    }
+    h-&gt;arr[index] = newVal;  <span class="cm">/* Modify value */</span>
+    <span class="fn">heapifyUp</span>(h, index);     <span class="cm">/* Bubble UP to fix property */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Key at index %d increased to %d\n"</span>, index, newVal);
+}
+
+<span class="cm">/* MAINTAIN HEAP PROPERTY:
+   After increase → node may be larger than parent
+   → Must move UP the tree (heapify up) */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Direction</div><div class="value">Upward</div></div>
+    <div class="complexity-pill"><div class="label">Restriction</div><div class="value">newVal ≥ oldVal</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 12 — DECREASE KEY
+════════════════════════════════════════════ -->
+<section class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <div>
+      <div class="section-title">Decrease Key <span class="level-badge lv-mid">Intermediate</span></div>
+      <div class="section-desc">Decrease a node's value — requires Heapify Down since node may now be smaller than children</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">📉</div>
+    <div class="analogy-text">
+      <h4>Analogy: Manager Gets Demoted</h4>
+      <p>A manager is demoted (value decreases). They're now less powerful than some employees below them, so they swap downward — changing places with the strongest subordinate — until they reach the level where they belong. This is Heapify Down.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">decrease_key.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === DECREASE KEY: value goes down → heapify down === */</span>
+
+<span class="ty">void</span> <span class="fn">decreaseKey</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> index, <span class="ty">int</span> newVal) {
+    <span class="kw">if</span> (index &lt; <span class="nm">0</span> || index &gt;= h-&gt;size) {
+        <span class="fn">printf</span>(<span class="str">"Invalid index!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">if</span> (newVal &gt; h-&gt;arr[index]) {
+        <span class="fn">printf</span>(<span class="str">"Error: New value must be &lt;= old value!\n"</span>);
+        <span class="kw">return</span>;  <span class="cm">/* Can't increase in a decrease operation */</span>
+    }
+    h-&gt;arr[index] = newVal;   <span class="cm">/* Modify value */</span>
+    <span class="fn">heapifyDown</span>(h, index);   <span class="cm">/* Bubble DOWN to fix property */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Key at index %d decreased to %d\n"</span>, index, newVal);
+}
+
+<span class="cm">/* MAINTAIN HEAP PROPERTY:
+   After decrease → node may be smaller than its children
+   → Must move DOWN the tree (heapify down)
+   → Important in Dijkstra's algorithm! */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Direction</div><div class="value">Downward</div></div>
+    <div class="complexity-pill"><div class="label">Used In</div><div class="value">Dijkstra's</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 13 — REPLACE ELEMENT
+════════════════════════════════════════════ -->
+<section class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <div>
+      <div class="section-title">Replace Element <span class="level-badge lv-adv">Advanced</span></div>
+      <div class="section-desc">Remove an old value and insert a new one, then restore heap property</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🔄</div>
+    <div class="analogy-text">
+      <h4>Analogy: Replacing a Team Member</h4>
+      <p>A team member leaves and a new person joins in their exact seat. Depending on whether the new person is stronger or weaker than those around them, they'll move up or down the corporate ladder. The team structure adjusts automatically.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">replace_element.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === REPLACE ELEMENT: Remove old, insert new === */</span>
+
+<span class="ty">void</span> <span class="fn">replaceElement</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> oldVal, <span class="ty">int</span> newVal) {
+    <span class="cm">/* Step 1: Find the old value */</span>
+    <span class="ty">int</span> index = <span class="fn">searchElement</span>(h, oldVal);
+
+    <span class="kw">if</span> (index == -<span class="nm">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Value %d not found!\n"</span>, oldVal);
+        <span class="kw">return</span>;
+    }
+
+    <span class="ty">int</span> oldValue = h-&gt;arr[index];
+    <span class="cm">/* Step 2: Insert new value at that position */</span>
+    h-&gt;arr[index] = newVal;
+
+    <span class="cm">/* Step 3: Heapify based on change direction */</span>
+    <span class="kw">if</span> (newVal &gt; oldValue) {
+        <span class="fn">heapifyUp</span>(h, index);   <span class="cm">/* New > Old → go up */</span>
+    } <span class="kw">else</span> <span class="kw">if</span> (newVal &lt; oldValue) {
+        <span class="fn">heapifyDown</span>(h, index); <span class="cm">/* New &lt; Old → go down */</span>
+    }
+    <span class="cm">/* If equal, no reheapify needed */</span>
+    <span class="fn">printf</span>(<span class="str">"Replaced %d with %d\n"</span>, oldVal, newVal);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Search Step</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Reheapify Step</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Total</div><div class="value">O(n)</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 14 — MERGE HEAPS
+════════════════════════════════════════════ -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <div>
+      <div class="section-title">Merge Heaps <span class="level-badge lv-adv">Advanced</span></div>
+      <div class="section-desc">Combine two heaps into one valid heap — merge arrays and rebuild from scratch</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🤝</div>
+    <div class="analogy-text">
+      <h4>Analogy: Two Companies Merging</h4>
+      <p>Two companies with their own hierarchies merge. All employees join one building (combine arrays), but the org chart is now a mess. To fix it, you run the Build Heap algorithm — reorganize everyone bottom-up into a proper new hierarchy.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">merge_heaps.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === MERGE TWO HEAPS into one === */</span>
+
+<span class="ty">void</span> <span class="fn">mergeHeaps</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *result,
+                <span class="kw">struct</span> <span class="ty">Heap</span> *h1,
+                <span class="kw">struct</span> <span class="ty">Heap</span> *h2) {
+    <span class="ty">int</span> i, totalSize;
+
+    <span class="cm">/* Step 1: Check capacity */</span>
+    totalSize = h1-&gt;size + h2-&gt;size;
+    <span class="kw">if</span> (totalSize &gt; MAX_SIZE) {
+        <span class="fn">printf</span>(<span class="str">"Merged heap exceeds capacity!\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="cm">/* Step 2: Combine both arrays into result */</span>
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; h1-&gt;size; i++)
+        result-&gt;arr[i] = h1-&gt;arr[i];
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; h2-&gt;size; i++)
+        result-&gt;arr[h1-&gt;size + i] = h2-&gt;arr[i];
+
+    result-&gt;size = totalSize;
+
+    <span class="cm">/* Step 3: Rebuild heap (heapify merged array) */</span>
+    <span class="kw">for</span> (i = totalSize / <span class="nm">2</span> - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--)
+        <span class="fn">heapifyDown</span>(result, i);
+
+    <span class="fn">printf</span>(<span class="str">"Merged %d + %d = %d elements\n"</span>,
+           h1-&gt;size, h2-&gt;size, totalSize);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Merge + Rebuild</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">n = Total Elements</div><div class="value">n1 + n2</div></div>
+    <div class="complexity-pill"><div class="label">Space Needed</div><div class="value">O(n1 + n2)</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 15 — HEAP SORT
+════════════════════════════════════════════ -->
+<section class="section" id="s15">
+  <div class="section-header">
+    <div class="section-num">15</div>
+    <div>
+      <div class="section-title">Heap Sort <span class="level-badge lv-adv">Advanced</span></div>
+      <div class="section-desc">Sort an array using heap operations — O(n log n) guaranteed, in-place!</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🏅</div>
+    <div class="analogy-text">
+      <h4>Analogy: Ranking Athletes by Medal</h4>
+      <p>Build the heap from all athletes. The best athlete (gold) exits first — placed at the end of the results list. The next best becomes root, exits next (silver), placed second-to-last. Repeat until all are ranked. The array fills from right to left with sorted values!</p>
+    </div>
+  </div>
+
+  <div class="steps-list">
+    <div class="step-item"><div class="step-num">1</div><div class="step-content"><h5>Build Max Heap</h5><p>Convert the input array into a valid max heap using Bottom-Up Heapify. O(n)</p></div></div>
+    <div class="step-item"><div class="step-num">2</div><div class="step-content"><h5>Swap Root with Last</h5><p>The root (maximum) is swapped with the last element in the heap. The max is now in its sorted position.</p></div></div>
+    <div class="step-item"><div class="step-num">3</div><div class="step-content"><h5>Shrink Heap Size</h5><p>Reduce heap size by 1. The sorted portion grows from right to left.</p></div></div>
+    <div class="step-item"><div class="step-num">4</div><div class="step-content"><h5>Heapify Remaining</h5><p>Call Heapify Down on the new root to restore heap property on the smaller heap.</p></div></div>
+    <div class="step-item"><div class="step-num">5</div><div class="step-content"><h5>Repeat Until Done</h5><p>Repeat steps 2–4 until only one element remains. Array is now sorted ascending!</p></div></div>
+  </div>
+
+  <!-- HEAP SORT VISUALIZER -->
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Heap Sort — Step by Step</div>
+      <div class="viz-controls">
+        <button class="vbtn primary" onclick="heapSortStep()">Sort Step</button>
+        <button class="vbtn success" onclick="heapSortFull()">Sort All</button>
+        <button class="vbtn danger" onclick="resetSort()">Randomize</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="sortCanvas" class="heap-canvas"></canvas>
+      <div id="sortArrayDisplay" class="array-display"></div>
+      <div id="sortStatus" class="status-box">Click "Sort Step" to animate Heap Sort! 🎯</div>
+      <div class="viz-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--max-heap)"></div>Root (Max)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Sorted Portion</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Being Swapped</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">heap_sort.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === HEAP SORT: O(n log n), in-place === */</span>
+
+<span class="cm">/* Heapify for heap sort (works on subarray) */</span>
+<span class="ty">void</span> <span class="fn">heapifySortHelper</span>(<span class="ty">int</span> arr[], <span class="ty">int</span> n, <span class="ty">int</span> i) {
+    <span class="ty">int</span> largest = i;
+    <span class="ty">int</span> left  = <span class="nm">2</span> * i + <span class="nm">1</span>;
+    <span class="ty">int</span> right = <span class="nm">2</span> * i + <span class="nm">2</span>;
+
+    <span class="kw">if</span> (left  &lt; n &amp;&amp; arr[left]  &gt; arr[largest]) largest = left;
+    <span class="kw">if</span> (right &lt; n &amp;&amp; arr[right] &gt; arr[largest]) largest = right;
+
+    <span class="kw">if</span> (largest != i) {
+        <span class="ty">int</span> temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
+        <span class="fn">heapifySortHelper</span>(arr, n, largest);
+    }
+}
+
+<span class="ty">void</span> <span class="fn">heapSort</span>(<span class="ty">int</span> arr[], <span class="ty">int</span> n) {
+    <span class="ty">int</span> i;
+    <span class="cm">/* Step 1: Build max heap from array */</span>
+    <span class="kw">for</span> (i = n / <span class="nm">2</span> - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--)
+        <span class="fn">heapifySortHelper</span>(arr, n, i);
+
+    <span class="cm">/* Steps 2-5: Extract elements one by one */</span>
+    <span class="kw">for</span> (i = n - <span class="nm">1</span>; i &gt; <span class="nm">0</span>; i--) {
+        <span class="cm">/* Swap root (max) with last element */</span>
+        <span class="ty">int</span> temp = arr[<span class="nm">0</span>];
+        arr[<span class="nm">0</span>] = arr[i];
+        arr[i] = temp;
+        <span class="cm">/* Heapify the reduced heap */</span>
+        <span class="fn">heapifySortHelper</span>(arr, i, <span class="nm">0</span>);
+    }
+}
+
+<span class="cm">/* Usage: */</span>
+<span class="ty">int</span> data[] = {<span class="nm">64</span>, <span class="nm">25</span>, <span class="nm">12</span>, <span class="nm">22</span>, <span class="nm">11</span>};
+<span class="fn">heapSort</span>(data, <span class="nm">5</span>);
+<span class="cm">/* Result: {11, 12, 22, 25, 64} ascending */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Best Case</div><div class="value">O(n log n)</div></div>
+    <div class="complexity-pill"><div class="label">Worst Case</div><div class="value">O(n log n)</div></div>
+    <div class="complexity-pill"><div class="label">Space</div><div class="value">O(1) In-Place</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 16 — DELETE SPECIFIC ELEMENT
+════════════════════════════════════════════ -->
+<section class="section" id="s16">
+  <div class="section-header">
+    <div class="section-num">16</div>
+    <div>
+      <div class="section-title">Delete Specific Element <span class="level-badge lv-adv">Advanced</span></div>
+      <div class="section-desc">Remove any element (not just the root) by increasing it to max, then extracting</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🎯</div>
+    <div class="analogy-text">
+      <h4>Analogy: VIP Removal from Queue</h4>
+      <p>To remove a specific person from the middle of a priority queue, make them the highest priority (increase key to infinity), then remove them from the front as normal. Alternatively, find their spot, put the last person there, and let them bubble up or down to the right position.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">delete_specific.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === DELETE SPECIFIC ELEMENT from heap === */</span>
+<span class="cm">/* Method: Replace with last node, then heapify */</span>
+
+<span class="ty">void</span> <span class="fn">deleteSpecific</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h, <span class="ty">int</span> value) {
+    <span class="cm">/* Step 1: Find element */</span>
+    <span class="ty">int</span> index = <span class="fn">searchElement</span>(h, value);
+    <span class="kw">if</span> (index == -<span class="nm">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Element %d not found!\n"</span>, value);
+        <span class="kw">return</span>;
+    }
+
+    <span class="ty">int</span> oldVal = h-&gt;arr[index];
+
+    <span class="cm">/* Step 2: Replace with last element */</span>
+    h-&gt;arr[index] = h-&gt;arr[h-&gt;size - <span class="nm">1</span>];
+    h-&gt;size--;  <span class="cm">/* Step 3: Shrink heap */</span>
+
+    <span class="kw">if</span> (index &lt; h-&gt;size) {
+        <span class="cm">/* Step 4: Heapify up OR down depending on new value */</span>
+        <span class="fn">heapifyUp</span>(h, index);   <span class="cm">/* Try going up first */</span>
+        <span class="fn">heapifyDown</span>(h, index); <span class="cm">/* Then try going down */</span>
+        <span class="cm">/* Only one direction will actually swap */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"Deleted element: %d\n"</span>, oldVal);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Find Element</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Reheapify</div><div class="value">O(log n)</div></div>
+    <div class="complexity-pill"><div class="label">Total</div><div class="value">O(n)</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 17 — CONVERT MIN TO MAX HEAP
+════════════════════════════════════════════ -->
+<section class="section" id="s17">
+  <div class="section-header">
+    <div class="section-num">17</div>
+    <div>
+      <div class="section-title">Convert Min Heap to Max Heap <span class="level-badge lv-adv">Advanced</span></div>
+      <div class="section-desc">Transform the heap type by rebuilding — no extra memory needed!</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🔀</div>
+    <div class="analogy-text">
+      <h4>Analogy: Flipping the Rules</h4>
+      <p>Imagine a tournament where the weakest player was always at the top (min heap). Now we change the rules: strongest at top (max heap). We don't reassign people — we just re-run the entire tournament with the new rules. Same people, same array — different heap!</p>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header">
+      <div class="viz-title">🎮 Convert Min Heap → Max Heap</div>
+      <div class="viz-controls">
+        <button class="vbtn primary" onclick="buildMinHeapDemo()">Build Min Heap</button>
+        <button class="vbtn success" onclick="convertToMaxHeap()">Convert to Max!</button>
+        <button class="vbtn danger" onclick="resetConvert()">Reset</button>
+      </div>
+    </div>
+    <div class="viz-body">
+      <canvas id="convertCanvas" class="heap-canvas"></canvas>
+      <div id="convertArrayDisplay" class="array-display"></div>
+      <div id="convertStatus" class="status-box">Build a min heap first, then convert! 🔄</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">convert_heap.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === CONVERT MIN HEAP TO MAX HEAP === */</span>
+<span class="cm">/* Key insight: The array is the same — just re-heapify! */</span>
+
+<span class="cm">/* Heapify down for MAX heap */</span>
+<span class="ty">void</span> <span class="fn">maxHeapifyDown</span>(<span class="ty">int</span> arr[], <span class="ty">int</span> n, <span class="ty">int</span> i) {
+    <span class="ty">int</span> largest = i;
+    <span class="ty">int</span> left  = <span class="nm">2</span> * i + <span class="nm">1</span>;
+    <span class="ty">int</span> right = <span class="nm">2</span> * i + <span class="nm">2</span>;
+
+    <span class="kw">if</span> (left  &lt; n &amp;&amp; arr[left]  &gt; arr[largest]) largest = left;
+    <span class="kw">if</span> (right &lt; n &amp;&amp; arr[right] &gt; arr[largest]) largest = right;
+
+    <span class="kw">if</span> (largest != i) {
+        <span class="ty">int</span> temp = arr[i];
+        arr[i] = arr[largest];
+        arr[largest] = temp;
+        <span class="fn">maxHeapifyDown</span>(arr, n, largest);
+    }
+}
+
+<span class="ty">void</span> <span class="fn">convertMinToMax</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="ty">int</span> i;
+    <span class="cm">/* Rebuild heap using max-heap rules */</span>
+    <span class="kw">for</span> (i = h-&gt;size / <span class="nm">2</span> - <span class="nm">1</span>; i &gt;= <span class="nm">0</span>; i--) {
+        <span class="fn">maxHeapifyDown</span>(h-&gt;arr, h-&gt;size, i);
+    }
+    h-&gt;heapType = <span class="nm">1</span>; <span class="cm">/* Update heap type to Max */</span>
+    <span class="fn">printf</span>(<span class="str">"Converted to Max Heap! Root: %d\n"</span>, h-&gt;arr[<span class="nm">0</span>]);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Rebuild Time</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Extra Space</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">In-place?</div><div class="value">Yes!</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 18 — CLONE HEAP
+════════════════════════════════════════════ -->
+<section class="section" id="s18">
+  <div class="section-header">
+    <div class="section-num">18</div>
+    <div>
+      <div class="section-title">Clone Heap <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">Create an exact copy of a heap — duplicate both array contents and size</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">📋</div>
+    <div class="analogy-text">
+      <h4>Analogy: Photocopying a Document</h4>
+      <p>Cloning a heap is like photocopying an entire document — every element, every position, preserved exactly. The clone is independent: changing one won't affect the other. Useful when you want to experiment without destroying the original heap.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">clone_heap.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === CLONE HEAP: Make an exact copy === */</span>
+
+<span class="ty">void</span> <span class="fn">cloneHeap</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *dest, <span class="kw">struct</span> <span class="ty">Heap</span> *src) {
+    <span class="ty">int</span> i;
+
+    <span class="cm">/* Step 1: Copy heap size and type */</span>
+    dest-&gt;size     = src-&gt;size;
+    dest-&gt;heapType = src-&gt;heapType;
+
+    <span class="cm">/* Step 2: Copy each element one by one */</span>
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; src-&gt;size; i++) {
+        dest-&gt;arr[i] = src-&gt;arr[i];
+    }
+    <span class="cm">/* No reheapify needed — structure is preserved! */</span>
+    <span class="fn">printf</span>(<span class="str">"Heap cloned! %d elements copied.\n"</span>, dest-&gt;size);
+}
+
+<span class="cm">/* Alternative using memcpy (from string.h): */</span>
+<span class="cm">/* memcpy(dest->arr, src->arr, src->size * sizeof(int)); */</span>
+
+<span class="cm">/* Usage: */</span>
+<span class="kw">struct</span> <span class="ty">Heap</span> backup;
+<span class="fn">cloneHeap</span>(&amp;backup, &amp;myHeap); <span class="cm">/* Safe copy */</span>
+<span class="fn">deleteRoot</span>(&amp;myHeap);         <span class="cm">/* Original changes */</span>
+<span class="cm">/* backup still has original heap! */</span></pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Time Complexity</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Space Complexity</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Reheapify Needed?</div><div class="value">No</div></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SECTION 19 — CLEAR HEAP
+════════════════════════════════════════════ -->
+<section class="section" id="s19">
+  <div class="section-header">
+    <div class="section-num">19</div>
+    <div>
+      <div class="section-title">Clear Heap <span class="level-badge lv-basic">Basic</span></div>
+      <div class="section-desc">Remove all elements and reset the heap to its initial empty state</div>
+    </div>
+  </div>
+
+  <div class="analogy-card">
+    <div class="analogy-icon">🗑️</div>
+    <div class="analogy-text">
+      <h4>Analogy: Clearing the Whiteboard</h4>
+      <p>Clearing a heap is like erasing an entire whiteboard. You don't erase each letter one by one — you just wipe the whole thing clean and set the count to zero. The board (array) still exists; it's just ready for fresh content. In C, we simply set size = 0!</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span></span><span></span><span></span></div>
+      <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--text-dim)">clear_heap.c</span>
+      <span class="code-lang">C Language</span>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+<pre><span class="cm">/* === CLEAR HEAP: Remove all elements === */</span>
+
+<span class="cm">/* For static array (stack-allocated): */</span>
+<span class="ty">void</span> <span class="fn">clearHeap</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    h-&gt;size = <span class="nm">0</span>; <span class="cm">/* Just reset size — O(1)! */</span>
+    <span class="cm">/* Old data still in array but size=0 means */</span>
+    <span class="cm">/* heap treats it all as non-existent */</span>
+    <span class="fn">printf</span>(<span class="str">"Heap cleared! Size is now 0.\n"</span>);
+}
+
+<span class="cm">/* Optional: Also zero out the array (for security) */</span>
+<span class="ty">void</span> <span class="fn">clearHeapSecure</span>(<span class="kw">struct</span> <span class="ty">Heap</span> *h) {
+    <span class="ty">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; h-&gt;size; i++) {
+        h-&gt;arr[i] = <span class="nm">0</span>;  <span class="cm">/* Zero out each element */</span>
+    }
+    h-&gt;size = <span class="nm">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Heap securely cleared!\n"</span>);
+}
+
+<span class="cm">/* For DYNAMIC arrays (malloc): */</span>
+<span class="ty">void</span> <span class="fn">freeHeap</span>(<span class="ty">int</span> **arr, <span class="ty">int</span> *size) {
+    <span class="fn">free</span>(*arr);    <span class="cm">/* Free allocated memory */</span>
+    *arr  = <span class="nm">NULL</span>;  <span class="cm">/* Prevent dangling pointer */</span>
+    *size = <span class="nm">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Dynamic heap freed!\n"</span>);
+}</pre>
+  </div>
+
+  <div class="complexity-row">
+    <div class="complexity-pill"><div class="label">Reset Size</div><div class="value">O(1)</div></div>
+    <div class="complexity-pill"><div class="label">Zero All Elements</div><div class="value">O(n)</div></div>
+    <div class="complexity-pill"><div class="label">Free Memory</div><div class="value">O(1)</div></div>
+  </div>
+
+  <!-- SUMMARY TABLE -->
+  <div class="divider"></div>
+  <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:20px;">📊 Complete Operations Summary</div>
+
+  <table class="info-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Operation</th>
+        <th>Time</th>
+        <th>Space</th>
+        <th>Direction</th>
+        <th>Level</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">01</td><td>Create Heap</td><td class="mono">O(1)</td><td class="mono">O(n)</td><td>—</td><td><span class="tag tag-basic">Basic</span></td></tr>
+      <tr><td class="mono">02</td><td>Insert Element</td><td class="mono">O(log n)</td><td class="mono">O(1)</td><td>Bubble Up</td><td><span class="tag tag-basic">Basic</span></td></tr>
+      <tr><td class="mono">03</td><td>Delete Root</td><td class="mono">O(log n)</td><td class="mono">O(1)</td><td>Bubble Down</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">04</td><td>Extract Max/Min</td><td class="mono">O(log n)</td><td class="mono">O(1)</td><td>Bubble Down</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">05</td><td>Peek Root</td><td class="mono">O(1)</td><td class="mono">O(1)</td><td>None</td><td><span class="tag tag-basic">Basic</span></td></tr>
+      <tr><td class="mono">06</td><td>Heapify</td><td class="mono">O(log n)</td><td class="mono">O(log n)</td><td>Up or Down</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">07</td><td>Build Heap</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Bottom-Up</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">08</td><td>Traverse Heap</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Left→Right</td><td><span class="tag tag-basic">Basic</span></td></tr>
+      <tr><td class="mono">09</td><td>Search Element</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Linear</td><td><span class="tag tag-basic">Basic</span></td></tr>
+      <tr><td class="mono">10</td><td>Update Key</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Up or Down</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">11</td><td>Increase Key</td><td class="mono">O(log n)</td><td class="mono">O(1)</td><td>Bubble Up</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">12</td><td>Decrease Key</td><td class="mono">O(log n)</td><td class="mono">O(1)</td><td>Bubble Down</td><td><span class="tag tag-mid">Mid</span></td></tr>
+      <tr><td class="mono">13</td><td>Replace Element</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Up or Down</td><td><span class="tag tag-adv">Adv</span></td></tr>
+      <tr><td class="mono">14</td><td>Merge Heaps</td><td class="mono">O(n)</td><td class="mono">O(n)</td><td>Bottom-Up</td><td><span class="tag tag-adv">Adv</span></td></tr>
+      <tr><td class="mono">15</td><td>Heap Sort</td><td class="mono">O(n log n)</td><td class="mono">O(1)</td><td>Root Extract</td><td><span class="tag tag-adv">Adv</span></td></tr>
+      <tr><td class="mono">16</td><td>Delete Specific</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Up + Down</td><td><span class="tag tag-adv">Adv</span></td></tr>
+      <tr><td class="mono">17</td><td>Min→Max Convert</td><td class="mono">O(n)</td><td class="mono">O(1)</td><td>Rebuild</td><td><span class="tag tag-adv">Adv</span></td></tr>
+      <tr><td class="mono">18</td><td>Clone Heap</td><td class="mono">O(n)</td><td class="mono">O(n)</td><td>Copy</td><td><span class="tag tag-basic">Basic</span></td></tr>
+      <tr><td class="mono">19</td><td>Clear Heap</td><td class="mono">O(1)</td><td class="mono">O(1)</td><td>Reset</td><td><span class="tag tag-basic">Basic</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+</div>
+
+<!-- Scroll to top -->
+<div class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// UTILITY FUNCTIONS
+// ══════════════════════════════════════════════════════════
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 300);
+  // Update active sidebar link
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(s => {
+    const rect = s.getBoundingClientRect();
+    if (rect.top <= 100 && rect.bottom > 100) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      const link = document.querySelector(`.nav-item[href="#${s.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+// HEAP DATA STRUCTURE (JavaScript for visualization)
+// ══════════════════════════════════════════════════════════
+
+function swapArr(arr, i, j) { let t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+function parentIdx(i) { return Math.floor((i - 1) / 2); }
+function leftChild(i) { return 2 * i + 1; }
+function rightChild(i) { return 2 * i + 2; }
+
+// ══════════════════════════════════════════════════════════
+// CANVAS DRAWING ENGINE
+// ══════════════════════════════════════════════════════════
+
+const COLORS = {
+  nodeBg: '#1e3a5f',
+  nodeBorder: '#2a4a7f',
+  nodeText: '#e8eaf6',
+  highlight: '#ff6b35',
+  swap: '#00f5a0',
+  compare: '#7c3aed',
+  edge: '#2a4a7f',
+  sorted: '#00f5a0',
+  processing: '#ffd166',
+  deleted: '#ff4757',
+  accent: '#00e5ff',
+};
+
+function drawHeapOnCanvas(canvasId, arr, size, highlightSet = {}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 700;
+  canvas.height = 280;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (size === 0) {
+    ctx.fillStyle = '#4a5568';
+    ctx.font = '14px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText('Heap is empty', canvas.width / 2, canvas.height / 2);
+    return;
+  }
+
+  const levels = Math.floor(Math.log2(size)) + 1;
+  const nodeR = Math.min(24, (canvas.width / (Math.pow(2, levels) + 1)) * 0.45);
+  const levelH = Math.min(70, (canvas.height - 40) / levels);
+
+  function getX(i) {
+    const level = Math.floor(Math.log2(i + 1));
+    const levelStart = Math.pow(2, level) - 1;
+    const posInLevel = i - levelStart;
+    const levelCount = Math.pow(2, level);
+    return canvas.width / (levelCount + 1) * (posInLevel + 1);
+  }
+  function getY(i) {
+    const level = Math.floor(Math.log2(i + 1));
+    return 28 + level * levelH;
+  }
+
+  // Draw edges
+  for (let i = 1; i < size; i++) {
+    const p = parentIdx(i);
+    ctx.beginPath();
+    ctx.moveTo(getX(p), getY(p));
+    ctx.lineTo(getX(i), getY(i));
+    ctx.strokeStyle = COLORS.edge;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  // Draw nodes
+  for (let i = 0; i < size; i++) {
+    const x = getX(i), y = getY(i);
+    const state = highlightSet[i] || 'normal';
+
+    // Shadow
+    ctx.beginPath();
+    ctx.arc(x, y, nodeR + 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fill();
+
+    // Node fill
+    ctx.beginPath();
+    ctx.arc(x, y, nodeR, 0, Math.PI * 2);
+    let bg = COLORS.nodeBg;
+    let border = COLORS.nodeBorder;
+    if (state === 'highlight') { bg = 'rgba(255,107,53,0.3)'; border = COLORS.highlight; }
+    else if (state === 'swap') { bg = 'rgba(0,245,160,0.2)'; border = COLORS.swap; }
+    else if (state === 'compare') { bg = 'rgba(124,58,237,0.25)'; border = COLORS.compare; }
+    else if (state === 'sorted') { bg = 'rgba(0,245,160,0.15)'; border = COLORS.sorted; }
+    else if (state === 'processing') { bg = 'rgba(255,209,102,0.2)'; border = COLORS.processing; }
+    else if (state === 'deleted') { bg = 'rgba(255,71,87,0.2)'; border = COLORS.deleted; }
+    else if (state === 'root') { bg = 'rgba(0,229,255,0.15)'; border = COLORS.accent; }
+    ctx.fillStyle = bg;
+    ctx.fill();
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Value text
+    ctx.fillStyle = state === 'normal' ? COLORS.nodeText : border;
+    ctx.font = `bold ${Math.max(11, nodeR * 0.7)}px JetBrains Mono`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(arr[i], x, y);
+
+    // Index label
+    ctx.fillStyle = '#4a5568';
+    ctx.font = `9px JetBrains Mono`;
+    ctx.fillText(`[${i}]`, x, y + nodeR + 10);
+  }
+}
+
+function renderArrayDisplay(containerId, arr, size, highlightSet = {}) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  for (let i = 0; i < size; i++) {
+    const state = highlightSet[i] || 'normal';
+    let cls = 'array-val';
+    if (state === 'highlight') cls += ' highlight';
+    else if (state === 'swap') cls += ' swap';
+    else if (state === 'compare') cls += ' compare';
+    container.innerHTML += `<div class="array-cell"><div class="${cls}">${arr[i]}</div><div class="array-idx">[${i}]</div></div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 0 — INTRO VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let introArr = [], introSize = 0;
+
+function introShowMax() {
+  introArr = [90, 75, 80, 55, 60, 65, 70];
+  introSize = 7;
+  drawHeapOnCanvas('introCanvas', introArr, introSize, {0:'root'});
+  renderArrayDisplay('introArrayDisplay', introArr, introSize, {0:'root'});
+  document.getElementById('introStatus').textContent =
+    'Max Heap: Root (90) is the LARGEST. Every parent ≥ both children. arr[0] = 90 is always max!';
+}
+
+function introShowMin() {
+  introArr = [10, 20, 15, 40, 30, 25, 35];
+  introSize = 7;
+  drawHeapOnCanvas('introCanvas', introArr, introSize, {0:'root'});
+  renderArrayDisplay('introArrayDisplay', introArr, introSize, {0:'root'});
+  document.getElementById('introStatus').textContent =
+    'Min Heap: Root (10) is the SMALLEST. Every parent ≤ both children. arr[0] = 10 is always min!';
+}
+
+function introShowFormulas() {
+  introArr = [90, 75, 80, 55, 60, 65, 70];
+  introSize = 7;
+  const hl = {0:'root', 1:'highlight', 2:'highlight', 3:'compare', 4:'compare', 5:'compare', 6:'compare'};
+  drawHeapOnCanvas('introCanvas', introArr, introSize, hl);
+  renderArrayDisplay('introArrayDisplay', introArr, introSize, hl);
+  document.getElementById('introStatus').textContent =
+    'Index formulas: Parent of i = (i-1)/2 | Left child = 2i+1 | Right child = 2i+2 | Node at [0] is root!';
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 2 — INSERT VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let insertHeap = [50, 30, 40, 20, 25];
+let insertSize = 5;
+let insertStepIdx = -1;
+let insertStepData = null;
+
+function buildInsertViz() {
+  drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, {});
+  renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, {});
+}
+
+function insertStep() {
+  if (insertStepData) {
+    // Continue stepping
+    continueInsertStep();
+    return;
+  }
+  const val = parseInt(document.getElementById('insertVal').value);
+  if (isNaN(val) || val < 0 || val > 999) {
+    document.getElementById('insertStatus').textContent = '⚠️ Enter a valid number (0–999)';
+    return;
+  }
+  // Add to end
+  insertHeap[insertSize] = val;
+  insertSize++;
+  insertStepIdx = insertSize - 1;
+  let hl = {}; hl[insertStepIdx] = 'highlight';
+  drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, hl);
+  renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, hl);
+  document.getElementById('insertStatus').textContent =
+    `Step 1: Added ${val} at end (index ${insertStepIdx}). Now checking parent at index ${parentIdx(insertStepIdx)}: ${insertHeap[parentIdx(insertStepIdx)]}`;
+  insertStepData = { phase: 'bubble', idx: insertStepIdx, val };
+}
+
+function continueInsertStep() {
+  const d = insertStepData;
+  const parent = parentIdx(d.idx);
+  if (d.idx > 0 && insertHeap[d.idx] > insertHeap[parent]) {
+    let hl = {}; hl[d.idx] = 'swap'; hl[parent] = 'swap';
+    drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, hl);
+    renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, hl);
+    swapArr(insertHeap, d.idx, parent);
+    document.getElementById('insertStatus').textContent =
+      `Swap! ${insertHeap[parent]} at [${parent}] was less than ${insertHeap[d.idx]} at [${d.idx}]. Bubbling up...`;
+    d.idx = parent;
+    setTimeout(() => {
+      const newParent = parentIdx(d.idx);
+      if (d.idx > 0 && insertHeap[d.idx] > insertHeap[newParent]) {
+        document.getElementById('insertStatus').textContent += ' Continue stepping!';
+      } else {
+        finishInsert(d.val);
+      }
+      let hl2 = {}; hl2[d.idx] = 'highlight';
+      drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, hl2);
+      renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, hl2);
+    }, 400);
+  } else {
+    finishInsert(d.val);
+  }
+}
+
+function finishInsert(val) {
+  insertStepData = null;
+  drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, {0:'root'});
+  renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, {0:'root'});
+  document.getElementById('insertStatus').textContent =
+    `✅ Insertion of ${val} complete! Heap property maintained. Root: ${insertHeap[0]}`;
+}
+
+function insertFast() {
+  const val = parseInt(document.getElementById('insertVal').value);
+  if (isNaN(val)) return;
+  insertHeap[insertSize] = val;
+  insertSize++;
+  // Bubble up fully
+  let i = insertSize - 1;
+  while (i > 0 && insertHeap[i] > insertHeap[parentIdx(i)]) {
+    swapArr(insertHeap, i, parentIdx(i));
+    i = parentIdx(i);
+  }
+  insertStepData = null;
+  drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, {0:'root'});
+  renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, {0:'root'});
+  document.getElementById('insertStatus').textContent =
+    `✅ ${val} inserted instantly! Root: ${insertHeap[0]}`;
+}
+
+function resetInsert() {
+  insertHeap = [50, 30, 40, 20, 25];
+  insertSize = 5;
+  insertStepData = null;
+  drawHeapOnCanvas('insertCanvas', insertHeap, insertSize, {0:'root'});
+  renderArrayDisplay('insertArrayDisplay', insertHeap, insertSize, {0:'root'});
+  document.getElementById('insertStatus').textContent = 'Heap reset. Enter a value and insert! 👆';
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 3 — DELETE ROOT VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let delHeap = [90, 75, 80, 55, 60, 65, 70];
+let delSize = 7;
+let delPhase = 0;
+
+function drawDelete(hl) {
+  drawHeapOnCanvas('deleteCanvas', delHeap, delSize, hl);
+  renderArrayDisplay('deleteArrayDisplay', delHeap, delSize, hl);
+}
+
+function deleteRootStep() {
+  if (delSize === 0) { document.getElementById('deleteStatus').textContent = '⚠️ Heap is empty!'; return; }
+  if (delPhase === 0) {
+    document.getElementById('deleteStatus').textContent =
+      `Step 1: Root is ${delHeap[0]}. We will delete it. Last element is ${delHeap[delSize-1]}.`;
+    drawDelete({0:'deleted', [delSize-1]:'highlight'});
+    delPhase = 1;
+  } else if (delPhase === 1) {
+    const removed = delHeap[0];
+    delHeap[0] = delHeap[delSize - 1];
+    delSize--;
+    document.getElementById('deleteStatus').textContent =
+      `Step 2: Moved ${delHeap[0]} (last element) to root. Removed ${removed}. Now heapifying down...`;
+    drawDelete({0:'swap'});
+    delPhase = 2;
+  } else {
+    // Heapify down one step
+    let i = 0;
+    let l = leftChild(i), r = rightChild(i);
+    let largest = i;
+    if (l < delSize && delHeap[l] > delHeap[largest]) largest = l;
+    if (r < delSize && delHeap[r] > delHeap[largest]) largest = r;
+    if (largest !== i) {
+      let hl = {}; hl[i] = 'compare'; hl[largest] = 'swap';
+      drawDelete(hl);
+      document.getElementById('deleteStatus').textContent =
+        `Heapify Down: ${delHeap[largest]} > ${delHeap[i]}, swapping!`;
+      swapArr(delHeap, i, largest);
+      delPhase = 2;
+    } else {
+      drawDelete({0:'root'});
+      document.getElementById('deleteStatus').textContent =
+        `✅ Delete complete! New root: ${delHeap[0]}. Heap property restored!`;
+      delPhase = 0;
+    }
+  }
+}
+
+function deleteRootFull() {
+  if (delSize === 0) { document.getElementById('deleteStatus').textContent = '⚠️ Heap is empty!'; return; }
+  const removed = delHeap[0];
+  delHeap[0] = delHeap[delSize - 1];
+  delSize--;
+  let i = 0;
+  while (true) {
+    let l = leftChild(i), r = rightChild(i), largest = i;
+    if (l < delSize && delHeap[l] > delHeap[largest]) largest = l;
+    if (r < delSize && delHeap[r] > delHeap[largest]) largest = r;
+    if (largest === i) break;
+    swapArr(delHeap, i, largest);
+    i = largest;
+  }
+  delPhase = 0;
+  drawDelete({0:'root'});
+  document.getElementById('deleteStatus').textContent =
+    `✅ Deleted ${removed}. New root: ${delHeap[0]}. Heap size: ${delSize}`;
+}
+
+function resetDelete() {
+  delHeap = [90, 75, 80, 55, 60, 65, 70];
+  delSize = 7;
+  delPhase = 0;
+  drawDelete({0:'root'});
+  document.getElementById('deleteStatus').textContent = 'Heap reset! Click "Delete Root Step" to animate 👆';
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 5 — PEEK VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let peekHeap = [], peekSize = 0;
+
+function buildPeekHeap() {
+  peekHeap = [85, 70, 75, 55, 65, 60, 70];
+  peekSize = 7;
+  drawHeapOnCanvas('peekCanvas', peekHeap, peekSize, {});
+  renderArrayDisplay('peekArrayDisplay', peekHeap, peekSize, {});
+  document.getElementById('peekStatus').textContent = 'Heap loaded! Now click "Peek Root" 👆';
+}
+
+function peekDemo() {
+  if (peekSize === 0) { document.getElementById('peekStatus').textContent = '⚠️ Load a heap first!'; return; }
+  drawHeapOnCanvas('peekCanvas', peekHeap, peekSize, {0:'root'});
+  renderArrayDisplay('peekArrayDisplay', peekHeap, peekSize, {0:'root'});
+  document.getElementById('peekStatus').textContent =
+    `👁️ Peek: Root element is ${peekHeap[0]}. Heap unchanged! arr[0] always holds the maximum. O(1) operation.`;
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 7 — BUILD HEAP VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let buildArr = [3, 1, 6, 5, 2, 4, 7];
+let buildSize = 7;
+let buildStep = -1;
+let buildFixed = new Set();
+
+function resetBuild() {
+  buildArr = [3,1,6,5,2,4,7].sort(() => Math.random()-0.5);
+  buildSize = 7;
+  buildStep = Math.floor(buildSize / 2) - 1;
+  buildFixed = new Set();
+  drawHeapOnCanvas('buildCanvas', buildArr, buildSize, {});
+  renderArrayDisplay('buildArrayDisplay', buildArr, buildSize, {});
+  document.getElementById('buildStatus').textContent = `Randomized: [${buildArr.join(', ')}]. Click "Next Step" 👆`;
+}
+
+function buildHeapStep() {
+  if (buildStep < 0) {
+    document.getElementById('buildStatus').textContent = '✅ Build Heap complete! All nodes satisfy heap property.';
+    drawHeapOnCanvas('buildCanvas', buildArr, buildSize, Object.fromEntries([...Array(buildSize).keys()].map(i => [i,'sorted'])));
+    renderArrayDisplay('buildArrayDisplay', buildArr, buildSize, Object.fromEntries([...Array(buildSize).keys()].map(i => [i,'sorted'])));
+    return;
+  }
+  // Heapify down at buildStep
+  let i = buildStep;
+  let hl = {[i]:'processing'};
+  // Do one level of heapify
+  let l = leftChild(i), r = rightChild(i), largest = i;
+  if (l < buildSize && buildArr[l] > buildArr[largest]) largest = l;
+  if (r < buildSize && buildArr[r] > buildArr[largest]) largest = r;
+  if (largest !== i) {
+    hl[largest] = 'swap';
+    document.getElementById('buildStatus').textContent =
+      `Processing index ${i}: ${buildArr[i]}. Swapping with child ${buildArr[largest]} at [${largest}]`;
+    swapArr(buildArr, i, largest);
+    // Continue heapify down
+    let j = largest;
+    while (true) {
+      let ll = leftChild(j), rr = rightChild(j), lg = j;
+      if (ll < buildSize && buildArr[ll] > buildArr[lg]) lg = ll;
+      if (rr < buildSize && buildArr[rr] > buildArr[lg]) lg = rr;
+      if (lg === j) break;
+      swapArr(buildArr, j, lg);
+      j = lg;
+    }
+  } else {
+    document.getElementById('buildStatus').textContent =
+      `Processing index ${i}: ${buildArr[i]}. Already valid — no swap needed.`;
+  }
+  buildFixed.add(buildStep);
+  buildStep--;
+  let hl2 = {};
+  buildFixed.forEach(fi => hl2[fi] = 'sorted');
+  if (buildStep >= 0) hl2[buildStep] = 'processing';
+  drawHeapOnCanvas('buildCanvas', buildArr, buildSize, hl2);
+  renderArrayDisplay('buildArrayDisplay', buildArr, buildSize, hl2);
+}
+
+function buildHeapFull() {
+  for (let i = Math.floor(buildSize/2)-1; i >= 0; i--) {
+    let idx = i;
+    while (true) {
+      let l = leftChild(idx), r = rightChild(idx), largest = idx;
+      if (l < buildSize && buildArr[l] > buildArr[largest]) largest = l;
+      if (r < buildSize && buildArr[r] > buildArr[largest]) largest = r;
+      if (largest === idx) break;
+      swapArr(buildArr, idx, largest);
+      idx = largest;
+    }
+  }
+  buildStep = -1;
+  let hl = Object.fromEntries([...Array(buildSize).keys()].map(i => [i,'sorted']));
+  hl[0] = 'root';
+  drawHeapOnCanvas('buildCanvas', buildArr, buildSize, hl);
+  renderArrayDisplay('buildArrayDisplay', buildArr, buildSize, hl);
+  document.getElementById('buildStatus').textContent =
+    `✅ Max Heap built! Root: ${buildArr[0]}. Array: [${buildArr.slice(0,buildSize).join(', ')}]`;
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 9 — SEARCH VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let searchHeapArr = [], searchHeapSize = 0;
+
+function buildSearchHeap() {
+  searchHeapArr = [85, 70, 75, 55, 65, 60, 70, 40, 50];
+  searchHeapSize = 9;
+  drawHeapOnCanvas('searchCanvas', searchHeapArr, searchHeapSize, {0:'root'});
+  renderArrayDisplay('searchArrayDisplay', searchHeapArr, searchHeapSize, {0:'root'});
+  document.getElementById('searchStatus').textContent = 'Heap loaded! Enter a value to search 🔍';
+}
+
+function searchHeap() {
+  const target = parseInt(document.getElementById('searchVal').value);
+  if (searchHeapSize === 0) { document.getElementById('searchStatus').textContent = 'Load heap first!'; return; }
+  let found = -1;
+  for (let i = 0; i < searchHeapSize; i++) {
+    if (searchHeapArr[i] === target) { found = i; break; }
+  }
+  let hl = {};
+  if (found >= 0) {
+    hl[found] = 'highlight';
+    document.getElementById('searchStatus').textContent =
+      `🎯 Found ${target} at index [${found}]! Scanned ${found + 1} element(s). Linear search: O(n).`;
+  } else {
+    document.getElementById('searchStatus').textContent =
+      `❌ ${target} not found after searching all ${searchHeapSize} elements.`;
+  }
+  drawHeapOnCanvas('searchCanvas', searchHeapArr, searchHeapSize, hl);
+  renderArrayDisplay('searchArrayDisplay', searchHeapArr, searchHeapSize, hl);
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 15 — HEAP SORT VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let sortArr = [64, 34, 25, 12, 22, 11, 90];
+let sortN = 7;
+let sortHeapSize = 7;
+let sortBuilt = false;
+let sortStep2 = 0;
+
+function heapifyForSort(arr, n, i) {
+  let largest = i, l = 2*i+1, r = 2*i+2;
+  if (l < n && arr[l] > arr[largest]) largest = l;
+  if (r < n && arr[r] > arr[largest]) largest = r;
+  if (largest !== i) { swapArr(arr, i, largest); heapifyForSort(arr, n, largest); }
+}
+
+function resetSort() {
+  sortArr = [64,34,25,12,22,11,90].sort(() => Math.random()-0.5);
+  sortN = 7;
+  sortHeapSize = 7;
+  sortBuilt = false;
+  sortStep2 = 0;
+  drawHeapOnCanvas('sortCanvas', sortArr, sortN, {});
+  renderArrayDisplay('sortArrayDisplay', sortArr, sortN, {});
+  document.getElementById('sortStatus').textContent = `Array: [${sortArr.join(', ')}]. Click "Sort Step" 👆`;
+}
+
+function heapSortStep() {
+  if (!sortBuilt) {
+    // Build max heap first
+    for (let i = Math.floor(sortN/2)-1; i >= 0; i--) heapifyForSort(sortArr, sortN, i);
+    sortBuilt = true;
+    sortHeapSize = sortN;
+    sortStep2 = sortN - 1;
+    drawHeapOnCanvas('sortCanvas', sortArr, sortN, {0:'root'});
+    renderArrayDisplay('sortArrayDisplay', sortArr, sortN, {0:'root'});
+    document.getElementById('sortStatus').textContent =
+      `✅ Max Heap built! Root = ${sortArr[0]} (largest). Now extracting one by one...`;
+    return;
+  }
+  if (sortStep2 <= 0) {
+    let hl = Object.fromEntries([...Array(sortN).keys()].map(i => [i,'sorted']));
+    drawHeapOnCanvas('sortCanvas', sortArr, sortN, hl);
+    renderArrayDisplay('sortArrayDisplay', sortArr, sortN, hl);
+    document.getElementById('sortStatus').textContent =
+      `🎉 Sort Complete! Array: [${sortArr.join(', ')}] (ascending order)`;
+    return;
+  }
+  let hl = {0:'highlight', [sortStep2]:'swap'};
+  drawHeapOnCanvas('sortCanvas', sortArr, sortN, hl);
+  renderArrayDisplay('sortArrayDisplay', sortArr, sortN, hl);
+  const maxVal = sortArr[0];
+  swapArr(sortArr, 0, sortStep2);
+  sortHeapSize--;
+  heapifyForSort(sortArr, sortHeapSize, 0);
+  sortStep2--;
+  let hl2 = {};
+  for (let i = sortStep2+1; i < sortN; i++) hl2[i] = 'sorted';
+  if (sortStep2 > 0) hl2[0] = 'root';
+  drawHeapOnCanvas('sortCanvas', sortArr, sortN, hl2);
+  renderArrayDisplay('sortArrayDisplay', sortArr, sortN, hl2);
+  document.getElementById('sortStatus').textContent =
+    `Placed ${maxVal} at its sorted position. Remaining heap size: ${sortHeapSize}. Continue stepping!`;
+}
+
+function heapSortFull() {
+  // Build
+  for (let i = Math.floor(sortN/2)-1; i >= 0; i--) heapifyForSort(sortArr, sortN, i);
+  // Sort
+  for (let i = sortN-1; i > 0; i--) {
+    swapArr(sortArr, 0, i);
+    heapifyForSort(sortArr, i, 0);
+  }
+  sortBuilt = true; sortStep2 = 0;
+  let hl = Object.fromEntries([...Array(sortN).keys()].map(i => [i,'sorted']));
+  drawHeapOnCanvas('sortCanvas', sortArr, sortN, hl);
+  renderArrayDisplay('sortArrayDisplay', sortArr, sortN, hl);
+  document.getElementById('sortStatus').textContent =
+    `🎉 Sort Complete! [${sortArr.join(', ')}] (ascending)`;
+}
+
+// ══════════════════════════════════════════════════════════
+// SECTION 17 — CONVERT VISUALIZER
+// ══════════════════════════════════════════════════════════
+
+let convertArr = [], convertSize = 0;
+
+function buildMinHeapDemo() {
+  convertArr = [1, 5, 3, 10, 7, 6, 8];
+  convertSize = 7;
+  // Build as min heap
+  function minHeapify(arr, n, i) {
+    let smallest = i, l = 2*i+1, r = 2*i+2;
+    if (l < n && arr[l] < arr[smallest]) smallest = l;
+    if (r < n && arr[r] < arr[smallest]) smallest = r;
+    if (smallest !== i) { swapArr(arr, i, smallest); minHeapify(arr, n, smallest); }
+  }
+  for (let i = Math.floor(convertSize/2)-1; i >= 0; i--) minHeapify(convertArr, convertSize, i);
+  drawHeapOnCanvas('convertCanvas', convertArr, convertSize, {0:'root'});
+  renderArrayDisplay('convertArrayDisplay', convertArr, convertSize, {0:'root'});
+  document.getElementById('convertStatus').textContent =
+    `Min Heap built! Root = ${convertArr[0]} (minimum). Array: [${convertArr.join(', ')}]`;
+}
+
+function convertToMaxHeap() {
+  if (convertSize === 0) { document.getElementById('convertStatus').textContent = 'Build a min heap first!'; return; }
+  for (let i = Math.floor(convertSize/2)-1; i >= 0; i--) {
+    heapifyForSort(convertArr, convertSize, i);
+  }
+  drawHeapOnCanvas('convertCanvas', convertArr, convertSize, {0:'root'});
+  renderArrayDisplay('convertArrayDisplay', convertArr, convertSize, {0:'root'});
+  document.getElementById('convertStatus').textContent =
+    `✅ Converted to Max Heap! Root = ${convertArr[0]} (maximum). Same array, new heap rules!`;
+}
+
+function resetConvert() {
+  convertArr = []; convertSize = 0;
+  drawHeapOnCanvas('convertCanvas', convertArr, convertSize, {});
+  renderArrayDisplay('convertArrayDisplay', convertArr, convertSize, {});
+  document.getElementById('convertStatus').textContent = 'Click "Build Min Heap" to start! 👆';
+}
+
+// ══════════════════════════════════════════════════════════
+// INITIALIZE ALL VISUALIZERS ON LOAD
+// ══════════════════════════════════════════════════════════
+
+window.addEventListener('load', () => {
+  // Intro
+  introShowMax();
+
+  // Insert
+  buildInsertViz();
+
+  // Delete
+  drawHeapOnCanvas('deleteCanvas', delHeap, delSize, {0:'root'});
+  renderArrayDisplay('deleteArrayDisplay', delHeap, delSize, {0:'root'});
+
+  // Build
+  resetBuild();
+
+  // Sort
+  resetSort();
+
+  // Set initial canvas sizes
+  setTimeout(() => {
+    introShowMax();
+    buildInsertViz();
+    drawHeapOnCanvas('deleteCanvas', delHeap, delSize, {0:'root'});
+    resetBuild();
+  }, 100);
+});
+
+window.addEventListener('resize', () => {
+  introShowMax();
+  buildInsertViz();
+  drawHeapOnCanvas('deleteCanvas', delHeap, delSize, {0:'root'});
+  if (peekSize > 0) drawHeapOnCanvas('peekCanvas', peekHeap, peekSize, {0:'root'});
+  if (searchHeapSize > 0) drawHeapOnCanvas('searchCanvas', searchHeapArr, searchHeapSize, {0:'root'});
+  drawHeapOnCanvas('buildCanvas', buildArr, buildSize, {});
+  drawHeapOnCanvas('sortCanvas', sortArr, sortN, {});
+  if (convertSize > 0) drawHeapOnCanvas('convertCanvas', convertArr, convertSize, {0:'root'});
+});
+
+// Sidebar navigation highlight on click
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

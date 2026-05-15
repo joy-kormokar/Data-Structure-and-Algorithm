@@ -1,0 +1,2473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dense Graph — Incidence Matrix Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0d14;
+  --surface: #111520;
+  --surface2: #161c2d;
+  --surface3: #1d2540;
+  --border: #2a3356;
+  --accent: #4f8aff;
+  --accent2: #7c5cff;
+  --accent3: #00e5a0;
+  --accent4: #ff6b6b;
+  --accent5: #ffd166;
+  --text: #e8edf8;
+  --text2: #8b97b8;
+  --text3: #4a5578;
+  --code-bg: #0d1117;
+  --node-fill: #1e2d5a;
+  --node-stroke: #4f8aff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(79,138,255,0.07) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 80% 80%, rgba(124,92,255,0.06) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+/* LAYOUT */
+.shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 280px; min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: fixed; top: 0; left: 0; bottom: 0;
+  overflow-y: auto; z-index: 100;
+  display: flex; flex-direction: column;
+}
+.sidebar-logo {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 800;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sidebar-logo p { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.nav-section { padding: 12px 12px 4px; }
+.nav-section-label {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 0 8px; margin-bottom: 4px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 7px;
+  font-size: 12.5px; color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+  text-decoration: none; margin-bottom: 1px;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(79,138,255,0.15); color: var(--accent); }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.nav-item.active .nav-dot { background: var(--accent); }
+
+/* MAIN */
+.main { margin-left: 280px; flex: 1; padding: 0; }
+
+/* HERO */
+.hero {
+  padding: 64px 60px 48px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+}
+.hero-tag {
+  display: inline-block; padding: 4px 12px;
+  background: rgba(79,138,255,0.12); border: 1px solid rgba(79,138,255,0.25);
+  border-radius: 20px; font-size: 11px; color: var(--accent);
+  letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 16px;
+}
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 48px; font-weight: 800; line-height: 1.1;
+  margin-bottom: 14px;
+}
+.hero h1 span { color: var(--accent); }
+.hero p { font-size: 16px; color: var(--text2); max-width: 600px; line-height: 1.7; }
+.hero-stats {
+  display: flex; gap: 32px; margin-top: 32px;
+}
+.stat { text-align: center; }
+.stat-num { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); }
+.stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* CONTENT */
+.content { padding: 0 60px 80px; }
+
+/* SECTIONS */
+.section {
+  padding: 48px 0 32px;
+  border-bottom: 1px solid var(--border);
+}
+.section:last-child { border-bottom: none; }
+.section-header { margin-bottom: 28px; }
+.section-tag {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 4px; font-size: 10px;
+  font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.tag-beginner { background: rgba(0,229,160,0.12); color: var(--accent3); }
+.tag-intermediate { background: rgba(255,209,102,0.12); color: var(--accent5); }
+.tag-advanced { background: rgba(255,107,107,0.12); color: var(--accent4); }
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px; font-weight: 700;
+  margin-bottom: 8px;
+}
+.section-desc { font-size: 14px; color: var(--text2); line-height: 1.7; max-width: 700px; }
+
+/* SUBSECTIONS */
+.subsection { margin-bottom: 40px; }
+.subsection-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px; font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.subsection-title::before {
+  content: ''; display: block;
+  width: 3px; height: 18px; border-radius: 2px;
+  background: var(--accent);
+}
+
+/* CARDS */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.cards.three { grid-template-columns: 1fr 1fr 1fr; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+}
+.card h4 { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--accent); }
+.card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+/* THEORY BOX */
+.theory {
+  background: var(--surface2);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  font-size: 14px; color: var(--text2); line-height: 1.8;
+}
+.theory strong { color: var(--text); }
+
+/* ANALOGY */
+.analogy {
+  background: rgba(0,229,160,0.06);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: 10px; padding: 16px 20px;
+  margin-bottom: 20px;
+  font-size: 13px; color: var(--text2); line-height: 1.7;
+}
+.analogy-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent3);
+  margin-bottom: 6px;
+}
+
+/* CODE */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  margin-bottom: 20px;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.code-lang { font-size: 11px; color: var(--accent); font-weight: 600; letter-spacing: 0.06em; }
+.code-title { font-size: 11px; color: var(--text3); }
+.code-copy {
+  font-size: 10px; color: var(--text3); cursor: pointer;
+  padding: 3px 8px; border-radius: 4px;
+  border: 1px solid var(--border);
+  background: none; transition: all 0.15s;
+}
+.code-copy:hover { color: var(--accent); border-color: var(--accent); }
+pre {
+  padding: 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #cdd6f4;
+}
+.kw { color: #cba6f7; }
+.fn { color: #89b4fa; }
+.str { color: #a6e3a1; }
+.num { color: #fab387; }
+.cmt { color: #585b70; font-style: italic; }
+.type { color: #f9e2af; }
+.op { color: #89dceb; }
+
+/* VIZ */
+.viz-container {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  margin-bottom: 20px;
+}
+.viz-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.viz-title { font-size: 12px; font-weight: 600; color: var(--text2); }
+.viz-controls { display: flex; gap: 8px; }
+.btn {
+  padding: 6px 14px; border-radius: 6px; border: none;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #6b9fff; }
+.btn-secondary {
+  background: var(--surface3); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { color: var(--text); border-color: var(--accent); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.viz-body { padding: 20px; }
+canvas { border-radius: 8px; }
+
+/* MATRIX TABLE */
+.matrix-wrap { overflow-x: auto; margin-bottom: 16px; }
+table {
+  border-collapse: collapse; width: 100%;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+}
+th, td {
+  border: 1px solid var(--border);
+  padding: 8px 14px; text-align: center;
+}
+th { background: var(--surface3); color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+td { color: var(--text2); }
+td.one { color: var(--accent3); font-weight: 700; }
+td.neg { color: var(--accent4); font-weight: 700; }
+td.zero { color: var(--text3); }
+
+/* STEPS */
+.steps { display: flex; flex-direction: column; gap: 12px; }
+.step {
+  display: flex; gap: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px;
+}
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(79,138,255,0.15); color: var(--accent);
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-text { font-size: 13px; color: var(--text2); line-height: 1.6; padding-top: 4px; }
+
+/* COMPLEXITY TABLE */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.comp-table th { text-align: left; }
+.comp-table td:last-child { color: var(--accent3); font-family: 'JetBrains Mono', monospace; }
+
+/* HIGHLIGHT */
+.hl-accent { color: var(--accent); font-weight: 600; }
+.hl-green { color: var(--accent3); font-weight: 600; }
+.hl-red { color: var(--accent4); }
+.hl-yellow { color: var(--accent5); }
+
+/* BREADCRUMB */
+.breadcrumb {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text3); margin-bottom: 8px;
+}
+.breadcrumb span { color: var(--text2); }
+
+/* PROGRESS BAR */
+.progress-bar {
+  height: 2px; background: var(--border); border-radius: 2px;
+  margin-bottom: 32px; margin-top: 16px;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px; transition: width 0.3s;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .sidebar { width: 220px; }
+  .main { margin-left: 220px; }
+  .hero { padding: 40px 30px; }
+  .content { padding: 0 30px 60px; }
+  .cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .hero { padding: 30px 20px; }
+  .content { padding: 0 20px 60px; }
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* INTERACTIVE GRAPH */
+.graph-svg { width: 100%; height: 300px; }
+.node-circle { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 2; cursor: pointer; transition: fill 0.2s; }
+.node-circle:hover { fill: #2a3d7a; }
+.node-label { fill: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; pointer-events: none; }
+.edge-line { stroke: var(--accent2); stroke-width: 2; opacity: 0.7; }
+.edge-label { fill: var(--accent5); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+/* BFS/DFS ANIMATION */
+.visited { fill: rgba(0,229,160,0.2) !important; stroke: var(--accent3) !important; }
+.current { fill: rgba(79,138,255,0.35) !important; stroke: var(--accent) !important; }
+.queue-item {
+  display: inline-block; padding: 4px 10px;
+  background: rgba(79,138,255,0.15); border: 1px solid rgba(79,138,255,0.3);
+  border-radius: 4px; font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--accent); margin: 2px;
+}
+.queue-box { min-height: 36px; padding: 8px; background: var(--code-bg); border-radius: 6px; margin-top: 8px; }
+.output-box {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  color: var(--accent3); padding: 8px; background: var(--code-bg);
+  border-radius: 6px; min-height: 30px; margin-top: 8px;
+}
+
+/* DENSITY METER */
+.density-meter { position: relative; height: 20px; background: var(--surface3); border-radius: 10px; overflow: hidden; margin: 12px 0; }
+.density-fill { height: 100%; border-radius: 10px; transition: width 0.6s ease; background: linear-gradient(90deg, var(--accent3), var(--accent)); }
+.density-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* FLOYDWARSHALL TABLE */
+.fw-grid { display: grid; gap: 4px; margin: 12px 0; }
+.fw-cell {
+  width: 38px; height: 38px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  font-weight: 600; background: var(--surface3);
+  transition: background 0.3s, color 0.3s;
+}
+.fw-cell.updated { background: rgba(79,138,255,0.25); color: var(--accent); }
+.fw-cell.inf { color: var(--text3); }
+
+/* CLIQUE */
+.clique-node { stroke-width: 3; }
+
+/* INPUT ROW */
+.input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.inp {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 12px;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+  width: 60px;
+}
+.inp:focus { outline: none; border-color: var(--accent); }
+
+/* SECTION IDS for anchor */
+section { scroll-margin-top: 20px; }
+
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  background: rgba(79,138,255,0.15); color: var(--accent);
+  margin-left: 6px;
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>DENSE GRAPH</h1>
+    <p>Incidence Matrix · C Language</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Foundations</div>
+    <a href="#intro" class="nav-item active"><span class="nav-dot"></span>Introduction</a>
+    <a href="#representation" class="nav-item"><span class="nav-dot"></span>Incidence Matrix</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Vertex Operations</div>
+    <a href="#vertex-ops" class="nav-item"><span class="nav-dot"></span>Insert / Delete</a>
+    <a href="#vertex-search" class="nav-item"><span class="nav-dot"></span>Search / Update</a>
+    <a href="#vertex-count" class="nav-item"><span class="nav-dot"></span>Count / Display</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Edge Operations</div>
+    <a href="#edge-ops" class="nav-item"><span class="nav-dot"></span>Insert / Delete</a>
+    <a href="#edge-search" class="nav-item"><span class="nav-dot"></span>Search / Update</a>
+    <a href="#edge-bulk" class="nav-item"><span class="nav-dot"></span>Count / Bulk / Display</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Traversal</div>
+    <a href="#bfs" class="nav-item"><span class="nav-dot"></span>BFS</a>
+    <a href="#dfs" class="nav-item"><span class="nav-dot"></span>DFS</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Analysis</div>
+    <a href="#dense-analysis" class="nav-item"><span class="nav-dot"></span>Dense Analysis</a>
+    <a href="#connectivity" class="nav-item"><span class="nav-dot"></span>Connectivity</a>
+    <a href="#path-ops" class="nav-item"><span class="nav-dot"></span>Path Operations</a>
+    <a href="#cycle-ops" class="nav-item"><span class="nav-dot"></span>Cycle Operations</a>
+    <a href="#degree-ops" class="nav-item"><span class="nav-dot"></span>Degree Operations</a>
+    <a href="#structural" class="nav-item"><span class="nav-dot"></span>Structural Operations</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Advanced</div>
+    <a href="#advanced" class="nav-item"><span class="nav-dot"></span>Floyd-Warshall</a>
+    <a href="#prim" class="nav-item"><span class="nav-dot"></span>Prim's Algorithm</a>
+    <a href="#coloring" class="nav-item"><span class="nav-dot"></span>Graph Coloring</a>
+    <a href="#hamiltonian" class="nav-item"><span class="nav-dot"></span>Hamiltonian</a>
+    <a href="#clique" class="nav-item"><span class="nav-dot"></span>Clique Algorithms</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">Utility</div>
+    <a href="#utility" class="nav-item"><span class="nav-dot"></span>Utility Operations</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Data Structures · Graph Theory</div>
+  <h1>Dense Graph &amp;<br><span>Incidence Matrix</span></h1>
+  <p>A complete, beginner-to-advanced guide covering every operation, algorithm, and visualization for dense graphs using the incidence matrix representation in C.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">10+</div><div class="stat-label">Sections</div></div>
+    <div class="stat"><div class="stat-num">40+</div><div class="stat-label">Topics</div></div>
+    <div class="stat"><div class="stat-num">30+</div><div class="stat-label">Code Blocks</div></div>
+    <div class="stat"><div class="stat-num">15+</div><div class="stat-label">Visualizations</div></div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ============================================================ -->
+<!-- SECTION 1: INTRODUCTION -->
+<!-- ============================================================ -->
+<section id="intro" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">What is a Dense Graph?</div>
+    <div class="section-desc">Understand graphs, density, and why the incidence matrix is the perfect fit for dense graphs.</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Graph Basics</div>
+    <div class="theory">
+      A <strong>graph</strong> is a collection of <strong>vertices (nodes)</strong> connected by <strong>edges</strong>. Think of a city map — cities are vertices, and roads connecting them are edges.<br><br>
+      A graph with <strong>V vertices</strong> can have at most <strong>V×(V-1)/2</strong> edges (undirected) or <strong>V×(V-1)</strong> edges (directed).<br><br>
+      A graph is called <strong>dense</strong> when the number of edges is close to the maximum possible. Specifically, if <strong>E ≈ V²</strong>, we call it dense. If <strong>E ≈ V</strong>, it's sparse.
+    </div>
+    <div class="analogy">
+      <div class="analogy-label">🌍 Real-Life Analogy</div>
+      Imagine a group of 5 friends where almost everyone knows everyone else. This is a dense social graph. Compare this to a tree where each person only knows 2-3 others — that's sparse.
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h4>Sparse Graph</h4>
+        <p>Few edges. E ≈ V. Like a linked list or tree. Best stored with adjacency lists.</p>
+      </div>
+      <div class="card">
+        <h4>Dense Graph</h4>
+        <p>Many edges. E ≈ V². Like a social network or road network. Best stored with matrices.</p>
+      </div>
+    </div>
+
+    <!-- Interactive Graph Visualization -->
+    <div class="viz-container">
+      <div class="viz-header">
+        <span class="viz-title">Interactive Graph — Add/Remove Vertices & Edges</span>
+        <div class="viz-controls">
+          <button class="btn btn-secondary btn-sm" onclick="addVizVertex()">+ Vertex</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetViz()">Reset</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <svg id="introSvg" class="graph-svg" viewBox="0 0 600 260"></svg>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;">Click two nodes to toggle an edge between them.</div>
+        <div id="introStats" style="font-size:12px;color:var(--text2);margin-top:6px;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: INCIDENCE MATRIX -->
+<!-- ============================================================ -->
+<section id="representation" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Incidence Matrix Representation</div>
+    <div class="section-desc">How we store a dense graph as a 2D array where rows = vertices, columns = edges.</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">How the Incidence Matrix Works</div>
+    <div class="theory">
+      The <strong>Incidence Matrix</strong> is a 2D array of size <strong>V × E</strong> (vertices × edges).<br><br>
+      For an <strong>undirected graph</strong>: cell [v][e] = <span class="hl-green">1</span> if vertex v is connected by edge e, else <span class="hl-yellow">0</span>.<br>
+      For a <strong>directed graph</strong>: cell [v][e] = <span class="hl-green">1</span> if edge e leaves vertex v (source), <span class="hl-red">-1</span> if edge e enters vertex v (destination), else <span class="hl-yellow">0</span>.
+    </div>
+    <div class="analogy">
+      <div class="analogy-label">🚂 Real-Life Analogy</div>
+      Think of train stations (vertices) and routes (edges). The incidence matrix is like a schedule board: rows = stations, columns = routes. A "1" means this station is part of that route.
+    </div>
+    <!-- Static Matrix Example -->
+    <div class="viz-container">
+      <div class="viz-header">
+        <span class="viz-title">Interactive Incidence Matrix Builder</span>
+        <div class="viz-controls">
+          <button class="btn btn-primary btn-sm" onclick="buildMatrix()">Rebuild</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <svg id="matSvg" style="width:100%;height:220px;" viewBox="0 0 580 200"></svg>
+        <div class="matrix-wrap" id="matrixDiv" style="margin-top:16px;"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">
+          <span style="color:var(--accent3);font-weight:700;">1</span> = incident &nbsp;
+          <span style="color:var(--accent4);font-weight:700;">-1</span> = directed out &nbsp;
+          <span style="color:var(--text3);">0</span> = not incident
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">C</span>
+        <span class="code-title">Incidence Matrix — Data Structure Definition</span>
+        <button class="code-copy" onclick="copyCode(this)">Copy</button>
+      </div>
+<pre><span class="cmt">/* Dense Graph using Incidence Matrix */</span>
+<span class="kw">#define</span> MAX_V <span class="num">10</span>   <span class="cmt">/* max vertices */</span>
+<span class="kw">#define</span> MAX_E <span class="num">50</span>   <span class="cmt">/* max edges    */</span>
+
+<span class="type">int</span> incMatrix[MAX_V][MAX_E]; <span class="cmt">/* 2D array: rows=vertices, cols=edges */</span>
+<span class="type">int</span> V = <span class="num">0</span>;  <span class="cmt">/* current number of vertices */</span>
+<span class="type">int</span> E = <span class="num">0</span>;  <span class="cmt">/* current number of edges    */</span>
+
+<span class="cmt">/* Initialize: fill matrix with zeros */</span>
+<span class="type">void</span> <span class="fn">initGraph</span>() {
+    <span class="type">int</span> i, j;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; MAX_V; i++)
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; MAX_E; j++)
+            incMatrix[i][j] = <span class="num">0</span>;
+    V = <span class="num">0</span>; E = <span class="num">0</span>;
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: VERTEX OPERATIONS -->
+<!-- ============================================================ -->
+<section id="vertex-ops" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Vertex Operations — Insert &amp; Delete</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Insert Vertex</div>
+    <div class="theory">
+      <strong>Inserting a vertex</strong> means adding a new row in the incidence matrix and initializing all cells in that row to 0 (no edges yet). We simply increment the vertex count V.
+    </div>
+    <div class="analogy"><div class="analogy-label">🏙️ Analogy</div>Building a new city — it exists on the map but has no roads yet.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Insert Vertex</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">void</span> <span class="fn">insertVertex</span>() {
+    <span class="kw">if</span> (V &gt;= MAX_V) {
+        <span class="fn">printf</span>(<span class="str">"Error: Max vertices reached!\n"</span>);
+        <span class="kw">return</span>;
+    }
+    <span class="type">int</span> j;
+    <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; E; j++)
+        incMatrix[V][j] = <span class="num">0</span>;  <span class="cmt">/* new vertex has no edges */</span>
+    V++;
+    <span class="fn">printf</span>(<span class="str">"Vertex %d inserted. Total: %d\n"</span>, V-<span class="num">1</span>, V);
+}</pre>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Delete Vertex</div>
+    <div class="theory">
+      <strong>Deleting a vertex</strong> removes its row from the matrix. All edges involving that vertex must also be removed (any column where that vertex had 1 or -1). Then shift remaining rows up.
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Delete Vertex</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">void</span> <span class="fn">deleteVertex</span>(<span class="type">int</span> v) {
+    <span class="kw">if</span> (v &lt; <span class="num">0</span> || v &gt;= V) { <span class="fn">printf</span>(<span class="str">"Invalid vertex!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="type">int</span> i, j, col = <span class="num">0</span>;
+    <span class="cmt">/* Remove columns (edges) where vertex v is incident */</span>
+    <span class="kw">while</span> (col &lt; E) {
+        <span class="kw">if</span> (incMatrix[v][col] != <span class="num">0</span>) {
+            <span class="cmt">/* Shift all columns left to fill gap */</span>
+            <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++)
+                <span class="kw">for</span> (j = col; j &lt; E-<span class="num">1</span>; j++)
+                    incMatrix[i][j] = incMatrix[i][j+<span class="num">1</span>];
+            E--;  <span class="cmt">/* one less edge */</span>
+        } <span class="kw">else</span> col++;
+    }
+    <span class="cmt">/* Shift rows up to remove vertex v */</span>
+    <span class="kw">for</span> (i = v; i &lt; V-<span class="num">1</span>; i++)
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; E; j++)
+            incMatrix[i][j] = incMatrix[i+<span class="num">1</span>][j];
+    V--;
+    <span class="fn">printf</span>(<span class="str">"Vertex %d deleted.\n"</span>, v);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="vertex-search" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Vertex Operations — Search &amp; Update</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Search Vertex</div>
+    <div class="theory">Searching checks if a vertex index exists within the valid range [0, V-1]. Also prints which edges that vertex participates in.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Search Vertex</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> <span class="fn">searchVertex</span>(<span class="type">int</span> v) {
+    <span class="kw">if</span> (v &lt; <span class="num">0</span> || v &gt;= V) {
+        <span class="fn">printf</span>(<span class="str">"Vertex %d not found.\n"</span>, v);
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex %d found. Incident edges: "</span>, v);
+    <span class="type">int</span> j;
+    <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; E; j++)
+        <span class="kw">if</span> (incMatrix[v][j] != <span class="num">0</span>)
+            <span class="fn">printf</span>(<span class="str">"e%d "</span>, j);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Update Vertex</div>
+    <div class="theory">Updating a vertex means changing its label/ID in our naming convention. In the matrix, no structural change occurs — only the way we refer to that row index changes (e.g., via a label array).</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Update Vertex Label</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">char</span> vertexLabel[MAX_V][20]; <span class="cmt">/* optional labels */</span>
+
+<span class="type">void</span> <span class="fn">updateVertex</span>(<span class="type">int</span> v, <span class="type">char</span>* newLabel) {
+    <span class="kw">if</span> (v &lt; <span class="num">0</span> || v &gt;= V) { <span class="fn">printf</span>(<span class="str">"Invalid!\n"</span>); <span class="kw">return</span>; }
+    <span class="fn">strcpy</span>(vertexLabel[v], newLabel);
+    <span class="fn">printf</span>(<span class="str">"Vertex %d relabeled to '%s'\n"</span>, v, newLabel);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="vertex-count" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Vertex Operations — Count &amp; Display</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Count Vertices</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Count & Display Vertices</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> <span class="fn">countVertices</span>() {
+    <span class="fn">printf</span>(<span class="str">"Total Vertices: %d\n"</span>, V);
+    <span class="kw">return</span> V;
+}
+
+<span class="type">void</span> <span class="fn">displayVertices</span>() {
+    <span class="fn">printf</span>(<span class="str">"Vertices: "</span>);
+    <span class="type">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++)
+        <span class="fn">printf</span>(<span class="str">"V%d "</span>, i);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: EDGE OPERATIONS -->
+<!-- ============================================================ -->
+<section id="edge-ops" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Edge Operations — Insert &amp; Delete</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Insert Edge</div>
+    <div class="theory">
+      Inserting an edge between vertex <strong>u</strong> and vertex <strong>v</strong> means:<br>
+      • Adding a new column to the incidence matrix<br>
+      • Setting <code>incMatrix[u][E] = 1</code> and <code>incMatrix[v][E] = 1</code> (undirected)<br>
+      • For directed: <code>incMatrix[u][E] = 1</code> (source), <code>incMatrix[v][E] = -1</code> (destination)<br>
+      • Incrementing E (edge count)
+    </div>
+    <div class="analogy"><div class="analogy-label">🛣️ Analogy</div>Building a new road between two cities on the map.</div>
+
+    <!-- Interactive Edge Insertion Demo -->
+    <div class="viz-container">
+      <div class="viz-header">
+        <span class="viz-title">Edge Insertion Demo</span>
+      </div>
+      <div class="viz-body">
+        <svg id="edgeSvg" style="width:100%;height:220px;" viewBox="0 0 560 200"></svg>
+        <div class="input-row" style="margin-top:12px;">
+          <label style="font-size:12px;color:var(--text2);">From:</label>
+          <input class="inp" id="eu" type="number" min="0" max="4" value="0" placeholder="u">
+          <label style="font-size:12px;color:var(--text2);">To:</label>
+          <input class="inp" id="ev" type="number" min="0" max="4" value="2" placeholder="v">
+          <button class="btn btn-primary btn-sm" onclick="insertEdgeDemo()">Insert Edge</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetEdgeDemo()">Reset</button>
+        </div>
+        <div class="matrix-wrap" id="edgeMatrixDiv"></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Insert Undirected Edge</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">void</span> <span class="fn">insertEdge</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="kw">if</span> (u &lt; <span class="num">0</span> || u &gt;= V || v &lt; <span class="num">0</span> || v &gt;= V) {
+        <span class="fn">printf</span>(<span class="str">"Invalid vertices!\n"</span>); <span class="kw">return</span>;
+    }
+    <span class="kw">if</span> (E &gt;= MAX_E) { <span class="fn">printf</span>(<span class="str">"Max edges reached!\n"</span>); <span class="kw">return</span>; }
+
+    <span class="cmt">/* Set both endpoints to 1 for undirected edge */</span>
+    incMatrix[u][E] = <span class="num">1</span>;
+    incMatrix[v][E] = <span class="num">1</span>;
+    E++;  <span class="cmt">/* new column added */</span>
+    <span class="fn">printf</span>(<span class="str">"Edge e%d inserted: V%d -- V%d\n"</span>, E-<span class="num">1</span>, u, v);
+}
+
+<span class="cmt">/* For directed edge: u -> v */</span>
+<span class="type">void</span> <span class="fn">insertDirectedEdge</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="kw">if</span> (E &gt;= MAX_E) { <span class="fn">printf</span>(<span class="str">"Max edges reached!\n"</span>); <span class="kw">return</span>; }
+    incMatrix[u][E] = <span class="num">1</span>;   <span class="cmt">/* +1 for source */</span>
+    incMatrix[v][E] = <span class="op">-</span><span class="num">1</span>;  <span class="cmt">/* -1 for destination */</span>
+    E++;
+}</pre>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Delete Edge</div>
+    <div class="theory">Find the column index for the edge e, then shift all columns to the right of e one position left. Decrement E.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Delete Edge by Index</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">void</span> <span class="fn">deleteEdge</span>(<span class="type">int</span> e) {
+    <span class="kw">if</span> (e &lt; <span class="num">0</span> || e &gt;= E) { <span class="fn">printf</span>(<span class="str">"Invalid edge!\n"</span>); <span class="kw">return</span>; }
+    <span class="type">int</span> i, j;
+    <span class="cmt">/* Shift columns left starting from edge e */</span>
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++)
+        <span class="kw">for</span> (j = e; j &lt; E-<span class="num">1</span>; j++)
+            incMatrix[i][j] = incMatrix[i][j+<span class="num">1</span>];
+    E--;
+    <span class="fn">printf</span>(<span class="str">"Edge e%d deleted.\n"</span>, e);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="edge-search" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Edge Operations — Search &amp; Update</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Search Edge</div>
+    <div class="theory">To find if an edge exists between u and v, scan all columns. A column where both u and v have non-zero values is that edge.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Search Edge</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> <span class="fn">searchEdge</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="type">int</span> j;
+    <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; E; j++) {
+        <span class="kw">if</span> (incMatrix[u][j] != <span class="num">0</span> &amp;&amp; incMatrix[v][j] != <span class="num">0</span>) {
+            <span class="fn">printf</span>(<span class="str">"Edge between V%d and V%d: e%d\n"</span>, u, v, j);
+            <span class="kw">return</span> j;   <span class="cmt">/* return edge index */</span>
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"No edge between V%d and V%d\n"</span>, u, v);
+    <span class="kw">return</span> <span class="op">-</span><span class="num">1</span>;
+}
+
+<span class="cmt">/* Update edge: change which vertices it connects */</span>
+<span class="type">void</span> <span class="fn">updateEdge</span>(<span class="type">int</span> e, <span class="type">int</span> newU, <span class="type">int</span> newV) {
+    <span class="kw">if</span> (e &lt; <span class="num">0</span> || e &gt;= E) { <span class="fn">printf</span>(<span class="str">"Invalid edge!\n"</span>); <span class="kw">return</span>; }
+    <span class="type">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++) incMatrix[i][e] = <span class="num">0</span>; <span class="cmt">/* clear old */</span>
+    incMatrix[newU][e] = <span class="num">1</span>;
+    incMatrix[newV][e] = <span class="num">1</span>;
+    <span class="fn">printf</span>(<span class="str">"Edge e%d updated: V%d -- V%d\n"</span>, e, newU, newV);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<section id="edge-bulk" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Edge Operations — Count, Bulk Insert &amp; Display</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Count, Bulk Insert &amp; Display Edges</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Count / Bulk Insert / Display Edges</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> <span class="fn">countEdges</span>() {
+    <span class="fn">printf</span>(<span class="str">"Total edges: %d\n"</span>, E);
+    <span class="kw">return</span> E;
+}
+
+<span class="cmt">/* Bulk insert: add many edges at once */</span>
+<span class="type">void</span> <span class="fn">bulkInsertEdges</span>(<span class="type">int</span> pairs[][<span class="num">2</span>], <span class="type">int</span> count) {
+    <span class="type">int</span> i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; count; i++)
+        <span class="fn">insertEdge</span>(pairs[i][<span class="num">0</span>], pairs[i][<span class="num">1</span>]);
+    <span class="fn">printf</span>(<span class="str">"%d edges bulk-inserted.\n"</span>, count);
+}
+
+<span class="cmt">/* Display full incidence matrix */</span>
+<span class="type">void</span> <span class="fn">displayEdges</span>() {
+    <span class="type">int</span> i, j;
+    <span class="fn">printf</span>(<span class="str">"Incidence Matrix (%d x %d):\n"</span>, V, E);
+    <span class="fn">printf</span>(<span class="str">"   "</span>);
+    <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; E; j++) <span class="fn">printf</span>(<span class="str">"e%d "</span>, j);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++) {
+        <span class="fn">printf</span>(<span class="str">"V%d "</span>, i);
+        <span class="kw">for</span> (j = <span class="num">0</span>; j &lt; E; j++)
+            <span class="fn">printf</span>(<span class="str">"%2d  "</span>, incMatrix[i][j]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: BFS -->
+<!-- ============================================================ -->
+<section id="bfs" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Breadth First Search (BFS)</div>
+    <div class="section-desc">Visit all vertices level by level, starting from a source. Uses a queue.</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">BFS Theory &amp; Steps</div>
+    <div class="theory">
+      BFS explores the graph layer by layer. Starting from vertex s, we visit all neighbors first, then neighbors of neighbors, and so on. It uses a <strong>Queue</strong> (FIFO).<br><br>
+      With incidence matrix: for each vertex u, scan all edges (columns). If <code>incMatrix[u][j] != 0</code>, find the other vertex in that column — that's a neighbor.
+    </div>
+    <div class="analogy"><div class="analogy-label">💧 Analogy</div>BFS is like a water ripple from a stone thrown in a pond — it spreads outward one ring at a time.</div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text"><strong>Initialize:</strong> Create a visited[] array (all false), create an empty queue, mark start vertex as visited, add to queue.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text"><strong>Visit Node:</strong> Dequeue front vertex u, print/process it.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text"><strong>Traverse Adjacent:</strong> Scan all edge columns. If incMatrix[u][e] != 0, find vertex w in that column where w ≠ u. If not visited, mark visited and enqueue w.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Repeat</strong> until queue is empty.</div></div>
+    </div>
+
+    <!-- BFS Animation -->
+    <div class="viz-container">
+      <div class="viz-header">
+        <span class="viz-title">BFS Step-by-Step Animation</span>
+        <div class="viz-controls">
+          <button class="btn btn-primary btn-sm" onclick="startBFS()">Run BFS</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetBFS()">Reset</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <svg id="bfsSvg" style="width:100%;height:240px;" viewBox="0 0 560 220"></svg>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">QUEUE</div>
+            <div class="queue-box" id="bfsQueue"></div>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">VISIT ORDER</div>
+            <div class="output-box" id="bfsOutput"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">BFS using Incidence Matrix</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">void</span> <span class="fn">BFS</span>(<span class="type">int</span> start) {
+    <span class="type">int</span> visited[MAX_V] = {<span class="num">0</span>};
+    <span class="type">int</span> queue[MAX_V];
+    <span class="type">int</span> front = <span class="num">0</span>, rear = <span class="num">0</span>;  <span class="cmt">/* queue indices */</span>
+
+    <span class="cmt">/* Queue Initialization */</span>
+    visited[start] = <span class="num">1</span>;
+    queue[rear++] = start;
+
+    <span class="fn">printf</span>(<span class="str">"BFS from V%d: "</span>, start);
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="type">int</span> u = queue[front++];  <span class="cmt">/* dequeue */</span>
+        <span class="fn">printf</span>(<span class="str">"V%d "</span>, u);           <span class="cmt">/* Visit Node */</span>
+
+        <span class="cmt">/* Traverse Adjacent Nodes via incidence matrix */</span>
+        <span class="type">int</span> e;
+        <span class="kw">for</span> (e = <span class="num">0</span>; e &lt; E; e++) {
+            <span class="kw">if</span> (incMatrix[u][e] != <span class="num">0</span>) {  <span class="cmt">/* u is in edge e */</span>
+                <span class="type">int</span> w;
+                <span class="kw">for</span> (w = <span class="num">0</span>; w &lt; V; w++) {  <span class="cmt">/* find other vertex */</span>
+                    <span class="kw">if</span> (w != u &amp;&amp; incMatrix[w][e] != <span class="num">0</span>) {
+                        <span class="kw">if</span> (!visited[w]) {
+                            visited[w] = <span class="num">1</span>;      <span class="cmt">/* Mark Visited */</span>
+                            queue[rear++] = w;    <span class="cmt">/* enqueue */</span>
+                        }
+                    }
+                }
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: DFS -->
+<!-- ============================================================ -->
+<section id="dfs" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Depth First Search (DFS)</div>
+    <div class="section-desc">Explore as deep as possible before backtracking. Two versions: recursive and stack-based.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">DFS — Recursive &amp; Stack</div>
+    <div class="theory">
+      DFS goes as deep as possible along a path before backtracking. Like navigating a maze — go forward until a dead end, then backtrack.<br><br>
+      <strong>Recursive DFS</strong> uses the call stack implicitly. <strong>Stack DFS</strong> uses an explicit stack data structure.
+    </div>
+    <div class="analogy"><div class="analogy-label">🏔️ Analogy</div>DFS is like hiking — you pick one trail and follow it all the way to the end before coming back to try another trail.</div>
+
+    <!-- DFS Animation -->
+    <div class="viz-container">
+      <div class="viz-header">
+        <span class="viz-title">DFS Animation</span>
+        <div class="viz-controls">
+          <button class="btn btn-primary btn-sm" onclick="startDFS()">Run DFS</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetDFS()">Reset</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <svg id="dfsSvg" style="width:100%;height:240px;" viewBox="0 0 560 220"></svg>
+        <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">STACK</div>
+            <div class="queue-box" id="dfsStack"></div>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">VISIT ORDER</div>
+            <div class="output-box" id="dfsOutput"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Recursive DFS + Stack-based DFS</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> visited[MAX_V];  <span class="cmt">/* global visited array */</span>
+
+<span class="cmt">/* Recursive DFS */</span>
+<span class="type">void</span> <span class="fn">DFS_Recursive</span>(<span class="type">int</span> u) {
+    visited[u] = <span class="num">1</span>;         <span class="cmt">/* Visit Node */</span>
+    <span class="fn">printf</span>(<span class="str">"V%d "</span>, u);
+    <span class="type">int</span> e, w;
+    <span class="kw">for</span> (e = <span class="num">0</span>; e &lt; E; e++) {
+        <span class="kw">if</span> (incMatrix[u][e] != <span class="num">0</span>) {
+            <span class="kw">for</span> (w = <span class="num">0</span>; w &lt; V; w++) {
+                <span class="kw">if</span> (w != u &amp;&amp; incMatrix[w][e] != <span class="num">0</span> &amp;&amp; !visited[w])
+                    <span class="fn">DFS_Recursive</span>(w);  <span class="cmt">/* Backtracking via recursion */</span>
+            }
+        }
+    }
+}
+
+<span class="cmt">/* Stack-based DFS */</span>
+<span class="type">void</span> <span class="fn">DFS_Stack</span>(<span class="type">int</span> start) {
+    <span class="type">int</span> vis[MAX_V] = {<span class="num">0</span>};
+    <span class="type">int</span> stack[MAX_V], top = <span class="op">-</span><span class="num">1</span>;
+    stack[++top] = start;
+    <span class="fn">printf</span>(<span class="str">"DFS (stack) from V%d: "</span>, start);
+    <span class="kw">while</span> (top &gt;= <span class="num">0</span>) {
+        <span class="type">int</span> u = stack[top--];  <span class="cmt">/* pop */</span>
+        <span class="kw">if</span> (vis[u]) <span class="kw">continue</span>;
+        vis[u] = <span class="num">1</span>;
+        <span class="fn">printf</span>(<span class="str">"V%d "</span>, u);
+        <span class="type">int</span> e, w;
+        <span class="kw">for</span> (e = E-<span class="num">1</span>; e &gt;= <span class="num">0</span>; e--)
+            <span class="kw">if</span> (incMatrix[u][e] != <span class="num">0</span>)
+                <span class="kw">for</span> (w = <span class="num">0</span>; w &lt; V; w++)
+                    <span class="kw">if</span> (w != u &amp;&amp; incMatrix[w][e] != <span class="num">0</span> &amp;&amp; !vis[w])
+                        stack[++top] = w;  <span class="cmt">/* push neighbor */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 7: DENSE ANALYSIS -->
+<!-- ============================================================ -->
+<section id="dense-analysis" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Dense Analysis Operations</div>
+    <div class="section-desc">Algorithms to measure and analyze how dense a graph is.</div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Density Calculation</div>
+    <div class="theory">
+      <strong>Graph Density</strong> = (actual edges) / (maximum possible edges)<br><br>
+      For undirected: max edges = V×(V-1)/2<br>
+      For directed: max edges = V×(V-1)<br><br>
+      Density ranges from 0.0 (no edges) to 1.0 (complete graph).<br>
+      Typically, if density &gt; 0.5, the graph is considered <strong>dense</strong>.
+    </div>
+    <!-- Density Viz -->
+    <div class="viz-container">
+      <div class="viz-header"><span class="viz-title">Density Calculator</span></div>
+      <div class="viz-body">
+        <div class="input-row">
+          <label style="font-size:12px;color:var(--text2);">Vertices:</label>
+          <input class="inp" id="dv" type="number" value="5" min="2" max="10" style="width:60px;">
+          <label style="font-size:12px;color:var(--text2);">Edges:</label>
+          <input class="inp" id="de" type="number" value="7" min="0" style="width:60px;">
+          <button class="btn btn-primary btn-sm" onclick="calcDensity()">Calculate</button>
+        </div>
+        <div id="densityResult"></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Density Calculation & Dense Graph Check</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cmt">/* Calculate density (0.0 to 1.0) */</span>
+<span class="type">float</span> <span class="fn">densityCalc</span>() {
+    <span class="kw">if</span> (V &lt;= <span class="num">1</span>) <span class="kw">return</span> <span class="num">0.0</span>;
+    <span class="type">float</span> maxEdges = (V * (V - <span class="num">1</span>)) / <span class="num">2.0</span>;  <span class="cmt">/* undirected */</span>
+    <span class="type">float</span> density = E / maxEdges;
+    <span class="fn">printf</span>(<span class="str">"Density: %.2f\n"</span>, density);
+    <span class="kw">return</span> density;
+}
+
+<span class="cmt">/* Check if graph is dense (density > 0.5) */</span>
+<span class="type">int</span> <span class="fn">checkDenseGraph</span>() {
+    <span class="type">float</span> d = <span class="fn">densityCalc</span>();
+    <span class="kw">if</span> (d &gt; <span class="num">0.5</span>) {
+        <span class="fn">printf</span>(<span class="str">"Graph is DENSE (density=%.2f)\n"</span>, d);
+        <span class="kw">return</span> <span class="num">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Graph is SPARSE (density=%.2f)\n"</span>, d);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Edge Saturation Analysis */</span>
+<span class="type">void</span> <span class="fn">edgeSaturationAnalysis</span>() {
+    <span class="type">int</span> maxPossible = V * (V-<span class="num">1</span>) / <span class="num">2</span>;
+    <span class="type">int</span> missing = maxPossible - E;
+    <span class="fn">printf</span>(<span class="str">"Max possible: %d, Current: %d, Missing: %d\n"</span>,
+           maxPossible, E, missing);
+}
+
+<span class="cmt">/* Compare Edge Ratio: directed vs undirected */</span>
+<span class="type">void</span> <span class="fn">compareEdgeRatio</span>() {
+    <span class="type">float</span> undirRatio = E / (V*(V-<span class="num">1</span>)/<span class="num">2.0</span>);
+    <span class="type">float</span> dirRatio   = E / (<span class="type">float</span>)(V*(V-<span class="num">1</span>));
+    <span class="fn">printf</span>(<span class="str">"Undirected ratio: %.2f | Directed ratio: %.2f\n"</span>,
+           undirRatio, dirRatio);
+}
+
+<span class="cmt">/* Detect High Connectivity: vertex with all neighbors */</span>
+<span class="type">void</span> <span class="fn">detectHighConnectivity</span>() {
+    <span class="type">int</span> i, e, cnt;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++) {
+        cnt = <span class="num">0</span>;
+        <span class="kw">for</span> (e = <span class="num">0</span>; e &lt; E; e++)
+            <span class="kw">if</span> (incMatrix[i][e] != <span class="num">0</span>) cnt++;
+        <span class="fn">printf</span>(<span class="str">"V%d degree: %d"</span>, i, cnt);
+        <span class="kw">if</span> (cnt == V-<span class="num">1</span>) <span class="fn">printf</span>(<span class="str">" [FULLY CONNECTED]"</span>);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 8: CONNECTIVITY -->
+<!-- ============================================================ -->
+<section id="connectivity" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Connectivity Operations</div>
+    <div class="section-desc">Check whether all vertices are reachable from any starting point.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Connected Graph Check &amp; Components</div>
+    <div class="theory">
+      A graph is <strong>connected</strong> if every vertex is reachable from every other vertex. We use BFS/DFS from vertex 0 — if all V vertices are visited, the graph is connected.<br><br>
+      <strong>Strong Connectivity</strong> (directed): every vertex is reachable from every other vertex in both directions.<br><br>
+      <strong>Connected Components</strong>: groups of vertices where each group is internally connected but not connected to others.
+    </div>
+    <div class="analogy"><div class="analogy-label">🌐 Analogy</div>Like checking if all rooms in a building are reachable from the entrance. If yes, it's connected. If some rooms are isolated, those form separate "components".</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Connectivity Check + Connected Components</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cmt">/* BFS helper: returns count of visited nodes */</span>
+<span class="type">int</span> <span class="fn">bfsCount</span>(<span class="type">int</span> start, <span class="type">int</span> vis[]) {
+    <span class="type">int</span> queue[MAX_V], front=<span class="num">0</span>, rear=<span class="num">0</span>, count=<span class="num">0</span>;
+    vis[start] = <span class="num">1</span>; queue[rear++] = start;
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="type">int</span> u = queue[front++]; count++;
+        <span class="type">int</span> e, w;
+        <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++)
+            <span class="kw">if</span> (incMatrix[u][e]!=<span class="num">0</span>)
+                <span class="kw">for</span> (w=<span class="num">0</span>; w&lt;V; w++)
+                    <span class="kw">if</span> (w!=u &amp;&amp; incMatrix[w][e]!=<span class="num">0</span> &amp;&amp; !vis[w]) {
+                        vis[w]=<span class="num">1</span>; queue[rear++]=w;
+                    }
+    }
+    <span class="kw">return</span> count;
+}
+
+<span class="cmt">/* Check Connected Graph */</span>
+<span class="type">int</span> <span class="fn">checkConnected</span>() {
+    <span class="type">int</span> vis[MAX_V] = {<span class="num">0</span>};
+    <span class="type">int</span> cnt = <span class="fn">bfsCount</span>(<span class="num">0</span>, vis);
+    <span class="kw">if</span> (cnt == V) { <span class="fn">printf</span>(<span class="str">"Graph is CONNECTED\n"</span>); <span class="kw">return</span> <span class="num">1</span>; }
+    <span class="fn">printf</span>(<span class="str">"Graph is DISCONNECTED\n"</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Find Connected Components */</span>
+<span class="type">void</span> <span class="fn">connectedComponents</span>() {
+    <span class="type">int</span> vis[MAX_V] = {<span class="num">0</span>}, comp = <span class="num">0</span>, i;
+    <span class="kw">for</span> (i = <span class="num">0</span>; i &lt; V; i++) {
+        <span class="kw">if</span> (!vis[i]) {
+            comp++;
+            <span class="fn">printf</span>(<span class="str">"Component %d: "</span>, comp);
+            <span class="fn">bfsCount</span>(i, vis);  <span class="cmt">/* visit component */</span>
+            <span class="fn">printf</span>(<span class="str">"\n"</span>);
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Total components: %d\n"</span>, comp);
+}
+
+<span class="cmt">/* Reachability: can we get from u to v? */</span>
+<span class="type">int</span> <span class="fn">reachabilityCheck</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="type">int</span> vis[MAX_V] = {<span class="num">0</span>};
+    <span class="fn">bfsCount</span>(u, vis);
+    <span class="kw">if</span> (vis[v]) { <span class="fn">printf</span>(<span class="str">"V%d is reachable from V%d\n"</span>, v, u); <span class="kw">return</span> <span class="num">1</span>; }
+    <span class="fn">printf</span>(<span class="str">"V%d is NOT reachable from V%d\n"</span>, v, u);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 9: PATH OPERATIONS -->
+<!-- ============================================================ -->
+<section id="path-ops" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Path Operations</div>
+    <div class="section-desc">Finding paths, shortest paths, all paths, and path lengths.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Find Path, Shortest Path, All Paths</div>
+    <div class="theory">
+      A <strong>path</strong> is a sequence of vertices connected by edges with no repeated vertices.<br>
+      <strong>Shortest path</strong> (unweighted) = path with fewest edges — found by BFS.<br>
+      <strong>All paths</strong> uses DFS with backtracking.
+    </div>
+    <div class="analogy"><div class="analogy-label">🗺️ Analogy</div>Finding how to get from city A to city B: BFS gives you the fewest stops, DFS explores every possible route.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Shortest Path (BFS) + All Paths (DFS)</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cmt">/* Shortest path using BFS (unweighted) */</span>
+<span class="type">int</span> <span class="fn">shortestPath</span>(<span class="type">int</span> src, <span class="type">int</span> dst) {
+    <span class="type">int</span> dist[MAX_V], vis[MAX_V];
+    <span class="type">int</span> queue[MAX_V], front=<span class="num">0</span>, rear=<span class="num">0</span>, i;
+    <span class="kw">for</span> (i=<span class="num">0</span>;i&lt;V;i++){dist[i]=<span class="op">-</span><span class="num">1</span>;vis[i]=<span class="num">0</span>;}
+    vis[src]=<span class="num">1</span>; dist[src]=<span class="num">0</span>; queue[rear++]=src;
+    <span class="kw">while</span>(front&lt;rear){
+        <span class="type">int</span> u=queue[front++], e, w;
+        <span class="kw">for</span>(e=<span class="num">0</span>;e&lt;E;e++)
+            <span class="kw">if</span>(incMatrix[u][e]!=<span class="num">0</span>)
+                <span class="kw">for</span>(w=<span class="num">0</span>;w&lt;V;w++)
+                    <span class="kw">if</span>(w!=u&amp;&amp;incMatrix[w][e]!=<span class="num">0</span>&amp;&amp;!vis[w]){
+                        vis[w]=<span class="num">1</span>; dist[w]=dist[u]+<span class="num">1</span>;
+                        queue[rear++]=w;
+                    }
+    }
+    <span class="fn">printf</span>(<span class="str">"Shortest path V%d->V%d: %d edges\n"</span>, src, dst, dist[dst]);
+    <span class="kw">return</span> dist[dst];
+}
+
+<span class="cmt">/* All Paths using DFS with backtracking */</span>
+<span class="type">int</span> pathArr[MAX_V], pathLen;
+<span class="type">void</span> <span class="fn">findAllPaths</span>(<span class="type">int</span> u, <span class="type">int</span> dst, <span class="type">int</span> vis[]) {
+    vis[u]=<span class="num">1</span>;
+    pathArr[pathLen++]=u;
+    <span class="kw">if</span>(u==dst){
+        <span class="type">int</span> i;
+        <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;pathLen;i++) <span class="fn">printf</span>(<span class="str">"V%d%s"</span>,pathArr[i],i==pathLen-<span class="num">1</span>?<span class="str">"\n"</span>:<span class="str">"->"</span>);
+    } <span class="kw">else</span> {
+        <span class="type">int</span> e, w;
+        <span class="kw">for</span>(e=<span class="num">0</span>;e&lt;E;e++)
+            <span class="kw">if</span>(incMatrix[u][e]!=<span class="num">0</span>)
+                <span class="kw">for</span>(w=<span class="num">0</span>;w&lt;V;w++)
+                    <span class="kw">if</span>(w!=u&amp;&amp;incMatrix[w][e]!=<span class="num">0</span>&amp;&amp;!vis[w])
+                        <span class="fn">findAllPaths</span>(w,dst,vis);
+    }
+    pathLen--;
+    vis[u]=<span class="num">0</span>;  <span class="cmt">/* backtrack */</span>
+}
+
+<span class="cmt">/* Path Length Count */</span>
+<span class="type">int</span> <span class="fn">pathLengthCount</span>(<span class="type">int</span> src, <span class="type">int</span> dst) {
+    <span class="kw">return</span> <span class="fn">shortestPath</span>(src, dst);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 10: CYCLE OPERATIONS -->
+<!-- ============================================================ -->
+<section id="cycle-ops" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Cycle Operations</div>
+    <div class="section-desc">Detect, count cycles, and check Hamiltonian &amp; Euler cycles.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Cycle Detection, Euler &amp; Hamiltonian</div>
+    <div class="theory">
+      A <strong>cycle</strong> is a path where the first and last vertex are the same.<br><br>
+      <strong>Euler Cycle</strong>: visits every <em>edge</em> exactly once and returns to start. Exists if all vertices have even degree.<br>
+      <strong>Hamiltonian Cycle</strong>: visits every <em>vertex</em> exactly once and returns to start. Checking requires backtracking (NP-complete).
+    </div>
+    <div class="analogy"><div class="analogy-label">🚴 Analogy</div>Euler Cycle: a postman delivering mail on every street exactly once. Hamiltonian Cycle: a salesman visiting every city exactly once.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Cycle Detection + Euler Check + Hamiltonian Check</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cmt">/* Detect cycle using DFS */</span>
+<span class="type">int</span> <span class="fn">detectCycleDFS</span>(<span class="type">int</span> u, <span class="type">int</span> parent, <span class="type">int</span> vis[]) {
+    vis[u] = <span class="num">1</span>;
+    <span class="type">int</span> e, w;
+    <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++) {
+        <span class="kw">if</span> (incMatrix[u][e] != <span class="num">0</span>) {
+            <span class="kw">for</span> (w=<span class="num">0</span>; w&lt;V; w++) {
+                <span class="kw">if</span> (w!=u &amp;&amp; incMatrix[w][e]!=<span class="num">0</span>) {
+                    <span class="kw">if</span> (!vis[w]) {
+                        <span class="kw">if</span> (<span class="fn">detectCycleDFS</span>(w, u, vis)) <span class="kw">return</span> <span class="num">1</span>;
+                    } <span class="kw">else</span> <span class="kw">if</span> (w != parent) <span class="kw">return</span> <span class="num">1</span>; <span class="cmt">/* back edge */</span>
+                }
+            }
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Euler Cycle: all vertices must have even degree */</span>
+<span class="type">int</span> <span class="fn">eulerCycleCheck</span>() {
+    <span class="type">int</span> i, e, deg;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++) {
+        deg = <span class="num">0</span>;
+        <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++)
+            <span class="kw">if</span> (incMatrix[i][e] != <span class="num">0</span>) deg++;
+        <span class="kw">if</span> (deg % <span class="num">2</span> != <span class="num">0</span>) {
+            <span class="fn">printf</span>(<span class="str">"No Euler Cycle (V%d has odd degree %d)\n"</span>, i, deg);
+            <span class="kw">return</span> <span class="num">0</span>;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Euler Cycle EXISTS\n"</span>); <span class="kw">return</span> <span class="num">1</span>;
+}
+
+<span class="cmt">/* Hamiltonian Cycle check via backtracking */</span>
+<span class="type">int</span> hamPath[MAX_V];
+<span class="type">int</span> <span class="fn">hamiltonianHelper</span>(<span class="type">int</span> pos, <span class="type">int</span> vis[]) {
+    <span class="kw">if</span> (pos == V) {
+        <span class="cmt">/* check if last connects back to start */</span>
+        <span class="type">int</span> e;
+        <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++)
+            <span class="kw">if</span> (incMatrix[hamPath[pos-<span class="num">1</span>]][e]!=<span class="num">0</span> &amp;&amp;
+                incMatrix[hamPath[<span class="num">0</span>]][e]!=<span class="num">0</span>) <span class="kw">return</span> <span class="num">1</span>;
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="type">int</span> w, e;
+    <span class="kw">for</span> (w=<span class="num">1</span>; w&lt;V; w++) {
+        <span class="kw">if</span> (!vis[w]) {
+            <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++) {
+                <span class="kw">if</span> (incMatrix[hamPath[pos-<span class="num">1</span>]][e]!=<span class="num">0</span>&amp;&amp;incMatrix[w][e]!=<span class="num">0</span>) {
+                    vis[w]=<span class="num">1</span>; hamPath[pos]=w;
+                    <span class="kw">if</span> (<span class="fn">hamiltonianHelper</span>(pos+<span class="num">1</span>,vis)) <span class="kw">return</span> <span class="num">1</span>;
+                    vis[w]=<span class="num">0</span>;
+                }
+            }
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 11: DEGREE OPERATIONS -->
+<!-- ============================================================ -->
+<section id="degree-ops" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Degree Operations</div>
+    <div class="section-desc">Degree = number of edges incident to a vertex. Key metric for graph analysis.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Degree — Find, Min, Max, Average, Distribution</div>
+    <div class="theory">
+      The <strong>degree</strong> of a vertex is the count of edges it touches. In the incidence matrix, it's simply the count of non-zero values in that vertex's row.<br><br>
+      Sum of all degrees = 2 × E (Handshaking Lemma).
+    </div>
+
+    <!-- Degree Viz -->
+    <div class="viz-container">
+      <div class="viz-header"><span class="viz-title">Degree Distribution</span>
+        <div class="viz-controls">
+          <button class="btn btn-primary btn-sm" onclick="updateDegreeChart()">Refresh</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <svg id="degreeSvg" style="width:100%;height:200px;" viewBox="0 0 560 180"></svg>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">All Degree Operations</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cmt">/* Get degree of vertex v */</span>
+<span class="type">int</span> <span class="fn">findDegree</span>(<span class="type">int</span> v) {
+    <span class="type">int</span> e, cnt = <span class="num">0</span>;
+    <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++)
+        <span class="kw">if</span> (incMatrix[v][e] != <span class="num">0</span>) cnt++;
+    <span class="fn">printf</span>(<span class="str">"Degree of V%d = %d\n"</span>, v, cnt);
+    <span class="kw">return</span> cnt;
+}
+
+<span class="cmt">/* Maximum Degree */</span>
+<span class="type">int</span> <span class="fn">maxDegree</span>() {
+    <span class="type">int</span> i, maxD = <span class="num">0</span>, maxV = <span class="num">0</span>;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++) {
+        <span class="type">int</span> d = <span class="fn">findDegree</span>(i);
+        <span class="kw">if</span> (d &gt; maxD) { maxD=d; maxV=i; }
+    }
+    <span class="fn">printf</span>(<span class="str">"Max degree: V%d = %d\n"</span>, maxV, maxD);
+    <span class="kw">return</span> maxD;
+}
+
+<span class="cmt">/* Minimum Degree */</span>
+<span class="type">int</span> <span class="fn">minDegree</span>() {
+    <span class="type">int</span> i, minD = V, minV = <span class="num">0</span>;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++) {
+        <span class="type">int</span> d = <span class="fn">findDegree</span>(i);
+        <span class="kw">if</span> (d &lt; minD) { minD=d; minV=i; }
+    }
+    <span class="fn">printf</span>(<span class="str">"Min degree: V%d = %d\n"</span>, minV, minD);
+    <span class="kw">return</span> minD;
+}
+
+<span class="cmt">/* Average Degree */</span>
+<span class="type">float</span> <span class="fn">avgDegree</span>() {
+    <span class="type">float</span> avg = (<span class="num">2.0</span> * E) / V;  <span class="cmt">/* Handshaking Lemma */</span>
+    <span class="fn">printf</span>(<span class="str">"Average degree: %.2f\n"</span>, avg);
+    <span class="kw">return</span> avg;
+}
+
+<span class="cmt">/* Degree Distribution: print count per degree value */</span>
+<span class="type">void</span> <span class="fn">degreeDistribution</span>() {
+    <span class="type">int</span> dist[MAX_V] = {<span class="num">0</span>}, i;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++) dist[<span class="fn">findDegree</span>(i)]++;
+    <span class="fn">printf</span>(<span class="str">"Degree : Count\n"</span>);
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++)
+        <span class="kw">if</span> (dist[i]&gt;<span class="num">0</span>) <span class="fn">printf</span>(<span class="str">"  %d    :  %d\n"</span>, i, dist[i]);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 12: STRUCTURAL OPERATIONS -->
+<!-- ============================================================ -->
+<section id="structural" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-intermediate">Intermediate</span>
+    <div class="section-title">Structural Operations</div>
+    <div class="section-desc">Graph size, order, density classification, complete graph, and clique detection.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Size, Order, Dense/Sparse, Complete Graph, Clique Detection</div>
+    <div class="theory">
+      <strong>Graph Order</strong> = number of vertices (V)<br>
+      <strong>Graph Size</strong> = number of edges (E)<br>
+      <strong>Complete Graph K_n</strong>: every vertex is connected to every other vertex. Has V×(V-1)/2 edges.<br>
+      <strong>Clique</strong>: a subset of vertices where all pairs are connected.
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Structural Operations</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span>  <span class="fn">graphOrder</span>()  { <span class="fn">printf</span>(<span class="str">"Order(V)=%d\n"</span>,V); <span class="kw">return</span> V; }
+<span class="type">int</span>  <span class="fn">graphSize</span>()   { <span class="fn">printf</span>(<span class="str">"Size(E)=%d\n"</span>,E); <span class="kw">return</span> E; }
+
+<span class="cmt">/* Complete Graph Check: V*(V-1)/2 edges */</span>
+<span class="type">int</span> <span class="fn">completeGraphCheck</span>() {
+    <span class="type">int</span> maxE = V*(V-<span class="num">1</span>)/<span class="num">2</span>;
+    <span class="kw">if</span> (E == maxE) { <span class="fn">printf</span>(<span class="str">"COMPLETE graph K_%d\n"</span>, V); <span class="kw">return</span> <span class="num">1</span>; }
+    <span class="fn">printf</span>(<span class="str">"Not complete (%d/%d edges)\n"</span>, E, maxE); <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Sparse/Dense Classification */</span>
+<span class="type">void</span> <span class="fn">sparseDenseClassification</span>() {
+    <span class="type">float</span> d = E / (V*(V-<span class="num">1</span>)/<span class="num">2.0</span>);
+    <span class="kw">if</span>      (d &gt;= <span class="num">0.75</span>) <span class="fn">printf</span>(<span class="str">"VERY DENSE (%.0f%%)\n"</span>, d*<span class="num">100</span>);
+    <span class="kw">else if</span> (d &gt;= <span class="num">0.5</span>)  <span class="fn">printf</span>(<span class="str">"DENSE (%.0f%%)\n"</span>, d*<span class="num">100</span>);
+    <span class="kw">else if</span> (d &gt;= <span class="num">0.25</span>) <span class="fn">printf</span>(<span class="str">"MODERATE (%.0f%%)\n"</span>, d*<span class="num">100</span>);
+    <span class="kw">else</span>                 <span class="fn">printf</span>(<span class="str">"SPARSE (%.0f%%)\n"</span>, d*<span class="num">100</span>);
+}
+
+<span class="cmt">/* Clique Detection: check if subset is a clique */</span>
+<span class="type">int</span> <span class="fn">isClique</span>(<span class="type">int</span> subset[], <span class="type">int</span> size) {
+    <span class="type">int</span> i, j;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;size; i++) {
+        <span class="kw">for</span> (j=i+<span class="num">1</span>; j&lt;size; j++) {
+            <span class="kw">if</span> (<span class="fn">searchEdge</span>(subset[i], subset[j]) == <span class="op">-</span><span class="num">1</span>) {
+                <span class="fn">printf</span>(<span class="str">"Not a clique\n"</span>); <span class="kw">return</span> <span class="num">0</span>;
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Is a clique of size %d\n"</span>, size);
+    <span class="kw">return</span> <span class="num">1</span>;
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 13: FLOYD-WARSHALL -->
+<!-- ============================================================ -->
+<section id="advanced" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-advanced">Advanced</span>
+    <div class="section-title">Floyd-Warshall Algorithm</div>
+    <div class="section-desc">Find shortest paths between ALL pairs of vertices in O(V³).</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">All-Pairs Shortest Path</div>
+    <div class="theory">
+      Floyd-Warshall computes the shortest distance between every pair of vertices. It builds a <strong>distance matrix</strong> and tries each vertex as an intermediate node.<br><br>
+      Key formula: <code>dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])</code> for all intermediate k.<br><br>
+      Time Complexity: <strong>O(V³)</strong> — best for dense graphs since they already use O(V²) space.
+    </div>
+    <div class="analogy"><div class="analogy-label">✈️ Analogy</div>Finding the cheapest flight between every pair of cities, considering all possible layovers.</div>
+
+    <!-- Floyd-Warshall Interactive -->
+    <div class="viz-container">
+      <div class="viz-header">
+        <span class="viz-title">Floyd-Warshall Step Visualizer</span>
+        <div class="viz-controls">
+          <button class="btn btn-primary btn-sm" onclick="runFloyd()">Run</button>
+          <button class="btn btn-secondary btn-sm" onclick="resetFloyd()">Reset</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <div id="fwViz"></div>
+        <div id="fwStatus" style="font-size:12px;color:var(--text2);margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Floyd-Warshall Algorithm</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="kw">#define</span> INF <span class="num">99999</span>
+
+<span class="type">int</span> dist[MAX_V][MAX_V];
+
+<span class="cmt">/* Build dist matrix from incidence matrix */</span>
+<span class="type">void</span> <span class="fn">buildDistMatrix</span>() {
+    <span class="type">int</span> i, j, e;
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++) <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;V;j++)
+        dist[i][j] = (i==j) ? <span class="num">0</span> : INF;
+    <span class="cmt">/* For each edge, set dist[u][v] = 1 (unweighted) */</span>
+    <span class="kw">for</span>(e=<span class="num">0</span>;e&lt;E;e++){
+        <span class="type">int</span> u=-<span class="num">1</span>, v=-<span class="num">1</span>;
+        <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++)
+            <span class="kw">if</span>(incMatrix[i][e]!=<span class="num">0</span>){
+                <span class="kw">if</span>(u==-<span class="num">1</span>) u=i; <span class="kw">else</span> v=i;
+            }
+        <span class="kw">if</span>(u!=-<span class="num">1</span>&amp;&amp;v!=-<span class="num">1</span>){ dist[u][v]=<span class="num">1</span>; dist[v][u]=<span class="num">1</span>; }
+    }
+}
+
+<span class="cmt">/* Floyd-Warshall main algorithm */</span>
+<span class="type">void</span> <span class="fn">floydWarshall</span>() {
+    <span class="fn">buildDistMatrix</span>();
+    <span class="type">int</span> k, i, j;
+    <span class="kw">for</span>(k=<span class="num">0</span>;k&lt;V;k++)        <span class="cmt">/* try each vertex as intermediate */</span>
+        <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++)
+            <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;V;j++)
+                <span class="kw">if</span>(dist[i][k]!=INF &amp;&amp; dist[k][j]!=INF)
+                    <span class="kw">if</span>(dist[i][k]+dist[k][j] &lt; dist[i][j])
+                        dist[i][j] = dist[i][k]+dist[k][j];
+    <span class="cmt">/* Print distance matrix */</span>
+    <span class="type">int</span> x, y;
+    <span class="fn">printf</span>(<span class="str">"All-Pairs Shortest Distances:\n"</span>);
+    <span class="kw">for</span>(x=<span class="num">0</span>;x&lt;V;x++){
+        <span class="kw">for</span>(y=<span class="num">0</span>;y&lt;V;y++)
+            <span class="kw">if</span>(dist[x][y]==INF) <span class="fn">printf</span>(<span class="str">"%4s"</span>,<span class="str">"INF"</span>);
+            <span class="kw">else</span> <span class="fn">printf</span>(<span class="str">"%4d"</span>,dist[x][y]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 14: PRIM -->
+<!-- ============================================================ -->
+<section id="prim" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-advanced">Advanced</span>
+    <div class="section-title">Prim's Algorithm — Minimum Spanning Tree</div>
+    <div class="section-desc">Find the tree that connects all vertices with minimum total edge weight.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Prim's MST</div>
+    <div class="theory">
+      Prim's algorithm builds a Minimum Spanning Tree (MST) by greedily adding the cheapest edge that connects an unvisited vertex to the tree.<br><br>
+      1. Start from any vertex. Mark it in the MST.<br>
+      2. Among all edges from MST to non-MST vertices, pick the minimum weight one.<br>
+      3. Add that vertex to MST. Repeat until all vertices are included.
+    </div>
+    <div class="analogy"><div class="analogy-label">💡 Analogy</div>Laying cable to connect all houses in a neighborhood with minimum total cable length.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Prim's Algorithm (Incidence Matrix, Weighted)</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> edgeWeight[MAX_E];  <span class="cmt">/* weight for each edge */</span>
+
+<span class="type">void</span> <span class="fn">primMST</span>() {
+    <span class="type">int</span> inMST[MAX_V] = {<span class="num">0</span>};
+    <span class="type">int</span> mstEdges = <span class="num">0</span>, totalCost = <span class="num">0</span>;
+    inMST[<span class="num">0</span>] = <span class="num">1</span>;  <span class="cmt">/* start from vertex 0 */</span>
+
+    <span class="fn">printf</span>(<span class="str">"Prim's MST edges:\n"</span>);
+    <span class="kw">while</span> (mstEdges &lt; V-<span class="num">1</span>) {
+        <span class="type">int</span> bestEdge = <span class="op">-</span><span class="num">1</span>, bestW = INF;
+        <span class="type">int</span> bestU, bestV, e, i, j;
+
+        <span class="cmt">/* Find minimum weight edge from MST to non-MST */</span>
+        <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++) {
+            <span class="type">int</span> u=-<span class="num">1</span>, v=-<span class="num">1</span>;
+            <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++)
+                <span class="kw">if</span> (incMatrix[i][e]!=<span class="num">0</span>){
+                    <span class="kw">if</span>(u==-<span class="num">1</span>) u=i; <span class="kw">else</span> v=i;
+                }
+            <span class="kw">if</span> (u!=-<span class="num">1</span>&amp;&amp;v!=-<span class="num">1</span>&amp;&amp;inMST[u]!=inMST[v]) {
+                <span class="kw">if</span> (edgeWeight[e] &lt; bestW) {
+                    bestW=edgeWeight[e]; bestEdge=e;
+                    bestU=u; bestV=v;
+                }
+            }
+        }
+        <span class="kw">if</span> (bestEdge==-<span class="num">1</span>) <span class="kw">break</span>;
+        inMST[bestU]=inMST[bestV]=<span class="num">1</span>;
+        totalCost += bestW;
+        <span class="fn">printf</span>(<span class="str">"  V%d -- V%d (weight %d)\n"</span>, bestU, bestV, bestW);
+        mstEdges++;
+    }
+    <span class="fn">printf</span>(<span class="str">"MST Total Cost: %d\n"</span>, totalCost);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 15: GRAPH COLORING -->
+<!-- ============================================================ -->
+<section id="coloring" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-advanced">Advanced</span>
+    <div class="section-title">Graph Coloring</div>
+    <div class="section-desc">Assign colors to vertices so no two adjacent vertices share the same color.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Greedy Graph Coloring</div>
+    <div class="theory">
+      Graph coloring assigns a <strong>color</strong> to each vertex such that no two connected vertices have the same color. The minimum number of colors needed is the <strong>chromatic number χ(G)</strong>.<br><br>
+      For dense graphs, χ can be high. The greedy algorithm picks the smallest available color for each vertex.
+    </div>
+    <div class="analogy"><div class="analogy-label">📅 Analogy</div>Scheduling exams: courses that share students can't be at the same time. Each time slot is a "color".</div>
+
+    <!-- Coloring Viz -->
+    <div class="viz-container">
+      <div class="viz-header"><span class="viz-title">Graph Coloring Visualizer</span>
+        <div class="viz-controls">
+          <button class="btn btn-primary btn-sm" onclick="runColoring()">Color Graph</button>
+        </div>
+      </div>
+      <div class="viz-body">
+        <svg id="colorSvg" style="width:100%;height:240px;" viewBox="0 0 560 220"></svg>
+        <div id="colorResult" style="font-size:12px;color:var(--text2);margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Greedy Graph Coloring</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">void</span> <span class="fn">graphColoring</span>() {
+    <span class="type">int</span> color[MAX_V];
+    <span class="type">int</span> i, e, w, c;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++) color[i] = <span class="op">-</span><span class="num">1</span>;  <span class="cmt">/* uncolored */</span>
+    color[<span class="num">0</span>] = <span class="num">0</span>;  <span class="cmt">/* first vertex gets color 0 */</span>
+
+    <span class="kw">for</span> (i=<span class="num">1</span>; i&lt;V; i++) {
+        <span class="type">int</span> used[MAX_V] = {<span class="num">0</span>};  <span class="cmt">/* colors used by neighbors */</span>
+
+        <span class="cmt">/* Find all neighbors via incidence matrix */</span>
+        <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++) {
+            <span class="kw">if</span> (incMatrix[i][e] != <span class="num">0</span>) {
+                <span class="kw">for</span> (w=<span class="num">0</span>; w&lt;V; w++) {
+                    <span class="kw">if</span> (w!=i &amp;&amp; incMatrix[w][e]!=<span class="num">0</span> &amp;&amp; color[w]!=-<span class="num">1</span>)
+                        used[color[w]] = <span class="num">1</span>;
+                }
+            }
+        }
+        <span class="cmt">/* Assign smallest unused color */</span>
+        <span class="kw">for</span> (c=<span class="num">0</span>; used[c]; c++);
+        color[i] = c;
+        <span class="fn">printf</span>(<span class="str">"V%d -> Color %d\n"</span>, i, c);
+    }
+    <span class="cmt">/* Find chromatic number */</span>
+    <span class="type">int</span> maxColor = <span class="num">0</span>;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;V; i++) <span class="kw">if</span>(color[i]>maxColor) maxColor=color[i];
+    <span class="fn">printf</span>(<span class="str">"Chromatic number = %d\n"</span>, maxColor+<span class="num">1</span>);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 16: HAMILTONIAN ALGORITHMS -->
+<!-- ============================================================ -->
+<section id="hamiltonian" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-advanced">Advanced</span>
+    <div class="section-title">Hamiltonian Algorithms</div>
+    <div class="section-desc">Find a cycle or path that visits every vertex exactly once.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Hamiltonian Path &amp; Cycle — Backtracking</div>
+    <div class="theory">
+      A <strong>Hamiltonian Path</strong> visits every vertex exactly once. A <strong>Hamiltonian Cycle</strong> does this and returns to the starting vertex.<br><br>
+      This is NP-complete — no polynomial algorithm is known. We use <strong>backtracking</strong>: try each vertex, recurse, and undo if it doesn't work.
+    </div>
+    <div class="analogy"><div class="analogy-label">🏃 Analogy</div>A traveling salesman visiting every city exactly once and returning home. Every possible route is explored until a valid one is found.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Hamiltonian Cycle — Complete Backtracking Solution</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> hamCycle[MAX_V + <span class="num">1</span>];
+
+<span class="cmt">/* Check if vertex w can be added at position pos */</span>
+<span class="type">int</span> <span class="fn">isSafe</span>(<span class="type">int</span> w, <span class="type">int</span> pos) {
+    <span class="cmt">/* Check edge exists from previous vertex to w */</span>
+    <span class="type">int</span> e;
+    <span class="type">int</span> found = <span class="num">0</span>;
+    <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++)
+        <span class="kw">if</span>(incMatrix[hamCycle[pos-<span class="num">1</span>]][e]!=<span class="num">0</span>&amp;&amp;incMatrix[w][e]!=<span class="num">0</span>)
+            found = <span class="num">1</span>;
+    <span class="kw">if</span> (!found) <span class="kw">return</span> <span class="num">0</span>;
+
+    <span class="cmt">/* Check w not already visited */</span>
+    <span class="type">int</span> i;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;pos; i++)
+        <span class="kw">if</span> (hamCycle[i] == w) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> <span class="num">1</span>;
+}
+
+<span class="type">int</span> <span class="fn">hamCycleUtil</span>(<span class="type">int</span> pos) {
+    <span class="kw">if</span> (pos == V) {
+        <span class="cmt">/* Check edge back to start */</span>
+        <span class="type">int</span> e;
+        <span class="kw">for</span> (e=<span class="num">0</span>; e&lt;E; e++)
+            <span class="kw">if</span>(incMatrix[hamCycle[pos-<span class="num">1</span>]][e]!=<span class="num">0</span>&amp;&amp;incMatrix[hamCycle[<span class="num">0</span>]][e]!=<span class="num">0</span>)
+                <span class="kw">return</span> <span class="num">1</span>;
+        <span class="kw">return</span> <span class="num">0</span>;
+    }
+    <span class="type">int</span> v;
+    <span class="kw">for</span> (v=<span class="num">1</span>; v&lt;V; v++) {
+        <span class="kw">if</span> (<span class="fn">isSafe</span>(v, pos)) {
+            hamCycle[pos] = v;
+            <span class="kw">if</span> (<span class="fn">hamCycleUtil</span>(pos+<span class="num">1</span>)) <span class="kw">return</span> <span class="num">1</span>;
+            hamCycle[pos] = <span class="op">-</span><span class="num">1</span>;   <span class="cmt">/* backtrack */</span>
+        }
+    }
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="type">void</span> <span class="fn">findHamiltonianCycle</span>() {
+    <span class="type">int</span> i;
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V+<span class="num">1</span>;i++) hamCycle[i]=-<span class="num">1</span>;
+    hamCycle[<span class="num">0</span>] = <span class="num">0</span>;
+    <span class="kw">if</span> (!<span class="fn">hamCycleUtil</span>(<span class="num">1</span>))
+        <span class="fn">printf</span>(<span class="str">"No Hamiltonian Cycle\n"</span>);
+    <span class="kw">else</span> {
+        <span class="fn">printf</span>(<span class="str">"Hamiltonian Cycle: "</span>);
+        <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++) <span class="fn">printf</span>(<span class="str">"V%d->"</span>,hamCycle[i]);
+        <span class="fn">printf</span>(<span class="str">"V%d\n"</span>,hamCycle[<span class="num">0</span>]);
+    }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 17: CLIQUE ALGORITHMS -->
+<!-- ============================================================ -->
+<section id="clique" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-advanced">Advanced</span>
+    <div class="section-title">Clique Algorithms</div>
+    <div class="section-desc">Find maximum cliques — subsets of vertices all connected to each other.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">Maximum Clique via Backtracking (Bron-Kerbosch)</div>
+    <div class="theory">
+      A <strong>clique</strong> is a complete subgraph — every pair of vertices is connected. The <strong>maximum clique</strong> is the largest such group.<br><br>
+      Finding the maximum clique is NP-complete. We use the <strong>Bron-Kerbosch algorithm</strong> with backtracking.
+    </div>
+    <div class="analogy"><div class="analogy-label">👥 Analogy</div>Finding the largest group of mutual friends in a social network — where everyone in the group knows everyone else.</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Bron-Kerbosch Clique Algorithm</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="type">int</span> maxCliqueSet[MAX_V], maxCliqueSize = <span class="num">0</span>;
+
+<span class="cmt">/* Check edge between u and v */</span>
+<span class="type">int</span> <span class="fn">hasEdge</span>(<span class="type">int</span> u, <span class="type">int</span> v) {
+    <span class="type">int</span> e;
+    <span class="kw">for</span>(e=<span class="num">0</span>;e&lt;E;e++)
+        <span class="kw">if</span>(incMatrix[u][e]!=<span class="num">0</span>&amp;&amp;incMatrix[v][e]!=<span class="num">0</span>) <span class="kw">return</span> <span class="num">1</span>;
+    <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Bron-Kerbosch: R=current clique, P=candidates, X=excluded */</span>
+<span class="type">void</span> <span class="fn">bronKerbosch</span>(<span class="type">int</span> R[], <span class="type">int</span> Rsize,
+                    <span class="type">int</span> P[], <span class="type">int</span> Psize,
+                    <span class="type">int</span> X[], <span class="type">int</span> Xsize) {
+    <span class="kw">if</span> (Psize==<span class="num">0</span> &amp;&amp; Xsize==<span class="num">0</span>) {
+        <span class="kw">if</span> (Rsize &gt; maxCliqueSize) {
+            maxCliqueSize = Rsize;
+            <span class="type">int</span> i;
+            <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;Rsize;i++) maxCliqueSet[i]=R[i];
+        }
+        <span class="kw">return</span>;
+    }
+    <span class="type">int</span> i, j, v;
+    <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;Psize; i++) {
+        v = P[i];
+        <span class="type">int</span> newR[MAX_V], newP[MAX_V], newX[MAX_V];
+        <span class="type">int</span> nR=Rsize, nP=<span class="num">0</span>, nX=<span class="num">0</span>;
+        <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;Rsize;j++) newR[j]=R[j];
+        newR[nR++]=v;
+        <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;Psize;j++)
+            <span class="kw">if</span>(<span class="fn">hasEdge</span>(v,P[j])) newP[nP++]=P[j];
+        <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;Xsize;j++)
+            <span class="kw">if</span>(<span class="fn">hasEdge</span>(v,X[j])) newX[nX++]=X[j];
+        <span class="fn">bronKerbosch</span>(newR,nR,newP,nP,newX,nX);
+        X[Xsize++]=v;
+    }
+}
+
+<span class="type">void</span> <span class="fn">findMaxClique</span>() {
+    <span class="type">int</span> R[MAX_V], P[MAX_V], X[MAX_V], i;
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++) P[i]=i;
+    <span class="fn">bronKerbosch</span>(R,<span class="num">0</span>,P,V,X,<span class="num">0</span>);
+    <span class="fn">printf</span>(<span class="str">"Max Clique (size %d): "</span>, maxCliqueSize);
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;maxCliqueSize;i++) <span class="fn">printf</span>(<span class="str">"V%d "</span>,maxCliqueSet[i]);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SECTION 18: UTILITY OPERATIONS -->
+<!-- ============================================================ -->
+<section id="utility" class="section">
+  <div class="section-header">
+    <span class="section-tag tag-beginner">Beginner</span>
+    <div class="section-title">Utility Operations</div>
+    <div class="section-desc">Essential helper functions: isEmpty, clear, copy, display, reset visited.</div>
+  </div>
+  <div class="subsection">
+    <div class="subsection-title">All Utility Functions</div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">C</span><span class="code-title">Complete Utility Operations</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+<pre><span class="cmt">/* Is Empty: no vertices */</span>
+<span class="type">int</span> <span class="fn">isEmpty</span>() {
+    <span class="kw">if</span> (V == <span class="num">0</span>) { <span class="fn">printf</span>(<span class="str">"Graph is empty\n"</span>); <span class="kw">return</span> <span class="num">1</span>; }
+    <span class="fn">printf</span>(<span class="str">"Graph has %d vertices\n"</span>, V); <span class="kw">return</span> <span class="num">0</span>;
+}
+
+<span class="cmt">/* Clear Graph: reset everything */</span>
+<span class="type">void</span> <span class="fn">clearGraph</span>() {
+    <span class="type">int</span> i, j;
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;MAX_V;i++)
+        <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;MAX_E;j++)
+            incMatrix[i][j] = <span class="num">0</span>;
+    V = <span class="num">0</span>; E = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Graph cleared.\n"</span>);
+}
+
+<span class="cmt">/* Copy Graph: copy src matrix to dst */</span>
+<span class="type">void</span> <span class="fn">copyGraph</span>(<span class="type">int</span> dst[][MAX_E], <span class="type">int</span> src[][MAX_E]) {
+    <span class="type">int</span> i, j;
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++)
+        <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;E;j++)
+            dst[i][j] = src[i][j];
+    <span class="fn">printf</span>(<span class="str">"Graph copied.\n"</span>);
+}
+
+<span class="cmt">/* Display Graph: print incidence matrix */</span>
+<span class="type">void</span> <span class="fn">displayGraph</span>() {
+    <span class="type">int</span> i, j;
+    <span class="fn">printf</span>(<span class="str">"\n   | "</span>);
+    <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;E;j++) <span class="fn">printf</span>(<span class="str">"e%-2d"</span>, j);
+    <span class="fn">printf</span>(<span class="str">"\n---+"</span>);
+    <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;E;j++) <span class="fn">printf</span>(<span class="str">"---"</span>);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++){
+        <span class="fn">printf</span>(<span class="str">"V%d | "</span>, i);
+        <span class="kw">for</span>(j=<span class="num">0</span>;j&lt;E;j++)
+            <span class="fn">printf</span>(<span class="str">"%2d  "</span>, incMatrix[i][j]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}
+
+<span class="cmt">/* Reset Visited Array */</span>
+<span class="type">void</span> <span class="fn">resetVisited</span>(<span class="type">int</span> vis[]) {
+    <span class="type">int</span> i;
+    <span class="kw">for</span>(i=<span class="num">0</span>;i&lt;V;i++) vis[i]=<span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Visited array reset.\n"</span>);
+}</pre>
+    </div>
+
+    <!-- Complexity Summary -->
+    <div class="subsection-title" style="margin-top:24px;">Time &amp; Space Complexity Summary</div>
+    <div class="matrix-wrap">
+      <table class="comp-table">
+        <tr><th>Operation</th><th>Time</th><th>Notes</th></tr>
+        <tr><td>Insert Vertex</td><td>O(E)</td><td>Initialize new row</td></tr>
+        <tr><td>Delete Vertex</td><td>O(V·E)</td><td>Remove row + edge cleanup</td></tr>
+        <tr><td>Insert Edge</td><td>O(1)</td><td>Add new column</td></tr>
+        <tr><td>Delete Edge</td><td>O(V)</td><td>Shift columns</td></tr>
+        <tr><td>Search Edge</td><td>O(E)</td><td>Scan all columns</td></tr>
+        <tr><td>BFS / DFS</td><td>O(V·E)</td><td>Per vertex, scan all edges</td></tr>
+        <tr><td>Density</td><td>O(1)</td><td>E / V(V-1)/2</td></tr>
+        <tr><td>Floyd-Warshall</td><td>O(V³)</td><td>All-pairs shortest</td></tr>
+        <tr><td>Prim's MST</td><td>O(V·E)</td><td>Greedy MST</td></tr>
+        <tr><td>Graph Coloring</td><td>O(V²)</td><td>Greedy approach</td></tr>
+        <tr><td>Hamiltonian</td><td>O(V!)</td><td>NP-complete backtrack</td></tr>
+        <tr><td>Max Clique</td><td>O(3^(V/3))</td><td>Bron-Kerbosch</td></tr>
+        <tr><td>Space</td><td>O(V·E)</td><td>Matrix storage</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+</div><!-- end content -->
+</main>
+</div><!-- end shell -->
+
+<script>
+/* ===========================
+   SHARED GRAPH STATE
+   =========================== */
+const COLORS = ['#4f8aff','#7c5cff','#00e5a0','#ff6b6b','#ffd166','#a78bfa','#fb7185','#34d399'];
+
+// Demo graph data for visualizations
+let demoV = 5;
+let demoEdges = [[0,1],[1,2],[2,3],[3,4],[4,0],[0,2]];
+
+// Introduction SVG graph
+let introNodes = [
+  {x:100,y:120,id:0},{x:220,y:60,id:1},{x:340,y:80,id:2},
+  {x:300,y:180,id:3},{x:170,y:200,id:4}
+];
+let introEdges = [[0,1],[1,2],[2,3],[3,4],[4,0],[0,2],[1,3]];
+let selected = null;
+
+function drawIntroGraph() {
+  const svg = document.getElementById('introSvg');
+  svg.innerHTML = '';
+  // Draw edges
+  introEdges.forEach(([a,b]) => {
+    const na=introNodes[a], nb=introNodes[b];
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',na.x); line.setAttribute('y1',na.y);
+    line.setAttribute('x2',nb.x); line.setAttribute('y2',nb.y);
+    line.setAttribute('class','edge-line'); svg.appendChild(line);
+  });
+  // Draw nodes
+  introNodes.forEach(n => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('cursor','pointer');
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',n.x); c.setAttribute('cy',n.y); c.setAttribute('r','22');
+    c.setAttribute('class','node-circle');
+    if(selected===n.id) c.setAttribute('style','fill:rgba(79,138,255,0.35);stroke:#4f8aff;');
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',n.x); t.setAttribute('y',n.y+5);
+    t.setAttribute('text-anchor','middle'); t.setAttribute('class','node-label');
+    t.textContent = 'V'+n.id;
+    g.appendChild(c); g.appendChild(t);
+    g.onclick = () => {
+      if(selected===null){selected=n.id;}
+      else if(selected===n.id){selected=null;}
+      else{
+        const a=selected,b=n.id;
+        const idx=introEdges.findIndex(e=>(e[0]===a&&e[1]===b)||(e[0]===b&&e[1]===a));
+        if(idx>=0) introEdges.splice(idx,1); else introEdges.push([a,b]);
+        selected=null;
+      }
+      drawIntroGraph(); updateIntroStats();
+    };
+    svg.appendChild(g);
+  });
+  // Edge labels
+  introEdges.forEach(([a,b],i) => {
+    const na=introNodes[a],nb=introNodes[b];
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',(na.x+nb.x)/2+5); t.setAttribute('y',(na.y+nb.y)/2-5);
+    t.setAttribute('class','edge-label'); t.setAttribute('font-size','10');
+    t.textContent='e'+i; svg.appendChild(t);
+  });
+}
+function updateIntroStats() {
+  const v=introNodes.length, e=introEdges.length;
+  const maxE=v*(v-1)/2;
+  const d=(e/maxE*100).toFixed(0);
+  document.getElementById('introStats').innerHTML =
+    `<b style="color:var(--accent)">${v}</b> vertices · <b style="color:var(--accent3)">${e}</b> edges · Max possible: <b>${maxE}</b> · Density: <b style="color:var(--accent5)">${d}%</b> → <b style="color:${e/maxE>0.5?'var(--accent3)':'var(--accent4)'}">${e/maxE>0.5?'DENSE':'SPARSE'}</b>`;
+}
+function addVizVertex() {
+  if(introNodes.length>=8) return;
+  const angle=Math.random()*2*Math.PI;
+  const r=100+Math.random()*60;
+  introNodes.push({x:300+r*Math.cos(angle),y:130+r*0.6*Math.sin(angle),id:introNodes.length});
+  drawIntroGraph(); updateIntroStats();
+}
+function resetViz() {
+  introNodes=[{x:100,y:120,id:0},{x:220,y:60,id:1},{x:340,y:80,id:2},{x:300,y:180,id:3},{x:170,y:200,id:4}];
+  introEdges=[[0,1],[1,2],[2,3],[3,4],[4,0],[0,2],[1,3]];
+  selected=null; drawIntroGraph(); updateIntroStats();
+}
+
+/* ===========================
+   INCIDENCE MATRIX BUILDER
+   =========================== */
+const matNodes = [{x:80,y:100},{x:200,y:40},{x:320,y:100},{x:300,y:170},{x:170,y:175}];
+const matEdges = [[0,1,false],[1,2,false],[2,3,false],[3,4,false],[4,0,false],[0,2,true],[1,3,false]];
+
+function buildMatrix() {
+  const svg = document.getElementById('matSvg');
+  svg.innerHTML = '';
+  // Draw edges
+  matEdges.forEach(([a,b,dir],i) => {
+    const na=matNodes[a],nb=matNodes[b];
+    if(dir){
+      // dashed for directed
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',na.x);line.setAttribute('y1',na.y);
+      line.setAttribute('x2',nb.x);line.setAttribute('y2',nb.y);
+      line.setAttribute('stroke','#ff6b6b');line.setAttribute('stroke-width','2');
+      line.setAttribute('stroke-dasharray','5,3');line.setAttribute('opacity','0.8');
+      svg.appendChild(line);
+    } else {
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',na.x);line.setAttribute('y1',na.y);
+      line.setAttribute('x2',nb.x);line.setAttribute('y2',nb.y);
+      line.setAttribute('class','edge-line'); svg.appendChild(line);
+    }
+    // edge label
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',(na.x+nb.x)/2+3);t.setAttribute('y',(na.y+nb.y)/2-4);
+    t.setAttribute('fill','#ffd166');t.setAttribute('font-size','10');
+    t.setAttribute('font-family','JetBrains Mono');t.textContent='e'+i;
+    svg.appendChild(t);
+  });
+  // Draw nodes
+  matNodes.forEach((n,i) => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r','20');
+    c.setAttribute('class','node-circle'); svg.appendChild(c);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',n.x);t.setAttribute('y',n.y+5);
+    t.setAttribute('text-anchor','middle');t.setAttribute('class','node-label');
+    t.textContent='V'+i; svg.appendChild(t);
+  });
+
+  // Build HTML table
+  const V=matNodes.length, E=matEdges.length;
+  let html='<table><tr><th>V\e</th>';
+  for(let j=0;j<E;j++) html+=`<th>e${j}</th>`;
+  html+='</tr>';
+  for(let i=0;i<V;i++){
+    html+=`<tr><th>V${i}</th>`;
+    for(let j=0;j<E;j++){
+      const [a,b,dir]=matEdges[j];
+      let val=0, cls='zero';
+      if(dir){
+        if(a===i){val=1;cls='one';}
+        else if(b===i){val=-1;cls='neg';}
+      } else {
+        if(a===i||b===i){val=1;cls='one';}
+      }
+      html+=`<td class="${cls}">${val}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</table>';
+  document.getElementById('matrixDiv').innerHTML=html;
+}
+
+/* ===========================
+   EDGE DEMO
+   =========================== */
+let edgeV=5, edgeEdges=[[0,1],[1,2],[2,3],[3,4]];
+function drawEdgeGraph(){
+  const svg=document.getElementById('edgeSvg');
+  svg.innerHTML='';
+  const pos=[{x:80,y:100},{x:180,y:40},{x:290,y:70},{x:370,y:150},{x:250,y:175}];
+  edgeEdges.forEach(([a,b],i)=>{
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',pos[a].x);l.setAttribute('y1',pos[a].y);
+    l.setAttribute('x2',pos[b].x);l.setAttribute('y2',pos[b].y);
+    l.setAttribute('class','edge-line'); svg.appendChild(l);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',(pos[a].x+pos[b].x)/2);t.setAttribute('y',(pos[a].y+pos[b].y)/2-5);
+    t.setAttribute('fill','#ffd166');t.setAttribute('font-size','10');t.setAttribute('font-family','JetBrains Mono');
+    t.textContent='e'+i; svg.appendChild(t);
+  });
+  pos.forEach((p,i)=>{
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','22');
+    c.setAttribute('class','node-circle'); svg.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.x);t.setAttribute('y',p.y+5);
+    t.setAttribute('text-anchor','middle');t.setAttribute('class','node-label');
+    t.textContent='V'+i; svg.appendChild(t);
+  });
+  // Build matrix
+  const E=edgeEdges.length;
+  let html='<table><tr><th>V\\e</th>';
+  for(let j=0;j<E;j++) html+=`<th>e${j}</th>`;
+  html+='</tr>';
+  for(let i=0;i<5;i++){
+    html+=`<tr><th>V${i}</th>`;
+    for(let j=0;j<E;j++){
+      const v=(edgeEdges[j][0]===i||edgeEdges[j][1]===i)?1:0;
+      html+=`<td class="${v?'one':'zero'}">${v}</td>`;
+    }
+    html+='</tr>';
+  }
+  html+='</table>';
+  document.getElementById('edgeMatrixDiv').innerHTML=html;
+}
+function insertEdgeDemo(){
+  const u=parseInt(document.getElementById('eu').value);
+  const v=parseInt(document.getElementById('ev').value);
+  if(isNaN(u)||isNaN(v)||u<0||u>=5||v<0||v>=5||u===v) return;
+  if(!edgeEdges.find(e=>(e[0]===u&&e[1]===v)||(e[0]===v&&e[1]===u)))
+    edgeEdges.push([u,v]);
+  drawEdgeGraph();
+}
+function resetEdgeDemo(){edgeEdges=[[0,1],[1,2],[2,3],[3,4]]; drawEdgeGraph();}
+
+/* ===========================
+   BFS ANIMATION
+   =========================== */
+const bfsPos=[{x:100,y:110},{x:220,y:50},{x:340,y:80},{x:380,y:180},{x:260,y:190},{x:130,y:185}];
+const bfsAdj=[[0,1],[0,4],[0,5],[1,2],[1,3],[2,3],[3,4],[4,5]];
+let bfsAnim=null;
+
+function drawBFSGraph(visited,current,queue){
+  const svg=document.getElementById('bfsSvg');
+  svg.innerHTML='';
+  bfsAdj.forEach(([a,b])=>{
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',bfsPos[a].x);l.setAttribute('y1',bfsPos[a].y);
+    l.setAttribute('x2',bfsPos[b].x);l.setAttribute('y2',bfsPos[b].y);
+    l.setAttribute('stroke','#2a3356');l.setAttribute('stroke-width','2');svg.appendChild(l);
+  });
+  bfsPos.forEach((p,i)=>{
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','24');
+    let fill='#1e2d5a', stroke='#4f8aff';
+    if(i===current){fill='rgba(79,138,255,0.35)';stroke='#4f8aff';}
+    else if(visited.includes(i)){fill='rgba(0,229,160,0.2)';stroke='#00e5a0';}
+    c.setAttribute('fill',fill);c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','2.5');
+    svg.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.x);t.setAttribute('y',p.y+5);t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill','#e8edf8');t.setAttribute('font-family','JetBrains Mono');t.setAttribute('font-size','13');t.setAttribute('font-weight','700');
+    t.textContent='V'+i; svg.appendChild(t);
+  });
+}
+function resetBFS(){
+  clearTimeout(bfsAnim);
+  document.getElementById('bfsQueue').innerHTML='';
+  document.getElementById('bfsOutput').innerHTML='';
+  drawBFSGraph([],null,[]);
+}
+function startBFS(){
+  resetBFS();
+  const visited=[],queue=[0],order=[];
+  let step=0;
+  const adj=Array.from({length:6},()=>[]);
+  bfsAdj.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  visited.push(0);
+  const steps=[];
+  const q=[0];
+  const vis2=new Set([0]);
+  while(q.length){
+    const u=q.shift();
+    order.push(u);
+    adj[u].forEach(w=>{if(!vis2.has(w)){vis2.add(w);q.push(w);}});
+    steps.push({visited:[...order],queue:[...q],current:u});
+  }
+  function run(i){
+    if(i>=steps.length) return;
+    const s=steps[i];
+    drawBFSGraph(s.visited,s.current,s.queue);
+    document.getElementById('bfsQueue').innerHTML=s.queue.map(v=>`<span class="queue-item">V${v}</span>`).join('');
+    document.getElementById('bfsOutput').textContent='Visit order: '+s.visited.map(v=>'V'+v).join(' → ');
+    bfsAnim=setTimeout(()=>run(i+1),800);
+  }
+  run(0);
+}
+
+/* ===========================
+   DFS ANIMATION
+   =========================== */
+const dfsPos=[{x:100,y:110},{x:220,y:50},{x:340,y:80},{x:380,y:180},{x:260,y:190},{x:130,y:185}];
+const dfsAdj=[[0,1],[0,4],[0,5],[1,2],[1,3],[2,3],[3,4],[4,5]];
+let dfsAnim=null;
+
+function drawDFSGraph(visited,current,stack){
+  const svg=document.getElementById('dfsSvg');
+  svg.innerHTML='';
+  dfsAdj.forEach(([a,b])=>{
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',dfsPos[a].x);l.setAttribute('y1',dfsPos[a].y);
+    l.setAttribute('x2',dfsPos[b].x);l.setAttribute('y2',dfsPos[b].y);
+    l.setAttribute('stroke','#2a3356');l.setAttribute('stroke-width','2');svg.appendChild(l);
+  });
+  dfsPos.forEach((p,i)=>{
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','24');
+    let fill='#1e2d5a', stroke='#4f8aff';
+    if(i===current){fill='rgba(79,138,255,0.35)';stroke='#4f8aff';}
+    else if(visited.includes(i)){fill='rgba(0,229,160,0.2)';stroke='#00e5a0';}
+    c.setAttribute('fill',fill);c.setAttribute('stroke',stroke);c.setAttribute('stroke-width','2.5');
+    svg.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.x);t.setAttribute('y',p.y+5);t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill','#e8edf8');t.setAttribute('font-family','JetBrains Mono');t.setAttribute('font-size','13');t.setAttribute('font-weight','700');
+    t.textContent='V'+i; svg.appendChild(t);
+  });
+}
+function resetDFS(){
+  clearTimeout(dfsAnim);
+  document.getElementById('dfsStack').innerHTML='';
+  document.getElementById('dfsOutput').innerHTML='';
+  drawDFSGraph([],null,[]);
+}
+function startDFS(){
+  resetDFS();
+  const adj=Array.from({length:6},()=>[]);
+  dfsAdj.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const steps=[],vis=new Set();
+  function dfs(u,parent){
+    vis.add(u);
+    const stack=[...vis];
+    steps.push({visited:[...vis],current:u,stack:[...stack]});
+    adj[u].forEach(w=>{if(!vis.has(w)) dfs(w,u);});
+  }
+  dfs(0,-1);
+  function run(i){
+    if(i>=steps.length) return;
+    const s=steps[i];
+    drawDFSGraph([...s.visited],s.current,s.stack);
+    document.getElementById('dfsStack').innerHTML=[...s.stack].map(v=>`<span class="queue-item">V${v}</span>`).join('');
+    document.getElementById('dfsOutput').textContent='Visit order: '+[...s.visited].map(v=>'V'+v).join(' → ');
+    dfsAnim=setTimeout(()=>run(i+1),800);
+  }
+  run(0);
+}
+
+/* ===========================
+   DENSITY CALC
+   =========================== */
+function calcDensity(){
+  const V=parseInt(document.getElementById('dv').value);
+  const E=parseInt(document.getElementById('de').value);
+  const maxE=V*(V-1)/2;
+  const d=(E/maxE).toFixed(3);
+  const pct=(d*100).toFixed(1);
+  const color=d>0.5?'var(--accent3)':'var(--accent4)';
+  let cat='SPARSE';
+  if(d>=0.75) cat='VERY DENSE';
+  else if(d>=0.5) cat='DENSE';
+  else if(d>=0.25) cat='MODERATE';
+  document.getElementById('densityResult').innerHTML=`
+    <div style="margin:8px 0 4px;font-size:13px;color:var(--text2);">
+      Max edges: <b>${maxE}</b> &nbsp;|&nbsp; Actual: <b>${E}</b> &nbsp;|&nbsp; 
+      Density: <b style="color:${color}">${d}</b>
+    </div>
+    <div class="density-meter"><div class="density-fill" style="width:${Math.min(100,pct)}%"></div></div>
+    <div class="density-label">${pct}% → <span style="color:${color};font-weight:700;">${cat}</span>
+      ${d>=1?'<span style="color:var(--accent5);"> (Complete Graph K_'+V+')</span>':''}
+    </div>`;
+}
+
+/* ===========================
+   DEGREE CHART
+   =========================== */
+function updateDegreeChart(){
+  const nodes=[{x:100,y:90},{x:220,y:40},{x:340,y:70},{x:410,y:170},{x:280,y:180},{x:150,y:175}];
+  const edges=[[0,1],[0,2],[0,4],[0,5],[1,2],[1,3],[2,3],[3,4],[4,5]];
+  const degrees=new Array(6).fill(0);
+  edges.forEach(([a,b])=>{degrees[a]++;degrees[b]++;});
+  const svg=document.getElementById('degreeSvg');
+  svg.innerHTML='';
+  const maxD=Math.max(...degrees);
+  const bw=60, gap=20, ox=40, oy=160;
+  degrees.forEach((d,i)=>{
+    const h=(d/maxD)*110;
+    const x=ox+i*(bw+gap);
+    // bar
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x);r.setAttribute('y',oy-h);r.setAttribute('width',bw);r.setAttribute('height',h);
+    r.setAttribute('rx','5');r.setAttribute('fill',COLORS[i%COLORS.length]);r.setAttribute('opacity','0.8');
+    svg.appendChild(r);
+    // label V
+    const t1=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x',x+bw/2);t1.setAttribute('y',oy+15);t1.setAttribute('text-anchor','middle');
+    t1.setAttribute('fill','#8b97b8');t1.setAttribute('font-size','11');t1.setAttribute('font-family','JetBrains Mono');
+    t1.textContent='V'+i; svg.appendChild(t1);
+    // degree val
+    const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',x+bw/2);t2.setAttribute('y',oy-h-6);t2.setAttribute('text-anchor','middle');
+    t2.setAttribute('fill','#e8edf8');t2.setAttribute('font-size','12');t2.setAttribute('font-family','JetBrains Mono');t2.setAttribute('font-weight','700');
+    t2.textContent=d; svg.appendChild(t2);
+  });
+  // axis
+  const ax=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ax.setAttribute('x1',ox-5);ax.setAttribute('y1',oy);ax.setAttribute('x2',560);ax.setAttribute('y2',oy);
+  ax.setAttribute('stroke','#2a3356');ax.setAttribute('stroke-width','1');svg.appendChild(ax);
+}
+
+/* ===========================
+   FLOYD-WARSHALL VIZ
+   =========================== */
+const fwN=4;
+const INF=999;
+let fwDist=[];
+function resetFloyd(){
+  fwDist=[[0,1,INF,INF],[1,0,2,INF],[INF,2,0,1],[INF,INF,1,0]];
+  renderFW(-1,-1,-1);
+  document.getElementById('fwStatus').textContent='Original distance matrix. Press Run to execute Floyd-Warshall.';
+}
+function renderFW(k,i,j){
+  let html=`<div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">`;
+  html+=`<div>`;
+  html+=`<div style="display:grid;grid-template-columns:repeat(${fwN+1},38px);gap:3px;">`;
+  html+=`<div class="fw-cell" style="background:transparent;color:var(--text3)"></div>`;
+  for(let c=0;c<fwN;c++) html+=`<div class="fw-cell" style="background:rgba(79,138,255,0.15);color:var(--accent);font-size:10px;">V${c}</div>`;
+  for(let r=0;r<fwN;r++){
+    html+=`<div class="fw-cell" style="background:rgba(79,138,255,0.15);color:var(--accent);font-size:10px;">V${r}</div>`;
+    for(let c=0;c<fwN;c++){
+      const isUpdated=(r===i&&c===j);
+      const cls=isUpdated?'fw-cell updated':(fwDist[r][c]===INF?'fw-cell inf':'fw-cell');
+      const val=fwDist[r][c]===INF?'∞':fwDist[r][c];
+      html+=`<div class="${cls}">${val}</div>`;
+    }
+  }
+  html+=`</div></div></div>`;
+  document.getElementById('fwViz').innerHTML=html;
+}
+function runFloyd(){
+  resetFloyd();
+  const steps=[];
+  const d=fwDist.map(r=>[...r]);
+  for(let k=0;k<fwN;k++)
+    for(let i=0;i<fwN;i++)
+      for(let j=0;j<fwN;j++)
+        if(d[i][k]!==INF&&d[k][j]!==INF&&d[i][k]+d[k][j]<d[i][j]){
+          d[i][j]=d[i][k]+d[k][j];
+          steps.push({mat:d.map(r=>[...r]),k,i,j});
+        }
+  let step=0;
+  function tick(){
+    if(step>=steps.length){
+      document.getElementById('fwStatus').textContent='Floyd-Warshall complete! All shortest paths computed.';
+      return;
+    }
+    const s=steps[step];
+    fwDist=s.mat.map(r=>[...r]);
+    renderFW(s.k,s.i,s.j);
+    document.getElementById('fwStatus').textContent=
+      `Intermediate vertex k=V${s.k}: dist[V${s.i}][V${s.j}] updated to ${s.mat[s.i][s.j]}`;
+    step++;
+    setTimeout(tick,500);
+  }
+  tick();
+}
+
+/* ===========================
+   GRAPH COLORING VIZ
+   =========================== */
+const colorPos=[{x:100,y:110},{x:220,y:45},{x:340,y:75},{x:390,y:175},{x:260,y:190},{x:130,y:185}];
+const colorEdgesArr=[[0,1],[0,4],[0,5],[1,2],[1,3],[2,3],[3,4],[4,5]];
+function drawColorGraph(nodeColors){
+  const svg=document.getElementById('colorSvg');
+  svg.innerHTML='';
+  const palettes=['#4f8aff','#00e5a0','#ffd166','#ff6b6b','#a78bfa','#fb7185'];
+  colorEdgesArr.forEach(([a,b])=>{
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',colorPos[a].x);l.setAttribute('y1',colorPos[a].y);
+    l.setAttribute('x2',colorPos[b].x);l.setAttribute('y2',colorPos[b].y);
+    l.setAttribute('stroke','#2a3356');l.setAttribute('stroke-width','2');svg.appendChild(l);
+  });
+  colorPos.forEach((p,i)=>{
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r','24');
+    const col=nodeColors[i]>=0?palettes[nodeColors[i]]:'#1e2d5a';
+    c.setAttribute('fill',col);c.setAttribute('fill-opacity','0.8');
+    c.setAttribute('stroke',col||'#4f8aff');c.setAttribute('stroke-width','2.5');
+    svg.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.x);t.setAttribute('y',p.y+5);t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill','#fff');t.setAttribute('font-family','JetBrains Mono');t.setAttribute('font-size','12');t.setAttribute('font-weight','700');
+    t.textContent='V'+i; svg.appendChild(t);
+  });
+}
+function runColoring(){
+  const V=6;
+  const adj=Array.from({length:V},()=>[]);
+  colorEdgesArr.forEach(([a,b])=>{adj[a].push(b);adj[b].push(a);});
+  const color=new Array(V).fill(-1);
+  color[0]=0;
+  for(let i=1;i<V;i++){
+    const used=new Set(adj[i].filter(w=>color[w]>=0).map(w=>color[w]));
+    let c=0; while(used.has(c)) c++;
+    color[i]=c;
+  }
+  drawColorGraph(color);
+  const maxC=Math.max(...color);
+  const palNames=['Blue','Green','Yellow','Red','Purple','Pink'];
+  const res=color.map((c,i)=>`V${i}:${palNames[c]}`).join(', ');
+  document.getElementById('colorResult').innerHTML=
+    `Chromatic number = <b style="color:var(--accent)">${maxC+1}</b> &nbsp;|&nbsp; ${res}`;
+}
+
+/* ===========================
+   COPY CODE
+   =========================== */
+function copyCode(btn){
+  const pre=btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy',1500);
+  });
+}
+
+/* ===========================
+   SIDEBAR ACTIVE STATE
+   =========================== */
+const navItems=document.querySelectorAll('.nav-item');
+const sections=document.querySelectorAll('section');
+window.addEventListener('scroll',()=>{
+  let current='';
+  sections.forEach(s=>{
+    if(window.scrollY>=s.offsetTop-80) current=s.id;
+  });
+  navItems.forEach(n=>{
+    n.classList.toggle('active',n.getAttribute('href')==='#'+current);
+  });
+});
+
+/* ===========================
+   INIT ALL
+   =========================== */
+window.onload=()=>{
+  drawIntroGraph(); updateIntroStats();
+  buildMatrix();
+  drawEdgeGraph();
+  drawBFSGraph([],null,[]);
+  drawDFSGraph([],null,[]);
+  calcDensity();
+  updateDegreeChart();
+  resetFloyd();
+  drawColorGraph(new Array(6).fill(-1));
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circular Queue — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060d1a;--surface:#0b1628;--surface2:#10203a;--surface3:#162a4a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --accent:#22d3ee;--adim:rgba(34,211,238,0.12);
+  --amber:#f59e0b;--bdim:rgba(245,158,11,0.12);
+  --green:#10b981;--gdim:rgba(16,185,129,0.12);
+  --red:#ef4444;--rdim:rgba(239,68,68,0.12);
+  --purple:#a78bfa;--pdim:rgba(167,139,250,0.12);
+  --text:#e2e8f0;--tdim:#94a3b8;--tmute:#475569;
+  --sw:272px;--r:12px;--rs:8px;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:15px;line-height:1.65}
+a{text-decoration:none;color:inherit}
+code,pre{font-family:var(--mono)}
+ul{list-style:none}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+
+/* SIDEBAR */
+.sidebar{width:var(--sw);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:0;left:0;overflow-y:auto;z-index:100;display:flex;flex-direction:column;transition:transform .3s}
+.sb-logo{padding:22px 18px 18px;border-bottom:1px solid var(--border)}
+.sb-logo .ico{font-size:26px;display:block;margin-bottom:8px}
+.sb-logo h1{font-size:14px;font-weight:800;color:var(--accent);letter-spacing:-.3px}
+.sb-logo p{font-size:10px;color:var(--tmute);margin-top:2px;text-transform:uppercase;letter-spacing:.8px}
+.nav-sect{padding:14px 18px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--tmute)}
+.nl{display:flex;align-items:center;gap:8px;padding:7px 18px;font-size:12.5px;color:var(--tdim);cursor:pointer;transition:all .15s;border-left:2px solid transparent;user-select:none}
+.nl:hover{color:var(--text);background:var(--surface2)}
+.nl.active{color:var(--accent);border-left-color:var(--accent);background:var(--adim)}
+.nl .num{font-size:9px;font-weight:700;font-family:var(--mono);background:var(--surface3);width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nl.active .num{background:var(--adim);color:var(--accent)}
+
+/* MAIN */
+.main{margin-left:var(--sw);flex:1;min-height:100vh}
+
+/* HERO */
+.hero{padding:56px 44px 44px;background:linear-gradient(180deg,rgba(34,211,238,.04) 0%,transparent 100%);border-bottom:1px solid var(--border)}
+.hero .badge{display:inline-flex;align-items:center;gap:6px;background:var(--adim);color:var(--accent);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:4px 12px;border-radius:20px;margin-bottom:18px;border:1px solid rgba(34,211,238,.2)}
+.hero h1{font-size:46px;font-weight:900;letter-spacing:-2px;line-height:1.1;margin-bottom:14px}
+.hero h1 span{color:var(--accent)}
+.hero p{font-size:16px;color:var(--tdim);max-width:560px;line-height:1.7}
+.hero-stats{display:flex;gap:28px;margin-top:28px;flex-wrap:wrap}
+.hs .val{font-size:26px;font-weight:900;color:var(--accent);font-family:var(--mono)}
+.hs .lbl{font-size:10px;color:var(--tmute);text-transform:uppercase;letter-spacing:.6px}
+
+/* DEMO */
+.sec-label{padding:36px 44px 0}
+.sec-label h2{font-size:21px;font-weight:700;letter-spacing:-.5px}
+.sec-label p{color:var(--tdim);font-size:13px;margin-top:5px}
+.demo-section{padding:28px 44px 44px;border-bottom:1px solid var(--border)}
+.demo-grid{display:grid;grid-template-columns:1fr 330px;gap:20px;margin-top:20px}
+.cw{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.cw canvas{display:block;width:100%;height:auto}
+.sbar{display:flex;gap:14px;padding:8px 18px;background:var(--surface2);border-top:1px solid var(--border);font-size:11px;font-family:var(--mono);flex-wrap:wrap}
+.si{display:flex;align-items:center;gap:5px;color:var(--tdim)}
+.si .dot{width:5px;height:5px;border-radius:50%}
+.cleg{display:flex;gap:14px;padding:9px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,.2);flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--tdim)}
+.ld{width:9px;height:9px;border-radius:2px}
+.dp{display:flex;flex-direction:column;gap:14px}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.cc h4{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute);margin-bottom:10px}
+.cr{display:flex;gap:7px;margin-bottom:7px}
+.cr:last-child{margin-bottom:0}
+.ci{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 11px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s}
+.ci:focus{border-color:var(--accent)}
+.cb{padding:8px 13px;border-radius:var(--rs);border:1px solid;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font);white-space:nowrap}
+.cb:active{transform:scale(.97)}
+.ba{background:var(--adim);color:var(--accent);border-color:rgba(34,211,238,.3)}
+.bb{background:var(--bdim);color:var(--amber);border-color:rgba(245,158,11,.3)}
+.bg2{background:var(--gdim);color:var(--green);border-color:rgba(16,185,129,.3)}
+.br{background:var(--rdim);color:var(--red);border-color:rgba(239,68,68,.3)}
+.bp{background:var(--pdim);color:var(--purple);border-color:rgba(167,139,250,.3)}
+.bx{background:var(--surface2);color:var(--tdim);border-color:var(--border)}
+.ba:hover{background:rgba(34,211,238,.22)}.bb:hover{background:rgba(245,158,11,.22)}
+.bg2:hover{background:rgba(16,185,129,.22)}.br:hover{background:rgba(239,68,68,.22)}
+.bp:hover{background:rgba(167,139,250,.22)}.bx:hover{background:var(--surface3)}
+.logc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;flex:1}
+.lh{padding:9px 13px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute);display:flex;justify-content:space-between;align-items:center}
+.lclr{cursor:pointer;font-size:10px;color:var(--tmute);transition:color .2s}
+.lclr:hover{color:var(--red)}
+.lb{padding:8px 12px;height:185px;overflow-y:auto;font-family:var(--mono);font-size:11.5px}
+.le{display:flex;align-items:baseline;gap:7px;padding:3px 0;border-bottom:1px solid var(--border);animation:fs .2s ease}
+.le:last-child{border-bottom:none}
+@keyframes fs{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+.lm{color:var(--tdim)}
+.lm.s{color:var(--green)}.lm.e{color:var(--red)}.lm.i{color:var(--accent)}.lm.w{color:var(--amber)}
+
+/* TOPICS */
+.tc{padding:44px}
+.ts{margin-bottom:60px;scroll-margin-top:16px}
+.th2{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.tn{background:var(--surface2);border:1px solid var(--border);width:38px;height:38px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tmute);flex-shrink:0}
+.th2 h2{font-size:23px;font-weight:800;letter-spacing:-.5px}
+.ttag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:3px 10px;border-radius:20px;border:1px solid}
+.ta{color:var(--accent);border-color:rgba(34,211,238,.3);background:var(--adim)}
+.tb{color:var(--amber);border-color:rgba(245,158,11,.3);background:var(--bdim)}
+.tg{color:var(--green);border-color:rgba(16,185,129,.3);background:var(--gdim)}
+.tr{color:var(--red);border-color:rgba(239,68,68,.3);background:var(--rdim)}
+.tp{color:var(--purple);border-color:rgba(167,139,250,.3);background:var(--pdim)}
+
+/* Analogy */
+.ab{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:var(--r);padding:14px 18px;margin-bottom:18px}
+.ae{font-size:26px;flex-shrink:0}
+.ab h4{font-size:12px;font-weight:700;color:var(--amber);margin-bottom:4px}
+.ab p{font-size:13px;color:var(--tdim);line-height:1.6}
+
+/* Topic grid */
+.tg2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:16px}
+.tp2{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.pt{padding:11px 18px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute)}
+.tb3{padding:18px}
+.tb3 p{font-size:13.5px;color:var(--tdim);line-height:1.72;margin-bottom:11px}
+.tb3 p:last-child{margin-bottom:0}
+.tb3 strong{color:var(--text);font-weight:600}
+.tb3 code{background:var(--surface2);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--accent)}
+.fb{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:11px 16px;margin:14px 18px;font-family:var(--mono);font-size:12px;color:var(--accent);display:flex;align-items:center;gap:10px;overflow-x:auto}
+.fl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute);flex-shrink:0}
+.cp{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ch{padding:9px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+.cl{font-size:10px;color:var(--tmute);font-family:var(--mono)}
+.cd{display:flex;gap:4px}
+.cd span{width:8px;height:8px;border-radius:50%}
+.cb2{padding:18px;overflow-x:auto}
+.cb2 pre{font-size:11.5px;line-height:1.65;color:#8da8bf;white-space:pre}
+.c-kw{color:#7dd3fc}.c-fn{color:#86efac}.c-st{color:#fca5a5}.c-nm{color:#fcd34d}.c-pp{color:#e879f9}.c-cm{color:#4a6578;font-style:italic}
+
+/* Mini diagram */
+.md{padding:14px 18px;border-top:1px solid var(--border)}
+.mdt{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute);margin-bottom:14px}
+.mq{display:flex;gap:3px;align-items:flex-end;flex-wrap:wrap;margin-bottom:28px}
+.ms{position:relative;width:36px;height:30px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10.5px;color:var(--tmute);flex-shrink:0}
+.ms.mf{background:rgba(34,211,238,.12);border-color:rgba(34,211,238,.35);color:var(--accent)}
+.ms.mfr{border-color:var(--green);box-shadow:0 0 6px rgba(16,185,129,.25)}
+.ms.mrr{border-color:var(--amber);box-shadow:0 0 6px rgba(245,158,11,.25)}
+.ms.mbr{border-color:var(--purple);box-shadow:0 0 6px rgba(167,139,250,.25)}
+.ms.mhl{border-color:var(--red);box-shadow:0 0 6px rgba(239,68,68,.35);background:rgba(239,68,68,.1);color:var(--red)}
+.mix{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:8.5px;color:var(--tmute);white-space:nowrap;font-family:var(--mono)}
+.mptr{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;white-space:nowrap;font-family:var(--mono)}
+.mptr.mf{color:var(--green)}.mptr.mr{color:var(--amber)}.mptr.mfr{color:var(--purple)}
+.mnote{font-size:11.5px;font-family:var(--mono);color:var(--tdim);margin-top:4px}
+.marr{font-size:11px;color:var(--tmute);align-self:center;flex-shrink:0}
+
+/* Key points */
+.kp{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px}
+.kp h4{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute);margin-bottom:11px}
+.kp ul{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.kp li{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:var(--tdim);line-height:1.5}
+.kp li::before{content:'◆';color:var(--accent);font-size:7px;flex-shrink:0;margin-top:5px}
+.tdiv{border:none;border-top:1px solid var(--border);margin-bottom:60px}
+
+/* REFERENCE */
+.refs{padding:0 44px 60px}
+.rt{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:18px}
+.rt th{padding:11px 14px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--tmute);text-align:left;font-weight:700}
+.rt td{padding:10px 14px;border-top:1px solid var(--border);vertical-align:top}
+.rt tr:hover td{background:var(--surface)}
+.rt .on{font-weight:600;color:var(--text)}
+.rt .fc{font-family:var(--mono);font-size:10.5px;color:var(--accent)}
+.rt .tc2{font-family:var(--mono);font-size:10.5px;color:var(--amber)}
+
+/* Mobile */
+.mbtn{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:var(--rs);font-size:15px;cursor:pointer;align-items:center;justify-content:center}
+.ovl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99}
+@media(max-width:1100px){.tg2{grid-template-columns:1fr}}
+@media(max-width:900px){
+  .demo-grid{grid-template-columns:1fr}
+  .hero{padding:44px 22px 32px}.hero h1{font-size:32px}
+  .demo-section,.tc,.refs,.sec-label{padding-left:22px;padding-right:22px}
+  .kp ul{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+  .ovl.open{display:block}.mbtn{display:flex}.main{margin-left:0}
+  .hero-stats{gap:18px}
+}
+</style>
+</head>
+<body>
+
+<button class="mbtn" onclick="toggleSB()">☰</button>
+<div class="ovl" id="ovl" onclick="toggleSB()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <span class="ico">🔄</span>
+    <h1>Circular Queue</h1>
+    <p>Complete Learning Guide</p>
+  </div>
+  <nav>
+    <div class="nav-sect">Overview</div>
+    <a class="nl" onclick="goTo('demo')"><span class="num">★</span>Interactive Demo</a>
+    <div class="nav-sect">15 Operations</div>
+    <a class="nl" onclick="goTo('t1')"><span class="num">01</span>Initialize</a>
+    <a class="nl" onclick="goTo('t2')"><span class="num">02</span>Enqueue (Insert)</a>
+    <a class="nl" onclick="goTo('t3')"><span class="num">03</span>Dequeue (Delete)</a>
+    <a class="nl" onclick="goTo('t4')"><span class="num">04</span>Peek / Front</a>
+    <a class="nl" onclick="goTo('t5')"><span class="num">05</span>Rear Access</a>
+    <a class="nl" onclick="goTo('t6')"><span class="num">06</span>isEmpty()</a>
+    <a class="nl" onclick="goTo('t7')"><span class="num">07</span>isFull()</a>
+    <a class="nl" onclick="goTo('t8')"><span class="num">08</span>Display / Traverse</a>
+    <a class="nl" onclick="goTo('t9')"><span class="num">09</span>Size Count</a>
+    <a class="nl" onclick="goTo('t10')"><span class="num">10</span>Clear Queue</a>
+    <a class="nl" onclick="goTo('t11')"><span class="num">11</span>Search Element</a>
+    <a class="nl" onclick="goTo('t12')"><span class="num">12</span>Update Element</a>
+    <a class="nl" onclick="goTo('t13')"><span class="num">13</span>Circular Traversal</a>
+    <a class="nl" onclick="goTo('t14')"><span class="num">14</span>Overflow Handling</a>
+    <a class="nl" onclick="goTo('t15')"><span class="num">15</span>Underflow Handling</a>
+    <div class="nav-sect">Reference</div>
+    <a class="nl" onclick="goTo('ref')"><span class="num">⊞</span>Quick Reference</a>
+  </nav>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="badge">🎓 Complete Learning Dashboard</div>
+  <h1>Circular Queue<br><span>Data Structure</span></h1>
+  <p>Master all 15 operations from scratch — interactive visualization, beginner-friendly C code, real-life analogies, and detailed theory for every topic.</p>
+  <div class="hero-stats">
+    <div class="hs"><div class="val">15</div><div class="lbl">Topics Covered</div></div>
+    <div class="hs"><div class="val">C</div><div class="lbl">Language Used</div></div>
+    <div class="hs"><div class="val">8</div><div class="lbl">Queue Slots</div></div>
+    <div class="hs"><div class="val">O(1)</div><div class="lbl">Core Ops Time</div></div>
+  </div>
+</section>
+
+<!-- DEMO SECTION -->
+<div class="sec-label" id="demo">
+  <h2>🎮 Interactive Queue Demo</h2>
+  <p>Try all operations live — watch the circular queue animate in real time on the canvas.</p>
+</div>
+<section class="demo-section">
+  <div class="demo-grid">
+    <div>
+      <div class="cw">
+        <canvas id="qCanvas" width="580" height="350"></canvas>
+        <div class="sbar">
+          <div class="si"><div class="dot" style="background:var(--green)"></div><span id="sf">front: -1</span></div>
+          <div class="si"><div class="dot" style="background:var(--amber)"></div><span id="sr">rear: -1</span></div>
+          <div class="si"><div class="dot" style="background:var(--accent)"></div><span id="ss">size: 0/7</span></div>
+          <div class="si"><div class="dot" style="background:var(--purple)"></div><span id="sq" style="color:var(--tmute)">EMPTY</span></div>
+        </div>
+        <div class="cleg">
+          <div class="li"><div class="ld" style="background:var(--green)"></div>Front (F)</div>
+          <div class="li"><div class="ld" style="background:var(--amber)"></div>Rear (R)</div>
+          <div class="li"><div class="ld" style="background:rgba(34,211,238,.35)"></div>Filled slot</div>
+          <div class="li"><div class="ld" style="background:var(--surface3)"></div>Empty slot</div>
+          <div class="li"><div class="ld" style="background:rgba(167,139,250,.4)"></div>Highlighted</div>
+        </div>
+      </div>
+    </div>
+    <div class="dp">
+      <div class="cc">
+        <h4>⬆ Enqueue</h4>
+        <div class="cr">
+          <input class="ci" type="number" id="eiv" placeholder="Enter value (0–999)..." min="0" max="999">
+          <button class="cb ba" onclick="dEnq()">Enqueue</button>
+        </div>
+      </div>
+      <div class="cc">
+        <h4>🔍 Search &amp; Update</h4>
+        <div class="cr">
+          <input class="ci" type="number" id="siv" placeholder="Search value...">
+          <button class="cb bp" onclick="dSch()">Search</button>
+        </div>
+        <div class="cr">
+          <input class="ci" type="number" id="upidx" placeholder="Index to update...">
+          <input class="ci" type="number" id="upval" placeholder="New value...">
+          <button class="cb bb" onclick="dUpd()">Update</button>
+        </div>
+      </div>
+      <div class="cc">
+        <h4>⚙ Operations</h4>
+        <div class="cr">
+          <button class="cb bb" style="flex:1" onclick="dDeq()">⬇ Dequeue</button>
+          <button class="cb bg2" style="flex:1" onclick="dPeek()">👁 Peek</button>
+        </div>
+        <div class="cr">
+          <button class="cb bp" style="flex:1" onclick="dRear()">📍 Rear</button>
+          <button class="cb bx" style="flex:1" onclick="dSize()">📊 Size</button>
+        </div>
+        <div class="cr">
+          <button class="cb br" style="flex:1" onclick="dClr()">🗑 Clear Queue</button>
+        </div>
+      </div>
+      <div class="logc">
+        <div class="lh">
+          <span>Operation Log</span>
+          <span class="lclr" onclick="clrLog()">Clear log</span>
+        </div>
+        <div class="lb" id="lb">
+          <div class="le"><span>💡</span><span class="lm i">Queue ready — try enqueuing some values!</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOPICS CONTAINER (built by JS) -->
+<div class="tc" id="topicsWrap"></div>
+
+<!-- QUICK REFERENCE -->
+<section class="refs" id="ref">
+  <h2 style="font-size:21px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px">📋 Quick Reference</h2>
+  <p style="color:var(--tdim);font-size:13px;margin-bottom:14px">All 15 operations — conditions, time complexity, and key formulas at a glance.</p>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:11px 18px;margin-bottom:16px;font-family:var(--mono);font-size:12.5px;display:flex;gap:28px;flex-wrap:wrap">
+    <span><span style="color:var(--green)">Empty: </span><span style="color:var(--accent)">front == -1</span></span>
+    <span><span style="color:var(--red)">Full: </span><span style="color:var(--accent)">(rear + 1) % MAX == front</span></span>
+    <span><span style="color:var(--amber)">Wrap: </span><span style="color:var(--accent)">(index + 1) % MAX</span></span>
+    <span><span style="color:var(--purple)">Capacity: </span><span style="color:var(--accent)">MAX - 1 = 7 usable slots</span></span>
+  </div>
+  <table class="rt" id="reft"></table>
+</section>
+</div>
+
+<script>
+/* ======================================================
+   QUEUE STATE
+====================================================== */
+const MAX = 8;
+const qa = new Array(MAX).fill(null);
+let qf = -1, qr = -1, hlIdx = -1, hlTimer = null;
+
+function qFull(){ return qf !== -1 && (qr + 1) % MAX === qf; }
+function qEmpty(){ return qf === -1; }
+function qSz(){
+  if(qf === -1) return 0;
+  return qr >= qf ? qr - qf + 1 : MAX - qf + qr + 1;
+}
+function inRange(i){
+  if(qf === -1) return false;
+  if(qf <= qr) return i >= qf && i <= qr;
+  return i >= qf || i <= qr;
+}
+
+/* ======================================================
+   CANVAS VISUALIZER
+====================================================== */
+const cv = document.getElementById('qCanvas');
+const ct = cv.getContext('2d');
+const DR = window.devicePixelRatio || 1;
+cv.width = 580 * DR; cv.height = 350 * DR;
+cv.style.width = '100%'; cv.style.height = '350px';
+ct.scale(DR, DR);
+const CX = 290, CY = 170, RR = 125;
+const SW = 48, SH = 30;
+
+function drawRR(x, y, w, h, r) {
+  ct.beginPath();
+  ct.moveTo(x + r, y); ct.lineTo(x + w - r, y);
+  ct.quadraticCurveTo(x + w, y, x + w, y + r);
+  ct.lineTo(x + w, y + h - r);
+  ct.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ct.lineTo(x + r, y + h);
+  ct.quadraticCurveTo(x, y + h, x, y + h - r);
+  ct.lineTo(x, y + r);
+  ct.quadraticCurveTo(x, y, x + r, y);
+  ct.closePath();
+}
+
+function drawQ() {
+  ct.clearRect(0, 0, 580, 350);
+  // Dashed guide ring
+  ct.beginPath(); ct.arc(CX, CY, RR, 0, Math.PI * 2);
+  ct.strokeStyle = 'rgba(34,211,238,.07)'; ct.lineWidth = 1;
+  ct.setLineDash([3, 6]); ct.stroke(); ct.setLineDash([]);
+  // Center label
+  ct.textAlign = 'center'; ct.textBaseline = 'middle';
+  ct.fillStyle = 'rgba(34,211,238,.2)';
+  ct.font = `bold 12px 'JetBrains Mono',monospace`;
+  ct.fillText('MAX=' + MAX, CX, CY - 10);
+  ct.fillStyle = 'rgba(100,116,139,.45)';
+  ct.font = `11px 'JetBrains Mono',monospace`;
+  ct.fillText('Circular', CX, CY + 6);
+  ct.fillText('Queue', CX, CY + 21);
+
+  for (let i = 0; i < MAX; i++) {
+    const ang = -Math.PI / 2 + (Math.PI * 2 / MAX) * i;
+    const sx = CX + RR * Math.cos(ang);
+    const sy = CY + RR * Math.sin(ang);
+    const filled = inRange(i);
+    const isF = i === qf, isR = i === qr, isH = i === hlIdx;
+
+    // Box fill
+    if (isH) ct.fillStyle = 'rgba(167,139,250,.32)';
+    else if (filled) ct.fillStyle = 'rgba(34,211,238,.13)';
+    else ct.fillStyle = '#0c1a2e';
+    drawRR(sx - SW / 2, sy - SH / 2, SW, SH, 5); ct.fill();
+
+    // Box border
+    if (isF && isR) { ct.strokeStyle = '#a78bfa'; ct.lineWidth = 2.5; }
+    else if (isF) { ct.strokeStyle = '#10b981'; ct.lineWidth = 2.5; }
+    else if (isR) { ct.strokeStyle = '#f59e0b'; ct.lineWidth = 2.5; }
+    else if (isH) { ct.strokeStyle = '#a78bfa'; ct.lineWidth = 2; }
+    else if (filled) { ct.strokeStyle = 'rgba(34,211,238,.4)'; ct.lineWidth = 1; }
+    else { ct.strokeStyle = 'rgba(22,42,74,.9)'; ct.lineWidth = 0.8; }
+    drawRR(sx - SW / 2, sy - SH / 2, SW, SH, 5); ct.stroke();
+
+    // Outer index label
+    const od = RR + 27;
+    ct.fillStyle = 'rgba(71,85,105,.7)';
+    ct.font = `9px 'JetBrains Mono',monospace`;
+    ct.textAlign = 'center'; ct.textBaseline = 'middle';
+    ct.fillText('[' + i + ']', CX + od * Math.cos(ang), CY + od * Math.sin(ang));
+
+    // Value
+    ct.textAlign = 'center'; ct.textBaseline = 'middle';
+    if (filled && qa[i] !== null) {
+      ct.fillStyle = isH ? '#d8b4fe' : '#e2e8f0';
+      ct.font = `bold 12px 'JetBrains Mono',monospace`;
+      ct.fillText(String(qa[i]), sx, sy);
+    } else {
+      ct.fillStyle = 'rgba(22,42,74,.55)';
+      ct.font = `11px 'JetBrains Mono',monospace`;
+      ct.fillText('—', sx, sy);
+    }
+
+    // Inner F/R pointer label
+    const id3 = RR - 44;
+    const px = CX + id3 * Math.cos(ang), py = CY + id3 * Math.sin(ang);
+    ct.font = `bold 9px 'JetBrains Mono',monospace`;
+    if (isF && isR) { ct.fillStyle = '#a78bfa'; ct.fillText('F+R', px, py); }
+    else if (isF) { ct.fillStyle = '#10b981'; ct.fillText('F', px, py); }
+    else if (isR) { ct.fillStyle = '#f59e0b'; ct.fillText('R', px, py); }
+  }
+  updateSB();
+}
+
+function updateSB() {
+  document.getElementById('sf').textContent = 'front: ' + qf;
+  document.getElementById('sr').textContent = 'rear: ' + qr;
+  document.getElementById('ss').textContent = 'size: ' + qSz() + '/' + (MAX - 1);
+  const el = document.getElementById('sq');
+  const st = qEmpty() ? 'EMPTY' : qFull() ? 'FULL' : 'ACTIVE';
+  el.textContent = st;
+  el.style.color = st === 'EMPTY' ? 'var(--tmute)' : st === 'FULL' ? 'var(--red)' : 'var(--green)';
+}
+
+function flash(i) {
+  hlIdx = i; drawQ();
+  if (hlTimer) clearTimeout(hlTimer);
+  hlTimer = setTimeout(() => { hlIdx = -1; drawQ(); }, 900);
+}
+drawQ();
+
+/* ======================================================
+   OPERATION LOG
+====================================================== */
+function log(msg, t = 'i') {
+  const lb = document.getElementById('lb');
+  const ic = { i: '●', s: '✓', e: '✗', w: '⚠' };
+  const d = document.createElement('div');
+  d.className = 'le';
+  d.innerHTML = `<span>${ic[t] || '●'}</span><span class="lm ${t}">${msg}</span>`;
+  lb.insertBefore(d, lb.firstChild);
+  while (lb.children.length > 16) lb.removeChild(lb.lastChild);
+}
+function clrLog() {
+  document.getElementById('lb').innerHTML = '<div class="le"><span>💡</span><span class="lm i">Log cleared.</span></div>';
+}
+
+/* ======================================================
+   DEMO OPERATIONS
+====================================================== */
+function dEnq() {
+  const v = parseInt(document.getElementById('eiv').value);
+  if (isNaN(v)) { log('Enter a number to enqueue!', 'w'); return; }
+  if (qFull()) { log(`OVERFLOW: Queue full (cap=${MAX-1}). Cannot enqueue ${v}.`, 'e'); return; }
+  if (qf === -1) { qf = 0; qr = 0; } else qr = (qr + 1) % MAX;
+  qa[qr] = v; flash(qr);
+  log(`Enqueued ${v} → stored at index [${qr}]`, 's');
+  document.getElementById('eiv').value = '';
+  drawQ();
+}
+function dDeq() {
+  if (qEmpty()) { log('UNDERFLOW: Queue is EMPTY. Nothing to dequeue!', 'e'); return; }
+  const v = qa[qf], p = qf;
+  qa[qf] = null;
+  if (qf === qr) { qf = -1; qr = -1; } else qf = (qf + 1) % MAX;
+  flash(p); log(`Dequeued value ${v} from index [${p}]`, 'w'); drawQ();
+}
+function dPeek() {
+  if (qEmpty()) { log('UNDERFLOW: Queue is EMPTY — nothing to peek!', 'e'); return; }
+  log(`Peek → Front element = ${qa[qf]} at index [${qf}]`, 'i'); flash(qf); drawQ();
+}
+function dRear() {
+  if (qEmpty()) { log('Queue EMPTY — no rear element!', 'e'); return; }
+  log(`Rear element = ${qa[qr]} at index [${qr}]`, 'i'); flash(qr); drawQ();
+}
+function dSize() { log(`Current size = ${qSz()} element(s) | Free slots: ${(MAX-1) - qSz()}`, 'i'); }
+function dClr() {
+  for (let i = 0; i < MAX; i++) qa[i] = null;
+  qf = -1; qr = -1;
+  log('Queue cleared successfully. front = rear = -1', 'w'); drawQ();
+}
+function dSch() {
+  const v = parseInt(document.getElementById('siv').value);
+  if (isNaN(v)) { log('Enter a number to search!', 'w'); return; }
+  if (qEmpty()) { log('Queue EMPTY — nothing to search!', 'e'); return; }
+  let i = qf, c = 0, tot = qSz(), found = false;
+  while (c < tot) {
+    if (qa[i] === v) { log(`Found ${v} at index [${i}]`, 's'); flash(i); found = true; break; }
+    i = (i + 1) % MAX; c++;
+  }
+  if (!found) log(`Value ${v} not found in queue.`, 'e');
+  document.getElementById('siv').value = '';
+}
+function dUpd() {
+  const idx = parseInt(document.getElementById('upidx').value);
+  const val = parseInt(document.getElementById('upval').value);
+  if (isNaN(idx) || isNaN(val)) { log('Enter both index and new value!', 'w'); return; }
+  if (qEmpty()) { log('Queue EMPTY — nothing to update!', 'e'); return; }
+  if (idx < 0 || idx >= MAX) { log(`Index [${idx}] is out of range (0–${MAX-1})!`, 'e'); return; }
+  if (!inRange(idx)) { log(`Index [${idx}] has no element in queue!`, 'e'); return; }
+  const old = qa[idx]; qa[idx] = val;
+  log(`Updated index [${idx}]: ${old} → ${val}`, 's'); flash(idx); drawQ();
+  document.getElementById('upidx').value = '';
+  document.getElementById('upval').value = '';
+}
+
+/* ======================================================
+   NAVIGATION
+====================================================== */
+function goTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (window.innerWidth < 768) toggleSB();
+}
+function toggleSB() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('ovl').classList.toggle('open');
+}
+document.getElementById('eiv').addEventListener('keydown', e => { if (e.key === 'Enter') dEnq(); });
+document.getElementById('siv').addEventListener('keydown', e => { if (e.key === 'Enter') dSch(); });
+
+/* ======================================================
+   SYNTAX HIGHLIGHTER
+====================================================== */
+function hlCode(raw) {
+  let s = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s = s.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="c-cm">$1</span>');
+  s = s.replace(/(\/\/[^\n]*)/g, '<span class="c-cm">$1</span>');
+  s = s.replace(/((?:^|\n)(#\w+))/g, m => `<span class="c-pp">${m}</span>`);
+  s = s.replace(/("(?:[^"\\]|\\.)*")/g, '<span class="c-st">$1</span>');
+  const kw = 'int|void|char|float|double|return|if|else|for|while|do|break|continue|struct|typedef|sizeof|long|unsigned|short';
+  s = s.replace(new RegExp(`\\b(${kw})\\b`, 'g'), '<span class="c-kw">$1</span>');
+  s = s.replace(/\b(printf|scanf|malloc|free|exit)\b/g, '<span class="c-fn">$1</span>');
+  return s;
+}
+
+/* ======================================================
+   MINI DIAGRAM BUILDER
+====================================================== */
+function buildDiag(slots, note) {
+  let h = `<div class="md"><div class="mdt">📐 Concept Diagram</div><div class="mq">`;
+  slots.forEach((s, i) => {
+    if (s.arr) { h += `<div class="marr">→</div>`; return; }
+    let c = 'ms';
+    if (!s.empty) c += ' mf';
+    if (s.both) c += ' mbr';
+    else if (s.isF) c += ' mfr';
+    else if (s.isR) c += ' mrr';
+    if (s.hl) c += ' mhl';
+    h += `<div class="${c}">`;
+    h += `<span class="mix">[${s.idx !== undefined ? s.idx : i}]</span>`;
+    if (!s.empty && s.v !== undefined) h += s.v;
+    if (s.both) h += `<span class="mptr mfr">F+R</span>`;
+    else if (s.isF) h += `<span class="mptr mf">F</span>`;
+    else if (s.isR) h += `<span class="mptr mr">R</span>`;
+    h += `</div>`;
+  });
+  h += `</div>`;
+  if (note) h += `<div class="mnote">${note}</div>`;
+  h += `</div>`;
+  return h;
+}
+
+/* ======================================================
+   TOPIC DEFINITIONS (all 15)
+====================================================== */
+const TOPICS = [
+
+/* ---- 01 Initialize ---- */
+{
+  id: 1, icon: '🔧', title: 'Initialize', tag: { l: 'Setup', c: 'ta' },
+  analogy: { e: '🎡', t: 'Setting Up an Empty Merry-Go-Round',
+    d: 'Imagine installing a new merry-go-round at a park. Before any children climb on, every seat is empty and there is no "first" or "last" rider to point at. Initializing a circular queue is exactly this — you prepare the array structure and set both pointer variables to <strong>−1</strong>, the sentinel value that universally means "nothing is here yet."' },
+  theory: `<p>A <strong>Circular Queue</strong> is a fixed-size array where the last slot wraps around and connects logically to the first slot, forming a ring. Before performing any operation, the queue must be properly initialized.</p>
+<p>Initialization sets both <code>front</code> and <code>rear</code> to <strong>−1</strong>. The value −1 is a <em>sentinel value</em> — no valid array index is ever negative, so −1 uniquely signals "this queue is completely empty." Without this, <code>front</code> and <code>rear</code> hold random garbage values from memory, which would make every operation behave incorrectly.</p>
+<p>Think of <code>front</code> as pointing to the first item you would serve (remove), and <code>rear</code> as pointing to the last item that was added. With both at −1, neither exists yet.</p>`,
+  formula: 'front = -1   rear = -1',
+  diag: buildDiag(
+    Array.from({ length: 8 }, (_, i) => ({ empty: true, idx: i })),
+    '→ All 8 slots empty.  front = -1   rear = -1   (Queue is unstarted)'
+  ),
+  code: `#include <stdio.h>
+
+#define MAX 8        /* Total slots in the array   */
+
+int queue[MAX];      /* The circular queue array   */
+int front = -1;     /* Points to front element    */
+int rear  = -1;     /* Points to rear element     */
+
+/* Initialize — call this before any other operation */
+void initialize() {
+    front = -1;   /* -1 means: no front yet */
+    rear  = -1;   /* -1 means: no rear yet  */
+    printf("Queue initialized successfully.\\n");
+    printf("front = %d, rear = %d\\n", front, rear);
+}
+
+int main() {
+    initialize();
+    /* Output:
+       Queue initialized successfully.
+       front = -1, rear = -1          */
+    return 0;
+}`,
+  kp: ['<strong>front = rear = −1</strong> is the empty sentinel.', 'Never store −1 as real data — it breaks the sentinel.', 'Always initialize before calling any queue function.', '<code>MAX = 8</code> gives 7 usable data slots (capacity = MAX−1).']
+},
+
+/* ---- 02 Enqueue ---- */
+{
+  id: 2, icon: '➕', title: 'Enqueue (Insert)', tag: { l: 'Write', c: 'tg' },
+  analogy: { e: '🎟', t: 'Joining the Back of a Circular Ticket Line',
+    d: 'Picture a round ticket-booth line at a fair. Every new person who joins goes to the back. When the back reaches the end of the physical space, the <em>next</em> slot is the very beginning (it wraps around). The <strong>rear</strong> pointer always tracks where the newest person is standing, and insertion is always O(1) — just step to the next position.' },
+  theory: `<p><strong>Enqueue</strong> adds a new element to the rear of the circular queue. It is only allowed when the queue is not full.</p>
+<p><strong>Step-by-step logic:</strong></p>
+<p><strong>1.</strong> First check: is the queue full? Full condition: <code>(rear + 1) % MAX == front</code>. If yes, print overflow and return.</p>
+<p><strong>2.</strong> If the queue was empty (<code>front == -1</code>), set <code>front = 0</code> and <code>rear = 0</code>, then store the value at <code>queue[0]</code>.</p>
+<p><strong>3.</strong> Otherwise, advance rear using circular arithmetic: <code>rear = (rear + 1) % MAX</code>, then store the new value at <code>queue[rear]</code>.</p>
+<p>The modulo operator <code>% MAX</code> is the key — when rear reaches index 7 (MAX-1), adding 1 and taking modulo gives 0, wrapping cleanly back to the start of the array.</p>`,
+  formula: 'rear = (rear + 1) % MAX;   queue[rear] = value;',
+  diag: buildDiag([
+    { empty: true, idx: 0, isF: true, isR: false },
+    { empty: false, v: 10, idx: 1 },
+    { empty: false, v: 20, idx: 2 },
+    { empty: false, v: 30, idx: 3, isR: true },
+    { empty: true, idx: 4 },
+    { empty: true, idx: 5 },
+    { empty: true, idx: 6 },
+    { empty: true, idx: 7 }
+  ], '→ front=0  rear=3  queue has [10, 20, 30]  next enqueue → rear=(3+1)%8=4'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Check if queue is full */
+int isFull() {
+    return (rear + 1) % MAX == front;
+}
+
+/* Add element to rear of queue */
+void enqueue(int value) {
+    if (isFull()) {
+        printf("OVERFLOW! Queue is full.\\n");
+        return;
+    }
+    if (front == -1) {
+        /* First ever element: init both pointers */
+        front = 0;
+        rear  = 0;
+    } else {
+        /* Move rear forward, wrapping with modulo */
+        rear = (rear + 1) % MAX;
+    }
+    queue[rear] = value;
+    printf("Enqueued %d at index [%d]\\n", value, rear);
+}
+
+int main() {
+    enqueue(10);   /* Enqueued 10 at index [0] */
+    enqueue(20);   /* Enqueued 20 at index [1] */
+    enqueue(30);   /* Enqueued 30 at index [2] */
+    return 0;
+}`,
+  kp: ['Full check: <code>(rear+1)%MAX == front</code>.', 'First insert: set <code>front=0, rear=0</code>.', 'Subsequent: <code>rear=(rear+1)%MAX</code>.', 'Time complexity: <strong>O(1)</strong> — constant time always.']
+},
+
+/* ---- 03 Dequeue ---- */
+{
+  id: 3, icon: '➖', title: 'Dequeue (Delete)', tag: { l: 'Remove', c: 'tr' },
+  analogy: { e: '🎠', t: 'Serving the Person at the Front of the Line',
+    d: 'At the fair ticket booth, the <em>first</em> person in line is always served next. After they leave, <strong>front</strong> steps forward to point at the second person, who is now the new first. When the last person is served, the entire line is gone and both pointers reset to −1.' },
+  theory: `<p><strong>Dequeue</strong> removes and returns the element at the front of the circular queue. It is only allowed when the queue is not empty.</p>
+<p><strong>Step-by-step logic:</strong></p>
+<p><strong>1.</strong> First check: is the queue empty? Empty condition: <code>front == -1</code>. If yes, print underflow and return.</p>
+<p><strong>2.</strong> Save the value at <code>queue[front]</code> to return it.</p>
+<p><strong>3.</strong> If <code>front == rear</code>, the element we are removing was the very last one. Reset both pointers: <code>front = -1; rear = -1</code>.</p>
+<p><strong>4.</strong> Otherwise advance front circularly: <code>front = (front + 1) % MAX</code>.</p>
+<p>Notice that we do NOT physically erase the old data from the array slot — we simply move the pointer past it. The old value is considered "no longer part of the queue" and will be silently overwritten on the next enqueue.</p>`,
+  formula: 'value = queue[front];   front = (front + 1) % MAX;',
+  diag: buildDiag([
+    { empty: false, v: 10, idx: 0, isF: true, hl: true },
+    { empty: false, v: 20, idx: 1 },
+    { empty: false, v: 30, idx: 2, isR: true },
+    { empty: true, idx: 3 },
+    { empty: true, idx: 4 },
+    { empty: true, idx: 5 },
+    { empty: true, idx: 6 },
+    { empty: true, idx: 7 }
+  ], '→ Dequeue removes [0]=10 (highlighted)  new front = (0+1)%8 = 1'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Check if queue is empty */
+int isEmpty() {
+    return front == -1;
+}
+
+/* Remove and return element from front */
+int dequeue() {
+    if (isEmpty()) {
+        printf("UNDERFLOW! Queue is empty.\\n");
+        return -1;   /* Sentinel: nothing removed */
+    }
+    int value = queue[front];  /* Save front value */
+
+    if (front == rear) {
+        /* Removed the last element: reset queue */
+        front = -1;
+        rear  = -1;
+    } else {
+        /* Advance front circularly */
+        front = (front + 1) % MAX;
+    }
+    printf("Dequeued: %d\\n", value);
+    return value;
+}
+
+int main() {
+    /* Assume queue already has: 10, 20, 30 */
+    dequeue();   /* Dequeued: 10 */
+    dequeue();   /* Dequeued: 20 */
+    return 0;
+}`,
+  kp: ['Empty check: <code>front == -1</code>.', 'Last element removed? Reset: <code>front=rear=-1</code>.', 'Otherwise: <code>front=(front+1)%MAX</code>.', 'Time complexity: <strong>O(1)</strong>.']
+},
+
+/* ---- 04 Peek / Front ---- */
+{
+  id: 4, icon: '👁', title: 'Peek / Front', tag: { l: 'Read', c: 'ta' },
+  analogy: { e: '🔭', t: 'Looking at the First Person Without Moving Them',
+    d: 'You are the ticket officer and you glance at who is first in line — but you don\'t call them forward or remove them. <strong>Peek</strong> is purely a read: it looks at <code>queue[front]</code> and reports the value, leaving the queue 100% unchanged.' },
+  theory: `<p><strong>Peek</strong> (also called Front) reads and returns the element at the front of the queue without modifying the queue in any way. No pointers move; no data changes. It is a pure, non-destructive observation.</p>
+<p>The only requirement is that the queue is not empty. If it is empty, there is no front element to look at and the operation reports an error.</p>
+<p>Peek is extremely useful when you need to make a decision based on what is at the front before you commit to removing it. For example, in a CPU scheduler, the OS might peek at the highest-priority job to check if it still qualifies before actually dequeuing and running it.</p>`,
+  formula: 'return queue[front];   // no pointer change',
+  diag: buildDiag([
+    { empty: false, v: 42, idx: 0, isF: true, hl: true },
+    { empty: false, v: 75, idx: 1 },
+    { empty: false, v: 18, idx: 2, isR: true },
+    { empty: true, idx: 3 }, { empty: true, idx: 4 },
+    { empty: true, idx: 5 }, { empty: true, idx: 6 }, { empty: true, idx: 7 }
+  ], '→ Peek returns 42 (front index [0]) — no pointers move, queue unchanged'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Peek at the front element — does NOT remove it */
+int peek() {
+    if (front == -1) {
+        printf("Queue is EMPTY — no front to peek!\\n");
+        return -1;
+    }
+    /* Simply read the value; nothing changes */
+    return queue[front];
+}
+
+int main() {
+    /* Assume queue has: 42, 75, 18 */
+    int val = peek();
+    if (val != -1)
+        printf("Front element is: %d\\n", val);
+    /* Output: Front element is: 42
+       Queue is still: 42, 75, 18   */
+    return 0;
+}`,
+  kp: ['Returns <code>queue[front]</code> — zero side effects.', 'Check <code>front == -1</code> before reading.', 'Queue state is completely unchanged.', 'Time complexity: <strong>O(1)</strong>.']
+},
+
+/* ---- 05 Rear Access ---- */
+{
+  id: 5, icon: '📍', title: 'Rear / Last Element Access', tag: { l: 'Read', c: 'tb' },
+  analogy: { e: '🎪', t: 'Checking Who is Last in Line',
+    d: 'A manager at the fair walks to the very end of the ticket line and glances at the last person — without moving them or anyone else. That is exactly Rear Access: a non-destructive read of <code>queue[rear]</code>, the most recently inserted element.' },
+  theory: `<p><strong>Rear Access</strong> reads and returns the element at the rear (back) of the queue — the most recently enqueued value — without modifying anything.</p>
+<p>Like Peek, this is purely a read operation. <code>rear</code> always holds the array index of the last inserted element. We simply return <code>queue[rear]</code>.</p>
+<p>Use cases include logging the latest event in a buffer, confirming what was last added to a print job queue, or verifying the tail of a network packet buffer before sending.</p>`,
+  formula: 'return queue[rear];   // no pointer change',
+  diag: buildDiag([
+    { empty: false, v: 42, idx: 0, isF: true },
+    { empty: false, v: 75, idx: 1 },
+    { empty: false, v: 18, idx: 2, isR: true, hl: true },
+    { empty: true, idx: 3 }, { empty: true, idx: 4 },
+    { empty: true, idx: 5 }, { empty: true, idx: 6 }, { empty: true, idx: 7 }
+  ], '→ Rear access returns 18 at index [2] — queue is NOT modified'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Access the rear (last) element — does NOT remove it */
+int peekRear() {
+    if (front == -1) {
+        printf("Queue is EMPTY — no rear element!\\n");
+        return -1;
+    }
+    /* Simply read queue[rear]; rear pointer stays put */
+    return queue[rear];
+}
+
+int main() {
+    /* Assume queue has: 42, 75, 18 */
+    int last = peekRear();
+    if (last != -1)
+        printf("Rear element is: %d\\n", last);
+    /* Output: Rear element is: 18 */
+    return 0;
+}`,
+  kp: ['Returns <code>queue[rear]</code> — no changes at all.', 'Check <code>front == -1</code> (empty guard) first.', 'The most recently enqueued value is always at rear.', 'Time complexity: <strong>O(1)</strong>.']
+},
+
+/* ---- 06 isEmpty ---- */
+{
+  id: 6, icon: '❓', title: 'isEmpty()', tag: { l: 'Check', c: 'ta' },
+  analogy: { e: '🪑', t: 'Is the Waiting Room Empty?',
+    d: 'A receptionist checks whether the waiting room has any patients before calling the next name. Rather than walking the entire room, she simply looks at a single indicator light — if the front pointer is −1, the queue is empty, just like the light being off means nobody is waiting.' },
+  theory: `<p><strong>isEmpty()</strong> checks whether the circular queue contains any elements. It returns 1 (true) if empty, 0 (false) if not.</p>
+<p>The check is beautifully simple: if <code>front == -1</code>, the queue has never received a successful insert, OR it was just completely emptied by consecutive dequeues (which reset front to −1 when the last element is removed).</p>
+<p>isEmpty() should always be called before Dequeue, Peek, Rear Access, Display, Search, and Update operations to prevent reading invalid memory and causing undefined behavior or crashes.</p>`,
+  formula: 'return (front == -1);   // 1 = empty, 0 = has elements',
+  diag: buildDiag(
+    Array.from({ length: 8 }, (_, i) => ({ empty: true, idx: i })),
+    '→ front == -1  isEmpty() returns 1 (TRUE).  All slots unoccupied.'
+  ),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Returns 1 if queue is empty, 0 otherwise */
+int isEmpty() {
+    return (front == -1);
+}
+
+int main() {
+    /* Test on empty queue */
+    if (isEmpty())
+        printf("Queue is EMPTY.\\n");
+    else
+        printf("Queue has elements.\\n");
+    /* Output: Queue is EMPTY. */
+
+    /* After adding elements the result changes */
+    /* enqueue(10); --> isEmpty() returns 0    */
+    return 0;
+}`,
+  kp: ['Condition: <code>front == -1</code> → empty.', 'Always call isEmpty() before Dequeue or Peek.', 'Dequeue resets <code>front=-1</code> when last item is removed.', 'Time complexity: <strong>O(1)</strong>.']
+},
+
+/* ---- 07 isFull ---- */
+{
+  id: 7, icon: '🔴', title: 'isFull()', tag: { l: 'Check', c: 'tr' },
+  analogy: { e: '🚌', t: 'Is the Bus Full?',
+    d: 'A bus conductor checks if every seat is occupied before allowing the next passenger to board. He doesn\'t count all seats — he checks one formula: is the next-rear position the same as front? If yes, the bus is full. This is exactly how <code>isFull()</code> works using the modulo formula.' },
+  theory: `<p><strong>isFull()</strong> checks whether the circular queue has no more room for new elements.</p>
+<p>The full condition is: <code>(rear + 1) % MAX == front</code>. This computes where the <em>next</em> rear would go. If that position is already occupied by front, there is no room and the queue is full.</p>
+<p>Why does a queue of size MAX=8 only hold 7 elements? Because we deliberately leave one slot empty between rear and front to distinguish "full" from "empty". If we used all 8 slots, front would equal rear+1 both when empty (front=-1 exception aside) and when full, creating ambiguity. Sacrificing one slot gives us a clean, unambiguous check.</p>`,
+  formula: 'return ((rear + 1) % MAX == front);',
+  diag: buildDiag([
+    { empty: false, v: 70, idx: 0, isF: true },
+    { empty: false, v: 80, idx: 1 },
+    { empty: false, v: 90, idx: 2 },
+    { empty: false, v: 10, idx: 3 },
+    { empty: false, v: 20, idx: 4 },
+    { empty: false, v: 30, idx: 5 },
+    { empty: false, v: 40, idx: 6, isR: true },
+    { empty: true, idx: 7 }
+  ], '→ rear=6  (6+1)%8=7  front=0 ≠ 7 → NOT full yet (7 is the gap slot)'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Returns 1 if queue is full, 0 otherwise */
+int isFull() {
+    /* The next rear position hits front → no room */
+    return ((rear + 1) % MAX == front);
+}
+
+int main() {
+    /* Simulate a nearly-full queue */
+    /* After 7 enqueues: front=0, rear=6        */
+    /* isFull() checks: (6+1)%8 = 7 != 0 → not full yet */
+
+    /* After 7th enqueue: front=0, rear=7 would wrap */
+    /* (7+1)%8 = 0 == front(0) → FULL!               */
+    if (isFull())
+        printf("Queue is FULL.\\n");
+    else
+        printf("Queue has space.\\n");
+    return 0;
+}`,
+  kp: ['Full formula: <code>(rear+1)%MAX == front</code>.', 'One slot is sacrificed to distinguish full vs empty.', 'Capacity = MAX−1 = 7 (not MAX = 8).', 'Always call before Enqueue to prevent overflow.']
+},
+
+/* ---- 08 Display ---- */
+{
+  id: 8, icon: '📋', title: 'Display / Traverse', tag: { l: 'Read', c: 'ta' },
+  analogy: { e: '🎢', t: 'Reading Every Seat on the Ferris Wheel',
+    d: 'An inspector walks from the first occupied seat (front) all the way around the ferris wheel to the last occupied seat (rear), reading each one in order. The key is the circular wrap-around — after the highest-numbered seat comes seat 0 again. The inspector never jumps to unoccupied seats.' },
+  theory: `<p><strong>Display / Traverse</strong> prints all elements in the queue from front to rear in their correct order, handling the circular wrap-around properly.</p>
+<p>The algorithm uses modulo arithmetic. Starting at <code>front</code>, we step through elements one at a time: <code>i = (i + 1) % MAX</code>. We stop after visiting exactly <code>size</code> elements (or equivalently, when we return to front+1 after wrapping).</p>
+<p>There are two cases: (a) <code>front &lt;= rear</code> — data is in a single contiguous block from front to rear; (b) <code>front &gt; rear</code> — data wraps: from front to MAX-1, then from 0 to rear. The modulo loop handles both cases identically without any special-casing.</p>`,
+  formula: 'for(i=front; count<size; i=(i+1)%MAX, count++) print(queue[i]);',
+  diag: buildDiag([
+    { empty: false, v: 5, idx: 6, isF: true },
+    { empty: false, v: 9, idx: 7 },
+    { empty: false, v: 3, idx: 0 },
+    { empty: false, v: 7, idx: 1, isR: true },
+    { empty: true, idx: 2 },
+    { empty: true, idx: 3 },
+    { empty: true, idx: 4 },
+    { empty: true, idx: 5 }
+  ], '→ front=6 rear=1  Print order: [6]→5, [7]→9, [0]→3, [1]→7  (circular wrap!)'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Display all elements front → rear, handling wrap-around */
+void display() {
+    if (front == -1) {
+        printf("Queue is EMPTY.\\n");
+        return;
+    }
+    printf("Queue elements (front to rear): ");
+    int i = front;
+    int count = 0;
+    /* Count total elements */
+    int size = (rear >= front)
+               ? (rear - front + 1)
+               : (MAX - front + rear + 1);
+
+    while (count < size) {
+        printf("%d ", queue[i]);
+        i = (i + 1) % MAX;  /* Circular step */
+        count++;
+    }
+    printf("\\n");
+}
+
+int main() {
+    /* Assume queue: front=6, rear=1, values: 5,9,3,7 */
+    display();
+    /* Output: Queue elements: 5 9 3 7 */
+    return 0;
+}`,
+  kp: ['Start at <code>front</code>, stop after <code>size</code> steps.', 'Step formula: <code>i=(i+1)%MAX</code> handles wrap.', 'Works for both linear and wrapped-around layouts.', 'Time complexity: <strong>O(n)</strong>.']
+},
+
+/* ---- 09 Size Count ---- */
+{
+  id: 9, icon: '📊', title: 'Size Count', tag: { l: 'Compute', c: 'tb' },
+  analogy: { e: '🧮', t: 'Counting Passengers on a Circular Train',
+    d: 'A conductor on a circular train counts passengers from car #front to car #rear. If rear is ahead of front, it is a simple subtraction. But if the train wraps around (rear < front), the conductor counts from front to the last car, then continues from car 0 to rear and adds both segments together.' },
+  theory: `<p><strong>Size Count</strong> returns the number of elements currently stored in the circular queue.</p>
+<p>Two formulas handle the two possible physical layouts:</p>
+<p><strong>Case 1 — No wrap:</strong> <code>front ≤ rear</code>. Elements are in a straight block. Size = <code>rear − front + 1</code>.</p>
+<p><strong>Case 2 — Wrap-around:</strong> <code>front &gt; rear</code>. Elements span the end and the beginning of the array. Size = <code>MAX − front + rear + 1</code>. (Count from front to MAX−1, then from 0 to rear.)</p>
+<p>These two formulas can be unified into one elegant modulo expression: <code>(rear − front + MAX) % MAX + 1</code>, which always produces the correct result in both cases.</p>`,
+  formula: 'size = (rear - front + MAX) % MAX + 1;   // works for both cases',
+  diag: buildDiag([
+    { empty: false, v: 'A', idx: 0 },
+    { empty: false, v: 'B', idx: 1 },
+    { empty: false, v: 'C', idx: 2, isR: true },
+    { empty: true, idx: 3 }, { empty: true, idx: 4 },
+    { empty: false, v: 'D', idx: 5, isF: true },
+    { empty: false, v: 'E', idx: 6 },
+    { empty: false, v: 'F', idx: 7 }
+  ], '→ front=5 rear=2  size = 8−5+2+1 = 6  elements: D,E,F,A,B,C'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Returns number of elements currently in queue */
+int getSize() {
+    if (front == -1) return 0;     /* Empty queue */
+
+    if (rear >= front) {
+        /* Case 1: no wrap-around */
+        return rear - front + 1;
+    } else {
+        /* Case 2: wrapped around the array end */
+        return MAX - front + rear + 1;
+    }
+    /* Alternative unified formula:
+       return (rear - front + MAX) % MAX + 1; */
+}
+
+int main() {
+    /* Assume front=5, rear=2 (wrapped queue) */
+    printf("Queue size: %d\\n", getSize());
+    /* Output: Queue size: 6 */
+    return 0;
+}`,
+  kp: ['Case 1 (no wrap): <code>rear−front+1</code>.', 'Case 2 (wrapped): <code>MAX−front+rear+1</code>.', 'Unified: <code>(rear−front+MAX)%MAX+1</code>.', 'Time complexity: <strong>O(1)</strong>.']
+},
+
+/* ---- 10 Clear Queue ---- */
+{
+  id: 10, icon: '🗑', title: 'Clear Queue', tag: { l: 'Reset', c: 'tr' },
+  analogy: { e: '🧹', t: 'Sweeping the Fairground Seats Empty',
+    d: 'At the end of the fair day, the manager tells everyone to leave and sweeps all the seats clean. All data is gone, and the "first seat" and "last seat" signs are taken down. This is Clear Queue — a total reset. The structure itself (the seats / array) still exists, ready for the next day (next use).' },
+  theory: `<p><strong>Clear Queue</strong> removes all elements from the queue, returning it to its freshly initialized state.</p>
+<p>The implementation simply resets <code>front = -1</code> and <code>rear = -1</code>. This is the same state as after <code>initialize()</code>. You do NOT need to zero out the array — moving the pointers is sufficient because isEmpty() will return true, and all read/write operations will refuse to touch those old values.</p>
+<p>Optionally, for memory hygiene (important in security-sensitive code), you can loop through and zero all MAX slots. This prevents a later user from accidentally reading stale data if they bypass the normal API.</p>`,
+  formula: 'front = -1;   rear = -1;   // O(1) clear',
+  diag: buildDiag(
+    Array.from({ length: 8 }, (_, i) => ({ empty: true, idx: i })),
+    '→ After clear: front = -1  rear = -1  All elements logically gone'
+  ),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Clear all elements — reset queue to initial state */
+void clearQueue() {
+    front = -1;
+    rear  = -1;
+    /* Optional: zero the array for security */
+    int i;
+    for (i = 0; i < MAX; i++)
+        queue[i] = 0;
+    printf("Queue cleared. front = %d, rear = %d\\n", front, rear);
+}
+
+int main() {
+    /* Assume queue has values: 5, 10, 15 */
+    clearQueue();
+    /* Output: Queue cleared. front = -1, rear = -1 */
+    /* Queue is now completely empty and reusable    */
+    return 0;
+}`,
+  kp: ['Reset: <code>front = rear = -1</code>.', 'Array values are ignored (pointers are the truth).', 'Optionally zero the array for security reasons.', 'Time complexity: <strong>O(1)</strong> (or O(n) with zeroing).']
+},
+
+/* ---- 11 Search ---- */
+{
+  id: 11, icon: '🔍', title: 'Search Element', tag: { l: 'Find', c: 'tp' },
+  analogy: { e: '🕵️', t: 'Finding a Specific Person in a Circular Line',
+    d: 'A security guard needs to find the ticket holder with badge number 42. She starts at the front person and checks each one, going around the circular queue. She either finds the person (and records their position) or finishes a full loop without success. She never steps outside the occupied portion of the line.' },
+  theory: `<p><strong>Search</strong> scans the circular queue from <code>front</code> to <code>rear</code> looking for a specific value. If found, it returns the array index. If not found, it returns −1 or reports failure.</p>
+<p>The algorithm traverses exactly <code>size</code> elements using modulo stepping. It begins at <code>front</code>, compares each element, and advances: <code>i = (i + 1) % MAX</code>. It stops early on a match (linear search with early exit).</p>
+<p>Unlike a sorted structure, there is no shortcut — we must check every element in the worst case. However, the circular traversal ensures we never read out-of-bounds or visit empty slots.</p>`,
+  formula: 'while(count < size) { if(queue[i]==target) found; i=(i+1)%MAX; }',
+  diag: buildDiag([
+    { empty: false, v: 10, idx: 0, isF: true },
+    { empty: false, v: 25, idx: 1 },
+    { empty: false, v: 42, idx: 2, hl: true },
+    { empty: false, v: 7, idx: 3, isR: true },
+    { empty: true, idx: 4 }, { empty: true, idx: 5 },
+    { empty: true, idx: 6 }, { empty: true, idx: 7 }
+  ], '→ Searching for 42: check [0]=10 ✗, [1]=25 ✗, [2]=42 ✓ FOUND at index 2'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Search for target value; returns index or -1 if not found */
+int search(int target) {
+    if (front == -1) {
+        printf("Queue is EMPTY.\\n");
+        return -1;
+    }
+    int i = front;
+    int count = 0;
+    int size = (rear >= front)
+               ? (rear - front + 1)
+               : (MAX - front + rear + 1);
+
+    while (count < size) {
+        if (queue[i] == target) {
+            printf("Found %d at index [%d]\\n", target, i);
+            return i;
+        }
+        i = (i + 1) % MAX;
+        count++;
+    }
+    printf("%d not found in queue.\\n", target);
+    return -1;
+}
+
+int main() {
+    /* Queue: 10, 25, 42, 7  (front=0, rear=3) */
+    search(42);   /* Found 42 at index [2] */
+    search(99);   /* 99 not found in queue. */
+    return 0;
+}`,
+  kp: ['Traverse from <code>front</code>, exactly <code>size</code> steps.', 'Use <code>i=(i+1)%MAX</code> to step circularly.', 'Return the array index (not the position from front).', 'Time complexity: <strong>O(n)</strong> worst case.']
+},
+
+/* ---- 12 Update ---- */
+{
+  id: 12, icon: '✏️', title: 'Update Element', tag: { l: 'Modify', c: 'tb' },
+  analogy: { e: '🗒️', t: 'Correcting an Entry in the Circular Register',
+    d: 'A clerk realizes ticket number in seat 3 was entered wrong. She goes directly to that position and corrects the number — she doesn\'t move anyone, doesn\'t change the line order, just updates the value at that specific slot. Update Element works the same way: find a valid index and overwrite its value.' },
+  theory: `<p><strong>Update Element</strong> modifies the value stored at a given array index within the active region of the circular queue. The position must be within the current front-to-rear range.</p>
+<p>Steps: (1) Check that the queue is not empty. (2) Validate that the given index is a valid array index (0 ≤ index &lt; MAX). (3) Confirm the index falls within the active occupied portion of the queue using <code>inRange()</code>. (4) Overwrite <code>queue[index]</code> with the new value.</p>
+<p>Update does not change <code>front</code> or <code>rear</code> — it only changes data content at one position. The queue structure is preserved completely.</p>`,
+  formula: 'if(inRange(idx)) queue[idx] = newValue;',
+  diag: buildDiag([
+    { empty: false, v: 10, idx: 0, isF: true },
+    { empty: false, v: 25, idx: 1 },
+    { empty: false, v: 99, idx: 2, hl: true },
+    { empty: false, v: 7, idx: 3, isR: true },
+    { empty: true, idx: 4 }, { empty: true, idx: 5 },
+    { empty: true, idx: 6 }, { empty: true, idx: 7 }
+  ], '→ Update index [2] from old value → 99  front/rear unchanged'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Check if index is within active queue region */
+int inRange(int idx) {
+    if (front == -1) return 0;  /* Empty */
+    if (front <= rear)
+        return (idx >= front && idx <= rear);
+    else   /* Wrapped case */
+        return (idx >= front || idx <= rear);
+}
+
+/* Update value at a specific index */
+void updateAt(int idx, int newValue) {
+    if (front == -1) {
+        printf("Queue is EMPTY.\\n"); return;
+    }
+    if (idx < 0 || idx >= MAX) {
+        printf("Index %d out of range!\\n", idx); return;
+    }
+    if (!inRange(idx)) {
+        printf("Index [%d] not in active queue.\\n", idx); return;
+    }
+    int old = queue[idx];
+    queue[idx] = newValue;
+    printf("Updated [%d]: %d -> %d\\n", idx, old, newValue);
+}
+
+int main() {
+    /* Queue: 10,25,42,7 front=0 rear=3 */
+    updateAt(2, 99);  /* Updated [2]: 42 -> 99 */
+    updateAt(5, 88);  /* Index [5] not in active queue. */
+    return 0;
+}`,
+  kp: ['Validate index is within active range.', 'Use <code>inRange()</code> to check both linear and wrapped cases.', 'Only data changes — front and rear stay the same.', 'Time complexity: <strong>O(1)</strong> for the update itself.']
+},
+
+/* ---- 13 Circular Traversal ---- */
+{
+  id: 13, icon: '🔄', title: 'Circular Traversal', tag: { l: 'Traverse', c: 'tp' },
+  analogy: { e: '🏃', t: 'Running Laps on a Circular Track',
+    d: 'A runner on a circular track passes position 0, 1, 2 ... 7, then immediately hits position 0 again — endlessly. This is the essence of circular traversal. Unlike a normal array traverse that stops at the last index, circular traversal wraps index 7 back to 0 using the modulo operator, enabling continuous, infinite-loop-style stepping around the ring.' },
+  theory: `<p><strong>Circular Traversal</strong> is the fundamental mechanism that makes the data structure circular. When an index reaches <code>MAX−1</code> (the last slot), the next step is index 0 — not an array-out-of-bounds error.</p>
+<p>The magic formula: <code>nextIndex = (currentIndex + 1) % MAX</code>. When <code>currentIndex = 7</code> and <code>MAX = 8</code>, we get <code>(7+1)%8 = 0</code>. Perfect wrap-around with no branching.</p>
+<p>This is used internally by every operation: Enqueue advances rear, Dequeue advances front, Display steps element by element, and Search scans the active region. Without this modulo step, all of those operations would crash with array-index-out-of-bounds errors after reaching the end of the array.</p>`,
+  formula: 'nextIndex = (currentIndex + 1) % MAX;   // wrap: 7 → 0',
+  diag: buildDiag([
+    { empty: false, v: 0, idx: 0, isF: true },
+    { empty: false, v: 1, idx: 1 },
+    { empty: false, v: 2, idx: 2 },
+    { empty: false, v: 3, idx: 3 },
+    { empty: false, v: 4, idx: 4 },
+    { empty: false, v: 5, idx: 5 },
+    { empty: false, v: 6, idx: 6 },
+    { empty: false, v: 7, idx: 7, isR: true }
+  ], '→ From index [7]: (7+1)%8 = 0 → wraps back to [0]. That is circular traversal!'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Demonstrate circular traversal — prints index steps */
+void circularTraversal() {
+    if (front == -1) {
+        printf("Queue is EMPTY.\\n"); return;
+    }
+    printf("Circular traversal (front to rear):\\n");
+    int i = front;
+    int count = 0;
+    int size = (rear >= front)
+               ? (rear - front + 1)
+               : (MAX - front + rear + 1);
+
+    while (count < size) {
+        printf("  index[%d] = %d\\n", i, queue[i]);
+        /* THE KEY LINE: wraps index around the array */
+        i = (i + 1) % MAX;
+        count++;
+    }
+    printf("Traversal complete.\\n");
+}
+
+/* Show the wrap-around in action */
+void showWrap() {
+    int i;
+    for (i = 5; i <= 10; i++) {
+        printf("  index %d wraps to: %d\\n", i, i % MAX);
+    }
+    /* Output: 5->5, 6->6, 7->7, 8->0, 9->1, 10->2 */
+}
+
+int main() {
+    showWrap();
+    return 0;
+}`,
+  kp: ['Formula: <code>(i+1)%MAX</code> wraps index automatically.', '7 → 0 means the "circle" closes seamlessly.', 'All queue operations internally use this step.', 'Prevents array-out-of-bounds errors naturally.']
+},
+
+/* ---- 14 Overflow Handling ---- */
+{
+  id: 14, icon: '⚠️', title: 'Overflow Handling', tag: { l: 'Error Guard', c: 'tr' },
+  analogy: { e: '🛑', t: 'No Boarding: Bus is Full',
+    d: 'A fully-loaded bus cannot take even one more passenger, no matter how urgently they need to travel. The conductor firmly says "Bus Full — next bus coming!" and the passenger must wait. Overflow handling is this firm refusal — when the circular queue is full, Enqueue is denied, a clear error message is shown, and the queue data remains completely safe and unmodified.' },
+  theory: `<p><strong>Overflow</strong> occurs when you attempt to Enqueue into a queue that is already completely full. This is a logical error that your program must detect and handle gracefully — never silently.</p>
+<p>Overflow condition: <code>(rear + 1) % MAX == front</code>. When this is true, the next rear position would collide with front, destroying the front element.</p>
+<p><strong>How to handle overflow:</strong> (1) Print a descriptive error message with the attempted value. (2) Return from the function without modifying any queue state. (3) Optionally set an error flag or return an error code for the caller to act on. (4) In production, consider dynamically resizing (requires malloc/realloc in C), or use a separate overflow queue.</p>`,
+  formula: 'if((rear+1)%MAX == front) { printf("OVERFLOW!"); return; }',
+  diag: buildDiag([
+    { empty: false, v: 11, idx: 0, isF: true },
+    { empty: false, v: 22, idx: 1 },
+    { empty: false, v: 33, idx: 2 },
+    { empty: false, v: 44, idx: 3 },
+    { empty: false, v: 55, idx: 4 },
+    { empty: false, v: 66, idx: 5 },
+    { empty: false, v: 77, idx: 6, isR: true },
+    { empty: true, idx: 7 }
+  ], '→ 7 items stored (full). (6+1)%8=7 → gap slot. Next enqueue would make (7+1)%8=0=front → OVERFLOW'),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Robust enqueue with proper overflow handling */
+int enqueue(int value) {
+    /* OVERFLOW CHECK: next rear position == front? */
+    if (front != -1 && (rear + 1) % MAX == front) {
+        printf("OVERFLOW ERROR: Queue full!\\n");
+        printf("  Rejected value: %d\\n", value);
+        printf("  Current capacity: %d/%d\\n", MAX-1, MAX-1);
+        return 0;    /* 0 = failure */
+    }
+    /* Proceed with normal enqueue */
+    if (front == -1) { front = 0; rear = 0; }
+    else rear = (rear + 1) % MAX;
+    queue[rear] = value;
+    printf("Enqueued %d successfully.\\n", value);
+    return 1;    /* 1 = success */
+}
+
+int main() {
+    /* Fill the queue (7 elements max) */
+    int i;
+    for (i = 10; i <= 80; i += 10)
+        enqueue(i);
+    /* Try to add one more */
+    enqueue(99);
+    /* Output: OVERFLOW ERROR: Queue full!  */
+    return 0;
+}`,
+  kp: ['Check <code>(rear+1)%MAX==front</code> before inserting.', 'Print a clear, descriptive error message.', 'Return without touching any queue state.', 'Return an error code so the caller knows it failed.']
+},
+
+/* ---- 15 Underflow Handling ---- */
+{
+  id: 15, icon: '🚫', title: 'Underflow Handling', tag: { l: 'Error Guard', c: 'tr' },
+  analogy: { e: '📭', t: 'The Mailbox is Empty — Nothing to Collect',
+    d: 'A mailman arrives to collect letters from a mailbox but finds it completely empty. He cannot pick up what doesn\'t exist. He records "mailbox empty" in his log and moves on — he does not crash, panic, or create a fake letter. Underflow handling is this professional response: detect the empty queue and report gracefully without corrupting anything.' },
+  theory: `<p><strong>Underflow</strong> occurs when you attempt Dequeue, Peek, Rear Access, Search, or Display on a queue that is completely empty. Without protection, these operations would read garbage memory values and produce wrong results or crashes.</p>
+<p>Underflow condition: <code>front == -1</code>. This is the single, universal empty-check for a circular queue.</p>
+<p><strong>How to handle underflow:</strong> (1) Check the empty condition before every destructive or read operation. (2) Print a helpful message stating which operation failed and why. (3) Return a sentinel value (like −1 for int queues, or NULL for pointer queues) or an error code so the caller can detect failure. (4) Never silently proceed and return garbage — that is worse than crashing.</p>`,
+  formula: 'if(front == -1) { printf("UNDERFLOW!"); return -1; }',
+  diag: buildDiag(
+    Array.from({ length: 8 }, (_, i) => ({ empty: true, idx: i })),
+    '→ front == -1 → Queue EMPTY. Any dequeue/peek attempt = UNDERFLOW error'
+  ),
+  code: `#include <stdio.h>
+#define MAX 8
+
+int queue[MAX];
+int front = -1, rear = -1;
+
+/* Robust dequeue with proper underflow handling */
+int dequeue() {
+    /* UNDERFLOW CHECK: front == -1 means empty */
+    if (front == -1) {
+        printf("UNDERFLOW ERROR: Queue is EMPTY!\\n");
+        printf("  Cannot dequeue from an empty queue.\\n");
+        return -1;   /* Sentinel: indicates failure */
+    }
+    int value = queue[front];
+    if (front == rear) {
+        front = -1; rear = -1;   /* Last element removed */
+    } else {
+        front = (front + 1) % MAX;
+    }
+    printf("Dequeued: %d\\n", value);
+    return value;
+}
+
+/* Robust peek with underflow handling */
+int peek() {
+    if (front == -1) {
+        printf("UNDERFLOW ERROR: Nothing to peek!\\n");
+        return -1;
+    }
+    return queue[front];
+}
+
+int main() {
+    /* Try to dequeue from empty queue */
+    dequeue();
+    /* Output: UNDERFLOW ERROR: Queue is EMPTY! */
+    peek();
+    /* Output: UNDERFLOW ERROR: Nothing to peek! */
+    return 0;
+}`,
+  kp: ['Check <code>front == -1</code> before every read or remove operation.', 'Return <code>-1</code> (or an error code) on underflow.', 'Print a descriptive message — never proceed silently.', 'Handle the return value in the caller to detect failure.']
+}
+];
+
+/* ======================================================
+   RENDER TOPICS
+====================================================== */
+function renderTopics() {
+  const wrap = document.getElementById('topicsWrap');
+  TOPICS.forEach(t => {
+    const sec = document.createElement('section');
+    sec.className = 'ts';
+    sec.id = 't' + t.id;
+    sec.innerHTML = `
+<div class="th2">
+  <div class="tn">${String(t.id).padStart(2,'0')}</div>
+  <h2>${t.icon} ${t.title}</h2>
+  <span class="ttag ${t.tag.c}">${t.tag.l}</span>
+</div>
+
+<div class="ab">
+  <span class="ae">${t.analogy.e}</span>
+  <div>
+    <h4>Real-Life Analogy: ${t.analogy.t}</h4>
+    <p>${t.analogy.d}</p>
+  </div>
+</div>
+
+<div class="tg2">
+  <div class="tp2">
+    <div class="pt">📖 Theory Explanation</div>
+    <div class="tb3">${t.theory}</div>
+    <div class="fb"><span class="fl">Key Formula</span><span>${t.formula}</span></div>
+    ${t.diag}
+  </div>
+  <div class="tp2">
+    <div class="cp">
+      <div class="ch">
+        <span class="cl">c — topic_${t.id}_${t.title.toLowerCase().replace(/[^a-z]/g,'_')}.c</span>
+        <div class="cd"><span style="background:#ef4444"></span><span style="background:#f59e0b"></span><span style="background:#10b981"></span></div>
+      </div>
+      <div class="cb2"><pre>${hlCode(t.code)}</pre></div>
+    </div>
+    <div class="kp" style="margin-top:14px">
+      <h4>⚡ Key Takeaways</h4>
+      <ul>${t.kp.map(k => `<li>${k}</li>`).join('')}</ul>
+    </div>
+  </div>
+</div>
+
+${t.id < 15 ? '<hr class="tdiv">' : ''}`;
+    wrap.appendChild(sec);
+  });
+}
+
+/* ======================================================
+   RENDER QUICK REFERENCE TABLE
+====================================================== */
+const REF_DATA = [
+  ['01','Initialize','front=rear=-1','O(1)','O(1)','Always call before any operation'],
+  ['02','Enqueue','(rear+1)%MAX==front','O(1)','O(1)','rear=(rear+1)%MAX; queue[rear]=val'],
+  ['03','Dequeue','front==-1','O(1)','O(1)','val=queue[front]; front=(f+1)%MAX'],
+  ['04','Peek / Front','front==-1','O(1)','O(1)','return queue[front]; no change'],
+  ['05','Rear Access','front==-1','O(1)','O(1)','return queue[rear]; no change'],
+  ['06','isEmpty()','always safe','O(1)','O(1)','return (front == -1)'],
+  ['07','isFull()','always safe','O(1)','O(1)','return (rear+1)%MAX == front'],
+  ['08','Display','front==-1','O(n)','O(1)','Loop size times with (i+1)%MAX'],
+  ['09','Size Count','front==-1','O(1)','O(1)','rear>=front ? r-f+1 : MAX-f+r+1'],
+  ['10','Clear Queue','none','O(1)','O(1)','front=rear=-1; optionally zero array'],
+  ['11','Search','front==-1','O(n)','O(1)','Linear scan from front; (i+1)%MAX step'],
+  ['12','Update','front==-1 / inRange','O(1)','O(1)','queue[idx]=newVal if inRange(idx)'],
+  ['13','Circular Traversal','none','O(n)','O(1)','i=(i+1)%MAX is the core formula'],
+  ['14','Overflow Handling','(rear+1)%MAX==front','O(1)','O(1)','Check before enqueue; return error code'],
+  ['15','Underflow Handling','front==-1','O(1)','O(1)','Check before dequeue/peek/read']
+];
+
+function renderRefTable() {
+  const t = document.getElementById('reft');
+  t.innerHTML = `<thead><tr>
+    <th>#</th><th>Operation</th><th>Error Condition</th>
+    <th>Time</th><th>Space</th><th>Notes</th>
+  </tr></thead>`;
+  const tb = document.createElement('tbody');
+  REF_DATA.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="fc">${row[0]}</span></td>
+      <td class="on">${row[1]}</td>
+      <td><span class="fc">${row[2]}</span></td>
+      <td><span class="tc2">${row[3]}</span></td>
+      <td><span class="tc2">${row[4]}</span></td>
+      <td style="color:var(--tdim);font-size:11.5px">${row[5]}</td>`;
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+}
+
+/* ======================================================
+   ACTIVE NAV HIGHLIGHT
+====================================================== */
+function initScrollSpy() {
+  const links = document.querySelectorAll('.nl');
+  const setActive = id => {
+    links.forEach(l => l.classList.remove('active'));
+    const a = document.querySelector(`.nl[onclick*="'${id}'"]`);
+    if (a) a.classList.add('active');
+  };
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); });
+  }, { rootMargin: '-10% 0px -60% 0px' });
+  document.querySelectorAll('section[id], div[id]').forEach(el => obs.observe(el));
+}
+
+/* ======================================================
+   BOOT
+====================================================== */
+renderTopics();
+renderRefTable();
+initScrollSpy();
+</script>
+</body>
+</html>

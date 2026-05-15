@@ -1,0 +1,3111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fenwick Tree (BIT) — Complete Learning Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #11141b;
+  --surface2: #181d27;
+  --border: #1e2535;
+  --accent: #00e5c0;
+  --accent2: #ff6b35;
+  --accent3: #7c6dff;
+  --text: #e2e8f0;
+  --text-dim: #8892a4;
+  --text-muted: #4a5568;
+  --code-bg: #0d1117;
+  --node-active: #00e5c0;
+  --node-inactive: #1e2535;
+  --node-update: #ff6b35;
+  --node-query: #7c6dff;
+  --success: #22c55e;
+  --warning: #f59e0b;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* LAYOUT */
+.app { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #0d1117 0%, #11141b 100%);
+}
+
+.sidebar-logo {
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  margin-top: 4px;
+}
+
+.progress-bar-wrap {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.nav-section {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-section-label {
+  padding: 8px 20px 4px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,229,192,0.05); }
+
+.nav-item .nav-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  min-width: 18px;
+}
+
+.nav-item.active .nav-num { color: var(--accent); }
+
+/* MAIN CONTENT */
+.main {
+  margin-left: 280px;
+  flex: 1;
+  min-height: 100vh;
+}
+
+.hero {
+  background: linear-gradient(135deg, #0a0c10 0%, #0d1420 50%, #0a0c10 100%);
+  padding: 60px 48px 48px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(0,229,192,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -60px; left: 200px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(124,109,255,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-tag {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(0,229,192,0.08);
+  border: 1px solid rgba(0,229,192,0.2);
+  padding: 4px 12px;
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #e2e8f0 30%, #00e5c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  font-size: 16px;
+  color: var(--text-dim);
+  max-width: 600px;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-stat-num {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+  font-family: 'Space Mono', monospace;
+}
+
+.hero-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* CONTENT SECTIONS */
+.content-area {
+  padding: 0;
+}
+
+.section {
+  padding: 48px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 0;
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.section-num {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 3px;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.section-title span {
+  color: var(--accent);
+}
+
+/* TOPIC CARDS */
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.topic-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.topic-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.topic-card-header {
+  padding: 16px 20px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topic-icon {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.topic-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.topic-card-body {
+  padding: 20px;
+}
+
+/* THEORY BLOCKS */
+.theory-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+.theory-block strong { color: var(--text); }
+.theory-block .highlight { color: var(--accent); font-weight: 600; }
+.theory-block .warn { color: var(--accent2); font-weight: 600; }
+
+/* ANALOGY BLOCKS */
+.analogy-block {
+  background: linear-gradient(135deg, rgba(124,109,255,0.06), rgba(0,229,192,0.04));
+  border: 1px solid rgba(124,109,255,0.2);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.7;
+}
+
+.analogy-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent3);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* CODE BLOCKS */
+.code-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.code-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  padding: 8px 14px;
+  border-radius: 6px 6px 0 0;
+}
+
+.code-lang {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.code-copy {
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.code-copy:hover { color: var(--accent); }
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 0 0 6px 6px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: #abb2bf;
+}
+
+.kw { color: #c678dd; }
+.fn { color: #61afef; }
+.str { color: #98c379; }
+.num { color: #d19a66; }
+.cmt { color: #5c6370; font-style: italic; }
+.type { color: #e5c07b; }
+.op { color: #56b6c2; }
+.var { color: #abb2bf; }
+
+/* VIZ AREA */
+.viz-container {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  min-height: 140px;
+  overflow-x: auto;
+}
+
+.viz-title {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* Array viz */
+.array-viz {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.arr-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 44px;
+}
+
+.arr-box {
+  width: 44px; height: 44px;
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--surface2);
+  color: var(--text);
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.arr-box.active { border-color: var(--accent); background: rgba(0,229,192,0.12); color: var(--accent); box-shadow: 0 0 12px rgba(0,229,192,0.2); }
+.arr-box.update { border-color: var(--accent2); background: rgba(255,107,53,0.12); color: var(--accent2); box-shadow: 0 0 12px rgba(255,107,53,0.2); }
+.arr-box.query { border-color: var(--accent3); background: rgba(124,109,255,0.12); color: var(--accent3); box-shadow: 0 0 12px rgba(124,109,255,0.2); }
+
+.arr-idx {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+}
+
+/* BIT tree viz */
+.bit-viz {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.bit-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.bit-box {
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  background: var(--surface2);
+  color: var(--text);
+  transition: all 0.35s ease;
+  cursor: pointer;
+  font-size: 13px;
+  min-width: 40px; height: 40px;
+}
+
+.bit-box:hover { border-color: var(--accent); }
+.bit-box.active { border-color: var(--accent); background: rgba(0,229,192,0.12); color: var(--accent); box-shadow: 0 0 10px rgba(0,229,192,0.18); }
+.bit-box.update { border-color: var(--accent2); background: rgba(255,107,53,0.12); color: var(--accent2); }
+.bit-box.query { border-color: var(--accent3); background: rgba(124,109,255,0.12); color: var(--accent3); }
+
+.bit-label {
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+}
+
+.bit-range {
+  font-size: 9px;
+  font-family: 'Space Mono', monospace;
+  color: var(--accent3);
+  opacity: 0.7;
+}
+
+/* Controls */
+.viz-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.btn {
+  padding: 7px 14px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary { background: rgba(0,229,192,0.1); border-color: var(--accent); color: var(--accent); }
+.btn-primary:hover { background: rgba(0,229,192,0.2); }
+.btn-secondary { background: rgba(255,107,53,0.1); border-color: var(--accent2); color: var(--accent2); }
+.btn-secondary:hover { background: rgba(255,107,53,0.2); }
+.btn-tertiary { background: rgba(124,109,255,0.1); border-color: var(--accent3); color: var(--accent3); }
+.btn-tertiary:hover { background: rgba(124,109,255,0.2); }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text-dim); }
+.btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+
+.input-sm {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text);
+  width: 70px;
+  transition: border-color 0.2s;
+}
+
+.input-sm:focus { outline: none; border-color: var(--accent); }
+
+.output-log {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  min-height: 36px;
+  margin-top: 10px;
+}
+
+/* COMPLEXITY BADGE */
+.complexity-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  border: 1px solid;
+}
+
+.badge-green { border-color: var(--success); color: var(--success); background: rgba(34,197,94,0.07); }
+.badge-orange { border-color: var(--accent2); color: var(--accent2); background: rgba(255,107,53,0.07); }
+.badge-purple { border-color: var(--accent3); color: var(--accent3); background: rgba(124,109,255,0.07); }
+.badge-teal { border-color: var(--accent); color: var(--accent); background: rgba(0,229,192,0.07); }
+
+/* TABLE */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.data-table th {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+}
+
+.data-table td {
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-dim);
+}
+
+.data-table tr:hover td { background: var(--surface2); }
+
+/* SVG canvas */
+canvas {
+  border-radius: 6px;
+  max-width: 100%;
+}
+
+/* STEPS */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(0,229,192,0.1);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-content {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+.step-content strong { color: var(--text); }
+.step-content code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
+/* MOBILE TOGGLE */
+.menu-toggle {
+  display: none;
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 200;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 18px;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+/* bit-response bar */
+.response-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-top: 10px;
+  font-size: 13px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-dim);
+}
+
+/* CANVAS for 2D */
+.canvas-wrap {
+  overflow-x: auto;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  gap: 0;
+}
+
+.tab {
+  padding: 9px 16px;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: -1px;
+}
+
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .menu-toggle { display: flex; align-items: center; }
+  .hero { padding: 60px 24px 32px; }
+  .hero h1 { font-size: 30px; }
+  .section { padding: 32px 20px; }
+  .topic-grid { grid-template-columns: 1fr; }
+  .viz-controls { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+<div class="app">
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">Data Structures</div>
+    <div class="sidebar-title">Fenwick Tree<br>Complete Guide</div>
+    <div class="sidebar-subtitle">// Binary Indexed Tree</div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-label"><span>PROGRESS</span><span id="progressPct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div id="navLinks"></div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Binary Indexed Tree · O(log n) Operations</div>
+  <h1>Fenwick Tree<br>Mastery Course</h1>
+  <p>A complete, interactive guide to mastering Fenwick Trees (Binary Indexed Trees) — from basic concepts to advanced competitive programming applications. Learn with visualizations, C code, and real-world analogies.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-num">15</span><span class="hero-stat-label">Operation Categories</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">60+</span><span class="hero-stat-label">Sub-Operations</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">O(log n)</span><span class="hero-stat-label">Time Complexity</span></div>
+    <div class="hero-stat"><span class="hero-stat-num">C Lang</span><span class="hero-stat-label">All Examples</span></div>
+  </div>
+</div>
+
+<div class="content-area">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 0: INTRODUCTION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-intro">
+  <div class="section-header">
+    <div class="section-num">00</div>
+    <h2 class="section-title">What is a <span>Fenwick Tree?</span></h2>
+  </div>
+
+  <div class="theory-block">
+    <strong>Fenwick Tree</strong>, also known as a <span class="highlight">Binary Indexed Tree (BIT)</span>, is a data structure invented by Peter Fenwick in 1994. It is a clever array-based structure that allows you to efficiently compute <span class="highlight">prefix sums</span> and perform <span class="highlight">point updates</span> — both in <strong>O(log n)</strong> time.<br><br>
+    The key idea: instead of storing values directly, each position stores the <span class="warn">sum of a range</span> of elements. The size of that range is determined by the <strong>lowest set bit</strong> in the binary representation of the index.
+  </div>
+
+  <div class="analogy-block">
+    <div class="analogy-label">💡 Real-Life Analogy</div>
+    Imagine a <strong>bank ledger system</strong>. Instead of reading every transaction from page 1 to get your balance, the accountant maintains <em>subtotals</em> at strategic checkpoints — every 2 transactions, every 4, every 8, etc. To get your total, you only add 2–3 checkpoints, not all 1000 entries. That's the Fenwick Tree!
+  </div>
+
+  <div class="complexity-row">
+    <span class="badge badge-green">Update: O(log n)</span>
+    <span class="badge badge-teal">Query: O(log n)</span>
+    <span class="badge badge-purple">Space: O(n)</span>
+    <span class="badge badge-orange">Build: O(n log n)</span>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">// ARRAY vs BIT — Comparison</div>
+    <table class="data-table">
+      <thead><tr><th>Operation</th><th>Naive Array</th><th>Prefix Array</th><th>Fenwick Tree</th></tr></thead>
+      <tbody>
+        <tr><td>Point Update</td><td style="color:var(--success)">O(1)</td><td style="color:var(--accent2)">O(n)</td><td style="color:var(--accent)">O(log n)</td></tr>
+        <tr><td>Prefix Sum Query</td><td style="color:var(--accent2)">O(n)</td><td style="color:var(--success)">O(1)</td><td style="color:var(--accent)">O(log n)</td></tr>
+        <tr><td>Range Sum Query</td><td style="color:var(--accent2)">O(n)</td><td style="color:var(--success)">O(1)</td><td style="color:var(--accent)">O(log n)</td></tr>
+        <tr><td>Space</td><td style="color:var(--success)">O(n)</td><td style="color:var(--success)">O(n)</td><td style="color:var(--success)">O(n)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="viz-container" id="introViz">
+    <div class="viz-title">// LIVE — BIT Internal Structure (n=8)</div>
+    <div id="introArrRow"></div>
+    <div style="margin-top:16px; font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">FENWICK TREE ARRAY:</div>
+    <div id="introBITRow" style="margin-top:8px;"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 1: CREATE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-create">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <h2 class="section-title">Create <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <!-- Create Fenwick Tree -->
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🌱</div>
+        <div class="topic-card-title">Create Fenwick Tree</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Creating a Fenwick Tree means declaring an integer array <code>BIT[]</code> of size <span class="highlight">n+1</span> (1-indexed). All cells start at <strong>0</strong>. The tree "lives inside" this flat array — no pointers, no nodes!
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">🏗️ Analogy</div>
+          Like buying a fresh notebook — you label pages 1 to n, all pages start blank (zero). You'll fill them as you add data.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Create a Fenwick Tree of size n */</span>
+<span class="cpp">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="cpp">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+
+<span class="kw">#define</span> MAXN <span class="num">1005</span>
+
+<span class="type">int</span> BIT[MAXN]; <span class="cmt">/* The Fenwick Tree array */</span>
+<span class="type">int</span> n;         <span class="cmt">/* Size of the tree */</span>
+
+<span class="kw">void</span> <span class="fn">createTree</span>(<span class="type">int</span> size) {
+    n = size;
+    <span class="cmt">/* Set all elements to zero */</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt;= n; i++) {
+        BIT[i] = <span class="num">0</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Fenwick Tree created with size %d\n"</span>, n);
+}
+
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="fn">createTree</span>(<span class="num">8</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// VISUALIZATION — Empty Tree</div>
+          <div class="bit-viz" id="createViz"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Array -->
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">📋</div>
+        <div class="topic-card-title">Create Array / Allocate Memory</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          The <span class="highlight">source array</span> holds original values. The BIT array holds prefix sums. Memory can be static (fixed size at compile time) or <span class="warn">dynamic</span> (allocated at runtime using <code>malloc</code>).
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">📦 Analogy</div>
+          Static = buying a fixed-size box. Dynamic = asking the warehouse for exactly as many boxes as you need.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Static allocation */</span>
+<span class="type">int</span> arr[MAXN];  <span class="cmt">/* source array */</span>
+<span class="type">int</span> BIT[MAXN];  <span class="cmt">/* Fenwick Tree */</span>
+
+<span class="cmt">/* Dynamic allocation */</span>
+<span class="type">int</span> <span class="fn">createDynamic</span>(<span class="type">int</span> size) {
+    <span class="type">int</span> *BIT_dyn = (<span class="type">int</span>*)<span class="fn">malloc</span>((size + <span class="num">1</span>) * <span class="kw">sizeof</span>(<span class="type">int</span>));
+    <span class="kw">if</span> (BIT_dyn == NULL) {
+        <span class="fn">printf</span>(<span class="str">"Memory allocation failed!\n"</span>);
+        <span class="kw">return</span> -<span class="num">1</span>;
+    }
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt;= size; i++)
+        BIT_dyn[i] = <span class="num">0</span>;
+    <span class="fn">printf</span>(<span class="str">"Allocated %d integers\n"</span>, size + <span class="num">1</span>);
+    <span class="fn">free</span>(BIT_dyn); <span class="cmt">/* free when done */</span>
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">⚠️ Key Rule</div>
+          Always use <strong>1-based indexing</strong>. BIT[0] is never used because the lowest-set-bit trick requires index ≥ 1.
+        </div>
+      </div>
+    </div>
+
+    <!-- Initialize Tree -->
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">⚙️</div>
+        <div class="topic-card-title">Initialize Tree</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Initialization sets every BIT cell to <span class="highlight">0</span>. This prepares the tree to receive updates. Think of it as clearing the slate before writing.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="kw">void</span> <span class="fn">initTree</span>(<span class="type">int</span> *BIT, <span class="type">int</span> n) {
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt;= n; i++)
+        BIT[i] = <span class="num">0</span>;
+}
+
+<span class="cmt">/* Using memset (faster) */</span>
+<span class="cpp">#include</span> <span class="str">&lt;string.h&gt;</span>
+<span class="kw">void</span> <span class="fn">initFast</span>(<span class="type">int</span> *BIT, <span class="type">int</span> n) {
+    <span class="fn">memset</span>(BIT, <span class="num">0</span>, (n + <span class="num">1</span>) * <span class="kw">sizeof</span>(<span class="type">int</span>));
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 2: BUILD OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-build">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <h2 class="section-title">Build <span>Operations</span></h2>
+  </div>
+
+  <div class="theory-block">
+    Building fills the BIT with actual data. The <span class="highlight">lowbit(i) = i & (-i)</span> trick is at the heart of how the tree stores range sums. Each index <code>i</code> stores the sum of elements from <code>i - lowbit(i) + 1</code> to <code>i</code>.
+  </div>
+
+  <div class="viz-container" id="buildVizMain">
+    <div class="viz-title">// INTERACTIVE — Build BIT from array [3,2,−1,6,5,4,−3,3]</div>
+    <div style="margin-bottom:8px; font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">ORIGINAL ARRAY (1-indexed):</div>
+    <div class="array-viz" id="buildArrViz"></div>
+    <div style="margin:14px 0 8px; font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">FENWICK TREE BIT[] — hover to see range:</div>
+    <div class="bit-viz" id="buildBITViz"></div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="animateBuild()">Animate Build</button>
+      <button class="btn btn-ghost" onclick="resetBuildViz()">Reset</button>
+    </div>
+    <div class="output-log" id="buildLog">// Click "Animate Build" to watch BIT construction step by step...</div>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🔨</div>
+        <div class="topic-card-title">Build from Array</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          The simplest build: iterate through each element and call <span class="highlight">update(i, arr[i])</span>. This takes <strong>O(n log n)</strong> time.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="type">int</span> BIT[MAXN], n;
+
+<span class="cmt">/* Core update: add 'val' at index i */</span>
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">int</span> i, <span class="type">int</span> val) {
+    <span class="kw">for</span> (; i &lt;= n; i += i &amp; (-i))
+        BIT[i] += val;
+}
+
+<span class="cmt">/* Build BIT from array arr[] (1-indexed) */</span>
+<span class="kw">void</span> <span class="fn">buildFromArray</span>(<span class="type">int</span> arr[], <span class="type">int</span> size) {
+    n = size;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt;= n; i++)
+        BIT[i] = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+        <span class="fn">update</span>(i, arr[i]);
+}
+
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="type">int</span> arr[] = {<span class="num">0</span>,<span class="num">3</span>,<span class="num">2</span>,-<span class="num">1</span>,<span class="num">6</span>,<span class="num">5</span>,<span class="num">4</span>,-<span class="num">3</span>,<span class="num">3</span>};
+    <span class="fn">buildFromArray</span>(arr, <span class="num">8</span>);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">💡 The Magic Formula</div>
+          <code>i & (-i)</code> extracts the <strong>lowest set bit</strong> of i.<br>
+          Example: i=6 → binary 110 → lowest set bit = 010 = 2<br>
+          So BIT[6] stores sum of arr[5..6] (2 elements)
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">⚡</div>
+        <div class="topic-card-title">Incremental / Prefix-Based Build</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <strong>Incremental build</strong>: insert elements one at a time as they arrive — useful for streaming data.<br><br>
+          <strong>Prefix-based build</strong>: an O(n) optimization — use prefix sums to fill BIT directly without calling update for each element.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Incremental build — O(n log n) */</span>
+<span class="kw">void</span> <span class="fn">incrementalBuild</span>(<span class="type">int</span> arr[], <span class="type">int</span> size) {
+    n = size;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+        <span class="fn">update</span>(i, arr[i]); <span class="cmt">/* one by one */</span>
+    }
+}
+
+<span class="cmt">/* O(n) build using prefix sum trick */</span>
+<span class="kw">void</span> <span class="fn">fastBuild</span>(<span class="type">int</span> arr[], <span class="type">int</span> size) {
+    n = size;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+        BIT[i] += arr[i];
+        <span class="type">int</span> j = i + (i &amp; -i); <span class="cmt">/* parent */</span>
+        <span class="kw">if</span> (j &lt;= n)
+            BIT[j] += BIT[i];
+    }
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// Lowbit table for indices 1–8</div>
+          <table class="data-table">
+            <thead><tr><th>i</th><th>binary</th><th>lowbit</th><th>BIT[i] stores</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>0001</td><td>1</td><td>arr[1]</td></tr>
+              <tr><td>2</td><td>0010</td><td>2</td><td>arr[1..2]</td></tr>
+              <tr><td>3</td><td>0011</td><td>1</td><td>arr[3]</td></tr>
+              <tr><td>4</td><td>0100</td><td>4</td><td>arr[1..4]</td></tr>
+              <tr><td>5</td><td>0101</td><td>1</td><td>arr[5]</td></tr>
+              <tr><td>6</td><td>0110</td><td>2</td><td>arr[5..6]</td></tr>
+              <tr><td>7</td><td>0111</td><td>1</td><td>arr[7]</td></tr>
+              <tr><td>8</td><td>1000</td><td>8</td><td>arr[1..8]</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 3: TRAVERSAL OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-traversal">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <h2 class="section-title">Traversal <span>Operations</span></h2>
+  </div>
+
+  <div class="theory-block">
+    Traversal in a BIT is different from trees with left/right pointers. We navigate using <span class="highlight">index arithmetic</span> — moving to parent or child by adding/removing the lowest set bit.
+  </div>
+
+  <div class="topic-grid">
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">➡️</div>
+        <div class="topic-card-title">Forward Traversal</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">Moving from index i to its <span class="highlight">next update node</span>: <code>i += i & (-i)</code>. This is used during <strong>update</strong> operations to propagate changes upward.</div>
+        <div class="viz-container">
+          <div class="viz-title">// Forward path from index 3</div>
+          <div class="bit-viz" id="fwdViz"></div>
+          <div class="output-log" id="fwdLog">// i=3 → 3+lowbit(3)=3+1=4 → 4+4=8 → done</div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Forward traversal (for update) */</span>
+<span class="kw">void</span> <span class="fn">traverseForward</span>(<span class="type">int</span> i) {
+    <span class="fn">printf</span>(<span class="str">"Forward path from %d: "</span>, i);
+    <span class="kw">while</span> (i &lt;= n) {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, i);
+        i += i &amp; (-i); <span class="cmt">/* move to parent */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">⬅️</div>
+        <div class="topic-card-title">Backward Traversal / Prefix</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">Moving from index i toward the root: <code>i -= i & (-i)</code>. This is used during <strong>query</strong> operations to accumulate prefix sums by stripping the lowest set bit.</div>
+        <div class="viz-container">
+          <div class="viz-title">// Backward path from index 7</div>
+          <div class="bit-viz" id="bwdViz"></div>
+          <div class="output-log" id="bwdLog">// i=7 → 7-lowbit(7)=7-1=6 → 6-2=4 → 4-4=0 → done</div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Backward traversal (for query) */</span>
+<span class="kw">void</span> <span class="fn">traverseBackward</span>(<span class="type">int</span> i) {
+    <span class="fn">printf</span>(<span class="str">"Prefix path from %d: "</span>, i);
+    <span class="kw">while</span> (i &gt; <span class="num">0</span>) {
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, i);
+        i -= i &amp; (-i); <span class="cmt">/* strip lowest bit */</span>
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">🔍</div>
+        <div class="topic-card-title">Interactive Traversal</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">Try both traversal types on the BIT below. Enter a start index and select direction.</div>
+        <div class="viz-container">
+          <div class="bit-viz" id="travIntViz"></div>
+          <div class="viz-controls">
+            <input class="input-sm" type="number" id="travIdx" value="5" min="1" max="8">
+            <button class="btn btn-primary" onclick="doTraversal('fwd')">Forward →</button>
+            <button class="btn btn-tertiary" onclick="doTraversal('bwd')">← Backward</button>
+          </div>
+          <div class="output-log" id="travLog">// Enter index and click traversal direction</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 4: ACCESS OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-access">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <h2 class="section-title">Access <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🏠</div>
+        <div class="topic-card-title">Root, Parent, Child, Current Node</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          In a BIT, <span class="highlight">root = index 1</span> (the first element). <strong>Parent</strong> of i = <code>i + lowbit(i)</code>. <strong>Child</strong> of i = <code>i - lowbit(i)</code> (conceptually). <strong>Current node</strong> = BIT[i] value.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Access operations */</span>
+<span class="type">int</span> <span class="fn">accessRoot</span>() {
+    <span class="kw">return</span> BIT[<span class="num">1</span>]; <span class="cmt">/* root is at index 1 */</span>
+}
+
+<span class="type">int</span> <span class="fn">accessParent</span>(<span class="type">int</span> i) {
+    <span class="cmt">/* In update path, parent is at i + lowbit(i) */</span>
+    <span class="type">int</span> parent = i + (i &amp; -i);
+    <span class="kw">if</span> (parent &gt; n) <span class="kw">return</span> -<span class="num">1</span>; <span class="cmt">/* no parent */</span>
+    <span class="kw">return</span> BIT[parent];
+}
+
+<span class="type">int</span> <span class="fn">accessChild</span>(<span class="type">int</span> i) {
+    <span class="cmt">/* In query path, child is at i - lowbit(i) */</span>
+    <span class="type">int</span> child = i - (i &amp; -i);
+    <span class="kw">if</span> (child &lt;= <span class="num">0</span>) <span class="kw">return</span> -<span class="num">1</span>; <span class="cmt">/* no child */</span>
+    <span class="kw">return</span> BIT[child];
+}
+
+<span class="type">int</span> <span class="fn">accessCurrentNode</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> BIT[i]; <span class="cmt">/* direct array access */</span>
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// Access Demo — click any node</div>
+          <div class="bit-viz" id="accessViz"></div>
+          <div class="output-log" id="accessLog">// Click a BIT cell to see its value, parent, and child indices</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">📊</div>
+        <div class="topic-card-title">Access Prefix Value</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          The <span class="highlight">prefix value</span> at index i is the sum of all elements from index 1 to i. We compute it by walking backward from i, accumulating BIT values.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Get prefix sum from 1 to i */</span>
+<span class="type">int</span> <span class="fn">prefixSum</span>(<span class="type">int</span> i) {
+    <span class="type">int</span> sum = <span class="num">0</span>;
+    <span class="kw">while</span> (i &gt; <span class="num">0</span>) {
+        sum += BIT[i];
+        i -= i &amp; (-i); <span class="cmt">/* go to previous range */</span>
+    }
+    <span class="kw">return</span> sum;
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// Compute Prefix Sum</div>
+          <div class="bit-viz" id="prefixViz"></div>
+          <div class="viz-controls">
+            <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">i =</span>
+            <input class="input-sm" type="number" id="prefixIdx" value="6" min="1" max="8">
+            <button class="btn btn-tertiary" onclick="doPrefixAccess()">Compute</button>
+          </div>
+          <div class="output-log" id="prefixLog">// Enter an index to trace prefix sum path</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 5: QUERY OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-query">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <h2 class="section-title">Query <span>Operations</span></h2>
+  </div>
+
+  <div class="analogy-block">
+    <div class="analogy-label">💡 Real-Life Analogy</div>
+    Imagine a store's daily sales log. <strong>Prefix query</strong> = "Total sales from day 1 to day N". <strong>Range query</strong> = "Total sales from day 15 to day 30". <strong>Point query</strong> = "Sales on exactly day 20". All doable in O(log n)!
+  </div>
+
+  <!-- INTERACTIVE QUERY DEMO -->
+  <div class="viz-container">
+    <div class="viz-title">// INTERACTIVE QUERY DEMO — arr = [3,2,-1,6,5,4,-3,3]</div>
+    <div style="margin-bottom:8px; font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">ORIGINAL ARRAY:</div>
+    <div class="array-viz" id="queryArrViz"></div>
+    <div style="margin:12px 0 8px; font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">FENWICK TREE:</div>
+    <div class="bit-viz" id="queryBITViz"></div>
+    <div class="viz-controls">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">L=</span>
+      <input class="input-sm" type="number" id="queryL" value="2" min="1" max="8">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">R=</span>
+      <input class="input-sm" type="number" id="queryR" value="6" min="1" max="8">
+      <button class="btn btn-primary" onclick="doQuery('prefix')">Prefix Sum(R)</button>
+      <button class="btn btn-tertiary" onclick="doQuery('range')">Range Sum(L,R)</button>
+      <button class="btn btn-secondary" onclick="doQuery('point')">Point Query(L)</button>
+    </div>
+    <div class="output-log" id="queryLog">// Select a query type above to see it in action</div>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">Σ</div>
+        <div class="topic-card-title">Prefix Sum Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Sum from index 1 to i. Walk from i backward, subtracting the lowest set bit each time, accumulating BIT values. <strong>Time: O(log n)</strong>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Prefix sum: sum of arr[1..i] */</span>
+<span class="type">int</span> <span class="fn">query</span>(<span class="type">int</span> i) {
+    <span class="type">int</span> sum = <span class="num">0</span>;
+    <span class="kw">while</span> (i &gt; <span class="num">0</span>) {
+        sum += BIT[i];
+        i -= i &amp; (-i);
+    }
+    <span class="kw">return</span> sum;
+}
+<span class="cmt">/* Example: query(4) for arr=[3,2,-1,6] */</span>
+<span class="cmt">/* = BIT[4] = 10 */</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">↔️</div>
+        <div class="topic-card-title">Range Sum Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Sum from index l to r. Use two prefix queries: <code>query(r) - query(l-1)</code>. <strong>Time: O(log n)</strong>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Range sum: sum of arr[l..r] */</span>
+<span class="type">int</span> <span class="fn">rangeQuery</span>(<span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">return</span> <span class="fn">query</span>(r) - <span class="fn">query</span>(l - <span class="num">1</span>);
+}
+
+<span class="cmt">/* Example usage */</span>
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="cmt">/* arr = [3,2,-1,6,5,4,-3,3] */</span>
+    <span class="type">int</span> r = <span class="fn">rangeQuery</span>(<span class="num">2</span>, <span class="num">6</span>); <span class="cmt">/* 2+(-1)+6+5+4 = 16 */</span>
+    <span class="fn">printf</span>(<span class="str">"Range sum [2,6] = %d\n"</span>, r);
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">📍</div>
+        <div class="topic-card-title">Point Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Get the value of a single element at index i: <code>query(i) - query(i-1)</code>. This works when only point updates are done (not range updates).
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Point query: get value at index i */</span>
+<span class="type">int</span> <span class="fn">pointQuery</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> <span class="fn">query</span>(i) - <span class="fn">query</span>(i - <span class="num">1</span>);
+}
+
+<span class="cmt">/* OR if you maintain original array: */</span>
+<span class="type">int</span> arr[MAXN]; <span class="cmt">/* keep original */</span>
+<span class="type">int</span> <span class="fn">pointQueryDirect</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> arr[i]; <span class="cmt">/* O(1) if arr maintained */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(34,197,94,0.1)">📈</div>
+        <div class="topic-card-title">Cumulative / Partial Sum Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <strong>Cumulative frequency query</strong>: how many elements ≤ x? Useful in frequency counting.<br>
+          <strong>Partial sum query</strong>: sum of a specific portion, combining prefix queries.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Cumulative frequency up to value x */</span>
+<span class="cmt">/* BIT stores frequencies of each value */</span>
+<span class="type">int</span> freq[MAXN]; <span class="cmt">/* freq[v] = count of v */</span>
+
+<span class="kw">void</span> <span class="fn">addValue</span>(<span class="type">int</span> v) {
+    <span class="fn">update</span>(v, <span class="num">1</span>); <span class="cmt">/* increment frequency */</span>
+}
+
+<span class="type">int</span> <span class="fn">cumulativeFreq</span>(<span class="type">int</span> x) {
+    <span class="kw">return</span> <span class="fn">query</span>(x); <span class="cmt">/* count of vals <= x */</span>
+}
+
+<span class="cmt">/* Partial sum: specific window */</span>
+<span class="type">int</span> <span class="fn">partialSum</span>(<span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">return</span> <span class="fn">query</span>(r) - <span class="fn">query</span>(l - <span class="num">1</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 6: UPDATE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-update">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <h2 class="section-title">Update <span>Operations</span></h2>
+  </div>
+
+  <div class="theory-block">
+    All updates use the <span class="highlight">forward traversal</span> pattern: start at index i, add delta to BIT[i], then move to <code>i + lowbit(i)</code>, repeat until i > n. This propagates the change to all responsible ranges.
+  </div>
+
+  <!-- UPDATE VISUALIZER -->
+  <div class="viz-container">
+    <div class="viz-title">// INTERACTIVE UPDATE — arr = [3,2,-1,6,5,4,-3,3]</div>
+    <div class="array-viz" id="updArrViz"></div>
+    <div style="margin:12px 0 8px; font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">FENWICK TREE (affected cells flash):</div>
+    <div class="bit-viz" id="updBITViz"></div>
+    <div class="viz-controls">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">index=</span>
+      <input class="input-sm" type="number" id="updIdx" value="3" min="1" max="8">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">val=</span>
+      <input class="input-sm" type="number" id="updVal" value="5">
+      <button class="btn btn-secondary" onclick="doUpdate('add')">+ Add</button>
+      <button class="btn btn-ghost" onclick="doUpdate('sub')">− Sub</button>
+      <button class="btn btn-primary" onclick="doUpdate('set')">= Replace</button>
+    </div>
+    <div class="output-log" id="updLog">// Try updating a position</div>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">🔺</div>
+        <div class="topic-card-title">Point / Increment / Decrement Update</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Point update: add delta to arr[i] */</span>
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">int</span> i, <span class="type">int</span> delta) {
+    <span class="kw">for</span> (; i &lt;= n; i += i &amp; (-i))
+        BIT[i] += delta;
+}
+
+<span class="cmt">/* Increment: arr[i] += 1 */</span>
+<span class="kw">void</span> <span class="fn">increment</span>(<span class="type">int</span> i) {
+    <span class="fn">update</span>(i, <span class="num">1</span>);
+}
+
+<span class="cmt">/* Decrement: arr[i] -= 1 */</span>
+<span class="kw">void</span> <span class="fn">decrement</span>(<span class="type">int</span> i) {
+    <span class="fn">update</span>(i, -<span class="num">1</span>);
+}
+
+<span class="cmt">/* Add value v to arr[i] */</span>
+<span class="kw">void</span> <span class="fn">addVal</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="fn">update</span>(i, v);
+}
+
+<span class="cmt">/* Subtract value v from arr[i] */</span>
+<span class="kw">void</span> <span class="fn">subtractVal</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="fn">update</span>(i, -v);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🔄</div>
+        <div class="topic-card-title">Replace Value</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          To replace arr[i] with a new value, we need the <span class="highlight">delta</span>: <code>update(i, newVal - arr[i])</code>. Always keep a copy of the original array to compute the difference.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="type">int</span> arr[MAXN]; <span class="cmt">/* keep original values */</span>
+
+<span class="cmt">/* Replace arr[i] with newVal */</span>
+<span class="kw">void</span> <span class="fn">replaceValue</span>(<span class="type">int</span> i, <span class="type">int</span> newVal) {
+    <span class="type">int</span> delta = newVal - arr[i];
+    arr[i] = newVal;       <span class="cmt">/* update source array */</span>
+    <span class="fn">update</span>(i, delta);     <span class="cmt">/* update BIT with difference */</span>
+}
+
+<span class="cmt">/* Example: replace arr[3]=-1 with 10 */</span>
+<span class="cmt">/* delta = 10-(-1) = 11, update BIT by +11 */</span></pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">📌 Why the difference?</div>
+          The BIT stores sums, not direct values. To change arr[3] from -1 to 10, we add 11 to all BIT nodes responsible for index 3.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 7: SEARCH OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-search">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <h2 class="section-title">Search <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🔎</div>
+        <div class="topic-card-title">Search Element / Search Prefix Sum</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <strong>Search element</strong>: linear scan — BIT doesn't support direct element search efficiently.<br>
+          <strong>Search prefix sum</strong>: binary search on the BIT to find the index where prefix sum = target.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Search for element (linear O(n)) */</span>
+<span class="type">int</span> <span class="fn">searchElement</span>(<span class="type">int</span> arr[], <span class="type">int</span> val) {
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+        <span class="kw">if</span> (arr[i] == val) <span class="kw">return</span> i;
+    <span class="kw">return</span> -<span class="num">1</span>; <span class="cmt">/* not found */</span>
+}
+
+<span class="cmt">/* Find smallest i where prefix sum >= target */</span>
+<span class="type">int</span> <span class="fn">searchPrefixSum</span>(<span class="type">int</span> target) {
+    <span class="type">int</span> pos = <span class="num">0</span>, bitMask;
+    <span class="kw">for</span> (bitMask = <span class="num">1</span>&lt;&lt;<span class="num">20</span>; bitMask; bitMask &gt;&gt;= <span class="num">1</span>) {
+        <span class="type">int</span> next = pos + bitMask;
+        <span class="kw">if</span> (next &lt;= n &amp;&amp; BIT[next] &lt; target) {
+            pos = next;
+            target -= BIT[pos];
+        }
+    }
+    <span class="kw">return</span> pos + <span class="num">1</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">🏆</div>
+        <div class="topic-card-title">Find K-th Element</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Given a frequency BIT, find the <span class="highlight">k-th smallest element</span>. Walk the BIT in O(log n) using binary lifting — the most elegant BIT trick!
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Find k-th smallest element — O(log n) */</span>
+<span class="cmt">/* BIT stores frequencies: BIT[v] = freq of v */</span>
+<span class="type">int</span> <span class="fn">findKth</span>(<span class="type">int</span> k) {
+    <span class="type">int</span> pos = <span class="num">0</span>;
+    <span class="type">int</span> logN = <span class="num">0</span>;
+    
+    <span class="cmt">/* Find highest power of 2 <= n */</span>
+    <span class="kw">while</span> ((<span class="num">1</span> &lt;&lt; (logN + <span class="num">1</span>)) &lt;= n) logN++;
+    
+    <span class="kw">for</span> (<span class="type">int</span> i = logN; i &gt;= <span class="num">0</span>; i--) {
+        <span class="type">int</span> next = pos + (<span class="num">1</span> &lt;&lt; i);
+        <span class="kw">if</span> (next &lt;= n &amp;&amp; BIT[next] &lt; k) {
+            k -= BIT[next];
+            pos = next;
+        }
+    }
+    <span class="kw">return</span> pos + <span class="num">1</span>; <span class="cmt">/* k-th element */</span>
+}</pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">🏅 Use Case</div>
+          Used in competitive programming to find median or specific rank in a dynamically changing sorted list.
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">⬆️</div>
+        <div class="topic-card-title">Binary Lifting Search</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <span class="highlight">Binary Lifting</span> is a technique that halves the search space at each step by testing powers of 2. It allows finding positions in O(log n) without a separate binary search.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Binary lifting on BIT */</span>
+<span class="type">int</span> <span class="fn">binaryLift</span>(<span class="type">int</span> target) {
+    <span class="type">int</span> idx = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> pw = (<span class="num">1</span>&lt;&lt;<span class="num">17</span>); pw; pw &gt;&gt;= <span class="num">1</span>) {
+        <span class="kw">if</span> (idx + pw &lt;= n &amp;&amp;
+            BIT[idx + pw] &lt; target) {
+            idx += pw;
+            target -= BIT[idx];
+        }
+    }
+    <span class="kw">return</span> idx + <span class="num">1</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(34,197,94,0.1)">⬇️⬆️</div>
+        <div class="topic-card-title">Lower / Upper Bound Search</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <strong>Lower bound</strong>: first index where prefix_sum ≥ target.<br>
+          <strong>Upper bound</strong>: first index where prefix_sum > target.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Lower bound: first i with prefix >= target */</span>
+<span class="type">int</span> <span class="fn">lowerBound</span>(<span class="type">int</span> target) {
+    <span class="type">int</span> pos = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> pw = <span class="num">1</span>&lt;&lt;<span class="num">20</span>; pw; pw &gt;&gt;= <span class="num">1</span>) {
+        <span class="kw">if</span> (pos+pw &lt;= n &amp;&amp; BIT[pos+pw] &lt; target) {
+            pos += pw;
+            target -= BIT[pos];
+        }
+    }
+    <span class="kw">return</span> pos + <span class="num">1</span>;
+}
+
+<span class="cmt">/* Upper bound: first i with prefix > target */</span>
+<span class="type">int</span> <span class="fn">upperBound</span>(<span class="type">int</span> target) {
+    <span class="kw">return</span> <span class="fn">lowerBound</span>(target + <span class="num">1</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 8: RANGE OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-range">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <h2 class="section-title">Range <span>Operations</span></h2>
+  </div>
+
+  <div class="theory-block">
+    Range update (add a value to all elements in [l,r]) requires a <span class="highlight">difference array trick</span>. We maintain a BIT of differences so that range updates and point/range queries both stay O(log n).
+  </div>
+
+  <div class="analogy-block">
+    <div class="analogy-label">💡 Real-Life Analogy</div>
+    A teacher gives +5 bonus marks to all students from seat 3 to seat 7. Instead of updating each student's record individually, she notes "+5 starts at seat 3" and "−5 starts at seat 8". The bookkeeper reconstructs everyone's score in one pass.
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🔃</div>
+        <div class="topic-card-title">Range Update + Point Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Use a difference BIT: <code>update(l, +v)</code> and <code>update(r+1, -v)</code>. Then a point query at i = <code>prefix_sum(i)</code>.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="type">int</span> BIT_diff[MAXN]; <span class="cmt">/* difference BIT */</span>
+
+<span class="kw">void</span> <span class="fn">rangeUpdate</span>(<span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> v) {
+    <span class="fn">update_bit</span>(BIT_diff, l, v);
+    <span class="fn">update_bit</span>(BIT_diff, r + <span class="num">1</span>, -v);
+}
+
+<span class="type">int</span> <span class="fn">pointQueryAfterRangeUpdate</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> <span class="fn">prefix_query</span>(BIT_diff, i);
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// Range Update Demo</div>
+          <div class="array-viz" id="rangeUpdViz"></div>
+          <div class="viz-controls">
+            <span style="font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">L=</span>
+            <input class="input-sm" type="number" id="ruL" value="2" min="1" max="8">
+            <span style="font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">R=</span>
+            <input class="input-sm" type="number" id="ruR" value="5" min="1" max="8">
+            <span style="font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted)">V=</span>
+            <input class="input-sm" type="number" id="ruV" value="3">
+            <button class="btn btn-primary" onclick="doRangeUpdate()">Range Add</button>
+          </div>
+          <div class="output-log" id="ruLog">// Apply a range update to highlight affected indices</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">📐</div>
+        <div class="topic-card-title">Range Update + Range Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Uses <span class="highlight">two BITs</span>: BIT1 and BIT2. For range sum after range updates, a formula involving both BITs gives the correct result.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="type">int</span> BIT1[MAXN], BIT2[MAXN];
+
+<span class="kw">void</span> <span class="fn">add</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="kw">for</span> (<span class="type">int</span> x=i; x&lt;=n; x+=x&amp;-x) {
+        BIT1[x] += v;
+        BIT2[x] += v * (i - <span class="num">1</span>);
+    }
+}
+
+<span class="kw">void</span> <span class="fn">rangeAdd</span>(<span class="type">int</span> l, <span class="type">int</span> r, <span class="type">int</span> v) {
+    <span class="fn">add</span>(l, v);
+    <span class="fn">add</span>(r + <span class="num">1</span>, -v);
+}
+
+<span class="type">int</span> <span class="fn">prefQ</span>(<span class="type">int</span> i) {
+    <span class="type">int</span> s = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> x=i; x&gt;<span class="num">0</span>; x-=x&amp;-x)
+        s += BIT1[x] * i - BIT2[x];
+    <span class="kw">return</span> s;
+}
+
+<span class="type">int</span> <span class="fn">rangeSum</span>(<span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">return</span> <span class="fn">prefQ</span>(r) - <span class="fn">prefQ</span>(l - <span class="num">1</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 9: BIT MANIPULATION -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-bits">
+  <div class="section-header">
+    <div class="section-num">09</div>
+    <h2 class="section-title">Bit Manipulation <span>Operations</span></h2>
+  </div>
+
+  <div class="theory-block">
+    Fenwick Trees are built entirely on <span class="highlight">bitwise operations</span>. Understanding <code>i & (-i)</code> is the key to understanding everything. Let's demystify it!
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">// INTERACTIVE — Lowbit Calculator</div>
+    <div class="viz-controls" style="margin:0 0 14px;">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">Enter index:</span>
+      <input class="input-sm" type="number" id="bitIdx" value="6" min="1" max="255">
+      <button class="btn btn-primary" onclick="calcBitOps()">Calculate</button>
+    </div>
+    <div id="bitOpsResult"></div>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">⚡</div>
+        <div class="topic-card-title">Get Lowest Set Bit</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <code>i & (-i)</code> extracts the rightmost set bit. This tells us how many consecutive elements BIT[i] is responsible for.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Get lowest set bit of i */</span>
+<span class="type">int</span> <span class="fn">lowbit</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> i &amp; (-i);
+}
+<span class="cmt">/*
+  How it works:
+  i  =  6 → binary: 0110
+  -i = -6 → 2's complement: 1010
+  i&(-i)  = 0010 = 2 ✓
+
+  i  =  12 → binary: 1100
+  -i = -12 → 2's comp: 0100
+  i&(-i)   = 0100 = 4 ✓
+*/</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">👆</div>
+        <div class="topic-card-title">Parent / Next Index Calculation</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <span class="highlight">Parent (update path)</span>: <code>i + lowbit(i)</code> — move upward to next node responsible for i.<br>
+          <span class="highlight">Prev (query path)</span>: <code>i - lowbit(i)</code> — move backward to previous range.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Next index during update */</span>
+<span class="type">int</span> <span class="fn">nextIndex</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> i + (i &amp; -i);
+}
+
+<span class="cmt">/* Previous index during query */</span>
+<span class="type">int</span> <span class="fn">prevIndex</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> i - (i &amp; -i);
+}
+
+<span class="cmt">/* Index jump: skip entire subtree */</span>
+<span class="type">int</span> <span class="fn">indexJump</span>(<span class="type">int</span> i, <span class="type">int</span> steps) {
+    <span class="kw">while</span> (steps--) i = <span class="fn">nextIndex</span>(i);
+    <span class="kw">return</span> i;
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 10: VALIDATION OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-valid">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <h2 class="section-title">Validation <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(34,197,94,0.1)">✅</div>
+        <div class="topic-card-title">Check Empty / Validate Index / Range</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Always validate inputs before operations to prevent buffer overflow or undefined behavior. A BIT is "empty" when all values are 0.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Check if BIT is empty */</span>
+<span class="type">int</span> <span class="fn">isEmpty</span>() {
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+        <span class="kw">if</span> (BIT[i] != <span class="num">0</span>) <span class="kw">return</span> <span class="num">0</span>;
+    <span class="kw">return</span> <span class="num">1</span>;
+}
+
+<span class="cmt">/* Validate single index */</span>
+<span class="type">int</span> <span class="fn">validateIndex</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> (i &gt;= <span class="num">1</span> &amp;&amp; i &lt;= n);
+}
+
+<span class="cmt">/* Validate range [l, r] */</span>
+<span class="type">int</span> <span class="fn">validateRange</span>(<span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">return</span> (l &gt;= <span class="num">1</span> &amp;&amp; r &lt;= n &amp;&amp; l &lt;= r);
+}
+
+<span class="cmt">/* Boundary check with error message */</span>
+<span class="kw">void</span> <span class="fn">safeUpdate</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="kw">if</span> (!<span class="fn">validateIndex</span>(i)) {
+        <span class="fn">printf</span>(<span class="str">"Error: index %d out of bounds!\n"</span>, i);
+        <span class="kw">return</span>;
+    }
+    <span class="fn">update</span>(i, v);
+}
+
+<span class="kw">int</span> <span class="fn">safeQuery</span>(<span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">if</span> (!<span class="fn">validateRange</span>(l, r)) {
+        <span class="fn">printf</span>(<span class="str">"Error: invalid range [%d,%d]!\n"</span>,l,r);
+        <span class="kw">return</span> -<span class="num">1</span>;
+    }
+    <span class="kw">return</span> <span class="fn">rangeQuery</span>(l, r);
+}</pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">🛡️ Best Practice</div>
+          Always check bounds in competitive programming too — even one wrong index causes subtle wrong answers that are hard to debug.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 11: MEMORY OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-memory">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <h2 class="section-title">Memory <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">🗑️</div>
+        <div class="topic-card-title">Resize / Clear / Reset / Delete Tree</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cpp">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+<span class="cpp">#include</span> <span class="str">&lt;string.h&gt;</span>
+
+<span class="type">int</span> *BIT_dyn = NULL;
+
+<span class="cmt">/* Resize: reallocate for new size */</span>
+<span class="kw">void</span> <span class="fn">resizeTree</span>(<span class="type">int</span> newSize) {
+    BIT_dyn = (<span class="type">int</span>*)<span class="fn">realloc</span>(BIT_dyn,
+               (newSize + <span class="num">1</span>) * <span class="kw">sizeof</span>(<span class="type">int</span>));
+    n = newSize;
+    <span class="fn">memset</span>(BIT_dyn, <span class="num">0</span>, (n+<span class="num">1</span>)*<span class="kw">sizeof</span>(<span class="type">int</span>));
+}
+
+<span class="cmt">/* Clear: zero out all values */</span>
+<span class="kw">void</span> <span class="fn">clearTree</span>() {
+    <span class="fn">memset</span>(BIT, <span class="num">0</span>, (n+<span class="num">1</span>)*<span class="kw">sizeof</span>(<span class="type">int</span>));
+}
+
+<span class="cmt">/* Reset: zero out + reset size */</span>
+<span class="kw">void</span> <span class="fn">resetTree</span>() {
+    <span class="fn">clearTree</span>();
+    n = <span class="num">0</span>;
+}
+
+<span class="cmt">/* Delete dynamic tree */</span>
+<span class="kw">void</span> <span class="fn">deleteTree</span>() {
+    <span class="fn">free</span>(BIT_dyn);
+    BIT_dyn = NULL;
+    n = <span class="num">0</span>;
+}</pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">♻️ Memory Best Practices</div>
+          Always free dynamically allocated memory. Use <code>memset</code> (not a loop) for clearing — it's much faster and maps directly to CPU instructions.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 12: UTILITY OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-utility">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <h2 class="section-title">Utility <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🖨️</div>
+        <div class="topic-card-title">Print Tree / Display Array / Prefix Array</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="type">int</span> arr[MAXN];
+
+<span class="cmt">/* Get size of tree */</span>
+<span class="type">int</span> <span class="fn">getTreeSize</span>() { <span class="kw">return</span> n; }
+
+<span class="cmt">/* Count non-zero elements */</span>
+<span class="type">int</span> <span class="fn">countElements</span>() {
+    <span class="type">int</span> cnt = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">1</span>; i&lt;=n; i++)
+        <span class="kw">if</span> (arr[i] != <span class="num">0</span>) cnt++;
+    <span class="kw">return</span> cnt;
+}
+
+<span class="cmt">/* Print raw BIT array */</span>
+<span class="kw">void</span> <span class="fn">printTree</span>() {
+    <span class="fn">printf</span>(<span class="str">"BIT: "</span>);
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">1</span>; i&lt;=n; i++)
+        <span class="fn">printf</span>(<span class="str">"[%d]=%d "</span>, i, BIT[i]);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cmt">/* Display original array */</span>
+<span class="kw">void</span> <span class="fn">displayArray</span>() {
+    <span class="fn">printf</span>(<span class="str">"arr: "</span>);
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">1</span>; i&lt;=n; i++)
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, arr[i]);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cmt">/* Display prefix sums */</span>
+<span class="kw">void</span> <span class="fn">displayPrefixArray</span>() {
+    <span class="fn">printf</span>(<span class="str">"prefix: "</span>);
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">1</span>; i&lt;=n; i++)
+        <span class="fn">printf</span>(<span class="str">"%d "</span>, <span class="fn">query</span>(i));
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// Live Utility Display</div>
+          <div class="bit-viz" id="utilViz"></div>
+          <div class="viz-controls">
+            <button class="btn btn-primary" onclick="showUtility('tree')">Print Tree</button>
+            <button class="btn btn-secondary" onclick="showUtility('arr')">Display Array</button>
+            <button class="btn btn-tertiary" onclick="showUtility('prefix')">Prefix Array</button>
+          </div>
+          <div class="output-log" id="utilLog">// Click a display option above</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 13: ADVANCED OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-advanced">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <h2 class="section-title">Advanced <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🔲</div>
+        <div class="topic-card-title">2D Fenwick Tree</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Extend to 2D: BIT[i][j] stores cumulative sum over a rectangle. <span class="highlight">Update and query both run in O(log n × log m)</span>.
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">🗺️ Use Case</div>
+          Count the number of points in a 2D grid rectangle. Used in computational geometry and image processing.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="type">int</span> BIT2D[<span class="num">105</span>][<span class="num">105</span>];
+<span class="type">int</span> N, M; <span class="cmt">/* rows and columns */</span>
+
+<span class="kw">void</span> <span class="fn">update2D</span>(<span class="type">int</span> x, <span class="type">int</span> y, <span class="type">int</span> v) {
+    <span class="kw">for</span> (<span class="type">int</span> i=x; i&lt;=N; i+=i&amp;-i)
+        <span class="kw">for</span> (<span class="type">int</span> j=y; j&lt;=M; j+=j&amp;-j)
+            BIT2D[i][j] += v;
+}
+
+<span class="type">int</span> <span class="fn">query2D</span>(<span class="type">int</span> x, <span class="type">int</span> y) {
+    <span class="type">int</span> sum = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i=x; i&gt;<span class="num">0</span>; i-=i&amp;-i)
+        <span class="kw">for</span> (<span class="type">int</span> j=y; j&gt;<span class="num">0</span>; j-=j&amp;-j)
+            sum += BIT2D[i][j];
+    <span class="kw">return</span> sum;
+}
+
+<span class="cmt">/* Rectangle sum: (r1,c1) to (r2,c2) */</span>
+<span class="type">int</span> <span class="fn">rectSum</span>(<span class="type">int</span> r1,<span class="type">int</span> c1,<span class="type">int</span> r2,<span class="type">int</span> c2) {
+    <span class="kw">return</span> <span class="fn">query2D</span>(r2,c2)
+          -<span class="fn">query2D</span>(r1-<span class="num">1</span>,c2)
+          -<span class="fn">query2D</span>(r2,c1-<span class="num">1</span>)
+          +<span class="fn">query2D</span>(r1-<span class="num">1</span>,c1-<span class="num">1</span>);
+}</pre>
+        </div>
+        <div class="viz-container">
+          <div class="viz-title">// 2D BIT Grid (5×5)</div>
+          <div id="bit2dGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">🗜️</div>
+        <div class="topic-card-title">Compressed Fenwick Tree</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          When values are large (e.g., up to 10⁹) but sparse (only N distinct values), we <span class="highlight">compress coordinates</span> to 1..N first, then use a BIT of size N.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cpp">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+
+<span class="type">int</span> vals[MAXN]; <span class="cmt">/* large values */</span>
+<span class="type">int</span> sorted[MAXN];
+
+<span class="type">int</span> <span class="fn">cmp</span>(<span class="kw">const</span> <span class="type">void</span>* a, <span class="kw">const</span> <span class="type">void</span>* b) {
+    <span class="kw">return</span> (*(<span class="type">int</span>*)a) - (*(<span class="type">int</span>*)b);
+}
+
+<span class="cmt">/* Compress values to 1..n */</span>
+<span class="kw">void</span> <span class="fn">compress</span>(<span class="type">int</span> arr[], <span class="type">int</span> n) {
+    <span class="fn">memcpy</span>(sorted, arr, n * <span class="kw">sizeof</span>(<span class="type">int</span>));
+    <span class="fn">qsort</span>(sorted, n, <span class="kw">sizeof</span>(<span class="type">int</span>), cmp);
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; n; i++) {
+        <span class="cmt">/* binary search for rank */</span>
+        <span class="type">int</span> lo=<span class="num">0</span>, hi=n-<span class="num">1</span>, rank=-<span class="num">1</span>;
+        <span class="kw">while</span>(lo&lt;=hi) {
+            <span class="type">int</span> mid=(lo+hi)/<span class="num">2</span>;
+            <span class="kw">if</span>(sorted[mid]==arr[i]) {rank=mid+<span class="num">1</span>;<span class="kw">break</span>;}
+            <span class="kw">else if</span>(sorted[mid]&lt;arr[i]) lo=mid+<span class="num">1</span>;
+            <span class="kw">else</span> hi=mid-<span class="num">1</span>;
+        }
+        arr[i] = rank;
+    }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">📊</div>
+        <div class="topic-card-title">Frequency Counting</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Store element frequencies in BIT. <span class="highlight">Update(v, 1)</span> = add one occurrence of v. <span class="highlight">Query(v)</span> = how many elements ≤ v exist.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Frequency BIT for values 1..MAXV */</span>
+<span class="kw">#define</span> MAXV <span class="num">1000</span>
+<span class="type">int</span> freqBIT[MAXV + <span class="num">1</span>];
+<span class="type">int</span> MV = MAXV;
+
+<span class="kw">void</span> <span class="fn">addElement</span>(<span class="type">int</span> v) {
+    <span class="fn">update</span>(v, <span class="num">1</span>);  <span class="cmt">/* add one occurrence */</span>
+}
+
+<span class="kw">void</span> <span class="fn">removeElement</span>(<span class="type">int</span> v) {
+    <span class="fn">update</span>(v, -<span class="num">1</span>); <span class="cmt">/* remove one occurrence */</span>
+}
+
+<span class="type">int</span> <span class="fn">countLessEqual</span>(<span class="type">int</span> v) {
+    <span class="kw">return</span> <span class="fn">query</span>(v);
+}
+
+<span class="cmt">/* Median: find n/2-th element */</span>
+<span class="type">int</span> <span class="fn">findMedian</span>(<span class="type">int</span> totalCount) {
+    <span class="kw">return</span> <span class="fn">findKth</span>(totalCount / <span class="num">2</span> + <span class="num">1</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(34,197,94,0.1)">🔀</div>
+        <div class="topic-card-title">Inversion Counting</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          An <span class="highlight">inversion</span> is a pair (i, j) where i < j but arr[i] > arr[j]. BIT counts inversions in O(n log n) — essential in sorting algorithm analysis.
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">🃏 Analogy</div>
+          In a deck of cards, inversions = how "shuffled" it is. A sorted deck has 0 inversions. A reversed deck has n(n-1)/2 inversions.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Count inversions in arr[] — O(n log n) */</span>
+<span class="type">int</span> <span class="fn">countInversions</span>(<span class="type">int</span> arr[], <span class="type">int</span> n) {
+    <span class="type">int</span> inversions = <span class="num">0</span>;
+    <span class="type">int</span> maxVal = <span class="num">0</span>;
+    
+    <span class="cmt">/* Find max for BIT size */</span>
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+        <span class="kw">if</span> (arr[i] &gt; maxVal) maxVal = arr[i];
+    
+    <span class="cmt">/* Reset BIT to maxVal size */</span>
+    <span class="fn">memset</span>(BIT, <span class="num">0</span>, (maxVal+<span class="num">1</span>)*<span class="kw">sizeof</span>(<span class="type">int</span>));
+    
+    <span class="kw">for</span> (<span class="type">int</span> i = n-<span class="num">1</span>; i &gt;= <span class="num">0</span>; i--) {
+        <span class="cmt">/* Count elements < arr[i] seen so far */</span>
+        inversions += <span class="fn">query</span>(arr[i] - <span class="num">1</span>);
+        <span class="fn">update_bit</span>(arr[i], <span class="num">1</span>);
+    }
+    <span class="kw">return</span> inversions;
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 14: OPTIMIZATION OPERATIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-optim">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <h2 class="section-title">Optimization <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🚀</div>
+        <div class="topic-card-title">Fast Update / Fast Query</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          Micro-optimizations to squeeze out every nanosecond in competitive programming:
+          <ul style="margin-top:8px; padding-left:16px; line-height:1.8;">
+            <li>Use <code>register int</code> for loop variables</li>
+            <li>Avoid function call overhead by inlining</li>
+            <li>Prefer <code>i += i & -i</code> over computing lowbit separately</li>
+          </ul>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Optimized update — inline, no extra vars */</span>
+<span class="kw">inline void</span> <span class="fn">fastUpdate</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="kw">for</span> (; i &lt;= n; i += i &amp; -i)
+        BIT[i] += v;
+}
+
+<span class="cmt">/* Optimized query — no function call */</span>
+<span class="kw">inline int</span> <span class="fn">fastQuery</span>(<span class="type">int</span> i) {
+    <span class="type">int</span> s = <span class="num">0</span>;
+    <span class="kw">for</span> (; i &gt; <span class="num">0</span>; i -= i &amp; -i)
+        s += BIT[i];
+    <span class="kw">return</span> s;
+}
+
+<span class="cmt">/* Prefix optimization: precompute all prefix sums */</span>
+<span class="kw">void</span> <span class="fn">prefixOptimize</span>(<span class="type">int</span> prefix[]) {
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++)
+        prefix[i] = <span class="fn">fastQuery</span>(i);
+}
+
+<span class="cmt">/* Binary Indexed Optimization: O(n) build */</span>
+<span class="kw">void</span> <span class="fn">binaryIndexedOptimize</span>(<span class="type">int</span> arr[]) {
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+        BIT[i] += arr[i];
+        <span class="type">int</span> j = i + (i &amp; -i);
+        <span class="kw">if</span> (j &lt;= n) BIT[j] += BIT[i];
+    }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SECTION 15: COMPETITIVE PROGRAMMING -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-cp">
+  <div class="section-header">
+    <div class="section-num">15</div>
+    <h2 class="section-title">Competitive Programming <span>Operations</span></h2>
+  </div>
+
+  <div class="topic-grid">
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(0,229,192,0.1)">🗜️</div>
+        <div class="topic-card-title">Coordinate Compression</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          When values span [1, 10⁹] but there are only N ≤ 10⁵ queries, map values to [1, N] first. This reduces BIT size drastically.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cpp">#include</span> <span class="str">&lt;stdlib.h&gt;</span>
+
+<span class="type">int</span> vals[MAXN], comp[MAXN], m;
+
+<span class="type">int</span> <span class="fn">cmpInt</span>(<span class="kw">const</span> <span class="type">void</span>* a, <span class="kw">const</span> <span class="type">void</span>* b) {
+    <span class="kw">return</span> (*(<span class="type">int</span>*)a) - (*(<span class="type">int</span>*)b);
+}
+
+<span class="kw">void</span> <span class="fn">coordinateCompress</span>(<span class="type">int</span> n) {
+    <span class="fn">memcpy</span>(comp, vals, n*<span class="kw">sizeof</span>(<span class="type">int</span>));
+    <span class="fn">qsort</span>(comp, n, <span class="kw">sizeof</span>(<span class="type">int</span>), cmpInt);
+    <span class="cmt">/* remove duplicates */</span>
+    m = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;n; i++)
+        <span class="kw">if</span> (!m || comp[m-<span class="num">1</span>] != comp[i])
+            comp[m++] = comp[i];
+    <span class="cmt">/* map vals[i] to rank in [1..m] */</span>
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">0</span>; i&lt;n; i++) {
+        <span class="type">int</span> lo=<span class="num">0</span>, hi=m-<span class="num">1</span>;
+        <span class="kw">while</span>(lo&lt;hi) {
+            <span class="type">int</span> mid=(lo+hi)/<span class="num">2</span>;
+            <span class="kw">if</span>(comp[mid]&lt;vals[i]) lo=mid+<span class="num">1</span>;
+            <span class="kw">else</span> hi=mid;
+        }
+        vals[i] = lo + <span class="num">1</span>;
+    }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(255,107,53,0.1)">📦</div>
+        <div class="topic-card-title">Offline Query Processing</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <span class="highlight">Offline queries</span>: read all queries first, sort/group them, then answer together — often faster than online processing.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="kw">typedef struct</span> {
+    <span class="type">int</span> l, r, idx;
+} Query;
+
+Query queries[MAXN];
+<span class="type">int</span> ans[MAXN];
+
+<span class="type">int</span> <span class="fn">cmpQuery</span>(<span class="kw">const</span> <span class="type">void</span>* a, <span class="kw">const</span> <span class="type">void</span>* b) {
+    <span class="kw">return</span> ((Query*)a)->r - ((Query*)b)->r;
+}
+
+<span class="kw">void</span> <span class="fn">offlineProcess</span>(<span class="type">int</span> arr[], <span class="type">int</span> q) {
+    <span class="cmt">/* Sort queries by right endpoint */</span>
+    <span class="fn">qsort</span>(queries, q, <span class="kw">sizeof</span>(Query), cmpQuery);
+    
+    <span class="type">int</span> qi = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i &lt;= n; i++) {
+        <span class="fn">update</span>(i, arr[i]);
+        <span class="kw">while</span> (qi &lt; q &amp;&amp; queries[qi].r == i) {
+            ans[queries[qi].idx] =
+                <span class="fn">rangeQuery</span>(queries[qi].l, i);
+            qi++;
+        }
+    }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="topic-card">
+      <div class="topic-card-header">
+        <div class="topic-icon" style="background:rgba(124,109,255,0.1)">📈</div>
+        <div class="topic-card-title">Frequency Maintenance + Dynamic Prefix</div>
+      </div>
+      <div class="topic-card-body">
+        <div class="theory-block">
+          <strong>Frequency Maintenance</strong>: keep count of how many times each value appears, dynamically add/remove. <br>
+          <strong>Dynamic Prefix Handling</strong>: handle prefix queries even as elements are inserted or deleted online.
+        </div>
+        <div class="code-wrap">
+          <div class="code-label"><span class="code-lang">C</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cmt">/* Frequency maintenance */</span>
+<span class="type">int</span> BIT_freq[MAXN];
+
+<span class="kw">void</span> <span class="fn">insertVal</span>(<span class="type">int</span> v) {
+    <span class="fn">update</span>(v, +<span class="num">1</span>); <span class="cmt">/* increment freq */</span>
+}
+
+<span class="kw">void</span> <span class="fn">deleteVal</span>(<span class="type">int</span> v) {
+    <span class="fn">update</span>(v, -<span class="num">1</span>); <span class="cmt">/* decrement freq */</span>
+}
+
+<span class="type">int</span> <span class="fn">freqOf</span>(<span class="type">int</span> v) {
+    <span class="kw">return</span> <span class="fn">query</span>(v) - <span class="fn">query</span>(v - <span class="num">1</span>);
+}
+
+<span class="cmt">/* Dynamic prefix: sum updates on the fly */</span>
+<span class="type">int</span> <span class="fn">dynamicPrefix</span>(<span class="type">int</span> i) {
+    <span class="kw">return</span> <span class="fn">query</span>(i);
+    <span class="cmt">/* always reflects latest updates */</span>
+}</pre>
+        </div>
+        <div class="analogy-block">
+          <div class="analogy-label">🏪 Real-Life Use Case</div>
+          A live leaderboard in a game: players gain/lose scores, and you need to instantly answer "How many players have score ≤ X?" — that's frequency maintenance with BIT!
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- COMPLETE TEMPLATE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="section" id="sec-template">
+  <div class="section-header">
+    <div class="section-num">✦</div>
+    <h2 class="section-title">Complete <span>BIT Template</span></h2>
+  </div>
+
+  <div class="theory-block">
+    The complete, competition-ready Fenwick Tree implementation in C with all essential operations in one place.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span class="code-lang">C — Complete Template</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+<pre><span class="cpp">#include</span> <span class="str">&lt;stdio.h&gt;</span>
+<span class="cpp">#include</span> <span class="str">&lt;string.h&gt;</span>
+
+<span class="kw">#define</span> MAXN <span class="num">100005</span>
+
+<span class="type">int</span> BIT[MAXN], arr[MAXN], n;
+
+<span class="cmt">/* ── CORE ─────────────────────────────── */</span>
+<span class="kw">void</span> <span class="fn">update</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="kw">for</span> (; i &lt;= n; i += i&amp;-i) BIT[i] += v;
+}
+
+<span class="type">int</span> <span class="fn">query</span>(<span class="type">int</span> i) {
+    <span class="type">int</span> s = <span class="num">0</span>;
+    <span class="kw">for</span> (; i &gt; <span class="num">0</span>; i -= i&amp;-i) s += BIT[i];
+    <span class="kw">return</span> s;
+}
+
+<span class="type">int</span> <span class="fn">rangeQuery</span>(<span class="type">int</span> l, <span class="type">int</span> r) {
+    <span class="kw">return</span> <span class="fn">query</span>(r) - <span class="fn">query</span>(l-<span class="num">1</span>);
+}
+
+<span class="cmt">/* ── BUILD ────────────────────────────── */</span>
+<span class="kw">void</span> <span class="fn">build</span>(<span class="type">int</span> a[], <span class="type">int</span> sz) {
+    n = sz;
+    <span class="fn">memset</span>(BIT, <span class="num">0</span>, (n+<span class="num">1</span>)*<span class="kw">sizeof</span>(<span class="type">int</span>));
+    <span class="kw">for</span> (<span class="type">int</span> i=<span class="num">1</span>; i&lt;=n; i++) {
+        BIT[i] += a[i];
+        <span class="type">int</span> j = i+(i&amp;-i);
+        <span class="kw">if</span> (j&lt;=n) BIT[j] += BIT[i];
+    }
+}
+
+<span class="cmt">/* ── REPLACE ──────────────────────────── */</span>
+<span class="kw">void</span> <span class="fn">replace</span>(<span class="type">int</span> i, <span class="type">int</span> v) {
+    <span class="fn">update</span>(i, v - arr[i]);
+    arr[i] = v;
+}
+
+<span class="cmt">/* ── K-TH ─────────────────────────────── */</span>
+<span class="type">int</span> <span class="fn">kth</span>(<span class="type">int</span> k) {
+    <span class="type">int</span> pos = <span class="num">0</span>;
+    <span class="kw">for</span> (<span class="type">int</span> pw=(<span class="num">1</span>&lt;&lt;<span class="num">17</span>); pw; pw&gt;&gt;=<span class="num">1</span>)
+        <span class="kw">if</span> (pos+pw&lt;=n &amp;&amp; BIT[pos+pw]&lt;k) {
+            k -= BIT[pos+=pw];
+        }
+    <span class="kw">return</span> pos+<span class="num">1</span>;
+}
+
+<span class="cmt">/* ── MAIN ─────────────────────────────── */</span>
+<span class="type">int</span> <span class="fn">main</span>() {
+    <span class="type">int</span> a[] = {<span class="num">0</span>,<span class="num">3</span>,<span class="num">2</span>,-<span class="num">1</span>,<span class="num">6</span>,<span class="num">5</span>,<span class="num">4</span>,-<span class="num">3</span>,<span class="num">3</span>};
+    <span class="fn">memcpy</span>(arr, a, <span class="kw">sizeof</span>(a));
+    <span class="fn">build</span>(a, <span class="num">8</span>);
+
+    <span class="fn">printf</span>(<span class="str">"Prefix sum [1..5] = %d\n"</span>, <span class="fn">query</span>(<span class="num">5</span>));
+    <span class="fn">printf</span>(<span class="str">"Range sum [2..6]  = %d\n"</span>, <span class="fn">rangeQuery</span>(<span class="num">2</span>,<span class="num">6</span>));
+
+    <span class="fn">replace</span>(<span class="num">3</span>, <span class="num">10</span>);
+    <span class="fn">printf</span>(<span class="str">"After update: [1..3] = %d\n"</span>, <span class="fn">query</span>(<span class="num">3</span>));
+
+    <span class="kw">return</span> <span class="num">0</span>;
+}</pre>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">// FINAL INTERACTIVE PLAYGROUND</div>
+    <div id="playgroundBIT"></div>
+    <div class="viz-controls" style="margin-top:14px;">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">idx=</span>
+      <input class="input-sm" type="number" id="pgIdx" value="4" min="1" max="8">
+      <span style="font-size:12px; font-family:'Space Mono',monospace; color:var(--text-muted)">val=</span>
+      <input class="input-sm" type="number" id="pgVal" value="7">
+      <button class="btn btn-secondary" onclick="pgOp('update')">Update</button>
+      <button class="btn btn-primary" onclick="pgOp('prefix')">Prefix Sum</button>
+      <button class="btn btn-tertiary" onclick="pgOp('kth')">K-th Element</button>
+      <button class="btn btn-ghost" onclick="pgOp('reset')">Reset</button>
+    </div>
+    <div class="output-log" id="pgLog">// Welcome to the BIT Playground. Try any operation!</div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="padding:32px 48px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-wrap:gap;">
+  <div>
+    <div style="font-size:13px; color:var(--text-dim); font-weight:600;">Fenwick Tree Complete Guide</div>
+    <div style="font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted); margin-top:4px;">15 categories · 60+ operations · C language</div>
+  </div>
+  <div style="font-size:11px; font-family:'Space Mono',monospace; color:var(--text-muted);">O(log n) forever</div>
+</div>
+
+</div><!-- content-area -->
+</main>
+</div><!-- app -->
+
+<script>
+// ──────────────────────────────────────────────────────
+// GLOBAL STATE
+// ──────────────────────────────────────────────────────
+const N = 8;
+const ORIG = [0,3,2,-1,6,5,4,-3,3]; // 1-indexed
+let arr = [...ORIG];
+let BIT = new Array(N+1).fill(0);
+let pgArr = [...ORIG];
+let pgBIT = new Array(N+1).fill(0);
+let rangeUpdArr = [0,3,2,-1,6,5,4,-3,3];
+
+function buildBIT(a, n, b) {
+  b.fill(0);
+  for (let i = 1; i <= n; i++) {
+    b[i] += a[i];
+    let j = i + (i & -i);
+    if (j <= n) b[j] += b[i];
+  }
+}
+
+function updateBIT(b, i, val, n) {
+  for (; i <= n; i += i & -i) b[i] += val;
+}
+
+function queryBIT(b, i) {
+  let s = 0;
+  for (; i > 0; i -= i & -i) s += b[i];
+  return s;
+}
+
+buildBIT(arr, N, BIT);
+buildBIT(pgArr, N, pgBIT);
+
+// ──────────────────────────────────────────────────────
+// NAV GENERATION
+// ──────────────────────────────────────────────────────
+const sections = [
+  {id:'sec-intro', num:'00', label:'Introduction'},
+  {id:'sec-create', num:'01', label:'Create Operations'},
+  {id:'sec-build', num:'02', label:'Build Operations'},
+  {id:'sec-traversal', num:'03', label:'Traversal Operations'},
+  {id:'sec-access', num:'04', label:'Access Operations'},
+  {id:'sec-query', num:'05', label:'Query Operations'},
+  {id:'sec-update', num:'06', label:'Update Operations'},
+  {id:'sec-search', num:'07', label:'Search Operations'},
+  {id:'sec-range', num:'08', label:'Range Operations'},
+  {id:'sec-bits', num:'09', label:'Bit Manipulation'},
+  {id:'sec-valid', num:'10', label:'Validation Operations'},
+  {id:'sec-memory', num:'11', label:'Memory Operations'},
+  {id:'sec-utility', num:'12', label:'Utility Operations'},
+  {id:'sec-advanced', num:'13', label:'Advanced Operations'},
+  {id:'sec-optim', num:'14', label:'Optimization Operations'},
+  {id:'sec-cp', num:'15', label:'Competitive Programming'},
+  {id:'sec-template', num:'✦', label:'Complete Template'},
+];
+
+const navEl = document.getElementById('navLinks');
+navEl.innerHTML = `<div class="nav-section"><div class="nav-section-label">Contents</div>` +
+  sections.map(s => `<a class="nav-item" id="nav-${s.id}" href="#${s.id}" onclick="setActive('nav-${s.id}')">
+    <span class="nav-num">${s.num}</span>${s.label}</a>`).join('') +
+  `</div>`;
+
+function setActive(id) {
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  updateProgress();
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+// Intersection observer for nav highlight
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      const navId = `nav-${id}`;
+      setActive(navId);
+    }
+  });
+}, {threshold: 0.25});
+
+sections.forEach(s => {
+  const el = document.getElementById(s.id);
+  if (el) observer.observe(el);
+});
+
+function updateProgress() {
+  const active = document.querySelector('.nav-item.active');
+  if (!active) return;
+  const idx = [...document.querySelectorAll('.nav-item')].indexOf(active);
+  const pct = Math.round((idx / (sections.length - 1)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ──────────────────────────────────────────────────────
+// RENDER HELPERS
+// ──────────────────────────────────────────────────────
+function renderArr(containerId, a, highlights={}) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 1; i <= N; i++) {
+    const cls = highlights[i] || '';
+    el.innerHTML += `<div class="arr-cell">
+      <div class="arr-box ${cls}">${a[i]}</div>
+      <div class="arr-idx">[${i}]</div>
+    </div>`;
+  }
+}
+
+function renderBIT(containerId, b, highlights={}, showRange=false) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 1; i <= N; i++) {
+    const cls = highlights[i] || '';
+    const low = i & -i;
+    const rangeStart = i - low + 1;
+    const tip = `[${rangeStart}..${i}]`;
+    el.innerHTML += `<div class="bit-cell">
+      <div class="bit-box ${cls}" title="BIT[${i}]=${b[i]}, covers ${tip}">${b[i]}</div>
+      <div class="bit-label">[${i}]</div>
+      ${showRange ? `<div class="bit-range">${tip}</div>` : ''}
+    </div>`;
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 0: INTRO
+// ──────────────────────────────────────────────────────
+(function initIntro() {
+  const arr0 = [0,3,2,-1,6,5,4,-3,3];
+  const b0 = new Array(N+1).fill(0);
+  buildBIT(arr0, N, b0);
+  renderArr('introArrRow', arr0);
+  renderBIT('introBITRow', b0, {}, true);
+})();
+
+// ──────────────────────────────────────────────────────
+// SECTION 1: CREATE
+// ──────────────────────────────────────────────────────
+(function initCreate() {
+  const empty = new Array(N+1).fill(0);
+  renderBIT('createViz', empty);
+})();
+
+// ──────────────────────────────────────────────────────
+// SECTION 2: BUILD
+// ──────────────────────────────────────────────────────
+let buildArr = [0,3,2,-1,6,5,4,-3,3];
+let buildBITArr = new Array(N+1).fill(0);
+let buildAnimStep = 0;
+let buildAnimTimer = null;
+
+function resetBuildViz() {
+  clearTimeout(buildAnimTimer);
+  buildBITArr = new Array(N+1).fill(0);
+  buildAnimStep = 0;
+  renderArr('buildArrViz', buildArr);
+  renderBIT('buildBITViz', buildBITArr, {}, true);
+  document.getElementById('buildLog').textContent = '// Click "Animate Build" to watch BIT construction step by step...';
+}
+
+function animateBuild() {
+  clearTimeout(buildAnimTimer);
+  buildBITArr = new Array(N+1).fill(0);
+  buildAnimStep = 1;
+  renderArr('buildArrViz', buildArr);
+  renderBIT('buildBITViz', buildBITArr, {}, true);
+  runBuildStep();
+}
+
+function runBuildStep() {
+  if (buildAnimStep > N) {
+    document.getElementById('buildLog').textContent = '// ✓ Build complete! All BIT cells filled.';
+    renderArr('buildArrViz', buildArr, {});
+    renderBIT('buildBITViz', buildBITArr, {}, true);
+    return;
+  }
+  const i = buildAnimStep;
+  buildBITArr[i] += buildArr[i];
+  let j = i + (i & -i);
+  if (j <= N) buildBITArr[j] += buildBITArr[i];
+
+  const low = i & -i;
+  const rangeStart = i - low + 1;
+  const arrHL = {}; arrHL[i] = 'active';
+  const bitHL = {}; bitHL[i] = 'update';
+  if (j <= N) bitHL[j] = 'query';
+
+  renderArr('buildArrViz', buildArr, arrHL);
+  renderBIT('buildBITViz', buildBITArr, bitHL, true);
+
+  document.getElementById('buildLog').textContent =
+    `// Step ${i}: BIT[${i}] += arr[${i}](=${buildArr[i]}), covers arr[${rangeStart}..${i}]${j<=N ? ` → propagate to BIT[${j}]` : ''}`;
+
+  buildAnimStep++;
+  buildAnimTimer = setTimeout(runBuildStep, 600);
+}
+
+resetBuildViz();
+
+// ──────────────────────────────────────────────────────
+// SECTION 3: TRAVERSAL
+// ──────────────────────────────────────────────────────
+(function initTraversal() {
+  // Forward from index 3
+  const fHL = {};
+  let i = 3;
+  while (i <= N) { fHL[i] = 'active'; i += i & -i; }
+  renderBIT('fwdViz', BIT, fHL);
+
+  // Backward from index 7
+  const bHL = {};
+  i = 7;
+  while (i > 0) { bHL[i] = 'query'; i -= i & -i; }
+  renderBIT('bwdViz', BIT, bHL);
+
+  renderBIT('travIntViz', BIT);
+})();
+
+function doTraversal(dir) {
+  const idx = parseInt(document.getElementById('travIdx').value);
+  if (idx < 1 || idx > N) {
+    document.getElementById('travLog').textContent = '// Invalid index (1–8)';
+    return;
+  }
+  const hl = {};
+  const path = [];
+  let i = idx;
+  if (dir === 'fwd') {
+    while (i <= N) { hl[i] = 'update'; path.push(i); i += i & -i; }
+    document.getElementById('travLog').textContent = `// Forward from ${idx}: ${path.join(' → ')} → (end)`;
+  } else {
+    while (i > 0) { hl[i] = 'query'; path.push(i); i -= i & -i; }
+    document.getElementById('travLog').textContent = `// Backward from ${idx}: ${path.join(' → ')} → 0`;
+  }
+  renderBIT('travIntViz', BIT, hl);
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 4: ACCESS
+// ──────────────────────────────────────────────────────
+(function initAccess() {
+  renderBIT('accessViz', BIT, {}, true);
+
+  // attach click handlers after render
+  setTimeout(() => {
+    const el = document.getElementById('accessViz');
+    if (!el) return;
+    el.querySelectorAll('.bit-box').forEach((box, idx) => {
+      const i = idx + 1;
+      box.addEventListener('click', () => {
+        const parentIdx = i + (i & -i);
+        const childIdx = i - (i & -i);
+        const hl = {};
+        hl[i] = 'active';
+        if (parentIdx <= N) hl[parentIdx] = 'update';
+        if (childIdx >= 1) hl[childIdx] = 'query';
+        renderBIT('accessViz', BIT, hl, true);
+        document.getElementById('accessLog').textContent =
+          `// BIT[${i}] = ${BIT[i]} | Parent → ${parentIdx <= N ? `BIT[${parentIdx}]=${BIT[parentIdx]}` : 'none'} | Child → ${childIdx >= 1 ? `BIT[${childIdx}]=${BIT[childIdx]}` : 'none'}`;
+      });
+    });
+  }, 100);
+
+  renderBIT('prefixViz', BIT, {}, true);
+})();
+
+function doPrefixAccess() {
+  const idx = parseInt(document.getElementById('prefixIdx').value);
+  if (idx < 1 || idx > N) return;
+  const hl = {};
+  const path = [];
+  let i = idx, sum = 0;
+  while (i > 0) { hl[i] = 'query'; path.push(`BIT[${i}](=${BIT[i]})`); sum += BIT[i]; i -= i & -i; }
+  renderBIT('prefixViz', BIT, hl, true);
+  document.getElementById('prefixLog').textContent =
+    `// prefix(${idx}) = ${path.join(' + ')} = ${sum}`;
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 5: QUERY
+// ──────────────────────────────────────────────────────
+(function initQuery() {
+  renderArr('queryArrViz', arr);
+  renderBIT('queryBITViz', BIT);
+})();
+
+function doQuery(type) {
+  const L = parseInt(document.getElementById('queryL').value);
+  const R = parseInt(document.getElementById('queryR').value);
+  const hl = {};
+  let msg = '';
+
+  if (type === 'prefix') {
+    let i = R, sum = 0;
+    while (i > 0) { hl[i] = 'query'; sum += BIT[i]; i -= i & -i; }
+    renderArr('queryArrViz', arr, {});
+    renderBIT('queryBITViz', BIT, hl);
+    msg = `// prefix_sum(${R}) = ${sum}  [sum of arr[1..${R}]]`;
+  } else if (type === 'range') {
+    let i = R; while (i > 0) { hl[i] = 'query'; i -= i & -i; }
+    let j = L-1; while (j > 0) { hl[j] = 'update'; j -= j & -j; }
+    const arrHL = {};
+    for (let k = L; k <= R; k++) arrHL[k] = 'active';
+    renderArr('queryArrViz', arr, arrHL);
+    renderBIT('queryBITViz', BIT, hl);
+    const sum = queryBIT(BIT, R) - queryBIT(BIT, L-1);
+    msg = `// range_sum(${L},${R}) = query(${R}) - query(${L-1}) = ${sum}`;
+  } else {
+    const arrHL = {}; arrHL[L] = 'active';
+    const sum = queryBIT(BIT, L) - queryBIT(BIT, L-1);
+    renderArr('queryArrViz', arr, arrHL);
+    renderBIT('queryBITViz', BIT, hl);
+    msg = `// point_query(${L}) = query(${L}) - query(${L-1}) = ${sum}`;
+  }
+  document.getElementById('queryLog').textContent = msg;
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 6: UPDATE
+// ──────────────────────────────────────────────────────
+(function initUpdate() {
+  renderArr('updArrViz', arr);
+  renderBIT('updBITViz', BIT);
+})();
+
+function doUpdate(op) {
+  const idx = parseInt(document.getElementById('updIdx').value);
+  const val = parseInt(document.getElementById('updVal').value);
+  if (idx < 1 || idx > N || isNaN(val)) {
+    document.getElementById('updLog').textContent = '// Invalid input';
+    return;
+  }
+  let delta = val;
+  if (op === 'sub') delta = -val;
+  if (op === 'set') delta = val - arr[idx];
+
+  arr[idx] += delta;
+  updateBIT(BIT, idx, delta, N);
+
+  const hl = {}; hl[idx] = 'update';
+  let j = idx + (idx & -idx);
+  while (j <= N) { hl[j] = 'update'; j += j & -j; }
+
+  const arrHL = {}; arrHL[idx] = 'update';
+  renderArr('updArrViz', arr, arrHL);
+  renderBIT('updBITViz', BIT, hl);
+
+  const opStr = op === 'add' ? `+${val}` : op === 'sub' ? `-${val}` : `=${val}`;
+  document.getElementById('updLog').textContent =
+    `// update(${idx}, ${delta >= 0 ? '+' : ''}${delta}) — arr[${idx}] now = ${arr[idx]}`;
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 8: RANGE UPDATE
+// ──────────────────────────────────────────────────────
+(function initRangeUpd() {
+  renderArr('rangeUpdViz', rangeUpdArr);
+})();
+
+function doRangeUpdate() {
+  const l = parseInt(document.getElementById('ruL').value);
+  const r = parseInt(document.getElementById('ruR').value);
+  const v = parseInt(document.getElementById('ruV').value);
+  if (l < 1 || r > N || l > r || isNaN(v)) {
+    document.getElementById('ruLog').textContent = '// Invalid range';
+    return;
+  }
+  for (let i = l; i <= r; i++) rangeUpdArr[i] += v;
+  const hl = {};
+  for (let i = l; i <= r; i++) hl[i] = 'active';
+  hl[l] = 'update'; hl[r] = 'query';
+  renderArr('rangeUpdViz', rangeUpdArr, hl);
+  document.getElementById('ruLog').textContent =
+    `// range_update([${l},${r}], +${v}) — ${r-l+1} elements updated`;
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 9: BIT MANIPULATION
+// ──────────────────────────────────────────────────────
+function calcBitOps() {
+  const i = parseInt(document.getElementById('bitIdx').value);
+  if (i < 1) return;
+  const low = i & -i;
+  const twosComp = (~i + 1) >>> 0;
+  const andResult = i & twosComp;
+  const parent = i + low;
+  const prev = i - low;
+
+  const bin = (x, bits=8) => x.toString(2).padStart(bits,'0');
+
+  document.getElementById('bitOpsResult').innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Operation</th><th>Decimal</th><th>Binary (8-bit)</th></tr></thead>
+      <tbody>
+        <tr><td>i</td><td style="color:var(--text)">${i}</td><td style="color:var(--text); font-family:'JetBrains Mono',monospace">${bin(i)}</td></tr>
+        <tr><td>-i (2's complement)</td><td style="color:var(--accent2)">${-i}</td><td style="color:var(--accent2); font-family:'JetBrains Mono',monospace">${bin(twosComp)}</td></tr>
+        <tr><td>i & (-i) = lowbit</td><td style="color:var(--accent)">${low}</td><td style="color:var(--accent); font-family:'JetBrains Mono',monospace">${bin(low)}</td></tr>
+        <tr><td>i + lowbit (next/parent)</td><td style="color:var(--accent3)">${parent}</td><td style="color:var(--accent3); font-family:'JetBrains Mono',monospace">${bin(parent)}</td></tr>
+        <tr><td>i - lowbit (prev/child)</td><td style="color:var(--warning)">${prev}</td><td style="color:var(--warning); font-family:'JetBrains Mono',monospace">${bin(Math.max(0,prev))}</td></tr>
+        <tr><td>BIT[${i}] responsible range</td><td style="color:var(--success)" colspan="2">[${i-low+1} .. ${i}] → ${low} element(s)</td></tr>
+      </tbody>
+    </table>`;
+}
+
+calcBitOps();
+
+// ──────────────────────────────────────────────────────
+// SECTION 12: UTILITY
+// ──────────────────────────────────────────────────────
+(function initUtil() {
+  renderBIT('utilViz', BIT, {}, true);
+})();
+
+function showUtility(type) {
+  renderBIT('utilViz', BIT, {}, true);
+  if (type === 'tree') {
+    const parts = [];
+    for (let i = 1; i <= N; i++) parts.push(`BIT[${i}]=${BIT[i]}`);
+    document.getElementById('utilLog').textContent = '// BIT: ' + parts.join('  ');
+  } else if (type === 'arr') {
+    const parts = [];
+    for (let i = 1; i <= N; i++) parts.push(`arr[${i}]=${arr[i]}`);
+    document.getElementById('utilLog').textContent = '// arr: ' + parts.join('  ');
+  } else {
+    const parts = [];
+    for (let i = 1; i <= N; i++) parts.push(`P[${i}]=${queryBIT(BIT,i)}`);
+    document.getElementById('utilLog').textContent = '// prefix: ' + parts.join('  ');
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// SECTION 13: 2D BIT
+// ──────────────────────────────────────────────────────
+(function init2D() {
+  const G = 5;
+  let html = '<div style="display:inline-grid;grid-template-columns:repeat('+G+',40px);gap:3px;">';
+  for (let i = 1; i <= G; i++) {
+    for (let j = 1; j <= G; j++) {
+      const v = ((i*3 + j*2) % 9);
+      html += `<div style="width:40px;height:40px;background:var(--surface2);border:1.5px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:12px;color:var(--text-dim);cursor:pointer;transition:all 0.2s;" 
+        onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'"
+        title="cell(${i},${j})=${v}">${v}</div>`;
+    }
+  }
+  html += '</div>';
+  document.getElementById('bit2dGrid').innerHTML = html;
+})();
+
+// ──────────────────────────────────────────────────────
+// PLAYGROUND
+// ──────────────────────────────────────────────────────
+(function initPlayground() {
+  renderBIT('playgroundBIT', pgBIT, {}, true);
+})();
+
+function pgOp(op) {
+  const idx = parseInt(document.getElementById('pgIdx').value);
+  const val = parseInt(document.getElementById('pgVal').value);
+  let msg = '';
+
+  if (op === 'reset') {
+    pgArr = [...ORIG];
+    pgBIT = new Array(N+1).fill(0);
+    buildBIT(pgArr, N, pgBIT);
+    renderBIT('playgroundBIT', pgBIT, {}, true);
+    document.getElementById('pgLog').textContent = '// Reset to original array [3,2,-1,6,5,4,-3,3]';
+    return;
+  }
+
+  if (op === 'update') {
+    if (idx < 1 || idx > N || isNaN(val)) { document.getElementById('pgLog').textContent = '// Bad index/value'; return; }
+    const delta = val - pgArr[idx];
+    pgArr[idx] = val;
+    updateBIT(pgBIT, idx, delta, N);
+    const hl = {}; hl[idx] = 'update';
+    let j2 = idx + (idx & -idx);
+    while (j2 <= N) { hl[j2] = 'update'; j2 += j2 & -j2; }
+    renderBIT('playgroundBIT', pgBIT, hl, true);
+    msg = `// update(${idx}, ${val}) done. Propagated to ${Object.keys(hl).join(', ')}`;
+  } else if (op === 'prefix') {
+    if (idx < 1 || idx > N) { document.getElementById('pgLog').textContent = '// Bad index'; return; }
+    const hl = {}; let i = idx, sum = 0;
+    while (i > 0) { hl[i] = 'query'; sum += pgBIT[i]; i -= i & -i; }
+    renderBIT('playgroundBIT', pgBIT, hl, true);
+    msg = `// prefix_sum(${idx}) = ${sum}`;
+  } else if (op === 'kth') {
+    if (isNaN(val) || val < 1) { document.getElementById('pgLog').textContent = '// Bad k value'; return; }
+    // kth in frequency context
+    let k = val, pos = 0;
+    const hl = {};
+    for (let pw = (1<<4); pw; pw >>= 1) {
+      if (pos+pw <= N && pgBIT[pos+pw] < k) {
+        k -= pgBIT[pos += pw];
+        hl[pos] = 'query';
+      }
+    }
+    const result = pos + 1;
+    if (result <= N) hl[result] = 'active';
+    renderBIT('playgroundBIT', pgBIT, hl, true);
+    msg = result <= N
+      ? `// kth(${val}): found at index ${result} (value ${pgArr[result]})`
+      : `// kth(${val}): out of range`;
+  }
+  document.getElementById('pgLog').textContent = msg;
+}
+
+// ──────────────────────────────────────────────────────
+// COPY CODE
+// ──────────────────────────────────────────────────────
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'copied!';
+    btn.style.color = 'var(--accent)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+  });
+}
+
+// ──────────────────────────────────────────────────────
+// INITIAL PAGE LOAD
+// ──────────────────────────────────────────────────────
+setActive('nav-sec-intro');
+</script>
+</body>
+</html>

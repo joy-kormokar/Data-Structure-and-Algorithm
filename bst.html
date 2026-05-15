@@ -1,0 +1,2860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BST Mastery — Linked List Based Binary Search Tree</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #070b12;
+  --bg2: #0d1422;
+  --bg3: #121929;
+  --border: #1e2d45;
+  --accent: #00e87a;
+  --accent2: #00b8f0;
+  --accent3: #ff6b35;
+  --accent4: #a78bfa;
+  --text: #e2eaf6;
+  --text2: #8899b4;
+  --text3: #4e6080;
+  --node-fill: #0d2a4a;
+  --node-stroke: #00b8f0;
+  --node-active: #00e87a;
+  --node-delete: #ff4d6d;
+  --node-search: #ffd166;
+  --code-bg: #0a1020;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-track { background: transparent; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0;
+  background: var(--bg2);
+  z-index: 2;
+}
+.sidebar-logo {
+  font-size: 18px; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+.sidebar-sub { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: 'Fira Code', monospace; }
+.nav-group { padding: 8px 0; }
+.nav-group-title {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text3); padding: 8px 20px 4px; font-weight: 600;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 20px; cursor: pointer; transition: all 0.15s;
+  font-size: 13px; color: var(--text2); border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { background: rgba(0,232,122,0.07); color: var(--accent); border-left-color: var(--accent); }
+.nav-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--bg3); display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-family: 'Fira Code', monospace; color: var(--text3);
+  flex-shrink: 0;
+}
+.nav-item.active .nav-num { background: rgba(0,232,122,0.2); color: var(--accent); }
+
+/* Main */
+#main {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+  background: var(--bg);
+}
+#main::-webkit-scrollbar { width: 6px; }
+#main::-webkit-scrollbar-track { background: transparent; }
+#main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Interactive Panel */
+#viz-panel {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 28px;
+  position: sticky; top: 0; z-index: 5;
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.viz-canvas-wrap {
+  flex: 1; background: var(--bg); border-radius: 12px;
+  border: 1px solid var(--border); overflow: hidden; min-height: 220px;
+}
+#bstCanvas { display: block; width: 100%; }
+.viz-controls { display: flex; flex-direction: column; gap: 10px; width: 200px; }
+.viz-title { font-size: 11px; color: var(--text3); font-family: 'Fira Code', monospace; margin-bottom: 4px; }
+.ctrl-row { display: flex; gap: 6px; }
+.ctrl-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 13px;
+  font-family: 'Fira Code', monospace; outline: none;
+}
+.ctrl-input:focus { border-color: var(--accent2); }
+.btn {
+  padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: 600; font-family: 'Outfit', sans-serif;
+  transition: all 0.15s; white-space: nowrap;
+}
+.btn-insert { background: rgba(0,232,122,0.15); color: var(--accent); border: 1px solid rgba(0,232,122,0.3); }
+.btn-insert:hover { background: rgba(0,232,122,0.25); }
+.btn-delete { background: rgba(255,77,109,0.15); color: #ff4d6d; border: 1px solid rgba(255,77,109,0.3); }
+.btn-delete:hover { background: rgba(255,77,109,0.25); }
+.btn-search { background: rgba(255,209,102,0.15); color: #ffd166; border: 1px solid rgba(255,209,102,0.3); }
+.btn-search:hover { background: rgba(255,209,102,0.25); }
+.btn-clear { background: rgba(78,96,128,0.2); color: var(--text2); border: 1px solid var(--border); }
+.btn-clear:hover { background: rgba(78,96,128,0.35); }
+.btn-trav { background: rgba(0,184,240,0.12); color: var(--accent2); border: 1px solid rgba(0,184,240,0.3); font-size: 11px; padding: 6px 10px; }
+.btn-trav:hover { background: rgba(0,184,240,0.22); }
+.trav-buttons { display: flex; flex-wrap: wrap; gap: 5px; }
+#viz-log {
+  background: var(--code-bg); border-radius: 8px; padding: 8px 10px;
+  font-family: 'Fira Code', monospace; font-size: 11px; color: var(--accent);
+  min-height: 38px; max-height: 60px; overflow-y: auto;
+  border: 1px solid var(--border);
+}
+
+/* Content area */
+#content { padding: 32px 40px; max-width: 960px; }
+.section {
+  display: none; animation: fadeIn 0.3s ease;
+}
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.section-header { margin-bottom: 28px; }
+.section-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(0,184,240,0.1); border: 1px solid rgba(0,184,240,0.2);
+  border-radius: 100px; padding: 4px 12px; font-size: 11px; color: var(--accent2);
+  font-family: 'Fira Code', monospace; margin-bottom: 10px;
+}
+.section-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+.section-desc { font-size: 15px; color: var(--text2); margin-top: 6px; line-height: 1.6; }
+
+/* Topic cards */
+.topic-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 14px; margin-bottom: 24px; overflow: hidden;
+}
+.topic-header {
+  padding: 16px 20px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: background 0.15s;
+}
+.topic-header:hover { background: var(--bg3); }
+.topic-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.topic-name { font-size: 16px; font-weight: 600; }
+.topic-tag {
+  margin-left: auto; font-size: 10px; font-family: 'Fira Code', monospace;
+  padding: 3px 8px; border-radius: 100px; background: var(--bg3);
+  color: var(--text3);
+}
+.topic-body { padding: 20px; }
+.topic-body.collapsed { display: none; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 8px 18px; font-size: 13px; font-weight: 500; cursor: pointer;
+  color: var(--text3); border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Theory */
+.theory-block { line-height: 1.75; font-size: 14px; color: var(--text2); }
+.theory-block h4 { color: var(--text); font-size: 15px; margin: 16px 0 8px; font-weight: 600; }
+.theory-block p { margin-bottom: 10px; }
+.theory-block ul { padding-left: 20px; margin-bottom: 10px; }
+.theory-block ul li { margin-bottom: 5px; }
+.highlight-box {
+  background: rgba(0,232,122,0.06); border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 12px 0;
+  font-size: 13px; color: var(--text);
+}
+.info-box {
+  background: rgba(0,184,240,0.06); border-left: 3px solid var(--accent2);
+  border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 12px 0;
+  font-size: 13px; color: var(--text);
+}
+.warn-box {
+  background: rgba(255,107,53,0.07); border-left: 3px solid var(--accent3);
+  border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 12px 0;
+  font-size: 13px; color: var(--text);
+}
+
+/* Code */
+.code-block {
+  background: var(--code-bg); border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--border); margin: 10px 0;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+.code-lang { font-size: 11px; color: var(--accent); font-family: 'Fira Code', monospace; }
+.code-copy {
+  font-size: 11px; color: var(--text3); cursor: pointer; padding: 3px 8px;
+  border-radius: 4px; border: 1px solid var(--border); background: transparent;
+  transition: all 0.15s; font-family: 'Outfit', sans-serif;
+}
+.code-copy:hover { color: var(--text); border-color: var(--text3); }
+.code-body {
+  padding: 16px; overflow-x: auto; font-family: 'Fira Code', monospace;
+  font-size: 12.5px; line-height: 1.7; white-space: pre; color: #c9d8f0;
+}
+/* Syntax highlight classes */
+.kw { color: #ff79c6; }
+.fn { color: #50fa7b; }
+.tp { color: #8be9fd; }
+.cm { color: #6272a4; font-style: italic; }
+.st { color: #f1fa8c; }
+.nm { color: #bd93f9; }
+.op { color: #ff79c6; }
+
+/* Analogy */
+.analogy-card {
+  background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(0,184,240,0.06));
+  border: 1px solid rgba(167,139,250,0.2); border-radius: 12px; padding: 20px;
+}
+.analogy-emoji { font-size: 36px; margin-bottom: 10px; display: block; }
+.analogy-title { font-size: 16px; font-weight: 700; color: var(--accent4); margin-bottom: 8px; }
+.analogy-text { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+/* Mini viz */
+.mini-viz {
+  background: var(--code-bg); border-radius: 10px; padding: 16px;
+  border: 1px solid var(--border); margin: 10px 0; min-height: 140px;
+  display: flex; align-items: center; justify-content: center;
+}
+.mini-viz canvas, .mini-viz svg { max-width: 100%; }
+
+/* Grid info */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.info-cell {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px;
+}
+.info-cell-label { font-size: 11px; color: var(--text3); font-family: 'Fira Code', monospace; margin-bottom: 4px; }
+.info-cell-val { font-size: 18px; font-weight: 700; color: var(--accent); }
+.info-cell-desc { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* Traversal demo */
+.trav-seq {
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0;
+}
+.trav-node {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--node-fill); border: 2px solid var(--node-stroke);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fira Code', monospace; font-size: 13px; color: var(--accent2);
+  transition: all 0.3s;
+}
+.trav-node.lit { background: rgba(0,232,122,0.2); border-color: var(--accent); color: var(--accent); transform: scale(1.2); }
+.trav-arrow { display: flex; align-items: center; color: var(--text3); font-size: 12px; }
+
+/* Complexity table */
+.table-wrap { overflow-x: auto; margin: 12px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--bg3); padding: 10px 14px; text-align: left;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--text3); font-weight: 600;
+}
+td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+tr:last-child td { border-bottom: none; }
+.tc-best { color: var(--accent); }
+.tc-avg { color: var(--accent2); }
+.tc-worst { color: var(--accent3); }
+
+/* Delete cases */
+.case-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 14px 0; }
+.case-box {
+  background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; text-align: center;
+}
+.case-num { font-size: 10px; color: var(--text3); font-family: 'Fira Code', monospace; margin-bottom: 6px; }
+.case-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.case-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* BST cases colors */
+.case-1 .case-title { color: var(--accent); }
+.case-2 .case-title { color: var(--accent2); }
+.case-3 .case-title { color: var(--accent3); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  #sidebar { display: none; }
+  #content { padding: 20px; }
+  .case-grid { grid-template-columns: 1fr; }
+  .info-grid { grid-template-columns: 1fr; }
+  #viz-panel { flex-direction: column; }
+  .viz-controls { width: 100%; flex-direction: row; flex-wrap: wrap; }
+}
+
+/* Step animations for viz panel */
+.step-indicator {
+  font-family: 'Fira Code', monospace; font-size: 10px;
+  color: var(--text3); padding: 4px 8px; background: var(--bg3);
+  border-radius: 100px; border: 1px solid var(--border);
+}
+
+/* Section navigation arrows */
+.sec-nav { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.sec-nav-btn {
+  display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+  border-radius: 10px; border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text2); cursor: pointer; transition: all 0.15s; font-size: 13px;
+  text-decoration: none;
+}
+.sec-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sec-nav-btn.next { margin-left: auto; }
+
+/* Property check badges */
+.prop-badge {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px;
+  border-radius: 100px; font-size: 12px; font-weight: 600; margin: 3px;
+}
+.prop-valid { background: rgba(0,232,122,0.12); color: var(--accent); border: 1px solid rgba(0,232,122,0.25); }
+.prop-invalid { background: rgba(255,77,109,0.12); color: #ff4d6d; border: 1px solid rgba(255,77,109,0.25); }
+
+/* Path visualization */
+.path-node {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--node-fill); border: 2px solid var(--node-stroke);
+  font-family: 'Fira Code', monospace; font-size: 12px; color: var(--accent2);
+}
+.path-arrow { color: var(--text3); margin: 0 4px; font-size: 14px; }
+.path-display { display: flex; align-items: center; flex-wrap: wrap; gap: 0; padding: 16px; background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border); }
+
+/* Mobile toggle */
+#menu-btn { display:none; }
+@media (max-width: 900px) {
+  #menu-btn { display:flex; }
+  #sidebar.open { display: flex; position: fixed; height: 100%; z-index: 100; }
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">BST Mastery</div>
+    <div class="sidebar-sub">// linked_list_based_bst.c</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Foundations</div>
+    <div class="nav-item active" onclick="showSection(0)"><span class="nav-num">1</span> Basic Operations</div>
+    <div class="nav-item" onclick="showSection(1)"><span class="nav-num">2</span> Insertion Operations</div>
+    <div class="nav-item" onclick="showSection(2)"><span class="nav-num">3</span> Deletion Operations</div>
+    <div class="nav-item" onclick="showSection(3)"><span class="nav-num">4</span> Searching Operations</div>
+    <div class="nav-item" onclick="showSection(4)"><span class="nav-num">5</span> Traversal Operations</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Intermediate</div>
+    <div class="nav-item" onclick="showSection(5)"><span class="nav-num">6</span> Min / Max Operations</div>
+    <div class="nav-item" onclick="showSection(6)"><span class="nav-num">7</span> Successor & Predecessor</div>
+    <div class="nav-item" onclick="showSection(7)"><span class="nav-num">8</span> Structural Operations</div>
+    <div class="nav-item" onclick="showSection(8)"><span class="nav-num">9</span> Property Checking</div>
+    <div class="nav-item" onclick="showSection(9)"><span class="nav-num">10</span> Update Operations</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Advanced</div>
+    <div class="nav-item" onclick="showSection(10)"><span class="nav-num">11</span> Utility Operations</div>
+    <div class="nav-item" onclick="showSection(11)"><span class="nav-num">12</span> Path Operations</div>
+    <div class="nav-item" onclick="showSection(12)"><span class="nav-num">13</span> Balancing Operations</div>
+    <div class="nav-item" onclick="showSection(13)"><span class="nav-num">14</span> Conversion Operations</div>
+    <div class="nav-item" onclick="showSection(14)"><span class="nav-num">15</span> Recursive Operations</div>
+    <div class="nav-item" onclick="showSection(15)"><span class="nav-num">16</span> Iterative Operations</div>
+  </div>
+</nav>
+
+<div id="main">
+  <!-- Interactive BST Panel -->
+  <div id="viz-panel">
+    <div class="viz-canvas-wrap">
+      <canvas id="bstCanvas" height="220"></canvas>
+    </div>
+    <div class="viz-controls">
+      <div class="viz-title">// interactive_bst.c</div>
+      <div class="ctrl-row">
+        <input class="ctrl-input" id="nodeVal" type="number" placeholder="value..." min="1" max="99">
+        <button class="btn btn-insert" onclick="doInsert()">Insert</button>
+      </div>
+      <div class="ctrl-row">
+        <button class="btn btn-delete" onclick="doDelete()">Delete</button>
+        <button class="btn btn-search" onclick="doSearch()">Search</button>
+        <button class="btn btn-clear" onclick="doClear()">Clear</button>
+      </div>
+      <div class="trav-buttons">
+        <button class="btn btn-trav" onclick="doTraversal('inorder')">Inorder</button>
+        <button class="btn btn-trav" onclick="doTraversal('preorder')">Preorder</button>
+        <button class="btn btn-trav" onclick="doTraversal('postorder')">Postorder</button>
+        <button class="btn btn-trav" onclick="doTraversal('levelorder')">Level Order</button>
+      </div>
+      <div id="viz-log">// BST ready. Insert values to begin.</div>
+    </div>
+  </div>
+
+  <!-- SECTIONS -->
+  <div id="content">
+
+    <!-- SECTION 1: Basic Operations -->
+    <div class="section active" id="sec-0">
+      <div class="section-header">
+        <div class="section-badge">📦 Section 01</div>
+        <div class="section-title">Basic Operations</div>
+        <div class="section-desc">The foundation of every BST — creating nodes, initializing the tree, and checking if it's empty.</div>
+      </div>
+
+      <!-- Create BST -->
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,232,122,0.12)">🌱</div>
+          <div><div class="topic-name">Create BST & Initialize</div></div>
+          <span class="topic-tag">Beginner</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>A <strong>Binary Search Tree (BST)</strong> is a tree data structure where each node has at most two children. It follows a key rule:</p>
+              <div class="highlight-box">
+                <strong>BST Property:</strong> For every node N,<br>
+                • All values in the <em>left subtree</em> &lt; N's value<br>
+                • All values in the <em>right subtree</em> &gt; N's value
+              </div>
+              <h4>Key Components of a BST Node (Linked List Based)</h4>
+              <ul>
+                <li><strong>data</strong> — the value stored in the node</li>
+                <li><strong>left</strong> — pointer to the left child node</li>
+                <li><strong>right</strong> — pointer to the right child node</li>
+              </ul>
+              <p>A BST itself is just a pointer to its <strong>root node</strong>. When the tree is empty, root is <code>NULL</code>.</p>
+              <div class="info-box">💡 Unlike arrays, BST uses dynamic memory (malloc), so each node is created on the heap and linked via pointers.</div>
+              <div class="mini-viz">
+                <svg viewBox="0 0 400 160" width="400" height="160">
+                  <defs>
+                    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L8,3 z" fill="#8899b4"/>
+                    </marker>
+                  </defs>
+                  <!-- Node structure box -->
+                  <rect x="140" y="30" width="120" height="90" rx="8" fill="#0d1422" stroke="#1e2d45"/>
+                  <rect x="140" y="30" width="120" height="30" rx="8" fill="rgba(0,184,240,0.15)" stroke="#00b8f0"/>
+                  <text x="200" y="49" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="12">struct Node</text>
+                  <line x1="140" y1="75" x2="260" y2="75" stroke="#1e2d45"/>
+                  <text x="200" y="68" text-anchor="middle" fill="#c9d8f0" font-family="Fira Code" font-size="11">int data</text>
+                  <line x1="200" y1="75" x2="200" y2="110" stroke="#1e2d45"/>
+                  <text x="170" y="95" text-anchor="middle" fill="#00e87a" font-family="Fira Code" font-size="10">*left</text>
+                  <text x="230" y="95" text-anchor="middle" fill="#00e87a" font-family="Fira Code" font-size="10">*right</text>
+                  <!-- Arrows down -->
+                  <line x1="170" y1="110" x2="100" y2="138" stroke="#8899b4" marker-end="url(#arr)"/>
+                  <line x1="230" y1="110" x2="300" y2="138" stroke="#8899b4" marker-end="url(#arr)"/>
+                  <text x="95" y="155" text-anchor="middle" fill="#4e6080" font-family="Fira Code" font-size="10">NULL or</text>
+                  <text x="300" y="155" text-anchor="middle" fill="#4e6080" font-family="Fira Code" font-size="10">NULL or</text>
+                  <text x="95" y="165" text-anchor="middle" fill="#4e6080" font-family="Fira Code" font-size="10">left child</text>
+                  <text x="300" y="165" text-anchor="middle" fill="#4e6080" font-family="Fira Code" font-size="10">right child</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — bst_basics.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Step 1: Include headers */</span>
+<span class="kw">#include</span> <span class="st">&lt;stdio.h&gt;</span>
+<span class="kw">#include</span> <span class="st">&lt;stdlib.h&gt;</span>
+
+<span class="cm">/* Step 2: Define the Node structure */</span>
+<span class="kw">struct</span> <span class="tp">Node</span> {
+    <span class="tp">int</span> data;            <span class="cm">/* value stored in this node */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *left;   <span class="cm">/* pointer to left child  */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *right;  <span class="cm">/* pointer to right child */</span>
+};
+
+<span class="cm">/* Step 3: Create a new node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">createNode</span>(<span class="tp">int</span> value) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *newNode = (<span class="kw">struct</span> <span class="tp">Node</span>*)
+                             <span class="fn">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="tp">Node</span>));
+    newNode-&gt;data  = value;   <span class="cm">/* store value */</span>
+    newNode-&gt;left  = <span class="nm">NULL</span>;    <span class="cm">/* no left child yet */</span>
+    newNode-&gt;right = <span class="nm">NULL</span>;    <span class="cm">/* no right child yet */</span>
+    <span class="kw">return</span> newNode;
+}
+
+<span class="cm">/* Step 4: Initialize the BST (just a NULL root) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">initBST</span>() {
+    <span class="kw">return</span> <span class="nm">NULL</span>;  <span class="cm">/* empty tree = NULL root */</span>
+}
+
+<span class="cm">/* Step 5: Check if BST is empty */</span>
+<span class="tp">int</span> <span class="fn">isEmpty</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">return</span> (root == <span class="nm">NULL</span>);  <span class="cm">/* 1 = empty, 0 = not empty */</span>
+}
+
+<span class="cm">/* Main function to test */</span>
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *bst = <span class="fn">initBST</span>();  <span class="cm">/* create empty BST */</span>
+
+    <span class="kw">if</span> (<span class="fn">isEmpty</span>(bst))
+        <span class="fn">printf</span>(<span class="st">"BST is empty!\n"</span>);
+
+    <span class="cm">/* Create a single node */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *node1 = <span class="fn">createNode</span>(<span class="nm">50</span>);
+    <span class="fn">printf</span>(<span class="st">"Node created with value: %d\n"</span>, node1-&gt;data);
+
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">📚</span>
+              <div class="analogy-title">The Library Book Catalog</div>
+              <div class="analogy-text">
+                Imagine a library organizing books by their ID number. Each catalog card (a <strong>Node</strong>) has: the book ID (<code>data</code>), an arrow pointing to a lower-ID card shelf (<code>left</code>), and an arrow pointing to a higher-ID card shelf (<code>right</code>).
+                <br><br>
+                The BST itself is just knowing <em>where the first card is</em> — the root. An empty library has no first card (<code>NULL</code>). The <strong>BST property</strong> means: look left for smaller IDs, look right for bigger IDs. This makes finding any book blazingly fast!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Complexity overview -->
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,184,240,0.12)">⚡</div>
+          <div><div class="topic-name">Time Complexity Overview</div></div>
+          <span class="topic-tag">Reference</span>
+        </div>
+        <div class="topic-body">
+          <div class="table-wrap">
+            <table>
+              <tr><th>Operation</th><th class="tc-best">Best Case</th><th class="tc-avg">Average Case</th><th class="tc-worst">Worst Case (skewed)</th></tr>
+              <tr><td>Search</td><td class="tc-best">O(log n)</td><td class="tc-avg">O(log n)</td><td class="tc-worst">O(n)</td></tr>
+              <tr><td>Insert</td><td class="tc-best">O(log n)</td><td class="tc-avg">O(log n)</td><td class="tc-worst">O(n)</td></tr>
+              <tr><td>Delete</td><td class="tc-best">O(log n)</td><td class="tc-avg">O(log n)</td><td class="tc-worst">O(n)</td></tr>
+              <tr><td>Traversal</td><td class="tc-best">O(n)</td><td class="tc-avg">O(n)</td><td class="tc-worst">O(n)</td></tr>
+              <tr><td>Space</td><td class="tc-best">O(n)</td><td class="tc-avg">O(n)</td><td class="tc-worst">O(n)</td></tr>
+            </table>
+          </div>
+          <div class="warn-box">⚠️ Worst case O(n) happens when you insert sorted data (1, 2, 3, 4...) creating a linear chain. Use balanced BSTs (AVL, Red-Black) to avoid this.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Insertion -->
+    <div class="section" id="sec-1">
+      <div class="section-header">
+        <div class="section-badge">➕ Section 02</div>
+        <div class="section-title">Insertion Operations</div>
+        <div class="section-desc">Adding nodes while always maintaining the BST property. Covers recursive, iterative, and all special cases.</div>
+      </div>
+
+      <!-- Main Insert -->
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,232,122,0.12)">➕</div>
+          <div><div class="topic-name">Recursive Insertion</div></div>
+          <span class="topic-tag">Core</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>Insertion in a BST follows the BST property at each step. Starting from the root, we navigate left or right until we find an empty spot (<code>NULL</code>).</p>
+              <h4>Algorithm Steps:</h4>
+              <ul>
+                <li>If tree is empty → new node becomes root</li>
+                <li>If value &lt; root.data → go left, recurse</li>
+                <li>If value &gt; root.data → go right, recurse</li>
+                <li>If value == root.data → duplicate! (handle per policy)</li>
+                <li>When we hit NULL → create new node here</li>
+              </ul>
+              <div class="highlight-box">
+                <strong>Try it live!</strong> Type a number in the top panel and click Insert to see the node placed correctly in the interactive tree above.
+              </div>
+              <div class="case-grid">
+                <div class="case-box case-1">
+                  <div class="case-num">CASE 01</div>
+                  <div class="case-title">Insert Smaller Value</div>
+                  <div class="case-desc">Value &lt; current node → navigate left. Go left until NULL, then insert.</div>
+                </div>
+                <div class="case-box case-2">
+                  <div class="case-num">CASE 02</div>
+                  <div class="case-title">Insert Greater Value</div>
+                  <div class="case-desc">Value &gt; current node → navigate right. Go right until NULL, then insert.</div>
+                </div>
+                <div class="case-box case-3">
+                  <div class="case-num">CASE 03</div>
+                  <div class="case-title">Handle Duplicate Values</div>
+                  <div class="case-desc">Value == current node → common policy: ignore duplicate, or insert in right subtree.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — recursive_insert.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Recursive Insert — returns updated root */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">insertRecursive</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+
+    <span class="cm">/* Base case: empty spot found, create node here */</span>
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)
+        <span class="kw">return</span> <span class="fn">createNode</span>(value);
+
+    <span class="cm">/* Insert Smaller Value — go LEFT */</span>
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        root-&gt;left = <span class="fn">insertRecursive</span>(root-&gt;left, value);
+
+    <span class="cm">/* Insert Greater Value — go RIGHT */</span>
+    <span class="kw">else if</span> (value &gt; root-&gt;data)
+        root-&gt;right = <span class="fn">insertRecursive</span>(root-&gt;right, value);
+
+    <span class="cm">/* Handle Duplicate: do nothing (ignore) */</span>
+    <span class="cm">/* else: value == root-&gt;data, skip */</span>
+
+    <span class="kw">return</span> root;  <span class="cm">/* return (possibly updated) root */</span>
+}
+
+<span class="cm">/* Iterative Insert — no recursion */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">insertIterative</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *newNode = <span class="fn">createNode</span>(value);
+
+    <span class="cm">/* If tree is empty, new node is root */</span>
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> newNode;
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+    <span class="kw">struct</span> <span class="tp">Node</span> *parent = <span class="nm">NULL</span>;
+
+    <span class="cm">/* Walk down until we find NULL spot */</span>
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        parent = curr;                      <span class="cm">/* track parent */</span>
+        <span class="kw">if</span> (value &lt; curr-&gt;data)
+            curr = curr-&gt;left;              <span class="cm">/* go left */</span>
+        <span class="kw">else if</span> (value &gt; curr-&gt;data)
+            curr = curr-&gt;right;             <span class="cm">/* go right */</span>
+        <span class="kw">else</span>
+            <span class="kw">return</span> root;  <span class="cm">/* duplicate: return unchanged */</span>
+    }
+
+    <span class="cm">/* Attach new node to correct side of parent */</span>
+    <span class="kw">if</span> (value &lt; parent-&gt;data)
+        parent-&gt;left = newNode;
+    <span class="kw">else</span>
+        parent-&gt;right = newNode;
+
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Example usage */</span>
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="nm">NULL</span>;
+
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">50</span>);  <span class="cm">/* 50 is root */</span>
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">30</span>);  <span class="cm">/* 30 goes left */</span>
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">70</span>);  <span class="cm">/* 70 goes right */</span>
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">20</span>);  <span class="cm">/* 20 goes left of 30 */</span>
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">50</span>);  <span class="cm">/* duplicate! ignored */</span>
+
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🎯</span>
+              <div class="analogy-title">The Office Filing System</div>
+              <div class="analogy-text">
+                Imagine placing a new employee file into a cabinet. You start at the middle drawer (root). The new employee's ID is <strong>lower</strong>? Go to the left drawer. <strong>Higher</strong>? Go to the right. You keep doing this until you find an <em>empty slot</em> — that's where the file goes.
+                <br><br>
+                This is exactly recursive insertion! Every time you make a decision (left or right), you're recursing deeper into the cabinet until you find the correct empty position.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Deletion -->
+    <div class="section" id="sec-2">
+      <div class="section-header">
+        <div class="section-badge">🗑️ Section 03</div>
+        <div class="section-title">Deletion Operations</div>
+        <div class="section-desc">The most complex BST operation. Three distinct cases depending on how many children the node has. Master all three!</div>
+      </div>
+
+      <!-- Delete Cases -->
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(255,77,109,0.12)">🗑️</div>
+          <div><div class="topic-name">Delete — Three Cases Explained</div></div>
+          <span class="topic-tag">Most Important</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>BST deletion is the hardest operation because removing a node must preserve the BST property. There are <strong>3 cases</strong>:</p>
+              <div class="case-grid">
+                <div class="case-box case-1">
+                  <div class="case-num">CASE 01</div>
+                  <div class="case-title">Leaf Node</div>
+                  <div class="case-desc">Node has <strong>no children</strong>. Simply remove it — free the memory, set parent's pointer to NULL.</div>
+                </div>
+                <div class="case-box case-2">
+                  <div class="case-num">CASE 02</div>
+                  <div class="case-title">One Child</div>
+                  <div class="case-desc">Node has <strong>one child</strong>. Bypass the node — connect its parent directly to its child.</div>
+                </div>
+                <div class="case-box case-3">
+                  <div class="case-num">CASE 03</div>
+                  <div class="case-title">Two Children</div>
+                  <div class="case-desc">Node has <strong>two children</strong>. Replace with <em>Inorder Successor</em> (smallest in right subtree) or <em>Inorder Predecessor</em> (largest in left subtree).</div>
+                </div>
+              </div>
+              <h4>Case 3 — Inorder Successor Strategy:</h4>
+              <p>The inorder successor of a node is the <em>smallest value in its right subtree</em> (go right once, then go left as far as possible). You copy its value into the current node, then delete the successor from the right subtree.</p>
+              <div class="highlight-box">
+                <strong>Why does this work?</strong> The inorder successor is guaranteed to be larger than everything in the left subtree AND smaller than everything else in the right subtree — so the BST property is maintained!
+              </div>
+              <div class="mini-viz" id="delete-viz">
+                <svg viewBox="0 0 460 200" width="460" height="200">
+                  <!-- Before tree -->
+                  <text x="100" y="15" text-anchor="middle" fill="#8899b4" font-family="Fira Code" font-size="10">BEFORE (delete 50)</text>
+                  <circle cx="100" cy="45" r="18" fill="rgba(255,77,109,0.2)" stroke="#ff4d6d" stroke-width="2"/>
+                  <text x="100" y="50" text-anchor="middle" fill="#ff4d6d" font-family="Fira Code" font-size="13">50</text>
+                  <line x1="86" y1="60" x2="62" y2="82" stroke="#4e6080"/>
+                  <line x1="114" y1="60" x2="138" y2="82" stroke="#4e6080"/>
+                  <circle cx="55" cy="95" r="18" fill="#0d2a4a" stroke="#00b8f0" stroke-width="1.5"/>
+                  <text x="55" y="100" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="13">30</text>
+                  <circle cx="145" cy="95" r="18" fill="#0d2a4a" stroke="#00b8f0" stroke-width="1.5"/>
+                  <text x="145" y="100" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="13">70</text>
+                  <line x1="133" y1="110" x2="115" y2="132" stroke="#4e6080"/>
+                  <line x1="157" y1="110" x2="170" y2="132" stroke="#4e6080"/>
+                  <circle cx="108" cy="145" r="18" fill="rgba(0,232,122,0.2)" stroke="#00e87a" stroke-width="2"/>
+                  <text x="108" y="150" text-anchor="middle" fill="#00e87a" font-family="Fira Code" font-size="13">60</text>
+                  <text x="108" y="168" text-anchor="middle" fill="#00e87a" font-family="Fira Code" font-size="8">successor!</text>
+                  <circle cx="175" cy="145" r="18" fill="#0d2a4a" stroke="#00b8f0" stroke-width="1.5"/>
+                  <text x="175" y="150" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="13">80</text>
+                  <!-- Arrow -->
+                  <text x="240" y="100" text-anchor="middle" fill="#4e6080" font-size="24">→</text>
+                  <!-- After tree -->
+                  <text x="360" y="15" text-anchor="middle" fill="#8899b4" font-family="Fira Code" font-size="10">AFTER (60 replaces 50)</text>
+                  <circle cx="360" cy="45" r="18" fill="rgba(0,232,122,0.2)" stroke="#00e87a" stroke-width="2"/>
+                  <text x="360" y="50" text-anchor="middle" fill="#00e87a" font-family="Fira Code" font-size="13">60</text>
+                  <line x1="346" y1="60" x2="322" y2="82" stroke="#4e6080"/>
+                  <line x1="374" y1="60" x2="398" y2="82" stroke="#4e6080"/>
+                  <circle cx="315" cy="95" r="18" fill="#0d2a4a" stroke="#00b8f0" stroke-width="1.5"/>
+                  <text x="315" y="100" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="13">30</text>
+                  <circle cx="405" cy="95" r="18" fill="#0d2a4a" stroke="#00b8f0" stroke-width="1.5"/>
+                  <text x="405" y="100" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="13">70</text>
+                  <line x1="417" y1="110" x2="430" y2="132" stroke="#4e6080"/>
+                  <circle cx="435" cy="145" r="18" fill="#0d2a4a" stroke="#00b8f0" stroke-width="1.5"/>
+                  <text x="435" y="150" text-anchor="middle" fill="#00b8f0" font-family="Fira Code" font-size="13">80</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — bst_delete.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Helper: Find minimum node in a subtree */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMin</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">while</span> (root-&gt;left != <span class="nm">NULL</span>)
+        root = root-&gt;left;
+    <span class="kw">return</span> root;  <span class="cm">/* leftmost node is minimum */</span>
+}
+
+<span class="cm">/* Recursive Delete */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">deleteNode</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;  <span class="cm">/* not found */</span>
+
+    <span class="cm">/* Navigate to the node to delete */</span>
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        root-&gt;left = <span class="fn">deleteNode</span>(root-&gt;left, value);
+    <span class="kw">else if</span> (value &gt; root-&gt;data)
+        root-&gt;right = <span class="fn">deleteNode</span>(root-&gt;right, value);
+    <span class="kw">else</span> {
+        <span class="cm">/* FOUND the node! Now handle 3 cases: */</span>
+
+        <span class="cm">/* Case 1: Leaf node — no children */</span>
+        <span class="kw">if</span> (root-&gt;left == <span class="nm">NULL</span> &amp;&amp; root-&gt;right == <span class="nm">NULL</span>) {
+            <span class="fn">free</span>(root);
+            <span class="kw">return</span> <span class="nm">NULL</span>;
+        }
+
+        <span class="cm">/* Case 2a: Only right child exists */</span>
+        <span class="kw">if</span> (root-&gt;left == <span class="nm">NULL</span>) {
+            <span class="kw">struct</span> <span class="tp">Node</span> *temp = root-&gt;right;
+            <span class="fn">free</span>(root);
+            <span class="kw">return</span> temp;  <span class="cm">/* right child takes this spot */</span>
+        }
+
+        <span class="cm">/* Case 2b: Only left child exists */</span>
+        <span class="kw">if</span> (root-&gt;right == <span class="nm">NULL</span>) {
+            <span class="kw">struct</span> <span class="tp">Node</span> *temp = root-&gt;left;
+            <span class="fn">free</span>(root);
+            <span class="kw">return</span> temp;  <span class="cm">/* left child takes this spot */</span>
+        }
+
+        <span class="cm">/* Case 3: Two children — use Inorder Successor */</span>
+        <span class="kw">struct</span> <span class="tp">Node</span> *successor = <span class="fn">findMin</span>(root-&gt;right);
+        root-&gt;data = successor-&gt;data;  <span class="cm">/* copy successor's value */</span>
+        root-&gt;right = <span class="fn">deleteNode</span>(root-&gt;right, successor-&gt;data);
+    }
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Iterative Delete (using parent tracking) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">deleteIterative</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *parent = <span class="nm">NULL</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+
+    <span class="cm">/* Step 1: Find node to delete */</span>
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span> &amp;&amp; curr-&gt;data != value) {
+        parent = curr;
+        curr = (value &lt; curr-&gt;data) ? curr-&gt;left : curr-&gt;right;
+    }
+    <span class="kw">if</span> (curr == <span class="nm">NULL</span>)  <span class="kw">return</span> root;  <span class="cm">/* not found */</span>
+
+    <span class="cm">/* Step 2: Handle 2-children case using successor */</span>
+    <span class="kw">if</span> (curr-&gt;left != <span class="nm">NULL</span> &amp;&amp; curr-&gt;right != <span class="nm">NULL</span>) {
+        <span class="kw">struct</span> <span class="tp">Node</span> *sucParent = curr;
+        <span class="kw">struct</span> <span class="tp">Node</span> *suc = curr-&gt;right;
+        <span class="kw">while</span> (suc-&gt;left != <span class="nm">NULL</span>) { sucParent = suc; suc = suc-&gt;left; }
+        curr-&gt;data = suc-&gt;data;
+        parent = sucParent; curr = suc;
+    }
+
+    <span class="cm">/* Step 3: Node now has 0 or 1 child — replace */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *child = (curr-&gt;left != <span class="nm">NULL</span>) ? curr-&gt;left : curr-&gt;right;
+    <span class="kw">if</span> (parent == <span class="nm">NULL</span>) { <span class="fn">free</span>(curr); <span class="kw">return</span> child; }
+    <span class="kw">if</span> (parent-&gt;left == curr)  parent-&gt;left  = child;
+    <span class="kw">else</span>                       parent-&gt;right = child;
+    <span class="fn">free</span>(curr);
+    <span class="kw">return</span> root;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🏢</span>
+              <div class="analogy-title">Removing a Manager from a Company Hierarchy</div>
+              <div class="analogy-text">
+                Imagine a company org chart. Deleting an employee is like removing a manager:
+                <br><br>
+                <strong>Case 1 (Leaf):</strong> Remove a worker with no reports — just delete them, nothing changes above.
+                <br><br>
+                <strong>Case 2 (One Child):</strong> Remove a manager with one team — their single team reports directly to the manager above.
+                <br><br>
+                <strong>Case 3 (Two Children):</strong> Remove a manager with two teams — you need to promote someone. You choose the <em>most junior senior person</em> from the right team (inorder successor) to take over, maintaining the full hierarchy.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4: Searching -->
+    <div class="section" id="sec-3">
+      <div class="section-header">
+        <div class="section-badge">🔍 Section 04</div>
+        <div class="section-title">Searching Operations</div>
+        <div class="section-desc">The BST shines at searching! Divide and conquer — eliminate half the tree at each step.</div>
+      </div>
+
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(255,209,102,0.12)">🔍</div>
+          <div><div class="topic-name">Search — Recursive & Iterative</div></div>
+          <span class="topic-tag">Core</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>Searching uses the BST property to make decisions at every node, eliminating half the remaining tree each time (on a balanced tree).</p>
+              <h4>Types of Search:</h4>
+              <ul>
+                <li><strong>Exact Match Search:</strong> Find a specific value — return the node or NULL</li>
+                <li><strong>Search Minimum:</strong> Go left as far as possible — leftmost node is minimum</li>
+                <li><strong>Search Maximum:</strong> Go right as far as possible — rightmost node is maximum</li>
+              </ul>
+              <div class="highlight-box">
+                <strong>Search Path Example:</strong> Searching for 35 in a tree rooted at 50:<br>
+                35 &lt; 50 → go left → 35 &lt; 40 → go left → 35 &gt; 30 → go right → 35 == 35 → FOUND! ✓
+              </div>
+              <p>Use the Search button above to highlight the search path in the interactive tree!</p>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — bst_search.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Recursive Search — returns the node or NULL */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">searchRecursive</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="cm">/* Base cases */</span>
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)          <span class="kw">return</span> <span class="nm">NULL</span>;   <span class="cm">/* not found */</span>
+    <span class="kw">if</span> (root-&gt;data == value)   <span class="kw">return</span> root;   <span class="cm">/* exact match! */</span>
+
+    <span class="cm">/* Recursive cases */</span>
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">searchRecursive</span>(root-&gt;left,  value);
+    <span class="kw">else</span>
+        <span class="kw">return</span> <span class="fn">searchRecursive</span>(root-&gt;right, value);
+}
+
+<span class="cm">/* Iterative Search — more memory efficient */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">searchIterative</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="kw">if</span> (value == curr-&gt;data)
+            <span class="kw">return</span> curr;             <span class="cm">/* found! */</span>
+        <span class="kw">else if</span> (value &lt; curr-&gt;data)
+            curr = curr-&gt;left;       <span class="cm">/* go left */</span>
+        <span class="kw">else</span>
+            curr = curr-&gt;right;      <span class="cm">/* go right */</span>
+    }
+    <span class="kw">return</span> <span class="nm">NULL</span>;  <span class="cm">/* not found */</span>
+}
+
+<span class="cm">/* Search Minimum — leftmost node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">searchMin</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+    <span class="kw">while</span> (root-&gt;left != <span class="nm">NULL</span>)
+        root = root-&gt;left;
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Search Maximum — rightmost node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">searchMax</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+    <span class="kw">while</span> (root-&gt;right != <span class="nm">NULL</span>)
+        root = root-&gt;right;
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Usage */</span>
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="nm">NULL</span>;
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">50</span>);
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">30</span>);
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">70</span>);
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *found = <span class="fn">searchIterative</span>(root, <span class="nm">30</span>);
+    <span class="kw">if</span> (found)
+        <span class="fn">printf</span>(<span class="st">"Found: %d\n"</span>, found-&gt;data);
+    <span class="kw">else</span>
+        <span class="fn">printf</span>(<span class="st">"Not found!\n"</span>);
+
+    <span class="fn">printf</span>(<span class="st">"Min: %d\n"</span>, <span class="fn">searchMin</span>(root)-&gt;data);
+    <span class="fn">printf</span>(<span class="st">"Max: %d\n"</span>, <span class="fn">searchMax</span>(root)-&gt;data);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">📖</span>
+              <div class="analogy-title">Dictionary Lookup</div>
+              <div class="analogy-text">
+                A dictionary is sorted alphabetically — just like a BST is sorted by value. When looking up "Mango", you don't read every word. You open to the middle — if you're past 'M', go left; if before 'M', go right.
+                <br><br>
+                BST search is exactly this! You never scan every node. Each comparison eliminates an entire half-subtree. This is why BST search is O(log n) — the same principle as binary search in a sorted array, but in a dynamic tree structure.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 5: Traversal -->
+    <div class="section" id="sec-4">
+      <div class="section-header">
+        <div class="section-badge">🔄 Section 05</div>
+        <div class="section-title">Traversal Operations</div>
+        <div class="section-desc">Four ways to visit every node in the BST. Each has a unique order and specific use-case.</div>
+      </div>
+
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(167,139,250,0.12)">🔄</div>
+          <div><div class="topic-name">DFS Traversals: Inorder, Preorder, Postorder</div></div>
+          <span class="topic-tag">Core</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>DFS (Depth-First Search) traversals visit nodes by going deep before wide. The difference is <em>when</em> you process the root relative to left and right subtrees:</p>
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">01 — INORDER</div>
+                  <div class="info-cell-val" style="font-size:14px;font-family:'Fira Code'">L → Root → R</div>
+                  <div class="info-cell-desc">Visits nodes in <strong>sorted ascending order</strong>. Most useful BST traversal!</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">02 — PREORDER</div>
+                  <div class="info-cell-val" style="font-size:14px;font-family:'Fira Code'">Root → L → R</div>
+                  <div class="info-cell-desc">Root visited first. Used to <strong>copy or serialize</strong> a tree.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">03 — POSTORDER</div>
+                  <div class="info-cell-val" style="font-size:14px;font-family:'Fira Code'">L → R → Root</div>
+                  <div class="info-cell-desc">Root visited last. Used to <strong>delete or free</strong> a tree safely.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">04 — LEVEL ORDER (BFS)</div>
+                  <div class="info-cell-val" style="font-size:14px;font-family:'Fira Code'">Level by Level</div>
+                  <div class="info-cell-desc">Visits nodes level by level using a <strong>queue</strong>.</div>
+                </div>
+              </div>
+              <div class="highlight-box">
+                <strong>Example tree: 50, 30, 70, 20, 40</strong><br>
+                Inorder: 20, 30, 40, 50, 70 ← sorted! ✓<br>
+                Preorder: 50, 30, 20, 40, 70<br>
+                Postorder: 20, 40, 30, 70, 50
+              </div>
+              <p>Click the traversal buttons at the top to animate the traversal sequence on the interactive tree!</p>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — bst_traversal.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* 1. INORDER: Left → Root → Right (gives sorted output!) */</span>
+<span class="kw">void</span> <span class="fn">inorder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+    <span class="fn">inorder</span>(root-&gt;left);          <span class="cm">/* visit left subtree */</span>
+    <span class="fn">printf</span>(<span class="st">"%d "</span>, root-&gt;data);    <span class="cm">/* process root */</span>
+    <span class="fn">inorder</span>(root-&gt;right);         <span class="cm">/* visit right subtree */</span>
+}
+
+<span class="cm">/* 2. PREORDER: Root → Left → Right (copy/serialize tree) */</span>
+<span class="kw">void</span> <span class="fn">preorder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+    <span class="fn">printf</span>(<span class="st">"%d "</span>, root-&gt;data);    <span class="cm">/* process root FIRST */</span>
+    <span class="fn">preorder</span>(root-&gt;left);
+    <span class="fn">preorder</span>(root-&gt;right);
+}
+
+<span class="cm">/* 3. POSTORDER: Left → Right → Root (delete tree safely) */</span>
+<span class="kw">void</span> <span class="fn">postorder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+    <span class="fn">postorder</span>(root-&gt;left);
+    <span class="fn">postorder</span>(root-&gt;right);
+    <span class="fn">printf</span>(<span class="st">"%d "</span>, root-&gt;data);    <span class="cm">/* process root LAST */</span>
+}
+
+<span class="cm">/* 4. LEVEL ORDER (BFS) — uses a queue */</span>
+<span class="kw">#include</span> <span class="st">&lt;stdlib.h&gt;</span>
+<span class="kw">void</span> <span class="fn">levelOrder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+
+    <span class="cm">/* Simple queue using an array */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *queue[<span class="nm">100</span>];
+    <span class="tp">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+
+    queue[rear++] = root;          <span class="cm">/* enqueue root */</span>
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="kw">struct</span> <span class="tp">Node</span> *curr = queue[front++];  <span class="cm">/* dequeue */</span>
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, curr-&gt;data);
+
+        <span class="kw">if</span> (curr-&gt;left  != <span class="nm">NULL</span>)  queue[rear++] = curr-&gt;left;
+        <span class="kw">if</span> (curr-&gt;right != <span class="nm">NULL</span>)  queue[rear++] = curr-&gt;right;
+    }
+}
+
+<span class="cm">/* Iterative Inorder using stack */</span>
+<span class="kw">void</span> <span class="fn">inorderIterative</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *stack[<span class="nm">100</span>];
+    <span class="tp">int</span> top = <span class="nm">-1</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span> || top &gt;= <span class="nm">0</span>) {
+        <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+            stack[++top] = curr;   <span class="cm">/* push to stack */</span>
+            curr = curr-&gt;left;    <span class="cm">/* go left */</span>
+        }
+        curr = stack[top--];       <span class="cm">/* pop */</span>
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, curr-&gt;data);
+        curr = curr-&gt;right;        <span class="cm">/* go right */</span>
+    }
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🗺️</span>
+              <div class="analogy-title">Exploring a Maze — Different Routes</div>
+              <div class="analogy-text">
+                Think of a tree as a branching maze. Each traversal is a different <em>exploration strategy</em>:
+                <br><br>
+                <strong>Inorder</strong> = Reading a book left-to-right. All left pages, then the bookmark (root), then all right pages. Perfect for sorted output.
+                <br><br>
+                <strong>Preorder</strong> = Taking a photo before you enter each room. You see the room first, then explore it.
+                <br><br>
+                <strong>Postorder</strong> = Cleaning up after leaving each room. You finish all work inside first, then acknowledge the room.
+                <br><br>
+                <strong>Level Order</strong> = Exploring floor by floor in a building, rather than going deep into one corner first.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 6: Min/Max -->
+    <div class="section" id="sec-5">
+      <div class="section-header">
+        <div class="section-badge">📊 Section 06</div>
+        <div class="section-title">Min / Max Operations</div>
+        <div class="section-desc">Finding the smallest and largest values is elegantly simple in a BST — just follow the edges!</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,232,122,0.12)">📊</div>
+          <div><div class="topic-name">Find Minimum & Maximum Node</div></div>
+          <span class="topic-tag">Simple</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>The BST property makes finding min/max trivial:</p>
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">Find Minimum</div>
+                  <div class="info-cell-val">↖ Leftmost</div>
+                  <div class="info-cell-desc">Keep going left until you hit <code>NULL</code>. The leftmost node is the minimum (also called <strong>Find Leftmost Node</strong>).</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Find Maximum</div>
+                  <div class="info-cell-val">↗ Rightmost</div>
+                  <div class="info-cell-desc">Keep going right until you hit <code>NULL</code>. The rightmost node is the maximum (also called <strong>Find Rightmost Node</strong>).</div>
+                </div>
+              </div>
+              <div class="highlight-box">Both operations run in <strong>O(h)</strong> time where h is the height of the tree. In a balanced tree, that's O(log n).</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — min_max.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Find Minimum — go as left as possible */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMinimum</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="cm">/* Find Leftmost Node */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+    <span class="kw">while</span> (curr-&gt;left != <span class="nm">NULL</span>)
+        curr = curr-&gt;left;   <span class="cm">/* keep going left */</span>
+    <span class="kw">return</span> curr;
+}
+
+<span class="cm">/* Recursive version of findMinimum */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMinRecursive</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span> || root-&gt;left == <span class="nm">NULL</span>)
+        <span class="kw">return</span> root;
+    <span class="kw">return</span> <span class="fn">findMinRecursive</span>(root-&gt;left);
+}
+
+<span class="cm">/* Find Maximum — go as right as possible */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findMaximum</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="cm">/* Find Rightmost Node */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+    <span class="kw">while</span> (curr-&gt;right != <span class="nm">NULL</span>)
+        curr = curr-&gt;right;  <span class="cm">/* keep going right */</span>
+    <span class="kw">return</span> curr;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="nm">NULL</span>;
+    <span class="tp">int</span> values[] = {<span class="nm">50</span>, <span class="nm">30</span>, <span class="nm">70</span>, <span class="nm">20</span>, <span class="nm">40</span>, <span class="nm">60</span>, <span class="nm">80</span>};
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">7</span>; i++)
+        root = <span class="fn">insertRecursive</span>(root, values[i]);
+
+    <span class="fn">printf</span>(<span class="st">"Minimum: %d\n"</span>, <span class="fn">findMinimum</span>(root)-&gt;data);  <span class="cm">/* 20 */</span>
+    <span class="fn">printf</span>(<span class="st">"Maximum: %d\n"</span>, <span class="fn">findMaximum</span>(root)-&gt;data);  <span class="cm">/* 80 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🏋️</span>
+              <div class="analogy-title">A Sorted Line of Athletes</div>
+              <div class="analogy-text">
+                Imagine athletes sorted by height standing in a V-shape — the shortest at the far left, the tallest at the far right, with everyone properly placed in between.
+                <br><br>
+                To find the <strong>shortest</strong> athlete, you just walk to the leftmost end. To find the <strong>tallest</strong>, walk to the rightmost end. No need to compare everyone! This is the elegance of BST min/max — it's built into the structure itself.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 7: Successor & Predecessor -->
+    <div class="section" id="sec-6">
+      <div class="section-header">
+        <div class="section-badge">🔀 Section 07</div>
+        <div class="section-title">Successor & Predecessor Operations</div>
+        <div class="section-desc">Find the next greater or next smaller element relative to any given node — critical for delete and range queries.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(255,107,53,0.12)">🔀</div>
+          <div><div class="topic-name">Inorder Successor & Predecessor</div></div>
+          <span class="topic-tag">Intermediate</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">Inorder Successor</div>
+                  <div class="info-cell-val" style="font-size:13px">Next Greater Element</div>
+                  <div class="info-cell-desc">The node with the smallest value that is still <strong>greater</strong> than the given node.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Inorder Predecessor</div>
+                  <div class="info-cell-val" style="font-size:13px">Next Smaller Element</div>
+                  <div class="info-cell-desc">The node with the largest value that is still <strong>smaller</strong> than the given node.</div>
+                </div>
+              </div>
+              <h4>Finding Inorder Successor:</h4>
+              <ul>
+                <li><strong>If right subtree exists:</strong> → minimum of right subtree</li>
+                <li><strong>If no right subtree:</strong> → walk up from root, last time we went left is the successor</li>
+              </ul>
+              <h4>Finding Inorder Predecessor:</h4>
+              <ul>
+                <li><strong>If left subtree exists:</strong> → maximum of left subtree</li>
+                <li><strong>If no left subtree:</strong> → walk up from root, last time we went right is the predecessor</li>
+              </ul>
+              <div class="warn-box">⚠️ These operations are used internally in the delete algorithm (Case 3). Understanding them is key to mastering BST deletion!</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — successor_predecessor.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Find Inorder Successor of a node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">inorderSuccessor</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="kw">struct</span> <span class="tp">Node</span> *target) {
+    <span class="cm">/* Case 1: Right subtree exists */</span>
+    <span class="cm">/* Next Greater Element = min of right subtree */</span>
+    <span class="kw">if</span> (target-&gt;right != <span class="nm">NULL</span>)
+        <span class="kw">return</span> <span class="fn">findMinimum</span>(target-&gt;right);
+
+    <span class="cm">/* Case 2: No right subtree */</span>
+    <span class="cm">/* Walk from root, track last left-turn ancestor */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *successor = <span class="nm">NULL</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="kw">if</span> (target-&gt;data &lt; curr-&gt;data) {
+            successor = curr;   <span class="cm">/* potential successor */</span>
+            curr = curr-&gt;left;
+        } <span class="kw">else if</span> (target-&gt;data &gt; curr-&gt;data) {
+            curr = curr-&gt;right;
+        } <span class="kw">else</span> {
+            <span class="kw">break</span>;
+        }
+    }
+    <span class="kw">return</span> successor;
+}
+
+<span class="cm">/* Find Inorder Predecessor of a node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">inorderPredecessor</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="kw">struct</span> <span class="tp">Node</span> *target) {
+    <span class="cm">/* Case 1: Left subtree exists */</span>
+    <span class="cm">/* Next Smaller Element = max of left subtree */</span>
+    <span class="kw">if</span> (target-&gt;left != <span class="nm">NULL</span>)
+        <span class="kw">return</span> <span class="fn">findMaximum</span>(target-&gt;left);
+
+    <span class="cm">/* Case 2: No left subtree */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *predecessor = <span class="nm">NULL</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *curr = root;
+
+    <span class="kw">while</span> (curr != <span class="nm">NULL</span>) {
+        <span class="kw">if</span> (target-&gt;data &gt; curr-&gt;data) {
+            predecessor = curr;  <span class="cm">/* potential predecessor */</span>
+            curr = curr-&gt;right;
+        } <span class="kw">else if</span> (target-&gt;data &lt; curr-&gt;data) {
+            curr = curr-&gt;left;
+        } <span class="kw">else</span> {
+            <span class="kw">break</span>;
+        }
+    }
+    <span class="kw">return</span> predecessor;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🎵</span>
+              <div class="analogy-title">Playlist Navigation</div>
+              <div class="analogy-text">
+                In a music playlist sorted by track number, if you're on track 7:
+                <br><br>
+                <strong>Inorder Successor</strong> = "Next track" button → track 8 (next greater number)
+                <br><br>
+                <strong>Inorder Predecessor</strong> = "Previous track" button → track 6 (next smaller number)
+                <br><br>
+                BST makes this super efficient — you don't scan the entire playlist. You just look at the right subtree (for next) or left subtree (for previous) of the current track's node.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 8: Structural -->
+    <div class="section" id="sec-7">
+      <div class="section-header">
+        <div class="section-badge">🏗️ Section 08</div>
+        <div class="section-title">Structural Operations</div>
+        <div class="section-desc">Analyze the shape and structure of the tree — counting nodes, finding height, depth, levels, and relationships.</div>
+      </div>
+
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,184,240,0.12)">🔢</div>
+          <div><div class="topic-name">Counting: Total, Leaf & Internal Nodes</div></div>
+          <span class="topic-tag">Intermediate</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">Total Nodes</div>
+                  <div class="info-cell-val">1 + L + R</div>
+                  <div class="info-cell-desc">Count every node in the tree recursively.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Leaf Nodes</div>
+                  <div class="info-cell-val">No children</div>
+                  <div class="info-cell-desc">Nodes with <code>left == NULL && right == NULL</code>.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Internal Nodes</div>
+                  <div class="info-cell-val">Has ≥1 child</div>
+                  <div class="info-cell-desc">Any node that is NOT a leaf. = Total − Leaves.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Height of Tree</div>
+                  <div class="info-cell-val">max(L,R) + 1</div>
+                  <div class="info-cell-desc">Longest path from root to any leaf node.</div>
+                </div>
+              </div>
+              <h4>Height vs Depth vs Level:</h4>
+              <ul>
+                <li><strong>Height</strong> of a node = longest path to a leaf below it</li>
+                <li><strong>Depth</strong> of a node = distance from the root to that node</li>
+                <li><strong>Level</strong> of a node = depth + 1 (level 1 is the root level)</li>
+              </ul>
+              <div class="info-box">Height of entire tree = height of root. Depth of root = 0. A single node has height 0.</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — structural_ops.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Count Total Nodes */</span>
+<span class="tp">int</span> <span class="fn">countTotal</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">return</span> <span class="nm">1</span> + <span class="fn">countTotal</span>(root-&gt;left) + <span class="fn">countTotal</span>(root-&gt;right);
+}
+
+<span class="cm">/* Count Leaf Nodes (no children) */</span>
+<span class="tp">int</span> <span class="fn">countLeaves</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">if</span> (root-&gt;left == <span class="nm">NULL</span> &amp;&amp; root-&gt;right == <span class="nm">NULL</span>)
+        <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* this IS a leaf */</span>
+    <span class="kw">return</span> <span class="fn">countLeaves</span>(root-&gt;left) + <span class="fn">countLeaves</span>(root-&gt;right);
+}
+
+<span class="cm">/* Count Internal Nodes (has at least 1 child) */</span>
+<span class="tp">int</span> <span class="fn">countInternal</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">return</span> <span class="fn">countTotal</span>(root) - <span class="fn">countLeaves</span>(root);
+}
+
+<span class="cm">/* Find Height of tree */</span>
+<span class="tp">int</span> <span class="fn">findHeight</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">-1</span>;  <span class="cm">/* -1 for empty, 0 for leaf */</span>
+    <span class="tp">int</span> leftH  = <span class="fn">findHeight</span>(root-&gt;left);
+    <span class="tp">int</span> rightH = <span class="fn">findHeight</span>(root-&gt;right);
+    <span class="kw">return</span> <span class="nm">1</span> + (leftH &gt; rightH ? leftH : rightH);
+}
+
+<span class="cm">/* Find Depth of a node (from root) */</span>
+<span class="tp">int</span> <span class="fn">findDepth</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value, <span class="tp">int</span> depth) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)           <span class="kw">return</span> <span class="nm">-1</span>;  <span class="cm">/* not found */</span>
+    <span class="kw">if</span> (root-&gt;data == value)     <span class="kw">return</span> depth;
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">findDepth</span>(root-&gt;left,  value, depth + <span class="nm">1</span>);
+    <span class="kw">return</span>     <span class="fn">findDepth</span>(root-&gt;right, value, depth + <span class="nm">1</span>);
+}
+
+<span class="cm">/* Find Level (= depth + 1) */</span>
+<span class="tp">int</span> <span class="fn">findLevel</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="tp">int</span> depth = <span class="fn">findDepth</span>(root, value, <span class="nm">0</span>);
+    <span class="kw">return</span> (depth == <span class="nm">-1</span>) ? <span class="nm">-1</span> : depth + <span class="nm">1</span>;
+}
+
+<span class="cm">/* Find Parent of a node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findParent</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span> || root-&gt;data == value)
+        <span class="kw">return</span> <span class="nm">NULL</span>;  <span class="cm">/* root has no parent */</span>
+
+    <span class="cm">/* Check if immediate children match */</span>
+    <span class="kw">if</span> ((root-&gt;left  &amp;&amp; root-&gt;left-&gt;data  == value) ||
+        (root-&gt;right &amp;&amp; root-&gt;right-&gt;data == value))
+        <span class="kw">return</span> root;
+
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">findParent</span>(root-&gt;left,  value);
+    <span class="kw">return</span>     <span class="fn">findParent</span>(root-&gt;right, value);
+}
+
+<span class="cm">/* Check if nodeA is Ancestor of nodeB */</span>
+<span class="tp">int</span> <span class="fn">isAncestor</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> ancestorVal, <span class="tp">int</span> targetVal) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="kw">if</span> (root-&gt;data == ancestorVal) {
+        <span class="cm">/* Check if target exists in this subtree */</span>
+        <span class="kw">return</span> (<span class="fn">searchRecursive</span>(root, targetVal) != <span class="nm">NULL</span>);
+    }
+    <span class="kw">if</span> (ancestorVal &lt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">isAncestor</span>(root-&gt;left,  ancestorVal, targetVal);
+    <span class="kw">return</span>     <span class="fn">isAncestor</span>(root-&gt;right, ancestorVal, targetVal);
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🌳</span>
+              <div class="analogy-title">A Family Tree</div>
+              <div class="analogy-text">
+                A BST is like a family tree with strict rules about who goes left/right. The structural operations are like asking family questions:
+                <br><br>
+                <strong>Height</strong> = How many generations deep does this family go?<br>
+                <strong>Depth</strong> = How many generations away from the great-grandparent are you?<br>
+                <strong>Level</strong> = Which generation do you belong to?<br>
+                <strong>Parent</strong> = Who gave birth to this person?<br>
+                <strong>Ancestor</strong> = Is this person in your lineage?<br>
+                <strong>Leaf nodes</strong> = Youngest generation with no children yet!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 9: Property Checking -->
+    <div class="section" id="sec-8">
+      <div class="section-header">
+        <div class="section-badge">✅ Section 09</div>
+        <div class="section-title">Property Checking Operations</div>
+        <div class="section-desc">Verify if a BST satisfies certain structural properties — valid BST, balanced, full, complete, or perfect.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,232,122,0.12)">✅</div>
+          <div><div class="topic-name">BST Validation & Shape Checking</div></div>
+          <span class="topic-tag">Intermediate</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <div class="case-grid">
+                <div class="case-box case-1">
+                  <div class="case-num">CHECK 01</div>
+                  <div class="case-title">Valid BST</div>
+                  <div class="case-desc">Every node respects BST property for its entire subtree (not just direct children). Use min/max range check.</div>
+                </div>
+                <div class="case-box case-2">
+                  <div class="case-num">CHECK 02</div>
+                  <div class="case-title">Balanced BST</div>
+                  <div class="case-desc">Height difference between left and right subtrees is at most 1 for every node.</div>
+                </div>
+                <div class="case-box case-3">
+                  <div class="case-num">CHECK 03</div>
+                  <div class="case-title">Full BST</div>
+                  <div class="case-desc">Every node has either 0 or 2 children. No node has exactly 1 child.</div>
+                </div>
+              </div>
+              <div class="case-grid">
+                <div class="case-box case-2">
+                  <div class="case-num">CHECK 04</div>
+                  <div class="case-title">Complete BST</div>
+                  <div class="case-desc">All levels are filled except possibly the last, which is filled from left to right.</div>
+                </div>
+                <div class="case-box case-3">
+                  <div class="case-num">CHECK 05</div>
+                  <div class="case-title">Perfect BST</div>
+                  <div class="case-desc">All internal nodes have exactly 2 children AND all leaves are at the same level.</div>
+                </div>
+                <div class="case-box case-1">
+                  <div class="case-num">RELATION</div>
+                  <div class="case-title">Perfect ⊂ Full ⊂ BST</div>
+                  <div class="case-desc">Perfect is the strictest. Every perfect tree is also full. Every full tree is a valid BST (if values are correct).</div>
+                </div>
+              </div>
+              <div class="warn-box">⚠️ Common mistake in validating BST: checking only root &gt; left AND root &lt; right is NOT enough! You must check the entire range constraint at each level.</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — property_checking.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="kw">#include</span> <span class="st">&lt;limits.h&gt;</span>
+
+<span class="cm">/* Check Valid BST using min/max range */</span>
+<span class="tp">int</span> <span class="fn">isValidBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> minVal, <span class="tp">int</span> maxVal) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* empty is valid */</span>
+
+    <span class="cm">/* Node's value must be within allowed range */</span>
+    <span class="kw">if</span> (root-&gt;data &lt;= minVal || root-&gt;data &gt;= maxVal)
+        <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* violates BST property */</span>
+
+    <span class="cm">/* Left must be (minVal, root->data) range */</span>
+    <span class="cm">/* Right must be (root->data, maxVal) range */</span>
+    <span class="kw">return</span> <span class="fn">isValidBST</span>(root-&gt;left,  minVal,      root-&gt;data) &amp;&amp;
+           <span class="fn">isValidBST</span>(root-&gt;right, root-&gt;data, maxVal);
+}
+<span class="cm">/* Call as: isValidBST(root, INT_MIN, INT_MAX) */</span>
+
+<span class="cm">/* Check Balanced BST */</span>
+<span class="tp">int</span> <span class="fn">isBalanced</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">1</span>;
+
+    <span class="tp">int</span> lh = <span class="fn">findHeight</span>(root-&gt;left);
+    <span class="tp">int</span> rh = <span class="fn">findHeight</span>(root-&gt;right);
+    <span class="tp">int</span> diff = lh - rh;
+    <span class="kw">if</span> (diff &lt; <span class="nm">0</span>) diff = -diff;  <span class="cm">/* absolute value */</span>
+
+    <span class="kw">return</span> (diff &lt;= <span class="nm">1</span>)                 <span class="cm">/* height diff ≤ 1 */</span>
+        &amp;&amp; <span class="fn">isBalanced</span>(root-&gt;left)       <span class="cm">/* left balanced */</span>
+        &amp;&amp; <span class="fn">isBalanced</span>(root-&gt;right);     <span class="cm">/* right balanced */</span>
+}
+
+<span class="cm">/* Check Full BST: every node has 0 or 2 children */</span>
+<span class="tp">int</span> <span class="fn">isFullBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* empty OK */</span>
+
+    <span class="cm">/* Exactly one child = NOT full */</span>
+    <span class="kw">if</span> ((root-&gt;left == <span class="nm">NULL</span>) != (root-&gt;right == <span class="nm">NULL</span>))
+        <span class="kw">return</span> <span class="nm">0</span>;
+
+    <span class="kw">return</span> <span class="fn">isFullBST</span>(root-&gt;left) &amp;&amp; <span class="fn">isFullBST</span>(root-&gt;right);
+}
+
+<span class="cm">/* Check Perfect BST: all leaves at same level */</span>
+<span class="tp">int</span> <span class="fn">isPerfect</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> depth, <span class="tp">int</span> level) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">1</span>;
+
+    <span class="cm">/* If leaf, check it's at the expected depth */</span>
+    <span class="kw">if</span> (root-&gt;left == <span class="nm">NULL</span> &amp;&amp; root-&gt;right == <span class="nm">NULL</span>)
+        <span class="kw">return</span> (depth == level);
+
+    <span class="cm">/* Internal node must have exactly 2 children */</span>
+    <span class="kw">if</span> (root-&gt;left == <span class="nm">NULL</span> || root-&gt;right == <span class="nm">NULL</span>)
+        <span class="kw">return</span> <span class="nm">0</span>;
+
+    <span class="kw">return</span> <span class="fn">isPerfect</span>(root-&gt;left,  depth + <span class="nm">1</span>, level) &amp;&amp;
+           <span class="fn">isPerfect</span>(root-&gt;right, depth + <span class="nm">1</span>, level);
+}
+<span class="cm">/* Helper: call as isPerfect(root, 0, findHeight(root)) */</span>
+
+<span class="cm">/* Check Complete BST using level order */</span>
+<span class="tp">int</span> <span class="fn">isComplete</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">1</span>;
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *queue[<span class="nm">100</span>];
+    <span class="tp">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+    <span class="tp">int</span> foundNull = <span class="nm">0</span>;  <span class="cm">/* once we see NULL, no more non-NULL */</span>
+    queue[rear++] = root;
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="kw">struct</span> <span class="tp">Node</span> *curr = queue[front++];
+        <span class="kw">if</span> (curr == <span class="nm">NULL</span>) { foundNull = <span class="nm">1</span>; <span class="kw">continue</span>; }
+        <span class="kw">if</span> (foundNull)  <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* non-NULL after NULL = not complete */</span>
+        queue[rear++] = curr-&gt;left;
+        queue[rear++] = curr-&gt;right;
+    }
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🏆</span>
+              <div class="analogy-title">Types of Apartment Buildings</div>
+              <div class="analogy-text">
+                <strong>Valid BST</strong> = A building where apartments are numbered correctly on every floor (not just the main floor).
+                <br><br>
+                <strong>Balanced BST</strong> = Left wing and right wing have approximately equal floors.
+                <br><br>
+                <strong>Full BST</strong> = Every corridor either has no rooms or exactly two rooms on each side.
+                <br><br>
+                <strong>Complete BST</strong> = All floors are full except the topmost, which fills from the left.
+                <br><br>
+                <strong>Perfect BST</strong> = Every floor is completely full with identical layout. Most rare and optimal!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 10: Update Operations -->
+    <div class="section" id="sec-9">
+      <div class="section-header">
+        <div class="section-badge">✏️ Section 10</div>
+        <div class="section-title">Update Operations</div>
+        <div class="section-desc">Updating a value in a BST — you can't just change it in place! You must delete and reinsert to maintain BST order.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(255,107,53,0.12)">✏️</div>
+          <div><div class="topic-name">Update Node Value</div></div>
+          <span class="topic-tag">Intermediate</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>Unlike arrays, you <strong>cannot simply change a node's value</strong> in a BST. Changing a value might violate the BST property for the entire subtree rooted at that node.</p>
+              <div class="warn-box">
+                ⚠️ If you have a node with value 30 (left child of 50), and you change it to 60 — now 60 is in the left subtree of 50, which violates BST (60 &gt; 50 should be in the right)!
+              </div>
+              <h4>BST-Safe Update Strategy:</h4>
+              <div class="highlight-box">
+                <strong>Step 1:</strong> Delete the old value from the BST<br>
+                <strong>Step 2:</strong> Insert the new value into the BST<br>
+                This guarantees the BST property is maintained!
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — update_node.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Update Node Value in BST */</span>
+<span class="cm">/* Strategy: Delete old value, Insert new value */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">updateNode</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> oldVal, <span class="tp">int</span> newVal) {
+    <span class="cm">/* Check if old value exists */</span>
+    <span class="kw">if</span> (<span class="fn">searchRecursive</span>(root, oldVal) == <span class="nm">NULL</span>) {
+        <span class="fn">printf</span>(<span class="st">"Value %d not found in BST!\n"</span>, oldVal);
+        <span class="kw">return</span> root;
+    }
+
+    <span class="cm">/* Check if new value already exists */</span>
+    <span class="kw">if</span> (<span class="fn">searchRecursive</span>(root, newVal) != <span class="nm">NULL</span>) {
+        <span class="fn">printf</span>(<span class="st">"Value %d already exists!\n"</span>, newVal);
+        <span class="kw">return</span> root;
+    }
+
+    <span class="cm">/* Step 1: Delete old value */</span>
+    root = <span class="fn">deleteNode</span>(root, oldVal);
+    <span class="fn">printf</span>(<span class="st">"Deleted: %d\n"</span>, oldVal);
+
+    <span class="cm">/* Step 2: Insert new value (BST property maintained) */</span>
+    root = <span class="fn">insertRecursive</span>(root, newVal);
+    <span class="fn">printf</span>(<span class="st">"Inserted: %d\n"</span>, newVal);
+
+    <span class="fn">printf</span>(<span class="st">"Update complete: %d -&gt; %d\n"</span>, oldVal, newVal);
+    <span class="kw">return</span> root;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="nm">NULL</span>;
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">50</span>);
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">30</span>);
+    root = <span class="fn">insertRecursive</span>(root, <span class="nm">70</span>);
+
+    <span class="fn">printf</span>(<span class="st">"Before: "</span>); <span class="fn">inorder</span>(root); <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    <span class="cm">/* Before: 30 50 70 */</span>
+
+    root = <span class="fn">updateNode</span>(root, <span class="nm">30</span>, <span class="nm">35</span>);  <span class="cm">/* change 30 to 35 */</span>
+
+    <span class="fn">printf</span>(<span class="st">"After:  "</span>); <span class="fn">inorder</span>(root); <span class="fn">printf</span>(<span class="st">"\n"</span>);
+    <span class="cm">/* After: 35 50 70 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">📦</span>
+              <div class="analogy-title">Moving Items in a Sorted Warehouse</div>
+              <div class="analogy-text">
+                Imagine a warehouse where items are sorted by weight. If you want to "update" a 30kg box to 60kg (add more weight), you can't just relabel it! It's in the wrong shelf position.
+                <br><br>
+                You must <strong>remove it from shelf 30</strong>, then <strong>place it on shelf 60</strong>. The same logic applies to BST: changing a value means relocating the node entirely. Delete then re-insert is the only BST-safe approach!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 11: Utility Operations -->
+    <div class="section" id="sec-10">
+      <div class="section-header">
+        <div class="section-badge">🛠️ Section 11</div>
+        <div class="section-title">Utility Operations</div>
+        <div class="section-desc">Essential tree management: copy, clone, mirror, clear, and destroy the entire BST.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(167,139,250,0.12)">🛠️</div>
+          <div><div class="topic-name">Copy, Clone, Mirror, Clear & Destroy BST</div></div>
+          <span class="topic-tag">Advanced</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">Copy BST</div>
+                  <div class="info-cell-val">Deep Copy</div>
+                  <div class="info-cell-desc">Create an identical tree with all new nodes. Changes to copy don't affect original.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Mirror BST</div>
+                  <div class="info-cell-val">Flip ↔</div>
+                  <div class="info-cell-desc">Swap left and right children at every node. Result is a mirrored (horizontally flipped) tree.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Clear BST</div>
+                  <div class="info-cell-val">Remove All</div>
+                  <div class="info-cell-desc">Delete all nodes and set root to NULL. Frees all memory.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Destroy BST</div>
+                  <div class="info-cell-val">Free Memory</div>
+                  <div class="info-cell-desc">Same as clear — use postorder to free children before parent to avoid memory leaks.</div>
+                </div>
+              </div>
+              <div class="info-box">💡 Copy/Clone use <strong>Preorder</strong> traversal logic. Destroy uses <strong>Postorder</strong> — always free children before parent!</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — utility_ops.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Copy BST — creates deep copy (all new nodes) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">copyBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *newNode = <span class="fn">createNode</span>(root-&gt;data);
+    newNode-&gt;left  = <span class="fn">copyBST</span>(root-&gt;left);   <span class="cm">/* copy left subtree */</span>
+    newNode-&gt;right = <span class="fn">copyBST</span>(root-&gt;right);  <span class="cm">/* copy right subtree */</span>
+    <span class="kw">return</span> newNode;  <span class="cm">/* clone = copyBST (same function) */</span>
+}
+
+<span class="cm">/* Mirror BST — swap left and right at every node */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">mirrorBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="cm">/* Recursively mirror subtrees first */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *left  = <span class="fn">mirrorBST</span>(root-&gt;left);
+    <span class="kw">struct</span> <span class="tp">Node</span> *right = <span class="fn">mirrorBST</span>(root-&gt;right);
+
+    <span class="cm">/* Swap left and right */</span>
+    root-&gt;left  = right;
+    root-&gt;right = left;
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Clear BST — delete all nodes, free memory */</span>
+<span class="cm">/* Uses POSTORDER: free children before parent */</span>
+<span class="kw">void</span> <span class="fn">clearBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+    <span class="fn">clearBST</span>(root-&gt;left);    <span class="cm">/* free left subtree first */</span>
+    <span class="fn">clearBST</span>(root-&gt;right);   <span class="cm">/* free right subtree */</span>
+    <span class="fn">free</span>(root);              <span class="cm">/* then free this node */</span>
+}
+
+<span class="cm">/* Destroy BST — clears and sets root to NULL */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">destroyBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="fn">clearBST</span>(root);
+    <span class="kw">return</span> <span class="nm">NULL</span>;  <span class="cm">/* caller: root = destroyBST(root) */</span>
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *orig = <span class="nm">NULL</span>;
+    orig = <span class="fn">insertRecursive</span>(orig, <span class="nm">50</span>);
+    orig = <span class="fn">insertRecursive</span>(orig, <span class="nm">30</span>);
+    orig = <span class="fn">insertRecursive</span>(orig, <span class="nm">70</span>);
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *copy = <span class="fn">copyBST</span>(orig);  <span class="cm">/* deep copy */</span>
+    <span class="fn">printf</span>(<span class="st">"Copy inorder: "</span>); <span class="fn">inorder</span>(copy); <span class="fn">printf</span>(<span class="st">"\n"</span>);
+
+    <span class="fn">mirrorBST</span>(orig);  <span class="cm">/* in-place mirror */</span>
+
+    orig = <span class="fn">destroyBST</span>(orig);  <span class="cm">/* orig = NULL after this */</span>
+    copy = <span class="fn">destroyBST</span>(copy);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🖨️</span>
+              <div class="analogy-title">Document Operations</div>
+              <div class="analogy-text">
+                <strong>Copy/Clone</strong> = Photocopying a document. You get a new, independent copy — changes to the copy don't affect the original.
+                <br><br>
+                <strong>Mirror</strong> = Flipping a document horizontally — the left side becomes the right side.
+                <br><br>
+                <strong>Clear/Destroy</strong> = Shredding the document and recycling the paper (freeing memory). You must shred pages from the bottom up — that's postorder! Shredding the binding (root) before the pages would lose the pages forever.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 12: Path Operations -->
+    <div class="section" id="sec-11">
+      <div class="section-header">
+        <div class="section-badge">🗺️ Section 12</div>
+        <div class="section-title">Path Operations</div>
+        <div class="section-desc">Find paths through the tree — from root to a node, root to all leaves, and the Lowest Common Ancestor (LCA).</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(255,209,102,0.12)">🗺️</div>
+          <div><div class="topic-name">Path to Node, Root-to-Leaf, LCA</div></div>
+          <span class="topic-tag">Advanced</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <h4>Find Path to Node:</h4>
+              <p>Store the traversal decisions (left/right) in an array. If we find the target, the array contains the path. If not found, backtrack.</p>
+              <h4>Print Root to Leaf Paths:</h4>
+              <p>Track nodes from root using a path array. When we reach a leaf (no children), print the full path stored so far.</p>
+              <h4>Lowest Common Ancestor (LCA):</h4>
+              <p>The LCA of two nodes A and B is the deepest node that is an ancestor of both. In a BST, this is elegant:</p>
+              <div class="highlight-box">
+                <strong>BST LCA Rule:</strong><br>
+                • If both A and B are &lt; current node → LCA is in left subtree<br>
+                • If both A and B are &gt; current node → LCA is in right subtree<br>
+                • Otherwise → current node IS the LCA!
+              </div>
+              <div class="path-display">
+                <span style="font-size:11px;color:var(--text3);font-family:'Fira Code';margin-right:8px">Path to 40:</span>
+                <span class="path-node">50</span>
+                <span class="path-arrow">→</span>
+                <span class="path-node">30</span>
+                <span class="path-arrow">→</span>
+                <span class="path-node" style="background:rgba(0,232,122,0.2);border-color:var(--accent);color:var(--accent)">40</span>
+                <span style="margin-left:12px;font-size:11px;color:var(--accent)">✓ Found!</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — path_ops.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Find Path from root to a node */</span>
+<span class="tp">int</span> <span class="fn">findPath</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value,
+              <span class="tp">int</span> path[], <span class="tp">int</span> pathLen) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* not found */</span>
+
+    path[pathLen] = root-&gt;data;  <span class="cm">/* add current to path */</span>
+    pathLen++;
+
+    <span class="kw">if</span> (root-&gt;data == value) {
+        <span class="cm">/* Found! Print the path */</span>
+        <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">0</span>; i &lt; pathLen; i++)
+            <span class="fn">printf</span>(<span class="st">"%d "</span>, path[i]);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">findPath</span>(root-&gt;left,  value, path, pathLen);
+    <span class="kw">return</span>     <span class="fn">findPath</span>(root-&gt;right, value, path, pathLen);
+}
+
+<span class="cm">/* Print ALL root-to-leaf paths */</span>
+<span class="kw">void</span> <span class="fn">printAllPaths</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> path[], <span class="tp">int</span> len) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+
+    path[len] = root-&gt;data;
+    len++;
+
+    <span class="cm">/* If leaf node, print path */</span>
+    <span class="kw">if</span> (root-&gt;left == <span class="nm">NULL</span> &amp;&amp; root-&gt;right == <span class="nm">NULL</span>) {
+        <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">0</span>; i &lt; len; i++)
+            <span class="fn">printf</span>(<span class="st">"%d "</span>, path[i]);
+        <span class="fn">printf</span>(<span class="st">"\n"</span>);
+        <span class="kw">return</span>;
+    }
+
+    <span class="fn">printAllPaths</span>(root-&gt;left,  path, len);
+    <span class="fn">printAllPaths</span>(root-&gt;right, path, len);
+}
+
+<span class="cm">/* Find Lowest Common Ancestor (LCA) — BST version */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">findLCA</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> a, <span class="tp">int</span> b) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="cm">/* Both values are smaller — LCA in left */</span>
+    <span class="kw">if</span> (a &lt; root-&gt;data &amp;&amp; b &lt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">findLCA</span>(root-&gt;left, a, b);
+
+    <span class="cm">/* Both values are larger — LCA in right */</span>
+    <span class="kw">if</span> (a &gt; root-&gt;data &amp;&amp; b &gt; root-&gt;data)
+        <span class="kw">return</span> <span class="fn">findLCA</span>(root-&gt;right, a, b);
+
+    <span class="cm">/* One is on each side (or one equals root) */</span>
+    <span class="cm">/* Current node is the LCA! */</span>
+    <span class="kw">return</span> root;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="nm">NULL</span>;
+    <span class="tp">int</span> values[] = {<span class="nm">50</span>, <span class="nm">30</span>, <span class="nm">70</span>, <span class="nm">20</span>, <span class="nm">40</span>};
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">5</span>; i++)
+        root = <span class="fn">insertRecursive</span>(root, values[i]);
+
+    <span class="tp">int</span> path[<span class="nm">100</span>];
+    <span class="fn">printf</span>(<span class="st">"Path to 40: "</span>); <span class="fn">findPath</span>(root, <span class="nm">40</span>, path, <span class="nm">0</span>);
+    <span class="cm">/* Output: 50 30 40 */</span>
+
+    <span class="fn">printf</span>(<span class="st">"All paths:\n"</span>); <span class="fn">printAllPaths</span>(root, path, <span class="nm">0</span>);
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *lca = <span class="fn">findLCA</span>(root, <span class="nm">20</span>, <span class="nm">40</span>);
+    <span class="fn">printf</span>(<span class="st">"LCA(20,40): %d\n"</span>, lca-&gt;data);  <span class="cm">/* 30 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🗺️</span>
+              <div class="analogy-title">Navigation & Common Meeting Points</div>
+              <div class="analogy-text">
+                <strong>Path to Node</strong> = GPS directions: "Turn left at 30, turn right at 40." The directions from the root to your destination.
+                <br><br>
+                <strong>Root-to-Leaf Paths</strong> = All possible routes from headquarters to every field office — useful for network routing.
+                <br><br>
+                <strong>LCA</strong> = If Alice is in city 20 and Bob is in city 40, what's the closest common city on both their routes back to HQ? That's city 30 — the <em>Lowest Common Ancestor</em>!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 13: Balancing -->
+    <div class="section" id="sec-12">
+      <div class="section-header">
+        <div class="section-badge">⚖️ Section 13</div>
+        <div class="section-title">Balancing Related Operations</div>
+        <div class="section-desc">Prevent the worst-case O(n) by keeping the tree balanced. Convert skewed trees to balanced BSTs.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,232,122,0.12)">⚖️</div>
+          <div><div class="topic-name">Balance BST & Convert Sorted Array to BST</div></div>
+          <span class="topic-tag">Advanced</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>A <strong>skewed BST</strong> (inserting sorted values) degenerates into a linked list, losing all O(log n) benefits.</p>
+              <div class="case-grid">
+                <div class="case-box case-1">
+                  <div class="case-num">STEP 01</div>
+                  <div class="case-title">BST → Sorted Array</div>
+                  <div class="case-desc">Use Inorder traversal to extract all values in sorted order into an array.</div>
+                </div>
+                <div class="case-box case-2">
+                  <div class="case-num">STEP 02</div>
+                  <div class="case-title">Sorted Array → BST</div>
+                  <div class="case-desc">Pick the middle element as root. Recursively do the same for left and right halves.</div>
+                </div>
+                <div class="case-box case-3">
+                  <div class="case-num">RESULT</div>
+                  <div class="case-title">Balanced BST!</div>
+                  <div class="case-desc">Middle element guarantees equal halves → height = O(log n) → all operations fast again!</div>
+                </div>
+              </div>
+              <div class="highlight-box">
+                <strong>Convert Sorted Array to BST:</strong><br>
+                Array: [10, 20, 30, 40, 50, 60, 70]<br>
+                Middle = 40 → root<br>
+                Left half [10,20,30] → middle=20 → left child<br>
+                Right half [50,60,70] → middle=60 → right child
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — balancing.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* Convert Sorted Array to Balanced BST */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">sortedArrayToBST</span>(<span class="tp">int</span> arr[], <span class="tp">int</span> start, <span class="tp">int</span> end) {
+    <span class="kw">if</span> (start &gt; end)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="cm">/* Middle element becomes root — guarantees balance */</span>
+    <span class="tp">int</span> mid = (start + end) / <span class="nm">2</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="fn">createNode</span>(arr[mid]);
+
+    <span class="cm">/* Recursively build left and right subtrees */</span>
+    root-&gt;left  = <span class="fn">sortedArrayToBST</span>(arr, start, mid - <span class="nm">1</span>);
+    root-&gt;right = <span class="fn">sortedArrayToBST</span>(arr, mid + <span class="nm">1</span>, end);
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Helper: Inorder traversal into array */</span>
+<span class="tp">int</span> gIdx = <span class="nm">0</span>;
+<span class="kw">void</span> <span class="fn">inorderToArray</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> arr[]) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+    <span class="fn">inorderToArray</span>(root-&gt;left, arr);
+    arr[gIdx++] = root-&gt;data;
+    <span class="fn">inorderToArray</span>(root-&gt;right, arr);
+}
+
+<span class="cm">/* Balance an existing (possibly skewed) BST */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">balanceBST</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="tp">int</span> n = <span class="fn">countTotal</span>(root);
+    <span class="kw">if</span> (n == <span class="nm">0</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="tp">int</span> *arr = (<span class="tp">int</span>*) <span class="fn">malloc</span>(n * <span class="kw">sizeof</span>(<span class="tp">int</span>));
+    gIdx = <span class="nm">0</span>;
+
+    <span class="cm">/* Step 1: Extract sorted values */</span>
+    <span class="fn">inorderToArray</span>(root, arr);
+
+    <span class="cm">/* Step 2: Build balanced BST from sorted array */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *balanced = <span class="fn">sortedArrayToBST</span>(arr, <span class="nm">0</span>, n - <span class="nm">1</span>);
+
+    <span class="fn">free</span>(arr);
+    <span class="kw">return</span> balanced;
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="cm">/* Worst case: inserting sorted values = skewed tree! */</span>
+    <span class="kw">struct</span> <span class="tp">Node</span> *skewed = <span class="nm">NULL</span>;
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">1</span>; i &lt;= <span class="nm">7</span>; i++)
+        skewed = <span class="fn">insertRecursive</span>(skewed, i * <span class="nm">10</span>);
+    <span class="fn">printf</span>(<span class="st">"Skewed height: %d\n"</span>, <span class="fn">findHeight</span>(skewed));   <span class="cm">/* 6 */</span>
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *balanced = <span class="fn">balanceBST</span>(skewed);
+    <span class="fn">printf</span>(<span class="st">"Balanced height: %d\n"</span>, <span class="fn">findHeight</span>(balanced)); <span class="cm">/* 2 */</span>
+
+    <span class="cm">/* Direct from sorted array */</span>
+    <span class="tp">int</span> arr[] = {<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>, <span class="nm">40</span>, <span class="nm">50</span>, <span class="nm">60</span>, <span class="nm">70</span>};
+    <span class="kw">struct</span> <span class="tp">Node</span> *bst = <span class="fn">sortedArrayToBST</span>(arr, <span class="nm">0</span>, <span class="nm">6</span>);
+    <span class="fn">printf</span>(<span class="st">"Optimal height: %d\n"</span>, <span class="fn">findHeight</span>(bst));  <span class="cm">/* 2 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">⚖️</span>
+              <div class="analogy-title">Reorganizing a Lopsided Bookshelf</div>
+              <div class="analogy-text">
+                Imagine books sorted 1 to 100 were placed one by one — always on the right. Now every book is stacked in a towering right-only pile (skewed BST). Finding book #99 means looking through all 98 books before it!
+                <br><br>
+                <strong>Balancing</strong> = Take all books off the shelf, arrange them in order, then place the middle book as the center divider, split the rest equally on both sides. Now finding any book takes at most 7 comparisons (log₂ 100)!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 14: Conversion Operations -->
+    <div class="section" id="sec-13">
+      <div class="section-header">
+        <div class="section-badge">🔁 Section 14</div>
+        <div class="section-title">Conversion Operations</div>
+        <div class="section-desc">Transform a BST into other data structures — sorted arrays, linked lists, and back.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,184,240,0.12)">🔁</div>
+          <div><div class="topic-name">BST ↔ Sorted Array, BST → Linked List</div></div>
+          <span class="topic-tag">Advanced</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">BST → Sorted Array</div>
+                  <div class="info-cell-val">Inorder</div>
+                  <div class="info-cell-desc">Inorder traversal naturally gives sorted output. Just collect into array.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Sorted Array → BST</div>
+                  <div class="info-cell-val">Middle First</div>
+                  <div class="info-cell-desc">Always pick middle element as root for optimal balance (Section 13 technique).</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">BST → Linked List</div>
+                  <div class="info-cell-val">Inorder</div>
+                  <div class="info-cell-desc">Reuse node pointers: left=prev, right=next. Thread nodes in inorder sequence.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Sorted Array → Optimal BST</div>
+                  <div class="info-cell-val">Min Height</div>
+                  <div class="info-cell-desc">Same as Sorted Array → BST. Always results in minimum height balanced BST.</div>
+                </div>
+              </div>
+              <div class="info-box">💡 The key insight: <strong>Inorder traversal of BST = Sorted sequence</strong>. This property powers most conversion operations.</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — conversion_ops.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* BST to Sorted Array */</span>
+<span class="tp">int</span> arrIdx = <span class="nm">0</span>;
+<span class="kw">void</span> <span class="fn">bstToSortedArray</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> arr[]) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+    <span class="fn">bstToSortedArray</span>(root-&gt;left, arr);   <span class="cm">/* inorder! */</span>
+    arr[arrIdx++] = root-&gt;data;
+    <span class="fn">bstToSortedArray</span>(root-&gt;right, arr);
+}
+
+<span class="cm">/* BST to Doubly Linked List (in-place, using same nodes!) */</span>
+<span class="cm">/* Reuse: left  = prev pointer                             */</span>
+<span class="cm">/*        right = next pointer                             */</span>
+<span class="kw">struct</span> <span class="tp">Node</span> *listHead = <span class="nm">NULL</span>;
+<span class="kw">struct</span> <span class="tp">Node</span> *listPrev = <span class="nm">NULL</span>;
+
+<span class="kw">void</span> <span class="fn">bstToLinkedList</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;
+
+    <span class="fn">bstToLinkedList</span>(root-&gt;left);  <span class="cm">/* process smaller first */</span>
+
+    <span class="cm">/* Link this node into the list */</span>
+    root-&gt;left = listPrev;         <span class="cm">/* prev pointer */</span>
+    <span class="kw">if</span> (listPrev != <span class="nm">NULL</span>)
+        listPrev-&gt;right = root;    <span class="cm">/* prev's next = this */</span>
+    <span class="kw">else</span>
+        listHead = root;           <span class="cm">/* first node = head */</span>
+    listPrev = root;               <span class="cm">/* move prev forward */</span>
+
+    <span class="fn">bstToLinkedList</span>(root-&gt;right); <span class="cm">/* process larger */</span>
+}
+
+<span class="cm">/* Print the resulting linked list */</span>
+<span class="kw">void</span> <span class="fn">printLinkedList</span>(<span class="kw">struct</span> <span class="tp">Node</span> *head) {
+    <span class="kw">while</span> (head != <span class="nm">NULL</span>) {
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, head-&gt;data);
+        head = head-&gt;right;  <span class="cm">/* next pointer */</span>
+    }
+    <span class="fn">printf</span>(<span class="st">"\n"</span>);
+}
+
+<span class="tp">int</span> <span class="fn">main</span>() {
+    <span class="kw">struct</span> <span class="tp">Node</span> *root = <span class="nm">NULL</span>;
+    <span class="tp">int</span> vals[] = {<span class="nm">50</span>, <span class="nm">30</span>, <span class="nm">70</span>, <span class="nm">20</span>, <span class="nm">40</span>};
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">5</span>; i++)
+        root = <span class="fn">insertRecursive</span>(root, vals[i]);
+
+    <span class="cm">/* BST to sorted array */</span>
+    <span class="tp">int</span> arr[<span class="nm">100</span>]; arrIdx = <span class="nm">0</span>;
+    <span class="fn">bstToSortedArray</span>(root, arr);
+    <span class="kw">for</span> (<span class="tp">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">5</span>; i++)
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, arr[i]);  <span class="cm">/* 20 30 40 50 70 */</span>
+
+    <span class="cm">/* BST to linked list */</span>
+    listHead = listPrev = <span class="nm">NULL</span>;
+    <span class="fn">bstToLinkedList</span>(root);
+    <span class="fn">printf</span>(<span class="st">"\nLinked list: "</span>);
+    <span class="fn">printLinkedList</span>(listHead);  <span class="cm">/* 20 30 40 50 70 */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🔄</span>
+              <div class="analogy-title">Data Transformation Pipeline</div>
+              <div class="analogy-text">
+                Think of BST conversions like a data pipeline in a company:
+                <br><br>
+                <strong>BST → Sorted Array</strong> = Exporting a hierarchical org chart to a flat sorted employee list (by ID) for a spreadsheet.
+                <br><br>
+                <strong>Sorted Array → BST</strong> = Importing that flat list back into a hierarchical search system.
+                <br><br>
+                <strong>BST → Linked List</strong> = Converting a tree of nodes into a sorted chain — reusing the same "employee cards" but changing how they're connected (no new memory needed!).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 15: Recursive Operations -->
+    <div class="section" id="sec-14">
+      <div class="section-header">
+        <div class="section-badge">🔁 Section 15</div>
+        <div class="section-title">Recursive Operations — Summary</div>
+        <div class="section-desc">Understand the recursive pattern that powers most BST algorithms. All recursive operations follow the same elegant template.</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(167,139,250,0.12)">🔁</div>
+          <div><div class="topic-name">The Recursive BST Pattern</div></div>
+          <span class="topic-tag">Deep Dive</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>Every recursive BST function follows the same template:</p>
+              <div class="highlight-box">
+                1. <strong>Base Case:</strong> if root == NULL → return (or default value)<br>
+                2. <strong>Decision:</strong> use BST property to decide left or right<br>
+                3. <strong>Recurse:</strong> call self on left or right subtree<br>
+                4. <strong>Return:</strong> propagate result back up
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>Operation</th><th>Traversal Used</th><th>Return Type</th><th>Call Stack Depth</th></tr>
+                  <tr><td>Recursive Insert</td><td>Modified Preorder</td><td>struct Node*</td><td>O(h)</td></tr>
+                  <tr><td>Recursive Delete</td><td>Modified Inorder</td><td>struct Node*</td><td>O(h)</td></tr>
+                  <tr><td>Recursive Search</td><td>Directed (BST)</td><td>struct Node*</td><td>O(h)</td></tr>
+                  <tr><td>Recursive Traversal</td><td>Inorder/Pre/Post</td><td>void</td><td>O(h)</td></tr>
+                  <tr><td>Count/Height</td><td>Postorder</td><td>int</td><td>O(h)</td></tr>
+                  <tr><td>Copy/Clone</td><td>Preorder</td><td>struct Node*</td><td>O(h)</td></tr>
+                </table>
+              </div>
+              <div class="info-box">💡 All recursive BST operations use O(h) stack space, where h is the height. In a balanced tree, that's O(log n). In a skewed tree, O(n) — this can cause stack overflow for large n!</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — recursive_pattern.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* ===== THE UNIVERSAL RECURSIVE BST TEMPLATE ===== */</span>
+
+<span class="cm">/* Pattern 1: Navigate + Return (Insert, Delete) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">recursiveTemplate</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> value) {
+    <span class="cm">/* Step 1: Base Case */</span>
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)
+        <span class="kw">return</span> <span class="fn">createNode</span>(value);  <span class="cm">/* insert: make new node */</span>
+
+    <span class="cm">/* Step 2: BST Decision */</span>
+    <span class="kw">if</span> (value &lt; root-&gt;data)
+        root-&gt;left  = <span class="fn">recursiveTemplate</span>(root-&gt;left,  value);
+    <span class="kw">else if</span> (value &gt; root-&gt;data)
+        root-&gt;right = <span class="fn">recursiveTemplate</span>(root-&gt;right, value);
+
+    <span class="cm">/* Step 4: Return current root (with updated children) */</span>
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Pattern 2: Accumulate + Return (Count, Height) */</span>
+<span class="tp">int</span> <span class="fn">accumulateTemplate</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">0</span>;  <span class="cm">/* or -1 for height */</span>
+
+    <span class="tp">int</span> left  = <span class="fn">accumulateTemplate</span>(root-&gt;left);
+    <span class="tp">int</span> right = <span class="fn">accumulateTemplate</span>(root-&gt;right);
+
+    <span class="kw">return</span> <span class="nm">1</span> + left + right;  <span class="cm">/* counting example */</span>
+}
+
+<span class="cm">/* Pattern 3: Visit All (Traversals, Print) */</span>
+<span class="kw">void</span> <span class="fn">visitAllTemplate</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span>;   <span class="cm">/* base case */</span>
+
+    <span class="fn">visitAllTemplate</span>(root-&gt;left);   <span class="cm">/* visit left */</span>
+    <span class="fn">printf</span>(<span class="st">"%d "</span>, root-&gt;data);      <span class="cm">/* process current */</span>
+    <span class="fn">visitAllTemplate</span>(root-&gt;right);  <span class="cm">/* visit right */</span>
+    <span class="cm">/* Change visit order for pre/postorder */</span>
+}
+
+<span class="cm">/* Pattern 4: Build New Tree (Copy, Mirror) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">buildTemplate</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (root == <span class="nm">NULL</span>)  <span class="kw">return</span> <span class="nm">NULL</span>;
+
+    <span class="kw">struct</span> <span class="tp">Node</span> *newNode = <span class="fn">createNode</span>(root-&gt;data);
+    newNode-&gt;left  = <span class="fn">buildTemplate</span>(root-&gt;left);
+    newNode-&gt;right = <span class="fn">buildTemplate</span>(root-&gt;right);
+    <span class="kw">return</span> newNode;
+}</div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">🪆</span>
+              <div class="analogy-title">Russian Matryoshka Dolls</div>
+              <div class="analogy-text">
+                Recursion is like Russian nesting dolls. To count all dolls:
+                <br><br>
+                <strong>Base case:</strong> The smallest doll has no dolls inside → count = 1
+                <br><br>
+                <strong>Recursive case:</strong> This doll has a smaller doll inside → count = 1 + count(inner doll)
+                <br><br>
+                The call stack builds up as you open dolls, and results are collected as you close them back. BST recursion works exactly the same — dive deep, collect results on the way back up!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 16: Iterative Operations -->
+    <div class="section" id="sec-15">
+      <div class="section-header">
+        <div class="section-badge">🔄 Section 16</div>
+        <div class="section-title">Iterative Operations — Summary</div>
+        <div class="section-desc">Convert recursive BST operations to iterative using explicit stacks and queues. Better for deep trees (avoids stack overflow).</div>
+      </div>
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(255,107,53,0.12)">🔄</div>
+          <div><div class="topic-name">Iterative Insert, Delete, Search & Traversal</div></div>
+          <span class="topic-tag">Deep Dive</span>
+        </div>
+        <div class="topic-body">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab(this,'theory')">Theory</div>
+            <div class="tab" onclick="switchTab(this,'code')">C Code</div>
+            <div class="tab" onclick="switchTab(this,'analogy')">Analogy</div>
+          </div>
+          <div class="tab-content active" data-tab="theory">
+            <div class="theory-block">
+              <p>Iterative operations use explicit data structures instead of the call stack:</p>
+              <div class="info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label">Iterative Insert</div>
+                  <div class="info-cell-val">Loop + Parent</div>
+                  <div class="info-cell-desc">Walk down with a <code>while</code> loop, track parent pointer to attach new node.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Iterative Delete</div>
+                  <div class="info-cell-val">Loop + Parent</div>
+                  <div class="info-cell-desc">Find node and parent iteratively, then handle the 3 cases.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Iterative Search</div>
+                  <div class="info-cell-val">While Loop</div>
+                  <div class="info-cell-desc">Simplest iterative operation — just loop until found or NULL.</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label">Iterative Traversal</div>
+                  <div class="info-cell-val">Stack / Queue</div>
+                  <div class="info-cell-desc">DFS uses an explicit stack. BFS (level order) uses a queue.</div>
+                </div>
+              </div>
+              <div class="highlight-box">
+                <strong>When to use iterative over recursive?</strong><br>
+                • Large trees (millions of nodes) — recursive would overflow the call stack<br>
+                • Memory-constrained systems<br>
+                • Real-time systems where stack size is limited<br>
+                • When the iterative version is simpler (e.g., search, insert)
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <tr><th>Operation</th><th>Recursive Space</th><th>Iterative Space</th><th>Winner</th></tr>
+                  <tr><td>Insert</td><td>O(h) stack</td><td>O(1)</td><td class="tc-best">Iterative</td></tr>
+                  <tr><td>Search</td><td>O(h) stack</td><td>O(1)</td><td class="tc-best">Iterative</td></tr>
+                  <tr><td>Inorder</td><td>O(h) stack</td><td>O(h) explicit stack</td><td class="tc-avg">Tie</td></tr>
+                  <tr><td>Copy/Clone</td><td>O(h) stack</td><td>Complex</td><td class="tc-best">Recursive</td></tr>
+                  <tr><td>Height</td><td>O(h) stack</td><td>O(w) queue (BFS)</td><td class="tc-avg">Depends</td></tr>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="code">
+            <div class="code-block">
+              <div class="code-header"><span class="code-lang">C — iterative_all.c</span><button class="code-copy" onclick="copyCode(this)">Copy</button></div>
+              <div class="code-body"><span class="cm">/* ============================================= */</span>
+<span class="cm">/* ITERATIVE BST OPERATIONS — ALL IN ONE FILE    */</span>
+<span class="cm">/* ============================================= */</span>
+
+<span class="cm">/* Iterative Insert (O(1) space!) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">iterInsert</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> val) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *n = <span class="fn">createNode</span>(val);
+    <span class="kw">if</span> (!root)  <span class="kw">return</span> n;
+    <span class="kw">struct</span> <span class="tp">Node</span> *p = <span class="nm">NULL</span>, *c = root;
+    <span class="kw">while</span> (c) {
+        p = c;
+        <span class="kw">if</span>      (val &lt; c-&gt;data) c = c-&gt;left;
+        <span class="kw">else if</span> (val &gt; c-&gt;data) c = c-&gt;right;
+        <span class="kw">else</span>    { <span class="fn">free</span>(n); <span class="kw">return</span> root; }  <span class="cm">/* dup */</span>
+    }
+    (val &lt; p-&gt;data) ? (p-&gt;left = n) : (p-&gt;right = n);
+    <span class="kw">return</span> root;
+}
+
+<span class="cm">/* Iterative Search (O(1) space!) */</span>
+<span class="kw">struct</span> <span class="tp">Node</span>* <span class="fn">iterSearch</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root, <span class="tp">int</span> val) {
+    <span class="kw">while</span> (root &amp;&amp; root-&gt;data != val)
+        root = (val &lt; root-&gt;data) ? root-&gt;left : root-&gt;right;
+    <span class="kw">return</span> root;  <span class="cm">/* NULL if not found */</span>
+}
+
+<span class="cm">/* Iterative Inorder using Stack */</span>
+<span class="kw">void</span> <span class="fn">iterInorder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">struct</span> <span class="tp">Node</span> *stk[<span class="nm">200</span>];
+    <span class="tp">int</span> top = <span class="nm">-1</span>;
+
+    <span class="kw">while</span> (root || top &gt;= <span class="nm">0</span>) {
+        <span class="kw">while</span> (root) {              <span class="cm">/* push left chain */</span>
+            stk[++top] = root;
+            root = root-&gt;left;
+        }
+        root = stk[top--];          <span class="cm">/* pop */</span>
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, root-&gt;data); <span class="cm">/* visit */</span>
+        root = root-&gt;right;         <span class="cm">/* go right */</span>
+    }
+}
+
+<span class="cm">/* Iterative Preorder using Stack */</span>
+<span class="kw">void</span> <span class="fn">iterPreorder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (!root)  <span class="kw">return</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *stk[<span class="nm">200</span>];
+    <span class="tp">int</span> top = <span class="nm">-1</span>;
+    stk[++top] = root;
+
+    <span class="kw">while</span> (top &gt;= <span class="nm">0</span>) {
+        <span class="kw">struct</span> <span class="tp">Node</span> *node = stk[top--];
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, node-&gt;data);    <span class="cm">/* visit FIRST */</span>
+        <span class="kw">if</span> (node-&gt;right)  stk[++top] = node-&gt;right;  <span class="cm">/* push right */</span>
+        <span class="kw">if</span> (node-&gt;left)   stk[++top] = node-&gt;left;   <span class="cm">/* push left (top) */</span>
+    }
+}
+
+<span class="cm">/* Iterative Postorder using 2 Stacks */</span>
+<span class="kw">void</span> <span class="fn">iterPostorder</span>(<span class="kw">struct</span> <span class="tp">Node</span> *root) {
+    <span class="kw">if</span> (!root)  <span class="kw">return</span>;
+    <span class="kw">struct</span> <span class="tp">Node</span> *s1[<span class="nm">200</span>], *s2[<span class="nm">200</span>];
+    <span class="tp">int</span> t1 = <span class="nm">-1</span>, t2 = <span class="nm">-1</span>;
+    s1[++t1] = root;
+
+    <span class="cm">/* Push to s2 in reverse post-order */</span>
+    <span class="kw">while</span> (t1 &gt;= <span class="nm">0</span>) {
+        <span class="kw">struct</span> <span class="tp">Node</span> *n = s1[t1--];
+        s2[++t2] = n;
+        <span class="kw">if</span> (n-&gt;left)   s1[++t1] = n-&gt;left;
+        <span class="kw">if</span> (n-&gt;right)  s1[++t1] = n-&gt;right;
+    }
+    <span class="cm">/* s2 now holds postorder in reverse */</span>
+    <span class="kw">while</span> (t2 &gt;= <span class="nm">0</span>)
+        <span class="fn">printf</span>(<span class="st">"%d "</span>, s2[t2--]-&gt;data);
+}
+
+<span class="cm">/* Level Order (BFS) using Queue — already shown in Section 5 */</span>
+<span class="cm">/* Uses a queue array — see Section 5 code */</span></div>
+            </div>
+          </div>
+          <div class="tab-content" data-tab="analogy">
+            <div class="analogy-card">
+              <span class="analogy-emoji">📋</span>
+              <div class="analogy-title">Manual To-Do List vs Auto-Scheduling</div>
+              <div class="analogy-text">
+                <strong>Recursive</strong> = Auto-scheduling: You assign a task, it automatically generates sub-tasks, which generate more sub-tasks. The system manages the "remember where you were" part automatically (call stack).
+                <br><br>
+                <strong>Iterative</strong> = Manual to-do list: You maintain your own list (explicit stack/queue) of "what to do next." You push tasks when you discover them, pop them when you do them. More work for you, but you have full control and avoid automatic stack overflow.
+                <br><br>
+                For massive BSTs, the manual approach (iterative) is safer and often more efficient!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Reference Card -->
+      <div class="topic-card">
+        <div class="topic-header" onclick="toggleCard(this)">
+          <div class="topic-icon" style="background:rgba(0,232,122,0.12)">🎯</div>
+          <div><div class="topic-name">Complete BST Quick Reference</div></div>
+          <span class="topic-tag">Summary</span>
+        </div>
+        <div class="topic-body">
+          <div class="theory-block">
+            <h4>All 16 Operation Categories at a Glance</h4>
+            <div class="table-wrap">
+              <table>
+                <tr><th>#</th><th>Category</th><th>Key Functions</th><th>Time</th></tr>
+                <tr><td>1</td><td>Basic</td><td>createNode, initBST, isEmpty</td><td>O(1)</td></tr>
+                <tr><td>2</td><td>Insert</td><td>insertRecursive, insertIterative</td><td>O(h)</td></tr>
+                <tr><td>3</td><td>Delete</td><td>deleteNode (3 cases)</td><td>O(h)</td></tr>
+                <tr><td>4</td><td>Search</td><td>searchRecursive, searchMin, searchMax</td><td>O(h)</td></tr>
+                <tr><td>5</td><td>Traversal</td><td>inorder, preorder, postorder, levelOrder</td><td>O(n)</td></tr>
+                <tr><td>6</td><td>Min/Max</td><td>findMinimum, findMaximum</td><td>O(h)</td></tr>
+                <tr><td>7</td><td>Successor/Pred</td><td>inorderSuccessor, inorderPredecessor</td><td>O(h)</td></tr>
+                <tr><td>8</td><td>Structural</td><td>countTotal, findHeight, findDepth, findParent</td><td>O(n)/O(h)</td></tr>
+                <tr><td>9</td><td>Properties</td><td>isValidBST, isBalanced, isFullBST, isComplete</td><td>O(n)</td></tr>
+                <tr><td>10</td><td>Update</td><td>updateNode (delete + reinsert)</td><td>O(h)</td></tr>
+                <tr><td>11</td><td>Utility</td><td>copyBST, mirrorBST, clearBST, destroyBST</td><td>O(n)</td></tr>
+                <tr><td>12</td><td>Paths</td><td>findPath, printAllPaths, findLCA</td><td>O(n)/O(h)</td></tr>
+                <tr><td>13</td><td>Balancing</td><td>balanceBST, sortedArrayToBST</td><td>O(n)</td></tr>
+                <tr><td>14</td><td>Conversion</td><td>bstToSortedArray, bstToLinkedList</td><td>O(n)</td></tr>
+                <tr><td>15</td><td>Recursive</td><td>All above — recursive versions</td><td>O(h) stack</td></tr>
+                <tr><td>16</td><td>Iterative</td><td>iterInsert, iterSearch, iterInorder etc.</td><td>O(1)/O(h)</td></tr>
+              </table>
+            </div>
+            <div class="highlight-box" style="margin-top:16px">
+              <strong>🎓 You've mastered all 16 BST operation categories!</strong><br>
+              Build the interactive tree above using Insert, then try Delete, Search, and traversals. The best way to solidify this knowledge is to implement each function from scratch!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #content -->
+</div><!-- end #main -->
+
+<script>
+// ===================== BST Data Structure =====================
+class BSTNode {
+  constructor(v) { this.v = v; this.left = null; this.right = null; this.x = 0; this.y = 0; }
+}
+class BST {
+  constructor() { this.root = null; }
+  insert(v) {
+    const n = new BSTNode(v);
+    if (!this.root) { this.root = n; return true; }
+    let c = this.root;
+    while (true) {
+      if (v < c.v) { if (!c.left) { c.left = n; return true; } c = c.left; }
+      else if (v > c.v) { if (!c.right) { c.right = n; return true; } c = c.right; }
+      else return false;
+    }
+  }
+  delete(v) {
+    this.root = this._del(this.root, v);
+  }
+  _del(n, v) {
+    if (!n) return null;
+    if (v < n.v) { n.left = this._del(n.left, v); }
+    else if (v > n.v) { n.right = this._del(n.right, v); }
+    else {
+      if (!n.left && !n.right) return null;
+      if (!n.left) return n.right;
+      if (!n.right) return n.left;
+      let s = n.right; while (s.left) s = s.left;
+      n.v = s.v; n.right = this._del(n.right, s.v);
+    }
+    return n;
+  }
+  search(v) {
+    let c = this.root, path = [];
+    while (c) { path.push(c); if (v === c.v) return path; c = v < c.v ? c.left : c.right; }
+    return null;
+  }
+  inorder() { const r = []; this._in(this.root, r); return r; }
+  _in(n, r) { if (!n) return; this._in(n.left, r); r.push(n); this._in(n.right, r); }
+  preorder() { const r = []; this._pre(this.root, r); return r; }
+  _pre(n, r) { if (!n) return; r.push(n); this._pre(n.left, r); this._pre(n.right, r); }
+  postorder() { const r = []; this._post(this.root, r); return r; }
+  _post(n, r) { if (!n) return; this._post(n.left, r); this._post(n.right, r); r.push(n); }
+  levelorder() {
+    if (!this.root) return [];
+    const q = [this.root], r = [];
+    while (q.length) { const n = q.shift(); r.push(n); if (n.left) q.push(n.left); if (n.right) q.push(n.right); }
+    return r;
+  }
+  count() { return this._cnt(this.root); }
+  _cnt(n) { return n ? 1 + this._cnt(n.left) + this._cnt(n.right) : 0; }
+  height() { return this._h(this.root); }
+  _h(n) { return n ? 1 + Math.max(this._h(n.left), this._h(n.right)) : 0; }
+  toArray() { return this.inorder().map(n => n.v); }
+}
+
+// ===================== Canvas Renderer =====================
+const bst = new BST();
+const canvas = document.getElementById('bstCanvas');
+const ctx = canvas.getContext('2d');
+let highlightNodes = new Set();
+let highlightColor = {};
+
+function resizeCanvas() {
+  const w = canvas.parentElement.clientWidth;
+  canvas.width = w; canvas.height = 220;
+}
+
+function assignPositions(node, depth, left, right) {
+  if (!node) return;
+  const mid = (left + right) / 2;
+  node.x = mid * canvas.width;
+  node.y = 40 + depth * 52;
+  assignPositions(node.left, depth + 1, left, mid);
+  assignPositions(node.right, depth + 1, mid, right);
+}
+
+function drawTree() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!bst.root) {
+    ctx.fillStyle = '#4e6080';
+    ctx.font = '13px Fira Code';
+    ctx.textAlign = 'center';
+    ctx.fillText('// empty tree — insert values above', canvas.width/2, 110);
+    return;
+  }
+  assignPositions(bst.root, 0, 0, 1);
+  drawEdges(bst.root);
+  drawNodes(bst.root);
+}
+
+function drawEdges(node) {
+  if (!node) return;
+  ctx.strokeStyle = '#1e2d45';
+  ctx.lineWidth = 1.5;
+  if (node.left) {
+    ctx.beginPath(); ctx.moveTo(node.x, node.y); ctx.lineTo(node.left.x, node.left.y); ctx.stroke();
+    drawEdges(node.left);
+  }
+  if (node.right) {
+    ctx.beginPath(); ctx.moveTo(node.x, node.y); ctx.lineTo(node.right.x, node.right.y); ctx.stroke();
+    drawEdges(node.right);
+  }
+}
+
+function drawNodes(node) {
+  if (!node) return;
+  const r = 18;
+  const isHighlighted = highlightNodes.has(node.v);
+  const col = highlightColor[node.v] || '#00b8f0';
+  
+  ctx.beginPath(); ctx.arc(node.x, node.y, r, 0, Math.PI*2);
+  ctx.fillStyle = isHighlighted ? col.replace(')', ',0.25)').replace('rgb', 'rgba') : '#0d1422';
+  if (isHighlighted) ctx.fillStyle = col === '#00e87a' ? 'rgba(0,232,122,0.2)' : col === '#ff4d6d' ? 'rgba(255,77,109,0.2)' : col === '#ffd166' ? 'rgba(255,209,102,0.2)' : 'rgba(0,184,240,0.2)';
+  ctx.fill();
+  ctx.strokeStyle = isHighlighted ? col : '#00b8f0';
+  ctx.lineWidth = isHighlighted ? 2.5 : 1.5;
+  ctx.stroke();
+  
+  ctx.fillStyle = isHighlighted ? col : '#c9d8f0';
+  ctx.font = 'bold 12px Fira Code';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(node.v, node.x, node.y);
+  
+  drawNodes(node.left);
+  drawNodes(node.right);
+}
+
+function setLog(msg, color) {
+  const log = document.getElementById('viz-log');
+  log.style.color = color || '#00e87a';
+  log.textContent = msg;
+}
+
+function doInsert() {
+  const v = parseInt(document.getElementById('nodeVal').value);
+  if (isNaN(v) || v < 1 || v > 999) { setLog('// error: enter a value (1-999)', '#ff4d6d'); return; }
+  if (bst.count() >= 20) { setLog('// max 20 nodes for visibility', '#ff6b35'); return; }
+  const ok = bst.insert(v);
+  if (!ok) { setLog(`// duplicate: ${v} already exists`, '#ffd166'); return; }
+  highlightNodes = new Set([v]);
+  highlightColor[v] = '#00e87a';
+  drawTree();
+  setLog(`// inserted: ${v} | total: ${bst.count()} nodes | height: ${bst.height()}`, '#00e87a');
+  setTimeout(() => { highlightNodes.clear(); drawTree(); }, 1200);
+}
+
+function doDelete() {
+  const v = parseInt(document.getElementById('nodeVal').value);
+  if (isNaN(v)) { setLog('// error: enter a value to delete', '#ff4d6d'); return; }
+  const path = bst.search(v);
+  if (!path) { setLog(`// not found: ${v} not in tree`, '#ffd166'); return; }
+  highlightNodes = new Set([v]);
+  highlightColor[v] = '#ff4d6d';
+  drawTree();
+  setTimeout(() => {
+    bst.delete(v);
+    highlightNodes.clear();
+    drawTree();
+    setLog(`// deleted: ${v} | remaining: ${bst.count()} nodes`, '#ff4d6d');
+  }, 600);
+}
+
+function doSearch() {
+  const v = parseInt(document.getElementById('nodeVal').value);
+  if (isNaN(v)) { setLog('// error: enter a value to search', '#ff4d6d'); return; }
+  const path = bst.search(v);
+  if (!path) { setLog(`// not found: ${v} — not in tree`, '#ffd166'); return; }
+  highlightNodes = new Set();
+  path.forEach((n, i) => { setTimeout(() => {
+    highlightNodes.clear();
+    for (let j = 0; j <= i; j++) { highlightNodes.add(path[j].v); highlightColor[path[j].v] = j < path.length-1 ? '#ffd166' : '#00e87a'; }
+    drawTree();
+  }, i * 300); });
+  setTimeout(() => {
+    setLog(`// found: ${v} at depth ${path.length-1} | comparisons: ${path.length}`, '#00e87a');
+    setTimeout(() => { highlightNodes.clear(); drawTree(); }, 800);
+  }, path.length * 300);
+}
+
+function doClear() {
+  bst.root = null; highlightNodes.clear(); highlightColor = {};
+  drawTree(); setLog('// tree cleared', '#4e6080');
+}
+
+function doTraversal(type) {
+  if (!bst.root) { setLog('// empty tree — insert nodes first', '#ff4d6d'); return; }
+  let nodes;
+  if (type === 'inorder') nodes = bst.inorder();
+  else if (type === 'preorder') nodes = bst.preorder();
+  else if (type === 'postorder') nodes = bst.postorder();
+  else nodes = bst.levelorder();
+  
+  const seq = nodes.map(n => n.v).join(' → ');
+  highlightNodes.clear();
+  nodes.forEach((n, i) => { setTimeout(() => {
+    highlightNodes.clear(); highlightNodes.add(n.v); highlightColor[n.v] = '#a78bfa'; drawTree();
+  }, i * 350); });
+  setTimeout(() => {
+    setLog(`// ${type}: [${seq}]`, '#a78bfa');
+    setTimeout(() => { highlightNodes.clear(); drawTree(); }, 600);
+  }, nodes.length * 350);
+}
+
+// ===================== UI Functions =====================
+function showSection(idx) {
+  document.querySelectorAll('.section').forEach((s, i) => s.classList.toggle('active', i === idx));
+  document.querySelectorAll('.nav-item').forEach((n, i) => n.classList.toggle('active', i === idx));
+  document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleCard(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('collapsed');
+}
+
+function switchTab(tab, name) {
+  const card = tab.closest('.topic-body');
+  card.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === tab));
+  card.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.dataset.tab === name));
+}
+
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('.code-body').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!'; btn.style.color = '#00e87a';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ===================== Init =====================
+window.addEventListener('load', () => {
+  resizeCanvas();
+  // Pre-populate with example tree
+  [50, 30, 70, 20, 40, 60, 80].forEach(v => bst.insert(v));
+  drawTree();
+  setLog('// example tree loaded — try Insert, Delete, Search!', '#00b8f0');
+});
+window.addEventListener('resize', () => { resizeCanvas(); drawTree(); });
+
+document.getElementById('nodeVal').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doInsert();
+});
+</script>
+</body>
+</html>

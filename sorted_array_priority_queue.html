@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorted Array-Based Priority Queue — Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #111318;
+  --surface2: #181b22;
+  --border: #252830;
+  --accent: #f0c040;
+  --accent2: #4ec9b0;
+  --accent3: #ce9178;
+  --accent4: #569cd6;
+  --danger: #f48771;
+  --success: #6a9955;
+  --text: #d4d4d4;
+  --text-dim: #7a7f8a;
+  --text-bright: #f0f0f0;
+  --code-bg: #0d1117;
+  --radius: 10px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Lora',Georgia,serif;min-height:100vh;overflow-x:hidden}
+
+/* SIDEBAR */
+#sidebar{
+  position:fixed;top:0;left:0;height:100vh;width:270px;
+  background:var(--surface);border-right:1px solid var(--border);
+  overflow-y:auto;z-index:100;
+  transition:transform .3s ease;
+  display:flex;flex-direction:column;
+}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.sidebar-header{
+  padding:24px 20px 16px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sidebar-header h1{
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:800;
+  color:var(--accent);letter-spacing:.05em;text-transform:uppercase;line-height:1.3;
+}
+.sidebar-header p{font-size:11px;color:var(--text-dim);margin-top:5px;font-family:'JetBrains Mono',monospace}
+
+.sidebar-nav{padding:12px 0;flex:1}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 20px;cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:600;
+  color:var(--text-dim);transition:all .15s ease;
+  text-decoration:none;border-left:2px solid transparent;
+}
+.nav-item:hover{color:var(--text-bright);background:rgba(240,192,64,.05)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(240,192,64,.08)}
+.nav-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--surface2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-family:'JetBrains Mono',monospace;flex-shrink:0;
+  color:var(--text-dim);
+}
+.nav-item.active .nav-num{background:var(--accent);color:#000;border-color:var(--accent)}
+
+/* MAIN */
+#main{margin-left:270px;min-height:100vh;padding:0}
+
+/* HERO */
+.hero{
+  padding:60px 60px 40px;
+  background:linear-gradient(135deg,#0d1117 0%,#111318 60%,#13161d 100%);
+  border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-80px;right:-80px;
+  width:400px;height:400px;border-radius:50%;
+  background:radial-gradient(circle,rgba(240,192,64,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);
+  padding:4px 12px;border-radius:20px;margin-bottom:20px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);
+}
+.hero h2{
+  font-family:'Syne',sans-serif;font-size:42px;font-weight:800;
+  color:var(--text-bright);line-height:1.1;margin-bottom:16px;
+}
+.hero h2 span{color:var(--accent)}
+.hero p{font-size:16px;color:var(--text-dim);max-width:600px;line-height:1.7}
+.hero-stats{display:flex;gap:32px;margin-top:32px;flex-wrap:wrap}
+.hero-stat{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim)}
+.hero-stat strong{color:var(--accent2);font-size:22px;display:block;margin-bottom:2px}
+
+/* SECTIONS */
+.section{
+  padding:50px 60px;border-bottom:1px solid var(--border);
+  scroll-margin-top:20px;
+}
+.section:last-child{border-bottom:none}
+
+.section-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:32px}
+.section-num{
+  width:42px;height:42px;border-radius:8px;
+  background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent);
+  flex-shrink:0;font-weight:700;
+}
+.section-title{
+  font-family:'Syne',sans-serif;font-size:24px;font-weight:800;
+  color:var(--text-bright);line-height:1.2;
+}
+.section-sub{font-size:14px;color:var(--text-dim);margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+/* CARDS */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:20px;
+}
+.card-title{
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  color:var(--accent);text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.card-title::before{content:'';width:3px;height:14px;background:var(--accent);border-radius:2px;display:inline-block}
+.card p{font-size:15px;line-height:1.8;color:var(--text)}
+.card p+p{margin-top:10px}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+
+/* ANALOGY */
+.analogy{
+  background:linear-gradient(135deg,rgba(78,201,176,.05),rgba(78,201,176,.02));
+  border:1px solid rgba(78,201,176,.15);border-radius:var(--radius);
+  padding:20px 24px;margin-bottom:20px;
+  display:flex;gap:16px;align-items:flex-start;
+}
+.analogy-icon{font-size:28px;flex-shrink:0;margin-top:2px}
+.analogy-content{}
+.analogy-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.analogy-text{font-size:14px;line-height:1.7;color:var(--text)}
+
+/* CODE */
+.code-wrap{position:relative;margin-bottom:20px}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#161b22;border:1px solid var(--border);border-bottom:none;
+  padding:10px 16px;border-radius:var(--radius) var(--radius) 0 0;
+}
+.code-lang{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent3);font-weight:600}
+.copy-btn{
+  background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);
+  color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;
+  padding:4px 12px;border-radius:5px;cursor:pointer;transition:all .2s;
+}
+.copy-btn:hover{background:rgba(240,192,64,.2)}
+pre{
+  background:var(--code-bg);border:1px solid var(--border);
+  border-radius:0 0 var(--radius) var(--radius);
+  padding:20px;overflow-x:auto;margin:0;
+  font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;
+}
+code{font-family:'JetBrains Mono',monospace;font-size:13px}
+
+/* Syntax highlight */
+.k{color:#569cd6}   /* keyword */
+.t{color:#4ec9b0}   /* type */
+.f{color:#dcdcaa}   /* function */
+.s{color:#ce9178}   /* string */
+.c{color:#6a9955}   /* comment */
+.n{color:#9cdcfe}   /* identifier */
+.num{color:#b5cea8} /* number */
+.p{color:#d4d4d4}   /* punctuation */
+
+/* VISUALIZATION */
+.viz-container{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;margin-bottom:20px;
+}
+.viz-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--accent2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:16px}
+.viz-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.viz-input{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:8px 14px;border-radius:6px;
+  font-family:'JetBrains Mono',monospace;font-size:13px;width:100px;
+  outline:none;
+}
+.viz-input:focus{border-color:var(--accent)}
+.btn{
+  padding:8px 18px;border-radius:6px;cursor:pointer;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
+  border:none;transition:all .2s;letter-spacing:.05em;
+}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{background:#f5d060;transform:translateY(-1px)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(244,135,113,.1);color:var(--danger);border:1px solid rgba(244,135,113,.2)}
+.btn-danger:hover{background:rgba(244,135,113,.2)}
+
+.pq-array{display:flex;gap:6px;flex-wrap:wrap;min-height:60px;align-items:center;padding:16px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.pq-cell{
+  display:flex;flex-direction:column;align-items:center;
+  animation:popIn .3s cubic-bezier(.175,.885,.32,1.275);
+}
+.pq-val{
+  min-width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+  background:rgba(240,192,64,.1);border:1.5px solid rgba(240,192,64,.3);
+  border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;
+  color:var(--text-bright);position:relative;transition:all .3s;
+}
+.pq-val.highlight{background:rgba(240,192,64,.3);border-color:var(--accent);color:var(--accent);transform:translateY(-4px)}
+.pq-val.danger{background:rgba(244,135,113,.2);border-color:var(--danger);color:var(--danger)}
+.pq-val.success{background:rgba(78,201,176,.15);border-color:var(--accent2);color:var(--accent2)}
+.pq-idx{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);margin-top:5px}
+.pq-label{font-size:9px;color:var(--accent);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.pq-empty{color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:13px}
+
+.viz-log{
+  margin-top:12px;min-height:36px;padding:10px 14px;
+  background:var(--code-bg);border-radius:6px;border:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent2);
+}
+
+.complexity-table{width:100%;border-collapse:collapse;margin-top:16px}
+.complexity-table th,.complexity-table td{padding:10px 16px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:12px;border:1px solid var(--border)}
+.complexity-table th{background:var(--surface2);color:var(--accent);font-weight:700}
+.complexity-table td{color:var(--text)}
+.complexity-table tr:hover td{background:rgba(240,192,64,.03)}
+
+.tag{
+  display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;margin:2px;
+}
+.tag-yellow{background:rgba(240,192,64,.1);color:var(--accent);border:1px solid rgba(240,192,64,.2)}
+.tag-blue{background:rgba(86,156,214,.1);color:var(--accent4);border:1px solid rgba(86,156,214,.2)}
+.tag-green{background:rgba(78,201,176,.1);color:var(--accent2);border:1px solid rgba(78,201,176,.2)}
+
+.pointer-row{display:flex;justify-content:space-between;padding:0 16px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)}
+
+@keyframes popIn{from{opacity:0;transform:scale(.5) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes slideRight{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* STEP VIZ */
+.step-viz{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:16px;background:var(--surface2);border-radius:8px;min-height:80px}
+.step-cell{
+  width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-radius:7px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+  border:1.5px solid var(--border);color:var(--text-dim);background:var(--surface);
+  transition:all .4s;position:relative;
+}
+.step-cell.active{background:rgba(240,192,64,.15);border-color:var(--accent);color:var(--accent)}
+.step-cell.shifting{background:rgba(86,156,214,.1);border-color:var(--accent4);color:var(--accent4);animation:shake .3s ease}
+.step-cell.placed{background:rgba(78,201,176,.12);border-color:var(--accent2);color:var(--accent2)}
+
+@keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(6px)}75%{transform:translateX(-3px)}100%{transform:translateX(0)}}
+
+/* TOC progress */
+.progress-bar{height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));position:fixed;top:0;left:0;z-index:200;transition:width .3s}
+
+/* Mobile toggle */
+#sidebar-toggle{
+  display:none;position:fixed;top:16px;left:16px;z-index:300;
+  background:var(--accent);border:none;color:#000;width:38px;height:38px;
+  border-radius:8px;cursor:pointer;font-size:18px;align-items:center;justify-content:center;
+}
+
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #main{margin-left:0}
+  .hero{padding:70px 24px 32px}
+  .hero h2{font-size:28px}
+  .section{padding:36px 24px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  #sidebar-toggle{display:flex}
+}
+
+/* Merge visualization */
+.merge-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:12px;background:var(--surface2);border-radius:8px;min-height:60px;margin-bottom:8px}
+.merge-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);margin-right:8px;flex-shrink:0}
+.merge-cell{
+  min-width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;
+  border:1.5px solid var(--border);color:var(--text-dim);background:var(--surface);
+  transition:all .3s;
+}
+.merge-cell.active{background:rgba(240,192,64,.15);border-color:var(--accent);color:var(--accent)}
+.merge-cell.used{opacity:.3}
+.merge-cell.result{background:rgba(78,201,176,.12);border-color:var(--accent2);color:var(--accent2)}
+
+/* Search highlight */
+.found{background:rgba(240,192,64,.25)!important;border-color:var(--accent)!important;color:var(--accent)!important;box-shadow:0 0 12px rgba(240,192,64,.3)}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button id="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <h1>Priority Queue<br>Complete Guide</h1>
+    <p>// sorted array implementation</p>
+  </div>
+  <div class="sidebar-nav">
+    <a class="nav-item active" href="#s0"><span class="nav-num">★</span>Introduction</a>
+    <a class="nav-item" href="#s1"><span class="nav-num">1</span>Initialization</a>
+    <a class="nav-item" href="#s2"><span class="nav-num">2</span>Insert / Enqueue</a>
+    <a class="nav-item" href="#s3"><span class="nav-num">3</span>Delete Highest</a>
+    <a class="nav-item" href="#s4"><span class="nav-num">4</span>Delete Lowest</a>
+    <a class="nav-item" href="#s5"><span class="nav-num">5</span>Peek Highest</a>
+    <a class="nav-item" href="#s6"><span class="nav-num">6</span>Peek Lowest</a>
+    <a class="nav-item" href="#s7"><span class="nav-num">7</span>IsEmpty</a>
+    <a class="nav-item" href="#s8"><span class="nav-num">8</span>IsFull</a>
+    <a class="nav-item" href="#s9"><span class="nav-num">9</span>Display</a>
+    <a class="nav-item" href="#s10"><span class="nav-num">10</span>Traverse</a>
+    <a class="nav-item" href="#s11"><span class="nav-num">11</span>Search</a>
+    <a class="nav-item" href="#s12"><span class="nav-num">12</span>Update Priority</a>
+    <a class="nav-item" href="#s13"><span class="nav-num">13</span>Count / Size</a>
+    <a class="nav-item" href="#s14"><span class="nav-num">14</span>Clear / Destroy</a>
+    <a class="nav-item" href="#s15"><span class="nav-num">15</span>Sort</a>
+    <a class="nav-item" href="#s16"><span class="nav-num">16</span>Merge</a>
+    <a class="nav-item" href="#s17"><span class="nav-num">17</span>Copy</a>
+    <a class="nav-item" href="#s18"><span class="nav-num">18</span>Reverse</a>
+  </div>
+</nav>
+
+<main id="main">
+
+<!-- HERO -->
+<div class="hero" id="s0">
+  <div class="hero-badge">📚 Data Structures · C Language · Interactive</div>
+  <h2>Sorted Array-Based<br><span>Priority Queue</span></h2>
+  <p>A complete beginner-to-advanced guide covering every operation with theory, live visualizations, C code examples, and real-world analogies.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><strong>18</strong>Topics Covered</div>
+    <div class="hero-stat"><strong>C</strong>Language</div>
+    <div class="hero-stat"><strong>Interactive</strong>Demos</div>
+    <div class="hero-stat"><strong>O(n)</strong>Insert Cost</div>
+  </div>
+</div>
+
+<!-- INTRO CARD -->
+<div class="section" style="border-bottom:1px solid var(--border)">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">What is a Priority Queue?</div>
+      <p>A <strong style="color:var(--accent)">Priority Queue</strong> is a special data structure where each element has a <em>priority value</em>. Elements are served based on their priority, not the order they arrived. The element with the highest (or lowest) priority is always processed first.</p>
+      <p style="margin-top:10px">In a <strong style="color:var(--accent2)">Sorted Array implementation</strong>, we maintain the array in sorted order at all times — either ascending or descending — so that the highest priority element is always at a known, fixed position.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Ascending vs Descending Order</div>
+      <p><span class="tag tag-yellow">Ascending (min→max)</span> Lowest priority value = first element. Highest priority element = last element (index size-1). Deletion of highest is O(1), insertion is O(n).</p>
+      <p style="margin-top:10px"><span class="tag tag-blue">Descending (max→min)</span> Highest priority value = first element. Deletion of highest is O(1) (front), insertion is O(n) to find correct spot.</p>
+    </div>
+  </div>
+  <div class="analogy">
+    <div class="analogy-icon">🏥</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Think of a hospital emergency room. Patients are not treated in the order they arrive — a critical heart attack patient (priority 10) is treated before someone with a minor sprain (priority 2). The sorted priority queue works exactly like this: elements are always kept in sorted order by priority, and the most critical (highest priority) is always served first.</div>
+    </div>
+  </div>
+  <table class="complexity-table">
+    <tr><th>Operation</th><th>Time Complexity</th><th>Reason</th></tr>
+    <tr><td>Insert</td><td>O(n)</td><td>Find position + shift elements</td></tr>
+    <tr><td>Delete Highest</td><td>O(1)</td><td>Known position (end/front)</td></tr>
+    <tr><td>Delete Lowest</td><td>O(1) or O(n)</td><td>Depends on order</td></tr>
+    <tr><td>Peek</td><td>O(1)</td><td>Direct index access</td></tr>
+    <tr><td>Search</td><td>O(n)</td><td>Linear scan</td></tr>
+    <tr><td>Space</td><td>O(n)</td><td>n elements stored</td></tr>
+  </table>
+</div>
+
+<!-- S1: INITIALIZATION -->
+<div class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">01</div>
+    <div>
+      <div class="section-title">Priority Queue Initialization</div>
+      <div class="section-sub">// Setting up the structure before use</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Theory</div>
+      <p>Before we can use a priority queue, we must <strong style="color:var(--accent)">initialize</strong> it. This means:</p>
+      <p>• Defining a fixed-size array to hold elements and their priorities.</p>
+      <p>• Setting <code style="color:var(--accent3)">size = 0</code> to indicate the queue is empty.</p>
+      <p>• Defining <code style="color:var(--accent3)">MAX_CAPACITY</code> so we never overflow.</p>
+      <p>• Deciding if we want ascending (min→max) or descending (max→min) order.</p>
+      <p>In C, we use a <code style="color:var(--accent2)">struct</code> to bundle the array, size, and capacity together into one clean unit.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Key Concepts</div>
+      <p><span class="tag tag-yellow">MAX_SIZE</span> Maximum elements allowed. Cannot grow dynamically in a basic array implementation.</p>
+      <p style="margin-top:10px"><span class="tag tag-blue">size</span> Current number of elements. Starts at 0. Goes up on insert, down on delete.</p>
+      <p style="margin-top:10px"><span class="tag tag-green">Order Rule</span> Ascending = arr[0] is minimum. Descending = arr[0] is maximum. Decide once, keep consistent.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📋</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Initialization is like setting up a new numbered ticket booth. You place an empty ticket rack (array) on the counter, hang a sign saying "Max 10 tickets" (MAX_SIZE), and flip the counter to zero (size = 0). Now you're ready to serve customers in priority order.</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Visualization — Empty Queue After Initialization</div>
+    <div class="pq-array" id="initViz">
+      <span class="pq-empty">[ Empty Queue — size: 0 / MAX: 8 ]</span>
+    </div>
+    <div class="viz-log" id="initLog">Queue initialized. size=0, MAX_CAPACITY=8, order=ASCENDING</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Priority Queue Initialization ===== */</span>
+<span class="k">#include</span> <span class="s">&lt;stdio.h&gt;</span>
+
+<span class="k">#define</span> <span class="n">MAX_SIZE</span> <span class="num">10</span>   <span class="c">/* Maximum capacity of the queue */</span>
+
+<span class="c">/* Structure to hold one element */</span>
+<span class="k">struct</span> <span class="t">Element</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">data</span><span class="p">;</span>      <span class="c">/* The actual value/data */</span>
+    <span class="t">int</span> <span class="n">priority</span><span class="p">;</span>  <span class="c">/* Priority (higher = served first) */</span>
+<span class="p">};</span>
+
+<span class="c">/* Structure for the entire Priority Queue */</span>
+<span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="t">Element</span> <span class="n">arr</span><span class="p">[</span><span class="n">MAX_SIZE</span><span class="p">];</span>  <span class="c">/* Array of elements */</span>
+    <span class="t">int</span> <span class="n">size</span><span class="p">;</span>                      <span class="c">/* Current number of elements */</span>
+    <span class="t">int</span> <span class="n">order</span><span class="p">;</span>  <span class="c">/* 0 = Ascending, 1 = Descending */</span>
+<span class="p">};</span>
+
+<span class="c">/* Initialize the priority queue */</span>
+<span class="t">void</span> <span class="f">initQueue</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">,</span> <span class="t">int</span> <span class="n">order</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span>    <span class="c">/* Start empty */</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">order</span> <span class="p">=</span> <span class="n">order</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Queue initialized. Max=%d, Order=%s\n"</span><span class="p">,</span>
+           <span class="n">MAX_SIZE</span><span class="p">,</span> <span class="n">order</span> <span class="p">?</span> <span class="s">"DESCENDING"</span> <span class="p">:</span> <span class="s">"ASCENDING"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="t">int</span> <span class="f">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="n">pq</span><span class="p">;</span>
+    <span class="f">initQueue</span><span class="p">(&amp;</span><span class="n">pq</span><span class="p">,</span> <span class="num">0</span><span class="p">);</span>  <span class="c">/* 0 = Ascending order */</span>
+    <span class="k">return</span> <span class="num">0</span><span class="p">;</span>
+<span class="p">}</span></code></pre>
+  </div>
+</div>
+
+<!-- S2: INSERT -->
+<div class="section" id="s2">
+  <div class="section-header">
+    <div class="section-num">02</div>
+    <div>
+      <div class="section-title">Insert / Enqueue Operation</div>
+      <div class="section-sub">// Adding elements while maintaining sorted order</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory — How Insertion Works</div>
+    <p>Inserting into a sorted priority queue has <strong style="color:var(--accent)">3 steps</strong>:</p>
+    <p><strong style="color:var(--accent2)">Step 1:</strong> Check if the queue is full. If yes, reject insertion.</p>
+    <p><strong style="color:var(--accent2)">Step 2:</strong> Find the correct position for the new element by scanning the array and comparing priorities.</p>
+    <p><strong style="color:var(--accent2)">Step 3:</strong> Shift all elements after that position one place to the right, then place the new element. This costs <strong style="color:var(--danger)">O(n)</strong> time in the worst case.</p>
+    <p style="margin-top:10px">The insert is called <em>stable</em> if elements with equal priority maintain their original insertion order.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📬</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Imagine a sorted stack of exam papers ordered by score. When a new paper arrives with score 78, you slide through the pile to find where 78 fits, push the lower-scored papers aside, and slot it in. The pile stays sorted every time — but you have to do some shifting work each time you add.</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Insert Elements (Ascending Order)</div>
+    <div class="viz-controls">
+      <input type="number" class="viz-input" id="insertVal" placeholder="Data" min="1" max="99" value="42">
+      <input type="number" class="viz-input" id="insertPri" placeholder="Priority" min="1" max="20" value="5">
+      <button class="btn btn-primary" onclick="insertElement()">Enqueue</button>
+      <button class="btn btn-secondary" onclick="resetInsertViz()">Reset</button>
+    </div>
+    <div class="pq-array" id="insertViz"><span class="pq-empty">Empty queue — insert elements above</span></div>
+    <div class="viz-log" id="insertLog">Ready. Enter data and priority, then click Enqueue.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Insert / Enqueue (Ascending Order by Priority) ===== */</span>
+
+<span class="t">void</span> <span class="f">insert</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">,</span> <span class="t">int</span> <span class="n">data</span><span class="p">,</span> <span class="t">int</span> <span class="n">priority</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c">/* Step 1: Check if queue is full */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="n">MAX_SIZE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue is FULL! Cannot insert.\n"</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Step 2: Find the correct position */</span>
+    <span class="t">int</span> <span class="n">i</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span>
+
+    <span class="c">/* Step 3: Shift elements right until we find correct spot */</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="p">&gt;=</span> <span class="num">0</span> <span class="p">&amp;&amp;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span> <span class="p">&gt;</span> <span class="n">priority</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="num">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>  <span class="c">/* Shift right */</span>
+        <span class="n">i</span><span class="p">--;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Step 4: Place new element at correct position */</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="num">1</span><span class="p">].</span><span class="n">data</span> <span class="p">=</span> <span class="n">data</span><span class="p">;</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="num">1</span><span class="p">].</span><span class="n">priority</span> <span class="p">=</span> <span class="n">priority</span><span class="p">;</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">++;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Inserted: data=%d, priority=%d\n"</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">priority</span><span class="p">);</span>
+<span class="p">}</span></code></pre>
+  </div>
+</div>
+
+<!-- S3: DELETE HIGHEST -->
+<div class="section" id="s3">
+  <div class="section-header">
+    <div class="section-num">03</div>
+    <div>
+      <div class="section-title">Delete Highest Priority Element</div>
+      <div class="section-sub">// O(1) — the power of sorted storage</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Theory</div>
+      <p>Since we keep the array sorted in <strong style="color:var(--accent)">ascending order</strong> (low→high priority), the highest priority element is always at index <code style="color:var(--accent3)">size - 1</code> (the last position).</p>
+      <p style="margin-top:10px">Deleting it is incredibly simple: just read the last element, then decrease <code style="color:var(--accent3)">size</code> by 1. <strong style="color:var(--accent2)">No shifting needed!</strong> This is <strong style="color:var(--danger)">O(1)</strong> time.</p>
+      <p style="margin-top:10px">If using descending order, the highest is at index 0 (front), and after removal, all elements must shift left — making deletion O(n).</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Step by Step</div>
+      <p><strong style="color:var(--accent2)">1.</strong> Check if queue is empty. If yes, report underflow.</p>
+      <p style="margin-top:8px"><strong style="color:var(--accent2)">2.</strong> Read the element at <code style="color:var(--accent3)">arr[size-1]</code>.</p>
+      <p style="margin-top:8px"><strong style="color:var(--accent2)">3.</strong> Decrease <code style="color:var(--accent3)">size</code> by 1. The element is logically removed.</p>
+      <p style="margin-top:8px"><strong style="color:var(--accent2)">4.</strong> Return the deleted element's data (optional).</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🚑</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">The doctor always takes the patient at the top of the sorted waiting list (the most critical one). Because the list is already sorted, the doctor doesn't need to search — they just take the last card off the top of the sorted deck. Fast, instant, no rearranging!</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Delete Highest Priority</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupDeleteHighViz()">Load Sample Queue</button>
+      <button class="btn btn-danger" onclick="deleteHighest()">Delete Highest</button>
+    </div>
+    <div class="pq-array" id="deleteHighViz"><span class="pq-empty">Click "Load Sample Queue" to begin</span></div>
+    <div class="viz-log" id="deleteHighLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Delete Highest Priority Element ===== */</span>
+
+<span class="t">int</span> <span class="f">deleteHighest</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c">/* Check if empty */</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="num">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue is EMPTY! Underflow.\n"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="p">-</span><span class="num">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* In ascending order: highest priority is at last index */</span>
+    <span class="t">int</span> <span class="n">highIdx</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span>
+    <span class="t">int</span> <span class="n">deletedData</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">highIdx</span><span class="p">].</span><span class="n">data</span><span class="p">;</span>
+    <span class="t">int</span> <span class="n">deletedPri</span>  <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">highIdx</span><span class="p">].</span><span class="n">priority</span><span class="p">;</span>
+
+    <span class="c">/* Simply reduce size — O(1)! */</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">--;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Deleted: data=%d, priority=%d\n"</span><span class="p">,</span>
+           <span class="n">deletedData</span><span class="p">,</span> <span class="n">deletedPri</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">deletedData</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(1) — No shifting needed! */</span></code></pre>
+  </div>
+</div>
+
+<!-- S4: DELETE LOWEST -->
+<div class="section" id="s4">
+  <div class="section-header">
+    <div class="section-num">04</div>
+    <div>
+      <div class="section-title">Delete Lowest Priority Element</div>
+      <div class="section-sub">// O(n) — shifting required from the front</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>In ascending order, the <strong style="color:var(--accent)">lowest priority element</strong> is at index <code style="color:var(--accent3)">0</code> (the front of the array).</p>
+    <p style="margin-top:10px">Removing it requires <strong style="color:var(--danger)">shifting all remaining elements one position to the left</strong> to fill the gap. This costs <strong style="color:var(--danger)">O(n)</strong> time.</p>
+    <p style="margin-top:10px">Example: Array is [P1, P3, P5, P8]. Remove P1 → shift [P3, P5, P8] left → result [P3, P5, P8]. Three elements moved!</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🎟️</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Imagine a cinema queue where all people stand in order of ticket priority. If the lowest-priority person at the back leaves, the queue is fine. But if we remove the person at the very front (lowest priority), everyone else must step forward — that's the O(n) shift!</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Delete Lowest Priority (See the Shift!)</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupDeleteLowViz()">Load Sample Queue</button>
+      <button class="btn btn-danger" onclick="deleteLowest()">Delete Lowest</button>
+    </div>
+    <div class="pq-array" id="deleteLowViz"><span class="pq-empty">Click "Load Sample Queue" to begin</span></div>
+    <div class="viz-log" id="deleteLowLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Delete Lowest Priority Element ===== */</span>
+
+<span class="t">int</span> <span class="f">deleteLowest</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="num">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue is EMPTY!\n"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="p">-</span><span class="num">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* In ascending order: lowest is at index 0 */</span>
+    <span class="t">int</span> <span class="n">deletedData</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="num">0</span><span class="p">].</span><span class="n">data</span><span class="p">;</span>
+    <span class="t">int</span> <span class="n">deletedPri</span>  <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="num">0</span><span class="p">].</span><span class="n">priority</span><span class="p">;</span>
+
+    <span class="c">/* Shift all elements left to fill the gap — O(n) */</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="num">1</span><span class="p">];</span>  <span class="c">/* Shift left */</span>
+    <span class="p">}</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">--;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Deleted lowest: data=%d, priority=%d\n"</span><span class="p">,</span>
+           <span class="n">deletedData</span><span class="p">,</span> <span class="n">deletedPri</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">deletedData</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n) — must shift all elements */</span></code></pre>
+  </div>
+</div>
+
+<!-- S5: PEEK HIGHEST -->
+<div class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">05</div>
+    <div>
+      <div class="section-title">Peek Highest Priority Element</div>
+      <div class="section-sub">// Read without removing — O(1)</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Theory</div>
+      <p>Peek means <strong style="color:var(--accent)">look without touching</strong>. We read the highest priority element but do not remove it from the queue.</p>
+      <p style="margin-top:10px">In ascending order, the highest priority is at <code style="color:var(--accent3)">arr[size-1]</code>. Simply read and return it — no modification to the queue at all. This is <strong style="color:var(--accent2)">O(1)</strong>.</p>
+      <p style="margin-top:10px">This is very useful when you want to <em>check what will be served next</em> before deciding to actually remove it.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Read-Only Rule</div>
+      <p>The key difference between <span class="tag tag-yellow">Peek</span> and <span class="tag tag-blue">Delete</span>:</p>
+      <p style="margin-top:10px">• <strong style="color:var(--accent)">Peek:</strong> size stays the same. Element stays in queue. Just returns the value.</p>
+      <p style="margin-top:10px">• <strong style="color:var(--danger)">Delete:</strong> size decreases by 1. Element is gone forever.</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">👀</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">A restaurant chef peeks at the next order ticket on the wheel without removing it — just to see what's coming next. The ticket stays pinned until the chef is ready to cook it. Peeking costs no effort (O(1)) because the sorted list keeps the most urgent task at a known position.</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Peek Highest (Queue Unchanged)</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupPeekViz()">Load Sample</button>
+      <button class="btn btn-secondary" onclick="peekHighest()">Peek Highest</button>
+    </div>
+    <div class="pq-array" id="peekViz"><span class="pq-empty">Load sample to peek</span></div>
+    <div class="viz-log" id="peekLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Peek Highest Priority Element ===== */</span>
+
+<span class="t">int</span> <span class="f">peekHighest</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="num">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue is EMPTY!\n"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="p">-</span><span class="num">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Ascending: highest priority at last index */</span>
+    <span class="t">int</span> <span class="n">highIdx</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Highest: data=%d, priority=%d (queue unchanged)\n"</span><span class="p">,</span>
+           <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">highIdx</span><span class="p">].</span><span class="n">data</span><span class="p">,</span>
+           <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">highIdx</span><span class="p">].</span><span class="n">priority</span><span class="p">);</span>
+
+    <span class="c">/* No size change! Read-only operation */</span>
+    <span class="k">return</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">highIdx</span><span class="p">].</span><span class="n">data</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(1) */</span></code></pre>
+  </div>
+</div>
+
+<!-- S6: PEEK LOWEST -->
+<div class="section" id="s6">
+  <div class="section-header">
+    <div class="section-num">06</div>
+    <div>
+      <div class="section-title">Peek Lowest Priority Element</div>
+      <div class="section-sub">// Also O(1) — known position at index 0</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>In ascending order, the <strong style="color:var(--accent)">lowest priority element</strong> is always at index <code style="color:var(--accent3)">0</code> (the beginning of the array).</p>
+    <p style="margin-top:10px">Just like peeking the highest, this is a <strong style="color:var(--accent2)">read-only</strong> operation. We access <code style="color:var(--accent3)">arr[0]</code> directly and return its value without changing anything. This is <strong style="color:var(--accent2)">O(1)</strong>.</p>
+    <p style="margin-top:10px">The beauty of sorted storage: both ends are always accessible in constant time!</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔍</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">In a sorted filing cabinet, the least urgent folder is always at the very front. You can glance at its label in one second (O(1)) without moving anything. The sorted order guarantees you always know exactly where it is.</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Peek Lowest Priority Element ===== */</span>
+
+<span class="t">int</span> <span class="f">peekLowest</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="num">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue is EMPTY!\n"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="p">-</span><span class="num">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Ascending order: lowest priority is always at index 0 */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Lowest: data=%d, priority=%d (queue unchanged)\n"</span><span class="p">,</span>
+           <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="num">0</span><span class="p">].</span><span class="n">data</span><span class="p">,</span>
+           <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="num">0</span><span class="p">].</span><span class="n">priority</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="num">0</span><span class="p">].</span><span class="n">data</span><span class="p">;</span>  <span class="c">/* No size change */</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(1) — direct index access */</span></code></pre>
+  </div>
+</div>
+
+<!-- S7: ISEMPTY -->
+<div class="section" id="s7">
+  <div class="section-header">
+    <div class="section-num">07</div>
+    <div>
+      <div class="section-title">IsEmpty Operation</div>
+      <div class="section-sub">// Guard before every delete or peek</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Theory</div>
+      <p>IsEmpty checks whether the priority queue has <strong style="color:var(--accent)">zero elements</strong>. This is a safety check used before any peek or delete operation.</p>
+      <p style="margin-top:10px">If you try to delete from an empty queue, you get an <strong style="color:var(--danger)">underflow error</strong>. Always check IsEmpty first!</p>
+      <p style="margin-top:10px">Implementation: simply check if <code style="color:var(--accent3)">size == 0</code>. Returns <code style="color:var(--accent2)">1 (true)</code> if empty, <code style="color:var(--accent2)">0 (false)</code> otherwise. <strong>O(1)</strong>.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Interactive Demo</div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+        <button class="btn btn-primary" onclick="checkEmpty(true)">Check Empty Queue</button>
+        <button class="btn btn-secondary" onclick="checkEmpty(false)">Check Non-Empty Queue</button>
+        <div class="viz-log" id="emptyLog" style="margin:0">Click a button to check.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🪣</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Before a barista tries to pour from a coffee pot, they glance at it: "Is there anything left?" If the pot is empty and they pour anyway, nothing comes out (underflow!). IsEmpty is that quick glance — cheap, O(1), and prevents errors.</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== IsEmpty Operation ===== */</span>
+
+<span class="t">int</span> <span class="f">isEmpty</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="num">0</span><span class="p">);</span>  <span class="c">/* Returns 1 if empty, 0 if not */</span>
+<span class="p">}</span>
+
+<span class="c">/* Safe usage pattern: */</span>
+<span class="t">void</span> <span class="f">safePeek</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="f">isEmpty</span><span class="p">(</span><span class="n">pq</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Cannot peek: queue is empty!\n"</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c">/* Safe to peek now */</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Top priority: %d\n"</span><span class="p">,</span>
+           <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">-</span><span class="num">1</span><span class="p">].</span><span class="n">priority</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(1) */</span></code></pre>
+  </div>
+</div>
+
+<!-- S8: ISFULL -->
+<div class="section" id="s8">
+  <div class="section-header">
+    <div class="section-num">08</div>
+    <div>
+      <div class="section-title">IsFull Operation</div>
+      <div class="section-sub">// Prevent overflow before insert</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>IsFull checks if the array has reached its <strong style="color:var(--accent)">maximum capacity</strong>. Just as IsEmpty guards against underflow, IsFull guards against <strong style="color:var(--danger)">overflow</strong>.</p>
+    <p style="margin-top:10px">If you try to insert when the array is already full, you will write past the array boundary — causing <strong style="color:var(--danger)">undefined behavior</strong> and crashes in C. Always check IsFull before insertion!</p>
+    <p style="margin-top:10px">Implementation: check if <code style="color:var(--accent3)">size == MAX_SIZE</code>. Returns 1 (true) if full. <strong>O(1)</strong>.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🚗</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">A parking lot with 10 spaces has a sensor at the entrance. If all 10 spots are taken (IsFull = true), the barrier stays down and a "FULL" sign lights up. No new car can enter — preventing a crash (literally). IsFull is that sensor check.</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== IsFull Operation ===== */</span>
+
+<span class="t">int</span> <span class="f">isFull</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">==</span> <span class="n">MAX_SIZE</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Safe insert pattern: */</span>
+<span class="t">void</span> <span class="f">safeInsert</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">,</span>
+                <span class="t">int</span> <span class="n">data</span><span class="p">,</span> <span class="t">int</span> <span class="n">priority</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="f">isFull</span><span class="p">(</span><span class="n">pq</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue FULL! Cannot insert data=%d\n"</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="f">insert</span><span class="p">(</span><span class="n">pq</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">priority</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(1) */</span></code></pre>
+  </div>
+</div>
+
+<!-- S9: DISPLAY -->
+<div class="section" id="s9">
+  <div class="section-header">
+    <div class="section-num">09</div>
+    <div>
+      <div class="section-title">Display Priority Queue</div>
+      <div class="section-sub">// Print all elements with priorities clearly</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>Display prints all elements in the priority queue in their current sorted order. It's a <strong style="color:var(--accent)">read-only</strong> traversal that helps with <em>debugging</em> and <em>visualization</em>.</p>
+    <p style="margin-top:10px">We loop from index <code style="color:var(--accent3)">0</code> to <code style="color:var(--accent3)">size-1</code>, printing each element's data and priority. In ascending order, <code style="color:var(--accent3)">arr[0]</code> is shown first (lowest priority) and <code style="color:var(--accent3)">arr[size-1]</code> last (highest). Time: <strong>O(n)</strong>.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Display Queue Contents</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupDisplayViz()">Load Sample</button>
+      <button class="btn btn-secondary" onclick="displayQueue()">Display Queue</button>
+    </div>
+    <div class="pq-array" id="displayViz"><span class="pq-empty">Load sample first</span></div>
+    <div class="viz-log" id="displayLog" style="white-space:pre-line;min-height:80px">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Display Priority Queue ===== */</span>
+
+<span class="t">void</span> <span class="f">displayQueue</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="f">isEmpty</span><span class="p">(</span><span class="n">pq</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Queue is empty.\n"</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Priority Queue [size=%d]:\n"</span><span class="p">,</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%-6s %-8s %-10s\n"</span><span class="p">,</span>
+           <span class="s">"Index"</span><span class="p">,</span> <span class="s">"Data"</span><span class="p">,</span> <span class="s">"Priority"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"----------------------------\n"</span><span class="p">);</span>
+
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="c">/* Mark highest and lowest for clarity */</span>
+        <span class="t">char</span> <span class="p">*</span><span class="n">label</span> <span class="p">=</span> <span class="s">""</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">)</span> <span class="n">label</span> <span class="p">=</span> <span class="s">" &lt;-- HIGHEST"</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="num">0</span><span class="p">)</span>           <span class="n">label</span> <span class="p">=</span> <span class="s">" &lt;-- LOWEST"</span><span class="p">;</span>
+
+        <span class="n">printf</span><span class="p">(</span><span class="s">"[%d]    %-8d %-10d%s\n"</span><span class="p">,</span>
+               <span class="n">i</span><span class="p">,</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">,</span>
+               <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span><span class="p">,</span> <span class="n">label</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n) */</span></code></pre>
+  </div>
+</div>
+
+<!-- S10: TRAVERSE -->
+<div class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div>
+      <div class="section-title">Traverse Priority Queue</div>
+      <div class="section-sub">// Forward and reverse traversal</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>Traversal means <strong style="color:var(--accent)">visiting each element exactly once</strong>. Unlike display (which just prints), traversal can be used to perform any operation on each element — sum all priorities, find an element, apply a transformation, etc.</p>
+    <p style="margin-top:10px"><strong style="color:var(--accent2)">Forward traversal:</strong> index 0 → size-1 (low priority to high priority). Use to process least urgent first.</p>
+    <p style="margin-top:10px"><strong style="color:var(--accent2)">Reverse traversal:</strong> index size-1 → 0 (high priority to low priority). Use to process most urgent first. Time: <strong>O(n)</strong> for both.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Animated Traversal Demo</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupTraverseViz()">Load Queue</button>
+      <button class="btn btn-secondary" onclick="traverseForward()">Forward →</button>
+      <button class="btn btn-secondary" onclick="traverseReverse()">← Reverse</button>
+    </div>
+    <div class="pq-array" id="traverseViz"><span class="pq-empty">Load queue first</span></div>
+    <div class="viz-log" id="traverseLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Traversal — Forward and Reverse ===== */</span>
+
+<span class="c">/* Forward: index 0 to size-1 (low → high priority) */</span>
+<span class="t">void</span> <span class="f">traverseForward</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Forward traversal:\n"</span><span class="p">);</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  [%d] data=%d pri=%d\n"</span><span class="p">,</span>
+               <span class="n">i</span><span class="p">,</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">,</span>
+               <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c">/* Reverse: index size-1 to 0 (high → low priority) */</span>
+<span class="t">void</span> <span class="f">traverseReverse</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Reverse traversal:\n"</span><span class="p">);</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&gt;=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span><span class="p">--)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  [%d] data=%d pri=%d\n"</span><span class="p">,</span>
+               <span class="n">i</span><span class="p">,</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">,</span>
+               <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n) for both */</span></code></pre>
+  </div>
+</div>
+
+<!-- S11: SEARCH -->
+<div class="section" id="s11">
+  <div class="section-header">
+    <div class="section-num">11</div>
+    <div>
+      <div class="section-title">Search Element</div>
+      <div class="section-sub">// Linear scan — O(n)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>Search scans the array from left to right looking for an element by its <strong style="color:var(--accent)">data value</strong> or <strong style="color:var(--accent)">priority</strong>. Since we sort by priority and search by data, we cannot do binary search on data — we must do a <strong style="color:var(--danger)">linear search</strong>.</p>
+    <p style="margin-top:10px">If we search by priority, we <em>could</em> use binary search (since priorities are sorted) for O(log n). But generally, search is O(n).</p>
+    <p style="margin-top:10px">Returns the index of the found element, or -1 if not found.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔎</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Searching for a patient named "John" in a hospital queue sorted by urgency — you can't skip ahead just because it's sorted by priority (not name). You must check each patient card one by one until you find John. That's linear search: O(n) in the worst case.</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Search by Data Value</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupSearchViz()">Load Sample</button>
+      <input type="number" class="viz-input" id="searchVal" placeholder="Search value" value="35">
+      <button class="btn btn-secondary" onclick="searchElement()">Search</button>
+    </div>
+    <div class="pq-array" id="searchViz"><span class="pq-empty">Load sample first</span></div>
+    <div class="viz-log" id="searchLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Search Element by Data Value ===== */</span>
+
+<span class="t">int</span> <span class="f">search</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">,</span> <span class="t">int</span> <span class="n">targetData</span><span class="p">)</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span> <span class="p">==</span> <span class="n">targetData</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">printf</span><span class="p">(</span><span class="s">"Found at index %d: data=%d, priority=%d\n"</span><span class="p">,</span>
+                   <span class="n">i</span><span class="p">,</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">,</span>
+                   <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">i</span><span class="p">;</span>  <span class="c">/* Return position */</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Element %d NOT FOUND.\n"</span><span class="p">,</span> <span class="n">targetData</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">-</span><span class="num">1</span><span class="p">;</span>  <span class="c">/* Not found */</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n) — worst case checks all elements */</span></code></pre>
+  </div>
+</div>
+
+<!-- S12: UPDATE PRIORITY -->
+<div class="section" id="s12">
+  <div class="section-header">
+    <div class="section-num">12</div>
+    <div>
+      <div class="section-title">Update Element Priority</div>
+      <div class="section-sub">// Search → Remove → Re-insert in sorted position</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory — 3-Step Process</div>
+    <p>Updating a priority is a <strong style="color:var(--accent)">3-phase operation</strong> that uses operations we already know:</p>
+    <p style="margin-top:10px"><strong style="color:var(--accent2)">Phase 1 — Search:</strong> Find the element by its data value. O(n).</p>
+    <p><strong style="color:var(--accent2)">Phase 2 — Remove:</strong> Delete the old entry at that index by shifting elements left. O(n).</p>
+    <p><strong style="color:var(--accent2)">Phase 3 — Re-insert:</strong> Insert the element with its new priority at the correct sorted position. O(n).</p>
+    <p style="margin-top:10px">Total: <strong style="color:var(--danger)">O(n)</strong> time. We cannot just change the priority in place because that would break sorted order.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🏥</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">A patient who arrived with a minor injury (priority 2) suddenly develops complications and is now critical (priority 9). The nurse removes their card from its current position in the sorted list, and places it near the top — near the most urgent cases. The whole list stays sorted throughout.</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Update Priority</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupUpdateViz()">Load Sample</button>
+      <input type="number" class="viz-input" id="updateTarget" placeholder="Data val" value="35">
+      <input type="number" class="viz-input" id="updateNewPri" placeholder="New Pri" value="9">
+      <button class="btn btn-secondary" onclick="updatePriority()">Update</button>
+    </div>
+    <div class="pq-array" id="updateViz"><span class="pq-empty">Load sample first</span></div>
+    <div class="viz-log" id="updateLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Update Element Priority ===== */</span>
+
+<span class="t">void</span> <span class="f">updatePriority</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">,</span>
+                    <span class="t">int</span> <span class="n">targetData</span><span class="p">,</span> <span class="t">int</span> <span class="n">newPriority</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c">/* Phase 1: Search for the element */</span>
+    <span class="t">int</span> <span class="n">pos</span> <span class="p">=</span> <span class="p">-</span><span class="num">1</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span> <span class="p">==</span> <span class="n">targetData</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">pos</span> <span class="p">=</span> <span class="n">i</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pos</span> <span class="p">==</span> <span class="p">-</span><span class="num">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Element %d not found!\n"</span><span class="p">,</span> <span class="n">targetData</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Phase 2: Remove old entry (shift left) */</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="n">pos</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="num">1</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">--;</span>
+
+    <span class="c">/* Phase 3: Re-insert with new priority */</span>
+    <span class="f">insert</span><span class="p">(</span><span class="n">pq</span><span class="p">,</span> <span class="n">targetData</span><span class="p">,</span> <span class="n">newPriority</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Updated data=%d to priority=%d\n"</span><span class="p">,</span>
+           <span class="n">targetData</span><span class="p">,</span> <span class="n">newPriority</span><span class="p">);</span>
+<span class="p">}</span></code></pre>
+  </div>
+</div>
+
+<!-- S13: COUNT -->
+<div class="section" id="s13">
+  <div class="section-header">
+    <div class="section-num">13</div>
+    <div>
+      <div class="section-title">Count / Size Operation</div>
+      <div class="section-sub">// Instant size retrieval — O(1)</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Theory</div>
+      <p>The count operation returns the <strong style="color:var(--accent)">total number of elements</strong> currently in the priority queue. Since we maintain the <code style="color:var(--accent3)">size</code> variable and update it on every insert and delete, this is a simple return of that variable.</p>
+      <p style="margin-top:10px">This is <strong style="color:var(--accent2)">O(1)</strong> — no need to count elements one by one. The size field always knows the current count.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Complexity Analysis</div>
+      <table class="complexity-table" style="margin-top:0">
+        <tr><th>Approach</th><th>Time</th></tr>
+        <tr><td>Using size field (our method)</td><td style="color:var(--accent2)">O(1)</td></tr>
+        <tr><td>Counting by loop (bad)</td><td style="color:var(--danger)">O(n)</td></tr>
+      </table>
+      <p style="margin-top:12px;font-size:13px;color:var(--text-dim)">Always maintain a separate size counter — counting by looping each time is wasteful.</p>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Count / Size Operation ===== */</span>
+
+<span class="t">int</span> <span class="f">count</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span>  <span class="c">/* O(1) — just return the field */</span>
+<span class="p">}</span>
+
+<span class="c">/* Usage examples: */</span>
+<span class="t">void</span> <span class="f">demo</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Total elements: %d\n"</span><span class="p">,</span> <span class="f">count</span><span class="p">(</span><span class="n">pq</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Slots remaining: %d\n"</span><span class="p">,</span> <span class="n">MAX_SIZE</span> <span class="p">-</span> <span class="f">count</span><span class="p">(</span><span class="n">pq</span><span class="p">));</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Usage: %.1f%%\n"</span><span class="p">,</span>
+           <span class="p">(</span><span class="t">float</span><span class="p">)</span><span class="f">count</span><span class="p">(</span><span class="n">pq</span><span class="p">)</span> <span class="p">/</span> <span class="n">MAX_SIZE</span> <span class="p">*</span> <span class="num">100</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(1) */</span></code></pre>
+  </div>
+</div>
+
+<!-- S14: CLEAR -->
+<div class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">14</div>
+    <div>
+      <div class="section-title">Clear / Destroy Priority Queue</div>
+      <div class="section-sub">// Reset everything back to zero</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>Clear (or Destroy) removes <strong style="color:var(--accent)">all elements</strong> from the queue and resets it to its initial empty state. This is useful when you want to reuse the queue structure without creating a new one.</p>
+    <p style="margin-top:10px">For a static array-based queue in C, clearing is as simple as setting <code style="color:var(--accent3)">size = 0</code>. The old data is still in memory but logically invisible — subsequent insertions will overwrite those positions. <strong>O(1)</strong>.</p>
+    <p style="margin-top:10px">For safety, you can also overwrite old values with zeros (optional, O(n)).</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🗑️</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Clearing a priority queue is like erasing a whiteboard — you don't remove the whiteboard itself, you just wipe all the writing off. The board is ready for new content immediately. Setting size=0 is that eraser swipe: instant and O(1).</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Clear Queue</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupClearViz()">Load Sample</button>
+      <button class="btn btn-danger" onclick="clearQueue()">Clear All</button>
+    </div>
+    <div class="pq-array" id="clearViz"><span class="pq-empty">Load sample first</span></div>
+    <div class="viz-log" id="clearLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Clear / Destroy Priority Queue ===== */</span>
+
+<span class="c">/* Simple clear — O(1) */</span>
+<span class="t">void</span> <span class="f">clearQueue</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Queue cleared. size=%d\n"</span><span class="p">,</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Secure clear — also zeroes memory — O(n) */</span>
+<span class="t">void</span> <span class="f">destroyQueue</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Queue destroyed and zeroed.\n"</span><span class="p">);</span>
+<span class="p">}</span></code></pre>
+  </div>
+</div>
+
+<!-- S15: SORT -->
+<div class="section" id="s15">
+  <div class="section-header">
+    <div class="section-num">15</div>
+    <div>
+      <div class="section-title">Sort Priority Queue</div>
+      <div class="section-sub">// Verify or enforce sorted order</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>In a sorted array-based priority queue, the array should <strong style="color:var(--accent)">always be sorted</strong> — the insert operation maintains this. However, if data is loaded externally or corruption occurs, we may need to re-sort.</p>
+    <p style="margin-top:10px">We use <strong style="color:var(--accent2)">Insertion Sort</strong> here because it's simple, works in-place, and is efficient when the array is nearly sorted (O(n) best case). For a completely unsorted array, it costs O(n²).</p>
+    <p style="margin-top:10px">We can sort in ascending (min-first) or descending (max-first) order by changing the comparison operator.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Sort Visualization — Insertion Sort on Priority</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupSortViz()">Load Unsorted</button>
+      <button class="btn btn-secondary" onclick="runSortAsc()">Sort Ascending ↑</button>
+      <button class="btn btn-secondary" onclick="runSortDesc()">Sort Descending ↓</button>
+    </div>
+    <div class="pq-array" id="sortViz"><span class="pq-empty">Load unsorted data first</span></div>
+    <div class="viz-log" id="sortLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Sort Priority Queue (Insertion Sort) ===== */</span>
+
+<span class="c">/* Ascending: arr[0]=min, arr[size-1]=max */</span>
+<span class="t">void</span> <span class="f">sortAscending</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="t">Element</span> <span class="n">key</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">key</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+        <span class="n">j</span> <span class="p">=</span> <span class="n">i</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span>
+
+        <span class="c">/* Shift larger elements right */</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">j</span> <span class="p">&gt;=</span> <span class="num">0</span> <span class="p">&amp;&amp;</span>
+               <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">priority</span> <span class="p">&gt;</span> <span class="n">key</span><span class="p">.</span><span class="n">priority</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span> <span class="p">+</span> <span class="num">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+            <span class="n">j</span><span class="p">--;</span>
+        <span class="p">}</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span> <span class="p">+</span> <span class="num">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">key</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Sorted in ascending order.\n"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Descending: change > to < in the while condition */</span>
+<span class="t">void</span> <span class="f">sortDescending</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="t">Element</span> <span class="n">key</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">key</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+        <span class="n">j</span> <span class="p">=</span> <span class="n">i</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">j</span> <span class="p">&gt;=</span> <span class="num">0</span> <span class="p">&amp;&amp;</span>
+               <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">priority</span> <span class="p">&lt;</span> <span class="n">key</span><span class="p">.</span><span class="n">priority</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span> <span class="p">+</span> <span class="num">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+            <span class="n">j</span><span class="p">--;</span>
+        <span class="p">}</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span> <span class="p">+</span> <span class="num">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">key</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Sorted in descending order.\n"</span><span class="p">);</span>
+<span class="p">}</span></code></pre>
+  </div>
+</div>
+
+<!-- S16: MERGE -->
+<div class="section" id="s16">
+  <div class="section-header">
+    <div class="section-num">16</div>
+    <div>
+      <div class="section-title">Merge / Concatenate Priority Queues</div>
+      <div class="section-sub">// Two-pointer merge — O(n+m)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory — Two-Pointer Merge</div>
+    <p>Merging two sorted priority queues into one sorted result uses the classic <strong style="color:var(--accent)">two-pointer technique</strong>:</p>
+    <p style="margin-top:10px">• Maintain one pointer (<code style="color:var(--accent3)">i</code>) at the start of Queue A, and another (<code style="color:var(--accent3)">j</code>) at the start of Queue B.</p>
+    <p>• Compare priorities at <code style="color:var(--accent3)">A[i]</code> and <code style="color:var(--accent3)">B[j]</code>. Copy the smaller one into the result and advance that pointer.</p>
+    <p>• When one queue runs out, copy remaining elements of the other.</p>
+    <p style="margin-top:10px">Time: <strong style="color:var(--accent2)">O(n + m)</strong> where n and m are the sizes of the two queues. Much better than re-inserting all elements!</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🃏</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Two sorted card decks are being merged into one. One person holds deck A, another holds deck B. They compare their top cards, place the lower one into the merged pile, and draw the next. This two-person collaboration is the two-pointer merge — efficient because both decks are already sorted!</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Animated Two-Pointer Merge</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupMergeViz()">Load Two Queues</button>
+      <button class="btn btn-secondary" onclick="runMerge()">Merge →</button>
+    </div>
+    <div id="mergeVizContainer">
+      <div class="merge-row"><span class="merge-label">Queue A:</span><span class="pq-empty" id="mergeA_empty">Load first</span></div>
+      <div class="merge-row"><span class="merge-label">Queue B:</span><span class="pq-empty" id="mergeB_empty">Load first</span></div>
+      <div class="merge-row"><span class="merge-label">Result:</span><span class="pq-empty" id="mergeR_empty">Will appear here</span></div>
+    </div>
+    <div class="viz-log" id="mergeLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Merge Two Sorted Priority Queues ===== */</span>
+
+<span class="t">void</span> <span class="f">mergeQueues</span><span class="p">(</span>
+    <span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">a</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">b</span><span class="p">,</span>
+    <span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">result</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="t">int</span> <span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">,</span> <span class="n">j</span> <span class="p">=</span> <span class="num">0</span><span class="p">,</span> <span class="n">k</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span>
+
+    <span class="c">/* Two-pointer: compare and pick smaller priority */</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="n">a</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">&amp;&amp;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">b</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span> <span class="p">&lt;=</span>
+            <span class="n">b</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">priority</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">result</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">++]</span> <span class="p">=</span> <span class="n">a</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">++];</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">result</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">++]</span> <span class="p">=</span> <span class="n">b</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">++];</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Copy leftover elements from A */</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="p">&lt;</span> <span class="n">a</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">++]</span> <span class="p">=</span> <span class="n">a</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">++];</span>
+
+    <span class="c">/* Copy leftover elements from B */</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">j</span> <span class="p">&lt;</span> <span class="n">b</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">k</span><span class="p">++]</span> <span class="p">=</span> <span class="n">b</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">++];</span>
+
+    <span class="n">result</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">=</span> <span class="n">k</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Merged: %d elements\n"</span><span class="p">,</span> <span class="n">k</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n + m) */</span></code></pre>
+  </div>
+</div>
+
+<!-- S17: COPY -->
+<div class="section" id="s17">
+  <div class="section-header">
+    <div class="section-num">17</div>
+    <div>
+      <div class="section-title">Copy Priority Queue</div>
+      <div class="section-sub">// Deep copy — fully independent duplicate</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Theory — Deep Copy</div>
+      <p>Copying creates a <strong style="color:var(--accent)">fully independent duplicate</strong> of the priority queue. In C, this means copying every element's data and priority, and the size field.</p>
+      <p style="margin-top:10px">A <strong style="color:var(--danger)">shallow copy</strong> (just copying the struct pointer) would make both variables point to the same memory — modifying one would corrupt the other!</p>
+      <p style="margin-top:10px">A <strong style="color:var(--accent2)">deep copy</strong> copies all the actual data. Changes to the copy don't affect the original. Time: <strong>O(n)</strong>.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Shallow vs Deep Copy</div>
+      <div style="background:var(--surface2);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim)">
+        <div style="color:var(--danger);margin-bottom:8px">❌ Shallow (WRONG in C):</div>
+        <div style="color:var(--text-dim);margin-bottom:12px">struct PQ *copy = original;<br>// Both point to same data!</div>
+        <div style="color:var(--accent2);margin-bottom:8px">✓ Deep (CORRECT):</div>
+        <div style="color:var(--text)">copy every field manually<br>copy.arr[i] = original.arr[i]</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">📄</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Photocopying a patient priority list creates a completely new, independent document. Writing on the photocopy doesn't change the original. That's deep copy. If you just pointed two doctors to the same single sheet, any one doctor's edits would confuse the other — that's shallow copy.</div>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Deep Copy Priority Queue ===== */</span>
+
+<span class="t">void</span> <span class="f">copyQueue</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">source</span><span class="p">,</span>
+               <span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">destination</span><span class="p">)</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="c">/* Copy the size and order fields */</span>
+    <span class="n">destination</span><span class="p">-&gt;</span><span class="n">size</span>  <span class="p">=</span> <span class="n">source</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span>
+    <span class="n">destination</span><span class="p">-&gt;</span><span class="n">order</span> <span class="p">=</span> <span class="n">source</span><span class="p">-&gt;</span><span class="n">order</span><span class="p">;</span>
+
+    <span class="c">/* Copy every element — element by element (deep copy) */</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="p">=</span> <span class="num">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">source</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span> <span class="p">{</span>
+        <span class="n">destination</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span>     <span class="p">=</span>
+            <span class="n">source</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">;</span>
+        <span class="n">destination</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span> <span class="p">=</span>
+            <span class="n">source</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">priority</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Copied %d elements to destination.\n"</span><span class="p">,</span>
+           <span class="n">source</span><span class="p">-&gt;</span><span class="n">size</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n) — copies n elements */</span></code></pre>
+  </div>
+</div>
+
+<!-- S18: REVERSE -->
+<div class="section" id="s18">
+  <div class="section-header">
+    <div class="section-num">18</div>
+    <div>
+      <div class="section-title">Reverse Priority Queue</div>
+      <div class="section-sub">// Flip ascending ↔ descending in O(n/2)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Theory</div>
+    <p>Reversing swaps the order of all elements: an ascending queue becomes descending, and vice versa. This effectively changes which end holds the highest priority element.</p>
+    <p style="margin-top:10px">We use the classic <strong style="color:var(--accent)">two-pointer swap technique</strong>: one pointer starts at index 0, the other at index <code style="color:var(--accent3)">size-1</code>. They swap elements and move toward each other until they meet in the middle.</p>
+    <p style="margin-top:10px">Only <strong style="color:var(--accent2)">n/2 swaps</strong> are needed! Time: <strong>O(n)</strong>. No extra array needed.</p>
+  </div>
+
+  <div class="analogy">
+    <div class="analogy-icon">🔄</div>
+    <div class="analogy-content">
+      <div class="analogy-label">Real-World Analogy</div>
+      <div class="analogy-text">Reversing a sorted queue is like flipping a ranked list upside down. The first person becomes last, the last becomes first. You grab person #1 and person #N, swap their positions, then do the same for #2 and #N-1, working your way inward until you've re-ordered the entire line in reverse.</div>
+    </div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-title">▶ Interactive — Reverse Queue</div>
+    <div class="viz-controls">
+      <button class="btn btn-primary" onclick="setupReverseViz()">Load Ascending Queue</button>
+      <button class="btn btn-secondary" onclick="runReverse()">Reverse ↔</button>
+    </div>
+    <div class="pq-array" id="reverseViz"><span class="pq-empty">Load queue first</span></div>
+    <div class="viz-log" id="reverseLog">Ready.</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span class="code-lang">C Language</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre><code><span class="c">/* ===== Reverse Priority Queue ===== */</span>
+
+<span class="t">void</span> <span class="f">reverseQueue</span><span class="p">(</span><span class="k">struct</span> <span class="t">PriorityQueue</span> <span class="p">*</span><span class="n">pq</span><span class="p">)</span> <span class="p">{</span>
+    <span class="t">int</span> <span class="n">left</span>  <span class="p">=</span> <span class="num">0</span><span class="p">;</span>
+    <span class="t">int</span> <span class="n">right</span> <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">size</span> <span class="p">-</span> <span class="num">1</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="t">Element</span> <span class="n">temp</span><span class="p">;</span>
+
+    <span class="c">/* Two-pointer swap from both ends toward center */</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">left</span> <span class="p">&lt;</span> <span class="n">right</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c">/* Swap elements at left and right */</span>
+        <span class="n">temp</span>             <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">left</span><span class="p">];</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">left</span><span class="p">]</span>   <span class="p">=</span> <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">right</span><span class="p">];</span>
+        <span class="n">pq</span><span class="p">-&gt;</span><span class="n">arr</span><span class="p">[</span><span class="n">right</span><span class="p">]</span>  <span class="p">=</span> <span class="n">temp</span><span class="p">;</span>
+
+        <span class="n">left</span><span class="p">++;</span>   <span class="c">/* Move inward from left */</span>
+        <span class="n">right</span><span class="p">--;</span>  <span class="c">/* Move inward from right */</span>
+    <span class="p">}</span>
+
+    <span class="c">/* Toggle the order flag */</span>
+    <span class="n">pq</span><span class="p">-&gt;</span><span class="n">order</span> <span class="p">=</span> <span class="p">!</span><span class="n">pq</span><span class="p">-&gt;</span><span class="n">order</span><span class="p">;</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Reversed. Now in %s order.\n"</span><span class="p">,</span>
+           <span class="n">pq</span><span class="p">-&gt;</span><span class="n">order</span> <span class="p">?</span> <span class="s">"DESCENDING"</span> <span class="p">:</span> <span class="s">"ASCENDING"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c">/* Time Complexity: O(n/2) = O(n), Space: O(1) */</span></code></pre>
+  </div>
+
+  <!-- FOOTER SUMMARY -->
+  <div style="margin-top:48px;padding:32px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text-bright);margin-bottom:20px">📊 Complete Operation Summary</div>
+    <table class="complexity-table">
+      <tr><th>#</th><th>Operation</th><th>Time</th><th>Space</th><th>Notes</th></tr>
+      <tr><td>1</td><td>Initialization</td><td style="color:var(--accent2)">O(1)</td><td>O(n)</td><td>Set size=0</td></tr>
+      <tr><td>2</td><td>Insert</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>Find pos + shift right</td></tr>
+      <tr><td>3</td><td>Delete Highest</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>Last element (ascending)</td></tr>
+      <tr><td>4</td><td>Delete Lowest</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>First element, shift left</td></tr>
+      <tr><td>5</td><td>Peek Highest</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>Read arr[size-1]</td></tr>
+      <tr><td>6</td><td>Peek Lowest</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>Read arr[0]</td></tr>
+      <tr><td>7</td><td>IsEmpty</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>size == 0</td></tr>
+      <tr><td>8</td><td>IsFull</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>size == MAX</td></tr>
+      <tr><td>9</td><td>Display</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>Loop and print</td></tr>
+      <tr><td>10</td><td>Traverse</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>Forward or reverse loop</td></tr>
+      <tr><td>11</td><td>Search</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>Linear scan by data</td></tr>
+      <tr><td>12</td><td>Update Priority</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>Search + delete + insert</td></tr>
+      <tr><td>13</td><td>Count</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>Return size field</td></tr>
+      <tr><td>14</td><td>Clear</td><td style="color:var(--accent2)">O(1)</td><td>O(1)</td><td>size = 0</td></tr>
+      <tr><td>15</td><td>Sort</td><td style="color:var(--danger)">O(n²)</td><td>O(1)</td><td>Insertion sort</td></tr>
+      <tr><td>16</td><td>Merge</td><td style="color:var(--accent)">O(n+m)</td><td>O(n+m)</td><td>Two-pointer technique</td></tr>
+      <tr><td>17</td><td>Copy</td><td style="color:var(--danger)">O(n)</td><td>O(n)</td><td>Deep element copy</td></tr>
+      <tr><td>18</td><td>Reverse</td><td style="color:var(--danger)">O(n)</td><td>O(1)</td><td>Two-pointer swap</td></tr>
+    </table>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ===== GLOBAL STATE =====
+const MAX = 8;
+let insertQueue = [];
+let deleteHighQueue = [];
+let deleteLowQueue = [];
+let peekQueue = [];
+let displayQueue_arr = [];
+let traverseQueue = [];
+let searchQueue = [];
+let updateQueue = [];
+let clearQueue_arr = [];
+let sortQueue = [];
+let mergeA = [], mergeB = [];
+let reverseQueue_arr = [];
+
+// ===== UTILITY =====
+function renderArray(containerId, arr, highIdx, lowIdx, foundIdx, labels) {
+  const c = document.getElementById(containerId);
+  if (!arr || arr.length === 0) {
+    c.innerHTML = '<span class="pq-empty">[ Empty Queue ]</span>';
+    return;
+  }
+  c.innerHTML = '';
+  arr.forEach((el, i) => {
+    const div = document.createElement('div');
+    div.className = 'pq-cell';
+    let cls = 'pq-val';
+    if (i === highIdx) cls += ' highlight';
+    if (i === foundIdx) cls += ' found';
+    const label = labels && labels[i] ? `<div class="pq-label">${labels[i]}</div>` : '';
+    div.innerHTML = `<div class="${cls}">P${el.p}</div><div class="pq-idx">[${i}]<br>d:${el.d}</div>${label}`;
+    c.appendChild(div);
+  });
+}
+
+function setLog(id, msg, color) {
+  const el = document.getElementById(id);
+  el.style.color = color || 'var(--accent2)';
+  el.textContent = msg;
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-wrap').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText);
+  btn.textContent = 'Copied!';
+  setTimeout(() => btn.textContent = 'Copy', 2000);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// Sample data sets
+const SAMPLE_A = [{d:10,p:2},{d:35,p:4},{d:72,p:7},{d:88,p:9}];
+const SAMPLE_B = [{d:15,p:1},{d:40,p:3},{d:55,p:5},{d:90,p:8}];
+const SAMPLE_UNSORTED = [{d:80,p:7},{d:20,p:2},{d:50,p:5},{d:10,p:1},{d:70,p:8}];
+
+// ===== S2: INSERT =====
+function insertElement() {
+  const d = parseInt(document.getElementById('insertVal').value) || 42;
+  const p = parseInt(document.getElementById('insertPri').value) || 5;
+  if (insertQueue.length >= MAX) { setLog('insertLog','Queue FULL (max '+MAX+')','var(--danger)'); return; }
+  // Find correct position (ascending by priority)
+  let i = insertQueue.length - 1;
+  const newArr = [...insertQueue];
+  newArr.push({d,p});
+  newArr.sort((a,b)=>a.p-b.p);
+  insertQueue = newArr;
+  const pos = insertQueue.findIndex(el=>el.d===d&&el.p===p);
+  renderArray('insertViz', insertQueue, -1, -1, -1);
+  setLog('insertLog', `✔ Inserted data=${d}, priority=${p} at index ${pos}. Queue size: ${insertQueue.length}`, 'var(--accent2)');
+}
+function resetInsertViz() { insertQueue=[]; renderArray('insertViz',[]); setLog('insertLog','Reset. Queue cleared.'); }
+
+// ===== S3: DELETE HIGHEST =====
+function setupDeleteHighViz() {
+  deleteHighQueue=[...SAMPLE_A.map(x=>({...x}))];
+  const labels={}; labels[deleteHighQueue.length-1]='HIGHEST';labels[0]='LOWEST';
+  renderArray('deleteHighViz',deleteHighQueue,deleteHighQueue.length-1,-1,-1,labels);
+  setLog('deleteHighLog','Sample loaded. Highest priority at last index.');
+}
+function deleteHighest() {
+  if(!deleteHighQueue.length){setLog('deleteHighLog','Queue is EMPTY!','var(--danger)');return;}
+  const removed=deleteHighQueue.pop();
+  const labels={}; if(deleteHighQueue.length){labels[deleteHighQueue.length-1]='HIGHEST';labels[0]='LOWEST';}
+  renderArray('deleteHighViz',deleteHighQueue,deleteHighQueue.length-1,-1,-1,labels);
+  setLog('deleteHighLog',`✔ Deleted: data=${removed.d}, priority=${removed.p}. Remaining: ${deleteHighQueue.length}`,'var(--accent)');
+}
+
+// ===== S4: DELETE LOWEST =====
+function setupDeleteLowViz() {
+  deleteLowQueue=[...SAMPLE_A.map(x=>({...x}))];
+  const labels={0:'LOWEST',[deleteLowQueue.length-1]:'HIGHEST'};
+  renderArray('deleteLowViz',deleteLowQueue,-1,-1,-1,labels);
+  setLog('deleteLowLog','Sample loaded. Lowest priority at index 0.');
+}
+function deleteLowest() {
+  if(!deleteLowQueue.length){setLog('deleteLowLog','Queue is EMPTY!','var(--danger)');return;}
+  const removed=deleteLowQueue.shift();
+  const labels={}; if(deleteLowQueue.length){labels[0]='LOWEST';labels[deleteLowQueue.length-1]='HIGHEST';}
+  renderArray('deleteLowViz',deleteLowQueue,-1,-1,-1,labels);
+  setLog('deleteLowLog',`✔ Deleted: data=${removed.d}, priority=${removed.p}. All elements shifted left. Remaining: ${deleteLowQueue.length}`,'var(--accent)');
+}
+
+// ===== S5: PEEK HIGHEST =====
+function setupPeekViz() {
+  peekQueue=[...SAMPLE_A.map(x=>({...x}))];
+  const labels={[peekQueue.length-1]:'HIGHEST',0:'LOWEST'};
+  renderArray('peekViz',peekQueue,peekQueue.length-1,-1,-1,labels);
+  setLog('peekLog','Queue loaded. Ready to peek.');
+}
+function peekHighest() {
+  if(!peekQueue.length){setLog('peekLog','Queue is EMPTY!','var(--danger)');return;}
+  const el=peekQueue[peekQueue.length-1];
+  const labels={[peekQueue.length-1]:'HIGHEST ★',0:'LOWEST'};
+  renderArray('peekViz',peekQueue,peekQueue.length-1,-1,-1,labels);
+  setLog('peekLog',`👀 PEEK: data=${el.d}, priority=${el.p}. Queue unchanged. Size still: ${peekQueue.length}`,'var(--accent)');
+}
+
+// ===== S7: ISEMPTY =====
+function checkEmpty(empty) {
+  if(empty) setLog('emptyLog','isEmpty() → true (1). Size=0. Queue is EMPTY. Underflow guard triggered.','var(--accent2)');
+  else setLog('emptyLog','isEmpty() → false (0). Size=4. Queue has elements. Safe to proceed.','var(--accent)');
+}
+
+// ===== S9: DISPLAY =====
+function setupDisplayViz() {
+  displayQueue_arr=[...SAMPLE_A.map(x=>({...x}))];
+  const labels={0:'LOWEST',[displayQueue_arr.length-1]:'HIGHEST'};
+  renderArray('displayViz',displayQueue_arr,-1,-1,-1,labels);
+  setLog('displayLog','Queue loaded.');
+}
+function displayQueue() {
+  if(!displayQueue_arr.length){setLog('displayLog','Queue is empty.','var(--danger)');return;}
+  let out='Index | Data | Priority\n';
+  out+='------+------+----------\n';
+  displayQueue_arr.forEach((el,i)=>{
+    const mark=i===displayQueue_arr.length-1?' ← HIGHEST':i===0?' ← LOWEST':'';
+    out+=`  [${i}]  |  ${String(el.d).padEnd(3)} |  P${el.p}${mark}\n`;
+  });
+  setLog('displayLog',out,'var(--text)');
+}
+
+// ===== S10: TRAVERSE =====
+function setupTraverseViz() {
+  traverseQueue=[...SAMPLE_A.map(x=>({...x}))];
+  renderArray('traverseViz',traverseQueue);
+  setLog('traverseLog','Queue loaded. Choose Forward or Reverse traversal.');
+}
+async function traverseForward() {
+  if(!traverseQueue.length){setLog('traverseLog','Empty!','var(--danger)');return;}
+  setLog('traverseLog','Forward traversal: index 0 → '+( traverseQueue.length-1));
+  for(let i=0;i<traverseQueue.length;i++){
+    const labels={};labels[i]='→ VISITING';
+    renderArray('traverseViz',traverseQueue,i,-1,-1,labels);
+    setLog('traverseLog',`Visiting [${i}]: data=${traverseQueue[i].d}, priority=P${traverseQueue[i].p}`);
+    await sleep(500);
+  }
+  renderArray('traverseViz',traverseQueue);
+  setLog('traverseLog','✔ Forward traversal complete. Visited '+traverseQueue.length+' elements.');
+}
+async function traverseReverse() {
+  if(!traverseQueue.length){setLog('traverseLog','Empty!','var(--danger)');return;}
+  setLog('traverseLog','Reverse traversal: index '+(traverseQueue.length-1)+' → 0');
+  for(let i=traverseQueue.length-1;i>=0;i--){
+    const labels={};labels[i]='← VISITING';
+    renderArray('traverseViz',traverseQueue,i,-1,-1,labels);
+    setLog('traverseLog',`Visiting [${i}]: data=${traverseQueue[i].d}, priority=P${traverseQueue[i].p}`);
+    await sleep(500);
+  }
+  renderArray('traverseViz',traverseQueue);
+  setLog('traverseLog','✔ Reverse traversal complete.');
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ===== S11: SEARCH =====
+function setupSearchViz() {
+  searchQueue=[{d:15,p:1},{d:35,p:4},{d:72,p:7},{d:88,p:9}];
+  renderArray('searchViz',searchQueue);
+  setLog('searchLog','Queue loaded: [15,35,72,88]. Enter a value to search.');
+}
+async function searchElement() {
+  if(!searchQueue.length){setLog('searchLog','Load sample first.','var(--danger)');return;}
+  const target=parseInt(document.getElementById('searchVal').value)||35;
+  setLog('searchLog','Searching for data='+target+'...');
+  for(let i=0;i<searchQueue.length;i++){
+    renderArray('searchViz',searchQueue,-1,-1,i);
+    setLog('searchLog',`Checking [${i}]: data=${searchQueue[i].d} ... ${searchQueue[i].d===target?'FOUND! ✔':'not here'}`);
+    await sleep(400);
+    if(searchQueue[i].d===target){
+      setLog('searchLog',`✔ FOUND data=${target} at index ${i}, priority=P${searchQueue[i].p}`,'var(--accent)');
+      return;
+    }
+  }
+  renderArray('searchViz',searchQueue);
+  setLog('searchLog',`✗ data=${target} NOT FOUND in queue.`,'var(--danger)');
+}
+
+// ===== S12: UPDATE PRIORITY =====
+function setupUpdateViz() {
+  updateQueue=[{d:15,p:1},{d:35,p:4},{d:72,p:7},{d:88,p:9}];
+  renderArray('updateViz',updateQueue);
+  setLog('updateLog','Queue loaded. Enter data value and new priority to update.');
+}
+function updatePriority() {
+  if(!updateQueue.length){setLog('updateLog','Load sample first.','var(--danger)');return;}
+  const target=parseInt(document.getElementById('updateTarget').value)||35;
+  const newPri=parseInt(document.getElementById('updateNewPri').value)||9;
+  const idx=updateQueue.findIndex(el=>el.d===target);
+  if(idx===-1){setLog('updateLog','Element data='+target+' NOT FOUND!','var(--danger)');return;}
+  const oldPri=updateQueue[idx].p;
+  updateQueue.splice(idx,1);
+  updateQueue.push({d:target,p:newPri});
+  updateQueue.sort((a,b)=>a.p-b.p);
+  const newIdx=updateQueue.findIndex(el=>el.d===target&&el.p===newPri);
+  renderArray('updateViz',updateQueue,-1,-1,newIdx);
+  setLog('updateLog',`✔ Updated data=${target}: P${oldPri} → P${newPri}. Re-inserted at index ${newIdx}.`,'var(--accent)');
+}
+
+// ===== S14: CLEAR =====
+function setupClearViz() {
+  clearQueue_arr=[...SAMPLE_A.map(x=>({...x}))];
+  renderArray('clearViz',clearQueue_arr);
+  setLog('clearLog','Queue loaded with '+clearQueue_arr.length+' elements.');
+}
+function clearQueue() {
+  if(!clearQueue_arr.length){setLog('clearLog','Already empty!','var(--danger)');return;}
+  const oldSize=clearQueue_arr.length;
+  clearQueue_arr=[];
+  renderArray('clearViz',[]);
+  setLog('clearLog',`✔ Queue cleared! Removed ${oldSize} elements. size=0. O(1) operation.`,'var(--accent)');
+}
+
+// ===== S15: SORT =====
+function setupSortViz() {
+  sortQueue=[...SAMPLE_UNSORTED.map(x=>({...x}))];
+  renderArray('sortViz',sortQueue);
+  setLog('sortLog','Unsorted queue loaded: P'+sortQueue.map(x=>x.p).join(', P'));
+}
+function runSortAsc() {
+  if(!sortQueue.length){setLog('sortLog','Load unsorted first.','var(--danger)');return;}
+  sortQueue.sort((a,b)=>a.p-b.p);
+  renderArray('sortViz',sortQueue,sortQueue.length-1);
+  setLog('sortLog','✔ Sorted ASCENDING: P'+sortQueue.map(x=>x.p).join(' < P')+'. Highest at last index.','var(--accent2)');
+}
+function runSortDesc() {
+  if(!sortQueue.length){setLog('sortLog','Load unsorted first.','var(--danger)');return;}
+  sortQueue.sort((a,b)=>b.p-a.p);
+  renderArray('sortViz',sortQueue,0);
+  setLog('sortLog','✔ Sorted DESCENDING: P'+sortQueue.map(x=>x.p).join(' > P')+'. Highest at index 0.','var(--accent)');
+}
+
+// ===== S16: MERGE =====
+function renderMergeRow(containerId, arr, highlightIdx, resultArr) {
+  const empty = document.getElementById(containerId+'_empty');
+  const row = empty ? empty.parentElement : document.createElement('div');
+  // Find the merge-row
+  const rows=document.querySelectorAll('.merge-row');
+  let target=null;
+  rows.forEach(r=>{const lbl=r.querySelector('.merge-label');if(lbl&&lbl.textContent===containerId.replace('merge','').replace('_empty','')+'.:')target=r;});
+  // Simple approach: find row by id of empty span
+  const emptySpan=document.getElementById(containerId+'_empty');
+  if(emptySpan) emptySpan.style.display='none';
+  const parentRow=emptySpan?emptySpan.parentElement:null;
+  if(!parentRow)return;
+  // Remove old cells
+  parentRow.querySelectorAll('.merge-cell').forEach(el=>el.remove());
+  (arr||[]).forEach((el,i)=>{
+    const div=document.createElement('div');
+    div.className='merge-cell'+(i===highlightIdx?' active':'');
+    div.textContent='P'+el.p;
+    parentRow.appendChild(div);
+  });
+}
+
+function setupMergeViz() {
+  mergeA=[{d:10,p:1},{d:30,p:3},{d:60,p:6}];
+  mergeB=[{d:20,p:2},{d:40,p:4},{d:50,p:5},{d:80,p:8}];
+  ['mergeA','mergeB','mergeR'].forEach(id=>{
+    const sp=document.getElementById(id+'_empty');
+    if(sp)sp.style.display='inline';
+    document.querySelectorAll('.merge-cell').forEach(e=>e.remove());
+  });
+  renderMergeSimple('mergeA',mergeA);
+  renderMergeSimple('mergeB',mergeB);
+  document.getElementById('mergeR_empty').style.display='inline';
+  document.getElementById('mergeR_empty').textContent='Will appear after merge';
+  setLog('mergeLog','Two queues loaded. A: [P1,P3,P6], B: [P2,P4,P5,P8]. Click Merge.');
+}
+function renderMergeSimple(prefix,arr){
+  const sp=document.getElementById(prefix+'_empty');
+  if(sp){sp.style.display='none';}
+  const row=sp?sp.parentElement:null;
+  if(!row)return;
+  row.querySelectorAll('.merge-cell').forEach(e=>e.remove());
+  arr.forEach(el=>{
+    const d=document.createElement('div');
+    d.className='merge-cell';d.textContent='P'+el.p;row.appendChild(d);
+  });
+}
+async function runMerge() {
+  if(!mergeA.length||!mergeB.length){setLog('mergeLog','Load two queues first.','var(--danger)');return;}
+  const result=[];let i=0,j=0;
+  const sp=document.getElementById('mergeR_empty');
+  if(sp){sp.style.display='none';}
+  const resultRow=sp?sp.parentElement:null;
+  resultRow&&resultRow.querySelectorAll('.merge-cell').forEach(e=>e.remove());
+
+  const addResult=(el)=>{
+    if(!resultRow)return;
+    const d=document.createElement('div');
+    d.className='merge-cell result';d.textContent='P'+el.p;resultRow.appendChild(d);
+  };
+
+  while(i<mergeA.length&&j<mergeB.length){
+    // Highlight current pointers
+    renderMergeHighlight('mergeA',mergeA,i);
+    renderMergeHighlight('mergeB',mergeB,j);
+    setLog('mergeLog',`Comparing P${mergeA[i].p} vs P${mergeB[j].p}...`);
+    await sleep(600);
+    if(mergeA[i].p<=mergeB[j].p){result.push(mergeA[i]);addResult(mergeA[i]);i++;}
+    else{result.push(mergeB[j]);addResult(mergeB[j]);j++;}
+  }
+  while(i<mergeA.length){result.push(mergeA[i]);addResult(mergeA[i]);i++;}
+  while(j<mergeB.length){result.push(mergeB[j]);addResult(mergeB[j]);j++;}
+  renderMergeHighlight('mergeA',mergeA,-1);
+  renderMergeHighlight('mergeB',mergeB,-1);
+  setLog('mergeLog','✔ Merge complete! '+result.length+' elements: P'+result.map(x=>x.p).join(', P'),'var(--accent2)');
+}
+function renderMergeHighlight(prefix,arr,hi){
+  const sp=document.getElementById(prefix+'_empty');
+  if(!sp)return;
+  const row=sp.parentElement;
+  const cells=row.querySelectorAll('.merge-cell');
+  cells.forEach((c,i)=>c.className='merge-cell'+(i===hi?' active':''));
+}
+
+// ===== S18: REVERSE =====
+function setupReverseViz() {
+  reverseQueue_arr=[{d:10,p:2},{d:30,p:4},{d:55,p:6},{d:88,p:9}];
+  const labels={0:'LOWEST',[reverseQueue_arr.length-1]:'HIGHEST'};
+  renderArray('reverseViz',reverseQueue_arr,-1,-1,-1,labels);
+  setLog('reverseLog','Ascending queue loaded. Highest at last index. Click Reverse.');
+}
+async function runReverse() {
+  if(!reverseQueue_arr.length){setLog('reverseLog','Load first.','var(--danger)');return;}
+  let left=0,right=reverseQueue_arr.length-1;
+  setLog('reverseLog','Starting two-pointer swap...');
+  while(left<right){
+    setLog('reverseLog',`Swapping [${left}](P${reverseQueue_arr[left].p}) ↔ [${right}](P${reverseQueue_arr[right].p})`);
+    [reverseQueue_arr[left],reverseQueue_arr[right]]=[reverseQueue_arr[right],reverseQueue_arr[left]];
+    renderArray('reverseViz',reverseQueue_arr,left,-1,right);
+    await sleep(500);
+    left++;right--;
+  }
+  const labels={0:'HIGHEST',[reverseQueue_arr.length-1]:'LOWEST'};
+  renderArray('reverseViz',reverseQueue_arr,0,-1,-1,labels);
+  setLog('reverseLog','✔ Reversed! Now DESCENDING. Highest at index 0. Took n/2='+Math.floor(reverseQueue_arr.length/2)+' swaps.','var(--accent)');
+}
+
+// ===== PROGRESS & NAV =====
+window.addEventListener('scroll',()=>{
+  const el=document.documentElement;
+  const pct=(el.scrollTop/(el.scrollHeight-el.clientHeight))*100;
+  document.getElementById('progressBar').style.width=pct+'%';
+
+  // Active nav
+  const sections=document.querySelectorAll('.section, .hero');
+  const navItems=document.querySelectorAll('.nav-item');
+  let current='s0';
+  sections.forEach(s=>{
+    if(s.getBoundingClientRect().top<200) current=s.id||current;
+  });
+  navItems.forEach(n=>{
+    n.classList.remove('active');
+    if(n.getAttribute('href')==='#'+current) n.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,2896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAG Master — Directed Acyclic Graph Complete Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --surface: #111318;
+  --surface2: #181c24;
+  --border: #252a36;
+  --accent: #00d4aa;
+  --accent2: #ff6b35;
+  --accent3: #7c6af7;
+  --accent4: #f0c040;
+  --text: #e8eaf0;
+  --text2: #8892a4;
+  --text3: #5a6478;
+  --node-fill: #1a2035;
+  --node-stroke: #00d4aa;
+  --edge: #3a4a6a;
+  --code-bg: #0d1117;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+#sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 100;
+  transition: transform 0.3s;
+}
+#sidebar::-webkit-scrollbar { width: 4px; }
+#sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+.sidebar-sub { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+.nav-section { padding: 12px 0 4px 20px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 2px; }
+.nav-item {
+  display: block; padding: 7px 20px;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+  color: var(--text2); text-decoration: none;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+.nav-item:hover { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,170,0.04); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,212,170,0.07); }
+.nav-item.sub { padding-left: 32px; font-size: 12px; font-weight: 400; font-family: 'Crimson Pro', serif; }
+
+/* MAIN */
+#main {
+  margin-left: 260px;
+  padding: 0 0 80px;
+}
+.hero {
+  background: linear-gradient(135deg, #0a0c10 0%, #111830 50%, #0a1020 100%);
+  padding: 64px 60px 48px;
+  border-bottom: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -100px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,212,170,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+.hero h1 { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; line-height: 1.1; color: var(--text); }
+.hero h1 span { color: var(--accent); }
+.hero p { color: var(--text2); font-size: 18px; margin-top: 16px; max-width: 600px; }
+.hero-meta { display: flex; gap: 32px; margin-top: 28px; }
+.hero-badge { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); background: var(--surface2); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; }
+.hero-badge span { color: var(--accent); }
+
+/* SECTION */
+.section {
+  padding: 48px 60px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.section-header { margin-bottom: 32px; }
+.section-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent2); letter-spacing: 2px; margin-bottom: 6px; }
+.section h2 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--text); }
+.section h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); margin: 28px 0 12px; }
+.section h4 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: var(--accent4); margin: 20px 0 8px; }
+.section p { color: var(--text2); margin-bottom: 12px; }
+.section li { color: var(--text2); margin-left: 20px; margin-bottom: 4px; }
+
+/* CARDS */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 20px 0; }
+.card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card-icon { font-size: 24px; margin-bottom: 8px; }
+.card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.card-desc { font-size: 14px; color: var(--text2); }
+
+/* ANALOGY BOX */
+.analogy {
+  background: linear-gradient(135deg, rgba(255,107,53,0.08), rgba(255,107,53,0.04));
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 12px; padding: 20px 24px; margin: 20px 0;
+}
+.analogy-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+.analogy p { color: var(--text2); font-size: 16px; margin: 0; }
+
+/* INFO BOX */
+.info-box {
+  background: rgba(0,212,170,0.05);
+  border: 1px solid rgba(0,212,170,0.2);
+  border-radius: 10px; padding: 16px 20px; margin: 16px 0;
+}
+.info-box .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.info-box p { color: var(--text2); font-size: 15px; margin: 0; }
+
+/* CODE */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px; margin: 16px 0;
+  overflow: hidden;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.code-lang { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); }
+.copy-btn {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--text3); background: none; border: 1px solid var(--border);
+  padding: 3px 10px; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+pre {
+  padding: 20px; overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7;
+  color: #c9d1d9;
+}
+pre::-webkit-scrollbar { height: 4px; }
+pre::-webkit-scrollbar-thumb { background: var(--border); }
+.kw { color: #ff7b72; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; }
+.cm { color: #8b949e; font-style: italic; } .nm { color: #79c0ff; }
+.pp { color: #f0c040; } .op { color: #c9d1d9; }
+
+/* VISUALIZATION */
+.viz-container {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; margin: 20px 0; overflow: hidden;
+}
+.viz-header {
+  padding: 12px 20px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.viz-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.viz-body { padding: 20px; }
+svg.dag-svg { width: 100%; display: block; }
+
+/* MATRIX TABLE */
+.matrix-wrap { overflow-x: auto; }
+table.matrix {
+  border-collapse: collapse; font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; margin: 12px 0;
+}
+table.matrix th, table.matrix td {
+  border: 1px solid var(--border); padding: 8px 14px;
+  text-align: center; color: var(--text2);
+}
+table.matrix th { background: var(--surface); color: var(--accent); font-size: 12px; }
+table.matrix td.one { color: var(--accent); font-weight: 700; }
+table.matrix td.neg { color: var(--accent2); font-weight: 700; }
+table.matrix tr:hover td { background: rgba(255,255,255,0.03); }
+
+/* CONTROLS */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.btn {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+  padding: 8px 18px; border-radius: 6px; cursor: pointer; border: none;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:hover { background: #00f0c0; }
+.btn-secondary { background: var(--surface); color: var(--text2); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-warn { background: rgba(255,107,53,0.15); color: var(--accent2); border: 1px solid rgba(255,107,53,0.3); }
+.btn-warn:hover { background: rgba(255,107,53,0.25); }
+
+/* OUTPUT */
+.output-box {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 18px; margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent);
+  min-height: 40px;
+}
+
+/* COMPLEXITY TABLE */
+.complexity-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.complexity-table th { background: var(--surface); color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+.complexity-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text2); font-size: 15px; }
+.complexity-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent4); }
+
+/* STEP DISPLAY */
+.step-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); min-height: 36px; line-height: 1.6; }
+.step-highlight { color: var(--accent); font-weight: 700; }
+.step-warn { color: var(--accent2); font-weight: 700; }
+
+/* PROGRESS BAR */
+.progress-bar { background: var(--border); border-radius: 4px; height: 6px; margin: 8px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 4px; transition: width 0.5s; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  #sidebar { transform: translateX(-100%); }
+  #sidebar.open { transform: translateX(0); }
+  #main { margin-left: 0; }
+  .section { padding: 32px 20px; }
+  .hero { padding: 40px 20px 32px; }
+  .hero h1 { font-size: 32px; }
+  #menu-btn { display: flex; }
+}
+#menu-btn {
+  display: none; position: fixed; top: 14px; left: 14px; z-index: 200;
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 8px 12px; border-radius: 6px; cursor: pointer; align-items: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2);
+}
+
+/* SCROLLBAR GLOBAL */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* TAG BADGES */
+.tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 20px; margin: 2px; }
+.tag-green { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+.tag-orange { background: rgba(255,107,53,0.15); color: var(--accent2); border: 1px solid rgba(255,107,53,0.3); }
+.tag-purple { background: rgba(124,106,247,0.15); color: var(--accent3); border: 1px solid rgba(124,106,247,0.3); }
+.tag-yellow { background: rgba(240,192,64,0.15); color: var(--accent4); border: 1px solid rgba(240,192,64,0.3); }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+/* Highlight rows in step animations */
+.hl-row { background: rgba(0,212,170,0.12) !important; }
+</style>
+</head>
+<body>
+
+<button id="menu-btn" onclick="toggleSidebar()">☰ Menu</button>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">DAG Master</div>
+    <div class="sidebar-sub">// incidence_matrix.h</div>
+  </div>
+  <div class="nav-section">Introduction</div>
+  <a class="nav-item" href="#s0">What is a DAG?</a>
+  <a class="nav-item sub" href="#s0">Representation</a>
+  <a class="nav-item sub" href="#s0b">Incidence Matrix</a>
+  <div class="nav-section">Vertex Operations</div>
+  <a class="nav-item" href="#s1">Insert Vertex</a>
+  <a class="nav-item" href="#s2">Delete Vertex</a>
+  <a class="nav-item" href="#s3">Search Vertex</a>
+  <a class="nav-item" href="#s4">Update Vertex</a>
+  <div class="nav-section">Edge Operations</div>
+  <a class="nav-item" href="#s5">Insert Directed Edge</a>
+  <a class="nav-item" href="#s6">Delete Edge</a>
+  <a class="nav-item" href="#s7">Search Edge</a>
+  <a class="nav-item" href="#s8">Update Edge Weight</a>
+  <a class="nav-item" href="#s9">Validate Acyclic</a>
+  <div class="nav-section">Traversal</div>
+  <a class="nav-item" href="#s10">BFS</a>
+  <a class="nav-item" href="#s11">DFS</a>
+  <a class="nav-item" href="#s12">Topological Traversal</a>
+  <a class="nav-item" href="#s13">Dependency Traversal</a>
+  <div class="nav-section">Path Operations</div>
+  <a class="nav-item" href="#s14">Find Path</a>
+  <a class="nav-item" href="#s15">Shortest Path</a>
+  <a class="nav-item" href="#s16">Longest Path</a>
+  <a class="nav-item" href="#s17">All Paths</a>
+  <a class="nav-item" href="#s18">Dependency Chain</a>
+  <div class="nav-section">Ordering</div>
+  <a class="nav-item" href="#s19">Topo Sort (DFS)</a>
+  <a class="nav-item" href="#s20">Kahn's Algorithm</a>
+  <a class="nav-item" href="#s21">Task Scheduling</a>
+  <a class="nav-item" href="#s22">Dependency Resolution</a>
+  <div class="nav-section">Cycle Operations</div>
+  <a class="nav-item" href="#s23">Cycle Detection</a>
+  <a class="nav-item" href="#s24">Prevent Cycle</a>
+  <a class="nav-item" href="#s25">DAG Validation</a>
+  <div class="nav-section">Connectivity</div>
+  <a class="nav-item" href="#s26">Reachability Check</a>
+  <a class="nav-item" href="#s27">Source / Sink Nodes</a>
+  <a class="nav-item" href="#s28">Components Analysis</a>
+  <div class="nav-section">Degree Operations</div>
+  <a class="nav-item" href="#s29">In-Degree / Out-Degree</a>
+  <a class="nav-item" href="#s30">Source & Sink Check</a>
+  <div class="nav-section">Scheduling</div>
+  <a class="nav-item" href="#s31">Course Prerequisites</a>
+  <a class="nav-item" href="#s32">Build System Deps</a>
+  <a class="nav-item" href="#s33">Workflow Scheduling</a>
+  <a class="nav-item" href="#s34">Critical Path Analysis</a>
+  <div class="nav-section">Advanced Algorithms</div>
+  <a class="nav-item" href="#s35">DP on DAG</a>
+  <a class="nav-item" href="#s36">Critical Path Method</a>
+  <a class="nav-item" href="#s37">Project Planning</a>
+  <div class="nav-section">Visualization</div>
+  <a class="nav-item" href="#s38">Display DAG</a>
+  <a class="nav-item" href="#s39">Topological Order</a>
+  <a class="nav-item" href="#s40">Dependency Tree</a>
+  <a class="nav-item" href="#s41">Execution Schedule</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Complete Learning Guide · C Language</div>
+  <h1>Directed Acyclic Graph<br><span>via Incidence Matrix</span></h1>
+  <p>Master DAGs from scratch — every operation, every algorithm, with interactive visualizations and beginner-friendly C code.</p>
+  <div class="hero-meta">
+    <div class="hero-badge">Language: <span>C</span></div>
+    <div class="hero-badge">Representation: <span>Incidence Matrix</span></div>
+    <div class="hero-badge">Level: <span>Beginner → Advanced</span></div>
+  </div>
+</div>
+
+<!-- ─── SECTION 0: What is a DAG? ─── -->
+<section class="section" id="s0">
+  <div class="section-header">
+    <div class="section-num">01 — INTRODUCTION</div>
+    <h2>What is a DAG?</h2>
+  </div>
+  <p>A <strong>Directed Acyclic Graph (DAG)</strong> is a graph with two key properties:</p>
+  <ul>
+    <li><strong>Directed</strong> — every edge has a direction (goes from one vertex to another)</li>
+    <li><strong>Acyclic</strong> — there are no cycles (you can never return to where you started by following edges)</li>
+  </ul>
+
+  <div class="analogy">
+    <div class="analogy-title">🍳 Real-Life Analogy</div>
+    <p>Think of a cooking recipe. You must chop vegetables <em>before</em> you fry them, and fry them <em>before</em> you serve. The steps have a direction, and you can never go back in time — that's a DAG!</p>
+  </div>
+
+  <div class="card-grid">
+    <div class="card"><div class="card-icon">🎯</div><div class="card-title">Directed Edges</div><div class="card-desc">Each edge A→B means "A comes before B" or "A depends on B being ready first."</div></div>
+    <div class="card"><div class="card-icon">🔄</div><div class="card-title">No Cycles</div><div class="card-desc">Following edges, you can never return to the starting vertex. No circular dependencies.</div></div>
+    <div class="card"><div class="card-icon">🌳</div><div class="card-title">Multiple Paths</div><div class="card-desc">Unlike trees, a node can have multiple parents. Two courses can both require the same prerequisite.</div></div>
+    <div class="card"><div class="card-icon">⚡</div><div class="card-title">Topological Order</div><div class="card-desc">DAGs always have a linear ordering of vertices where every edge points forward.</div></div>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Interactive DAG — Basic Example</div>
+    <div class="viz-body">
+      <svg class="dag-svg" id="basicDag" viewBox="0 0 600 220" height="220">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#00d4aa"/>
+          </marker>
+          <marker id="arrO" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ff6b35"/>
+          </marker>
+        </defs>
+        <!-- Edges -->
+        <line x1="80" y1="80" x2="188" y2="50" stroke="#00d4aa" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>
+        <line x1="80" y1="80" x2="188" y2="110" stroke="#00d4aa" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>
+        <line x1="240" y1="50" x2="348" y2="80" stroke="#00d4aa" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>
+        <line x1="240" y1="110" x2="348" y2="80" stroke="#00d4aa" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>
+        <line x1="400" y1="80" x2="508" y2="50" stroke="#00d4aa" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>
+        <line x1="400" y1="80" x2="508" y2="110" stroke="#00d4aa" stroke-width="1.5" marker-end="url(#arr)" opacity="0.7"/>
+        <!-- Nodes -->
+        <circle cx="60" cy="80" r="28" fill="#1a2035" stroke="#00d4aa" stroke-width="2"/>
+        <text x="60" y="85" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="13" font-weight="700">A</text>
+        <circle cx="220" cy="50" r="28" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="220" y="55" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="13" font-weight="700">B</text>
+        <circle cx="220" cy="110" r="28" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="220" y="115" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="13" font-weight="700">C</text>
+        <circle cx="380" cy="80" r="28" fill="#1a2035" stroke="#f0c040" stroke-width="2"/>
+        <text x="380" y="85" text-anchor="middle" fill="#f0c040" font-family="JetBrains Mono" font-size="13" font-weight="700">D</text>
+        <circle cx="530" cy="50" r="28" fill="#1a2035" stroke="#ff6b35" stroke-width="2"/>
+        <text x="530" y="55" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="13" font-weight="700">E</text>
+        <circle cx="530" cy="110" r="28" fill="#1a2035" stroke="#ff6b35" stroke-width="2"/>
+        <text x="530" y="115" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="13" font-weight="700">F</text>
+        <!-- Labels -->
+        <text x="60" y="175" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="11">Source</text>
+        <text x="380" y="175" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="11">Merge</text>
+        <text x="530" y="175" text-anchor="middle" fill="#8892a4" font-family="JetBrains Mono" font-size="11">Sinks</text>
+        <!-- Note: no cycle! -->
+        <text x="300" y="200" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="11">No cycle — edges always flow left → right</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- SECTION 0b: Incidence Matrix -->
+  <div id="s0b"></div>
+  <h3>Representation: Directed Incidence Matrix</h3>
+  <p>The <strong>Directed Incidence Matrix</strong> is a 2D array where:</p>
+  <ul>
+    <li>Rows = <strong>Vertices</strong> (nodes)</li>
+    <li>Columns = <strong>Edges</strong> (connections)</li>
+    <li>Cell value <span class="tag tag-green">+1</span> = this vertex is the <strong>tail (source)</strong> of the edge</li>
+    <li>Cell value <span class="tag tag-orange">-1</span> = this vertex is the <strong>head (destination)</strong> of the edge</li>
+    <li>Cell value <span class="tag tag-purple">0</span> = this vertex is <strong>not involved</strong> in this edge</li>
+  </ul>
+
+  <div class="analogy">
+    <div class="analogy-title">📮 Real-Life Analogy</div>
+    <p>Imagine a spreadsheet of package deliveries. Rows are warehouses, columns are delivery routes. +1 means "this warehouse SENDS on this route", -1 means "this warehouse RECEIVES from this route".</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Incidence Matrix Visualizer</div>
+    <div class="viz-body">
+      <p style="color:var(--text3);font-size:13px;font-family:'JetBrains Mono',monospace;margin-bottom:12px;">Graph: A→B, A→C, B→D, C→D</p>
+      <div class="matrix-wrap">
+        <table class="matrix" id="incMatrix">
+          <tr><th>V\E</th><th>e₁(A→B)</th><th>e₂(A→C)</th><th>e₃(B→D)</th><th>e₄(C→D)</th></tr>
+          <tr><td><b style="color:#00d4aa">A</b></td><td class="one">+1</td><td class="one">+1</td><td>0</td><td>0</td></tr>
+          <tr><td><b style="color:#7c6af7">B</b></td><td class="neg">-1</td><td>0</td><td class="one">+1</td><td>0</td></tr>
+          <tr><td><b style="color:#7c6af7">C</b></td><td>0</td><td class="neg">-1</td><td>0</td><td class="one">+1</td></tr>
+          <tr><td><b style="color:#f0c040">D</b></td><td>0</td><td>0</td><td class="neg">-1</td><td class="neg">-1</td></tr>
+        </table>
+      </div>
+      <div class="info-box" style="margin-top:12px;">
+        <div class="label">Reading the Matrix</div>
+        <p>Row A, column e₁ = +1 → A is the SOURCE of edge e₁. Row B, column e₁ = -1 → B is the DESTINATION of edge e₁. So e₁ = A→B ✓</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — DAG Structure (Incidence Matrix)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="pp">#include &lt;stdio.h&gt;</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;string.h&gt;</span>
+
+<span class="pp">#define MAX_V 20</span>   <span class="cm">/* max vertices */</span>
+<span class="pp">#define MAX_E 50</span>   <span class="cm">/* max edges    */</span>
+
+<span class="cm">/* Directed Incidence Matrix: 
+   +1 = vertex is tail (source) of edge
+   -1 = vertex is head (destination) of edge
+    0 = not involved                        */</span>
+<span class="kw">typedef struct</span> {
+    <span class="kw">int</span>  matrix[MAX_V][MAX_E];  <span class="cm">/* incidence matrix */</span>
+    <span class="kw">int</span>  weight[MAX_E];         <span class="cm">/* edge weights     */</span>
+    <span class="kw">char</span> vname[MAX_V][20];      <span class="cm">/* vertex names     */</span>
+    <span class="kw">int</span>  vcount;               <span class="cm">/* number of vertices */</span>
+    <span class="kw">int</span>  ecount;               <span class="cm">/* number of edges    */</span>
+} DAG;
+
+<span class="cm">/* Initialize an empty DAG */</span>
+<span class="kw">void</span> <span class="fn">dag_init</span>(DAG *g) {
+    g-&gt;vcount = <span class="nm">0</span>;
+    g-&gt;ecount = <span class="nm">0</span>;
+    memset(g-&gt;matrix, <span class="nm">0</span>, <span class="kw">sizeof</span>(g-&gt;matrix));
+    memset(g-&gt;weight, <span class="nm">0</span>, <span class="kw">sizeof</span>(g-&gt;weight));
+}
+
+<span class="kw">int</span> <span class="fn">main</span>() {
+    DAG g;
+    <span class="fn">dag_init</span>(&amp;g);
+    <span class="fn">printf</span>(<span class="str">"DAG initialized! Vertices: %d, Edges: %d\n"</span>,
+           g.vcount, g.ecount);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+
+  <table class="complexity-table">
+    <tr><th>Property</th><th>Value</th><th>Why?</th></tr>
+    <tr><td>Space</td><td class="mono">O(V × E)</td><td>Matrix has V rows and E columns</td></tr>
+    <tr><td>Check if edge exists</td><td class="mono">O(V)</td><td>Scan column for +1 and -1</td></tr>
+    <tr><td>Find edges of vertex</td><td class="mono">O(E)</td><td>Scan row for non-zero entries</td></tr>
+  </table>
+</section>
+
+<!-- ─── SECTION 1: Insert Vertex ─── -->
+<section class="section" id="s1">
+  <div class="section-header">
+    <div class="section-num">02 — VERTEX OPERATIONS</div>
+    <h2>Insert Vertex</h2>
+  </div>
+  <p>Adding a new vertex means adding a new <strong>row</strong> to the incidence matrix. All entries in the new row start as <strong>0</strong> (the new vertex has no edges yet).</p>
+  <div class="analogy">
+    <div class="analogy-title">🏫 Real-Life Analogy</div>
+    <p>Adding a new city to a road network map. The city exists but has no roads yet — all cells are 0. Later, we can add roads (edges) connecting it.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Insert Vertex — Interactive Demo</div>
+    <div class="viz-body">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input id="vInsertName" type="text" placeholder="Vertex name (e.g. E)" maxlength="10"
+          style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;width:160px;outline:none;">
+        <button class="btn btn-primary" onclick="insertVertex()">Insert Vertex</button>
+        <button class="btn btn-secondary" onclick="resetVertexDemo()">Reset</button>
+      </div>
+      <div id="vInsertTable" style="margin-top:14px;"></div>
+      <div class="step-box" id="vInsertLog">Click "Insert Vertex" to add a vertex to the incidence matrix.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Insert Vertex</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Add a new vertex to the DAG.
+   Returns vertex index, or -1 if full. */</span>
+<span class="kw">int</span> <span class="fn">insert_vertex</span>(DAG *g, <span class="kw">const char</span> *name) {
+    <span class="kw">if</span> (g-&gt;vcount &gt;= MAX_V) {
+        <span class="fn">printf</span>(<span class="str">"Error: max vertices reached!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="cm">/* Copy the name */</span>
+    <span class="fn">strncpy</span>(g-&gt;vname[g-&gt;vcount], name, <span class="nm">19</span>);
+
+    <span class="cm">/* New row is all zeros — no edges yet */</span>
+    <span class="kw">int</span> e;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++)
+        g-&gt;matrix[g-&gt;vcount][e] = <span class="nm">0</span>;
+
+    g-&gt;vcount++;
+    <span class="fn">printf</span>(<span class="str">"Vertex '%s' inserted at index %d\n"</span>,
+           name, g-&gt;vcount - <span class="nm">1</span>);
+    <span class="kw">return</span> g-&gt;vcount - <span class="nm">1</span>;
+}</pre>
+  </div>
+  <table class="complexity-table">
+    <tr><th>Operation</th><th>Time</th><th>Space</th></tr>
+    <tr><td>Insert Vertex</td><td class="mono">O(E)</td><td class="mono">O(1) extra</td></tr>
+  </table>
+</section>
+
+<!-- ─── SECTION 2: Delete Vertex ─── -->
+<section class="section" id="s2">
+  <div class="section-header">
+    <h2>Delete Vertex</h2>
+  </div>
+  <p>Deleting a vertex requires: (1) removing all edges connected to it, (2) removing its row from the matrix, and (3) shifting all remaining rows up.</p>
+  <div class="analogy">
+    <div class="analogy-title">🗺️ Real-Life Analogy</div>
+    <p>Closing a city. You must first close all roads (edges) that connect to it, then remove it from the map. Other cities reconnect directly if needed.</p>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Delete Vertex</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Find vertex index by name */</span>
+<span class="kw">int</span> <span class="fn">find_vertex</span>(DAG *g, <span class="kw">const char</span> *name) {
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++)
+        <span class="kw">if</span> (<span class="fn">strcmp</span>(g-&gt;vname[i], name) == <span class="nm">0</span>)
+            <span class="kw">return</span> i;
+    <span class="kw">return</span> -<span class="nm">1</span>;  <span class="cm">/* not found */</span>
+}
+
+<span class="cm">/* Delete a vertex and all its edges */</span>
+<span class="kw">int</span> <span class="fn">delete_vertex</span>(DAG *g, <span class="kw">const char</span> *name) {
+    <span class="kw">int</span> vi = <span class="fn">find_vertex</span>(g, name);
+    <span class="kw">if</span> (vi == -<span class="nm">1</span>) { <span class="fn">printf</span>(<span class="str">"Vertex not found.\n"</span>); <span class="kw">return</span> -<span class="nm">1</span>; }
+
+    <span class="cm">/* Step 1: Remove edges connected to vi
+       Scan columns; delete cols where row vi != 0 */</span>
+    <span class="kw">int</span> e = <span class="nm">0</span>;
+    <span class="kw">while</span> (e &lt; g-&gt;ecount) {
+        <span class="kw">if</span> (g-&gt;matrix[vi][e] != <span class="nm">0</span>) {
+            <span class="cm">/* Shift all columns left by 1 */</span>
+            <span class="kw">int</span> i, j;
+            <span class="kw">for</span> (j = e; j &lt; g-&gt;ecount - <span class="nm">1</span>; j++) {
+                <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++)
+                    g-&gt;matrix[i][j] = g-&gt;matrix[i][j+<span class="nm">1</span>];
+                g-&gt;weight[j] = g-&gt;weight[j+<span class="nm">1</span>];
+            }
+            g-&gt;ecount--;
+        } <span class="kw">else</span> e++;
+    }
+
+    <span class="cm">/* Step 2: Shift rows up (remove vertex row) */</span>
+    <span class="kw">int</span> i, j;
+    <span class="kw">for</span> (i = vi; i &lt; g-&gt;vcount - <span class="nm">1</span>; i++) {
+        <span class="kw">for</span> (j = <span class="nm">0</span>; j &lt; g-&gt;ecount; j++)
+            g-&gt;matrix[i][j] = g-&gt;matrix[i+<span class="nm">1</span>][j];
+        <span class="fn">strcpy</span>(g-&gt;vname[i], g-&gt;vname[i+<span class="nm">1</span>]);
+    }
+    g-&gt;vcount--;
+    <span class="fn">printf</span>(<span class="str">"Vertex '%s' deleted.\n"</span>, name);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+  <table class="complexity-table">
+    <tr><th>Operation</th><th>Time</th></tr>
+    <tr><td>Delete Vertex</td><td class="mono">O(V × E)</td></tr>
+  </table>
+</section>
+
+<!-- ─── SECTION 3: Search Vertex ─── -->
+<section class="section" id="s3">
+  <div class="section-header"><h2>Search Vertex</h2></div>
+  <p>Search scans the vertex name array linearly. Returns the index if found, -1 otherwise.</p>
+  <div class="analogy">
+    <div class="analogy-title">📖 Real-Life Analogy</div>
+    <p>Looking for a contact in your phone — you scroll through the list until you find the name.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Search Vertex</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Search for vertex by name. Returns index or -1 */</span>
+<span class="kw">int</span> <span class="fn">search_vertex</span>(DAG *g, <span class="kw">const char</span> *name) {
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++) {
+        <span class="kw">if</span> (<span class="fn">strcmp</span>(g-&gt;vname[i], name) == <span class="nm">0</span>) {
+            <span class="fn">printf</span>(<span class="str">"Found '%s' at index %d\n"</span>, name, i);
+            <span class="kw">return</span> i;
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Vertex '%s' not found.\n"</span>, name);
+    <span class="kw">return</span> -<span class="nm">1</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 4: Update Vertex ─── -->
+<section class="section" id="s4">
+  <div class="section-header"><h2>Update Vertex</h2></div>
+  <p>Updating a vertex means renaming it — only the name array changes, the matrix stays the same.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Update Vertex Name</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Rename a vertex */</span>
+<span class="kw">int</span> <span class="fn">update_vertex</span>(DAG *g, <span class="kw">const char</span> *old_name,
+                             <span class="kw">const char</span> *new_name) {
+    <span class="kw">int</span> i = <span class="fn">find_vertex</span>(g, old_name);
+    <span class="kw">if</span> (i == -<span class="nm">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Vertex '%s' not found.\n"</span>, old_name);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="fn">strncpy</span>(g-&gt;vname[i], new_name, <span class="nm">19</span>);
+    <span class="fn">printf</span>(<span class="str">"Renamed '%s' → '%s'\n"</span>, old_name, new_name);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 5: Insert Directed Edge ─── -->
+<section class="section" id="s5">
+  <div class="section-header">
+    <div class="section-num">03 — EDGE OPERATIONS</div>
+    <h2>Insert Directed Edge</h2>
+  </div>
+  <p>Adding edge u→v means adding a new <strong>column</strong> to the matrix, setting +1 in row u and -1 in row v. Before inserting, we must validate that no cycle is created.</p>
+  <div class="analogy">
+    <div class="analogy-title">🛣️ Real-Life Analogy</div>
+    <p>Adding a one-way street from city A to city B. The "road ledger" gets a new column: city A is marked as the departure (+1), city B as the arrival (-1).</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Edge Insertion — Live Demo</div>
+    <div class="viz-body">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input id="eFrom" type="text" placeholder="From (0-3)" maxlength="2"
+          style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;width:100px;outline:none;">
+        <span style="color:var(--accent);font-family:'JetBrains Mono',monospace;">→</span>
+        <input id="eTo" type="text" placeholder="To (0-3)" maxlength="2"
+          style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;width:100px;outline:none;">
+        <input id="eWeight" type="number" placeholder="Weight" value="1"
+          style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;width:100px;outline:none;">
+        <button class="btn btn-primary" onclick="insertEdge()">Insert Edge</button>
+        <button class="btn btn-secondary" onclick="resetEdgeDemo()">Reset</button>
+      </div>
+      <p style="color:var(--text3);font-size:12px;font-family:'JetBrains Mono',monospace;margin-top:8px;">Vertices: 0=A, 1=B, 2=C, 3=D</p>
+      <div id="eInsertTable" style="margin-top:12px;"></div>
+      <div class="step-box" id="eInsertLog">Enter from/to vertex indices and click Insert Edge.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Insert Directed Edge</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Forward declaration */</span>
+<span class="kw">int</span> <span class="fn">has_cycle</span>(DAG *g);
+
+<span class="cm">/* Insert directed edge from 'from' to 'to' with weight w.
+   Returns edge index or -1 on failure/cycle detected. */</span>
+<span class="kw">int</span> <span class="fn">insert_edge</span>(DAG *g, <span class="kw">int</span> from, <span class="kw">int</span> to, <span class="kw">int</span> w) {
+    <span class="kw">if</span> (g-&gt;ecount &gt;= MAX_E) {
+        <span class="fn">printf</span>(<span class="str">"Error: max edges reached!\n"</span>); <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="kw">if</span> (from &lt; <span class="nm">0</span> || from &gt;= g-&gt;vcount ||
+        to   &lt; <span class="nm">0</span> || to   &gt;= g-&gt;vcount) {
+        <span class="fn">printf</span>(<span class="str">"Error: invalid vertex index.\n"</span>); <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+
+    <span class="cm">/* Add column tentatively */</span>
+    <span class="kw">int</span> e = g-&gt;ecount;
+    g-&gt;matrix[from][e] = +<span class="nm">1</span>;  <span class="cm">/* source of edge */</span>
+    g-&gt;matrix[to  ][e] = -<span class="nm">1</span>;  <span class="cm">/* dest of edge   */</span>
+    g-&gt;weight[e] = w;
+    g-&gt;ecount++;
+
+    <span class="cm">/* Check acyclic property */</span>
+    <span class="kw">if</span> (<span class="fn">has_cycle</span>(g)) {
+        <span class="cm">/* Roll back */</span>
+        g-&gt;matrix[from][e] = <span class="nm">0</span>;
+        g-&gt;matrix[to  ][e] = <span class="nm">0</span>;
+        g-&gt;ecount--;
+        <span class="fn">printf</span>(<span class="str">"Cycle detected! Edge rejected.\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Edge %s→%s (w=%d) inserted at col %d\n"</span>,
+           g-&gt;vname[from], g-&gt;vname[to], w, e);
+    <span class="kw">return</span> e;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 6: Delete Edge ─── -->
+<section class="section" id="s6">
+  <div class="section-header"><h2>Delete Edge</h2></div>
+  <p>Deleting an edge removes its column from the matrix and shifts remaining columns left.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Delete Edge</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Find edge from 'from' to 'to'. Returns column index or -1 */</span>
+<span class="kw">int</span> <span class="fn">find_edge</span>(DAG *g, <span class="kw">int</span> from, <span class="kw">int</span> to) {
+    <span class="kw">int</span> e;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++)
+        <span class="kw">if</span> (g-&gt;matrix[from][e] == +<span class="nm">1</span> &amp;&amp;
+            g-&gt;matrix[to  ][e] == -<span class="nm">1</span>)
+            <span class="kw">return</span> e;
+    <span class="kw">return</span> -<span class="nm">1</span>;
+}
+
+<span class="cm">/* Delete edge by shifting columns left */</span>
+<span class="kw">int</span> <span class="fn">delete_edge</span>(DAG *g, <span class="kw">int</span> from, <span class="kw">int</span> to) {
+    <span class="kw">int</span> e = <span class="fn">find_edge</span>(g, from, to);
+    <span class="kw">if</span> (e == -<span class="nm">1</span>) { <span class="fn">printf</span>(<span class="str">"Edge not found.\n"</span>); <span class="kw">return</span> -<span class="nm">1</span>; }
+
+    <span class="cm">/* Shift columns left from position e */</span>
+    <span class="kw">int</span> i, j;
+    <span class="kw">for</span> (j = e; j &lt; g-&gt;ecount - <span class="nm">1</span>; j++) {
+        <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++)
+            g-&gt;matrix[i][j] = g-&gt;matrix[i][j+<span class="nm">1</span>];
+        g-&gt;weight[j] = g-&gt;weight[j+<span class="nm">1</span>];
+    }
+    g-&gt;ecount--;
+    <span class="fn">printf</span>(<span class="str">"Edge %s→%s deleted.\n"</span>,
+           g-&gt;vname[from], g-&gt;vname[to]);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 7: Search Edge ─── -->
+<section class="section" id="s7">
+  <div class="section-header"><h2>Search Edge</h2></div>
+  <p>Scan columns: an edge u→v exists when column e has matrix[u][e]==+1 AND matrix[v][e]==-1.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Search Edge</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Check if edge from→to exists. Returns 1=yes, 0=no */</span>
+<span class="kw">int</span> <span class="fn">search_edge</span>(DAG *g, <span class="kw">int</span> from, <span class="kw">int</span> to) {
+    <span class="kw">int</span> e = <span class="fn">find_edge</span>(g, from, to);
+    <span class="kw">if</span> (e != -<span class="nm">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Edge %s→%s EXISTS at col %d, weight=%d\n"</span>,
+               g-&gt;vname[from], g-&gt;vname[to],
+               e, g-&gt;weight[e]);
+        <span class="kw">return</span> <span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Edge %s→%s does NOT exist.\n"</span>,
+           g-&gt;vname[from], g-&gt;vname[to]);
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 8: Update Edge Weight ─── -->
+<section class="section" id="s8">
+  <div class="section-header"><h2>Update Edge Weight</h2></div>
+  <p>In a weighted DAG, update the weight array at the edge's column index.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Update Edge Weight</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Update weight of edge from→to */</span>
+<span class="kw">int</span> <span class="fn">update_edge_weight</span>(DAG *g, <span class="kw">int</span> from, <span class="kw">int</span> to,
+                                <span class="kw">int</span> new_w) {
+    <span class="kw">int</span> e = <span class="fn">find_edge</span>(g, from, to);
+    <span class="kw">if</span> (e == -<span class="nm">1</span>) {
+        <span class="fn">printf</span>(<span class="str">"Edge not found.\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="fn">printf</span>(<span class="str">"Weight %s→%s: %d → %d\n"</span>,
+           g-&gt;vname[from], g-&gt;vname[to],
+           g-&gt;weight[e], new_w);
+    g-&gt;weight[e] = new_w;
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 9: Validate Acyclic ─── -->
+<section class="section" id="s9">
+  <div class="section-header"><h2>Validate Acyclic Condition</h2></div>
+  <p>A graph is a valid DAG only if it has no cycles. We validate using DFS — if we encounter a vertex that is already in the current DFS path (gray/visiting state), a cycle exists.</p>
+  <div class="analogy">
+    <div class="analogy-title">🔍 Real-Life Analogy</div>
+    <p>Checking if a company's task list has circular dependencies — e.g., "Task A requires Task B, B requires C, C requires A" — which would be impossible to complete!</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Cycle Detection / Acyclic Validation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Build adjacency list from incidence matrix for DFS */</span>
+<span class="kw">static int</span> visited[MAX_V], in_stack[MAX_V];
+
+<span class="cm">/* DFS helper: returns 1 if cycle found */</span>
+<span class="kw">static int</span> <span class="fn">dfs_cycle</span>(DAG *g, <span class="kw">int</span> v) {
+    visited[v] = <span class="nm">1</span>;
+    in_stack[v] = <span class="nm">1</span>;  <span class="cm">/* mark as "in current path" */</span>
+
+    <span class="kw">int</span> e, u;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {  <span class="cm">/* v is source */</span>
+            <span class="cm">/* Find destination of this edge */</span>
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                    <span class="kw">if</span> (!visited[u] &amp;&amp; <span class="fn">dfs_cycle</span>(g, u))
+                        <span class="kw">return</span> <span class="nm">1</span>;
+                    <span class="kw">if</span> (in_stack[u])
+                        <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* Back edge = cycle! */</span>
+                }
+            }
+        }
+    }
+    in_stack[v] = <span class="nm">0</span>;  <span class="cm">/* remove from current path */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="cm">/* Returns 1 if graph has a cycle, 0 if it's a DAG */</span>
+<span class="kw">int</span> <span class="fn">has_cycle</span>(DAG *g) {
+    <span class="kw">int</span> i;
+    <span class="fn">memset</span>(visited,  <span class="nm">0</span>, <span class="kw">sizeof</span>(visited));
+    <span class="fn">memset</span>(in_stack, <span class="nm">0</span>, <span class="kw">sizeof</span>(in_stack));
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++)
+        <span class="kw">if</span> (!visited[i] &amp;&amp; <span class="fn">dfs_cycle</span>(g, i))
+            <span class="kw">return</span> <span class="nm">1</span>;
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="kw">void</span> <span class="fn">validate_dag</span>(DAG *g) {
+    <span class="kw">if</span> (<span class="fn">has_cycle</span>(g))
+        <span class="fn">printf</span>(<span class="str">"INVALID: Graph has a cycle!\n"</span>);
+    <span class="kw">else</span>
+        <span class="fn">printf</span>(<span class="str">"VALID DAG: No cycles detected.\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 10: BFS ─── -->
+<section class="section" id="s10">
+  <div class="section-header">
+    <div class="section-num">04 — TRAVERSAL OPERATIONS</div>
+    <h2>Breadth-First Search (BFS)</h2>
+  </div>
+  <p>BFS explores the graph level by level. Starting from a source vertex, it visits all immediate neighbors first, then their neighbors, using a queue.</p>
+  <div class="analogy">
+    <div class="analogy-title">💧 Real-Life Analogy</div>
+    <p>Think of dropping a stone in a pond — ripples spread outward in rings. BFS explores "rings" of neighbors one level at a time.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>BFS Traversal — Step by Step Animation</div>
+    <div class="viz-body">
+      <div class="controls">
+        <button class="btn btn-primary" onclick="startBFS()">▶ Run BFS from A</button>
+        <button class="btn btn-secondary" onclick="resetTraversal()">Reset</button>
+      </div>
+      <svg id="bfsSvg" class="dag-svg" viewBox="0 0 560 200" height="200">
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3a4a6a"/></marker>
+          <marker id="arr2a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#00d4aa"/></marker>
+        </defs>
+      </svg>
+      <div class="step-box" id="bfsLog">Click "Run BFS" to start traversal animation.</div>
+      <div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3);">Queue: <span id="bfsQueue" style="color:var(--accent);">[ ]</span></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3);">Visited: <span id="bfsVisited" style="color:var(--accent4);">[ ]</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — BFS on DAG (Incidence Matrix)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* BFS from start vertex. Prints visit order. */</span>
+<span class="kw">void</span> <span class="fn">bfs</span>(DAG *g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> queue[MAX_V];   <span class="cm">/* simple array as queue */</span>
+    <span class="kw">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+    <span class="kw">int</span> visited[MAX_V];
+    <span class="fn">memset</span>(visited, <span class="nm">0</span>, <span class="kw">sizeof</span>(visited));
+
+    queue[rear++] = start;
+    visited[start] = <span class="nm">1</span>;
+
+    <span class="kw">while</span> (front &lt; rear) {
+        <span class="kw">int</span> v = queue[front++];
+        <span class="fn">printf</span>(<span class="str">"Visit: %s\n"</span>, g-&gt;vname[v]);
+
+        <span class="cm">/* Find all neighbors of v via incidence matrix */</span>
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {  <span class="cm">/* v is source */</span>
+                <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>
+                        &amp;&amp; !visited[u]) {
+                        visited[u] = <span class="nm">1</span>;
+                        queue[rear++] = u;
+                    }
+                }
+            }
+        }
+    }
+}</pre>
+  </div>
+  <table class="complexity-table">
+    <tr><th>Time</th><th>Space</th></tr>
+    <tr><td class="mono">O(V × E)</td><td class="mono">O(V)</td></tr>
+  </table>
+</section>
+
+<!-- ─── SECTION 11: DFS ─── -->
+<section class="section" id="s11">
+  <div class="section-header"><h2>Depth-First Search (DFS)</h2></div>
+  <p>DFS dives as deep as possible along each branch before backtracking. Uses a recursive call stack (or explicit stack).</p>
+  <div class="analogy">
+    <div class="analogy-title">🗺️ Real-Life Analogy</div>
+    <p>Exploring a maze by always turning left: you go as deep as you can, then backtrack when stuck, trying the next path.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>DFS Traversal — Animation</div>
+    <div class="viz-body">
+      <div class="controls">
+        <button class="btn btn-primary" onclick="startDFS()">▶ Run DFS from A</button>
+        <button class="btn btn-secondary" onclick="resetDFSViz()">Reset</button>
+      </div>
+      <svg id="dfsSvg" class="dag-svg" viewBox="0 0 560 200" height="200"></svg>
+      <div class="step-box" id="dfsLog">Click "Run DFS" to start traversal.</div>
+      <div style="margin-top:10px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3);">Stack: <span id="dfsStack" style="color:var(--accent);">[ ]</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — DFS on DAG</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* DFS recursive helper */</span>
+<span class="kw">void</span> <span class="fn">dfs_helper</span>(DAG *g, <span class="kw">int</span> v, <span class="kw">int</span> vis[]) {
+    vis[v] = <span class="nm">1</span>;
+    <span class="fn">printf</span>(<span class="str">"Visit: %s\n"</span>, g-&gt;vname[v]);
+
+    <span class="kw">int</span> e, u;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>
+                    &amp;&amp; !vis[u]) {
+                    <span class="fn">dfs_helper</span>(g, u, vis);
+                }
+            }
+        }
+    }
+}
+
+<span class="cm">/* DFS from start vertex */</span>
+<span class="kw">void</span> <span class="fn">dfs</span>(DAG *g, <span class="kw">int</span> start) {
+    <span class="kw">int</span> vis[MAX_V];
+    <span class="fn">memset</span>(vis, <span class="nm">0</span>, <span class="kw">sizeof</span>(vis));
+    <span class="fn">dfs_helper</span>(g, start, vis);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 12: Topological Traversal ─── -->
+<section class="section" id="s12">
+  <div class="section-header"><h2>Topological Traversal</h2></div>
+  <p>Visits vertices in topological order — each vertex is visited only after all its predecessors. This is the foundation for scheduling algorithms.</p>
+  <div class="analogy">
+    <div class="analogy-title">👔 Real-Life Analogy</div>
+    <p>Getting dressed in the morning: socks before shoes, underwear before pants. There's a valid order that respects all dependencies.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Topological Traversal</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Compute in-degree of each vertex using incidence matrix */</span>
+<span class="kw">void</span> <span class="fn">compute_indegree</span>(DAG *g, <span class="kw">int</span> indeg[]) {
+    <span class="kw">int</span> v, e;
+    <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++) indeg[v] = <span class="nm">0</span>;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++)
+        <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++)
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == -<span class="nm">1</span>) indeg[v]++;
+}
+
+<span class="cm">/* Topological traversal using Kahn's idea */</span>
+<span class="kw">void</span> <span class="fn">topo_traversal</span>(DAG *g) {
+    <span class="kw">int</span> indeg[MAX_V], queue[MAX_V];
+    <span class="fn">compute_indegree</span>(g, indeg);
+    <span class="kw">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>;
+    <span class="kw">int</span> v;
+    <span class="cm">/* Enqueue vertices with in-degree 0 */</span>
+    <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++)
+        <span class="kw">if</span> (indeg[v] == <span class="nm">0</span>) queue[rear++] = v;
+
+    <span class="fn">printf</span>(<span class="str">"Topological order: "</span>);
+    <span class="kw">while</span> (front &lt; rear) {
+        v = queue[front++];
+        <span class="fn">printf</span>(<span class="str">"%s "</span>, g-&gt;vname[v]);
+        <span class="cm">/* Reduce in-degree of successors */</span>
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                        indeg[u]--;
+                        <span class="kw">if</span> (indeg[u] == <span class="nm">0</span>)
+                            queue[rear++] = u;
+                    }
+                }
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 13: Dependency Traversal ─── -->
+<section class="section" id="s13">
+  <div class="section-header"><h2>Dependency Traversal</h2></div>
+  <p>Given a target vertex, find all vertices it depends on (ancestors) by traversing edges in reverse direction.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Dependency Traversal (Reverse DFS)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Find all dependencies (ancestors) of vertex v */</span>
+<span class="kw">void</span> <span class="fn">dep_traversal</span>(DAG *g, <span class="kw">int</span> v, <span class="kw">int</span> vis[]) {
+    vis[v] = <span class="nm">1</span>;
+    <span class="kw">int</span> e, u;
+    <span class="cm">/* Find edges where v is DESTINATION (-1) */</span>
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == -<span class="nm">1</span>) {  <span class="cm">/* v is dest */</span>
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == +<span class="nm">1</span>
+                    &amp;&amp; !vis[u]) {
+                    <span class="fn">printf</span>(<span class="str">"%s depends on %s\n"</span>,
+                           g-&gt;vname[v], g-&gt;vname[u]);
+                    <span class="fn">dep_traversal</span>(g, u, vis);
+                }
+            }
+        }
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 14: Find Path ─── -->
+<section class="section" id="s14">
+  <div class="section-header">
+    <div class="section-num">05 — PATH OPERATIONS</div>
+    <h2>Find Path</h2>
+  </div>
+  <p>Determine if a path exists between source s and destination t using DFS.</p>
+  <div class="analogy">
+    <div class="analogy-title">🧭 Real-Life Analogy</div>
+    <p>Can you drive from city A to city Z following only one-way roads? That's a path-finding problem in a directed graph.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Path Finder — Interactive</div>
+    <div class="viz-body">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <select id="pfFrom" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;">
+          <option value="0">A (0)</option><option value="1">B (1)</option>
+          <option value="2">C (2)</option><option value="3">D (3)</option>
+          <option value="4">E (4)</option>
+        </select>
+        <span style="color:var(--accent);font-size:20px;">→</span>
+        <select id="pfTo" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:13px;">
+          <option value="0">A (0)</option><option value="1">B (1)</option>
+          <option value="2">C (2)</option><option value="3">D (3)</option>
+          <option value="4" selected>E (4)</option>
+        </select>
+        <button class="btn btn-primary" onclick="findPath()">Find Path</button>
+      </div>
+      <p style="font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:8px;">Graph: A→B, A→C, B→D, C→D, D→E</p>
+      <div class="step-box" id="pfResult">Select vertices and click Find Path.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Find Path (DFS)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Returns 1 if path exists from s to t */</span>
+<span class="kw">int</span> <span class="fn">find_path</span>(DAG *g, <span class="kw">int</span> s, <span class="kw">int</span> t,
+              <span class="kw">int</span> path[], <span class="kw">int</span> *plen,
+              <span class="kw">int</span> vis[]) {
+    vis[s] = <span class="nm">1</span>;
+    path[(*plen)++] = s;
+    <span class="kw">if</span> (s == t) <span class="kw">return</span> <span class="nm">1</span>;
+
+    <span class="kw">int</span> e, u;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[s][e] == +<span class="nm">1</span>) {
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>
+                    &amp;&amp; !vis[u]) {
+                    <span class="kw">if</span> (<span class="fn">find_path</span>(g, u, t, path,
+                                  plen, vis))
+                        <span class="kw">return</span> <span class="nm">1</span>;
+                }
+            }
+        }
+    }
+    (*plen)--;  <span class="cm">/* backtrack */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 15: Shortest Path ─── -->
+<section class="section" id="s15">
+  <div class="section-header"><h2>Shortest Path in DAG</h2></div>
+  <p>In a weighted DAG, find the shortest path using <strong>topological sort + relaxation</strong>. This is faster than Dijkstra's for DAGs — O(V+E) vs O((V+E)logV).</p>
+  <div class="analogy">
+    <div class="analogy-title">🚗 Real-Life Analogy</div>
+    <p>Finding the cheapest route from headquarters to a delivery location, where each road has a toll. Process intersections in topological order, always keeping the cheapest cumulative cost.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Shortest Path — Weighted DAG Visualization</div>
+    <div class="viz-body">
+      <svg class="dag-svg" viewBox="0 0 560 180" height="180">
+        <defs><marker id="arrW" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7c6af7"/></marker></defs>
+        <!-- Edges with weights -->
+        <line x1="60" y1="90" x2="178" y2="50" stroke="#7c6af7" stroke-width="2" marker-end="url(#arrW)" opacity="0.8"/>
+        <text x="108" y="58" fill="#f0c040" font-family="JetBrains Mono" font-size="12" font-weight="700">w=4</text>
+        <line x1="60" y1="90" x2="178" y2="130" stroke="#7c6af7" stroke-width="2" marker-end="url(#arrW)" opacity="0.8"/>
+        <text x="100" y="124" fill="#f0c040" font-family="JetBrains Mono" font-size="12" font-weight="700">w=2</text>
+        <line x1="230" y1="50" x2="348" y2="90" stroke="#7c6af7" stroke-width="2" marker-end="url(#arrW)" opacity="0.8"/>
+        <text x="274" y="58" fill="#f0c040" font-family="JetBrains Mono" font-size="12" font-weight="700">w=3</text>
+        <line x1="230" y1="130" x2="348" y2="90" stroke="#7c6af7" stroke-width="2" marker-end="url(#arrW)" opacity="0.8"/>
+        <text x="268" y="130" fill="#f0c040" font-family="JetBrains Mono" font-size="12" font-weight="700">w=5</text>
+        <line x1="400" y1="90" x2="498" y2="90" stroke="#7c6af7" stroke-width="2" marker-end="url(#arrW)" opacity="0.8"/>
+        <text x="430" y="82" fill="#f0c040" font-family="JetBrains Mono" font-size="12" font-weight="700">w=1</text>
+        <!-- Nodes -->
+        <circle cx="40" cy="90" r="26" fill="#1a2035" stroke="#00d4aa" stroke-width="2.5"/>
+        <text x="40" y="95" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="14" font-weight="700">A</text>
+        <text x="40" y="155" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="10">dist=0</text>
+        <circle cx="210" cy="50" r="26" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="210" y="55" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="14" font-weight="700">B</text>
+        <text x="210" y="20" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="10">dist=4</text>
+        <circle cx="210" cy="130" r="26" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="210" y="135" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="14" font-weight="700">C</text>
+        <text x="210" y="170" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="10">dist=2</text>
+        <circle cx="380" cy="90" r="26" fill="#1a2035" stroke="#f0c040" stroke-width="2"/>
+        <text x="380" y="95" text-anchor="middle" fill="#f0c040" font-family="JetBrains Mono" font-size="14" font-weight="700">D</text>
+        <text x="380" y="155" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="10">dist=7</text>
+        <circle cx="520" cy="90" r="26" fill="#1a2035" stroke="#ff6b35" stroke-width="2"/>
+        <text x="520" y="95" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="14" font-weight="700">E</text>
+        <text x="520" y="155" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="10">dist=8</text>
+        <!-- Best path highlight -->
+        <text x="280" y="175" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="11">Shortest A→E: A→C→D→E = 2+5+1 = 8</text>
+      </svg>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Shortest Path in DAG (Topo + Relaxation)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="pp">#define INF 99999</span>
+
+<span class="cm">/* Shortest path from src to all vertices */</span>
+<span class="kw">void</span> <span class="fn">shortest_path_dag</span>(DAG *g, <span class="kw">int</span> src) {
+    <span class="kw">int</span> dist[MAX_V], topo[MAX_V], tlen = <span class="nm">0</span>;
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++) dist[i] = INF;
+    dist[src] = <span class="nm">0</span>;
+
+    <span class="cm">/* Get topological order */</span>
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen); <span class="cm">/* see topo sort section */</span>
+
+    <span class="cm">/* Process vertices in topological order */</span>
+    <span class="kw">int</span> ti;
+    <span class="kw">for</span> (ti = <span class="nm">0</span>; ti &lt; tlen; ti++) {
+        <span class="kw">int</span> v = topo[ti];
+        <span class="kw">if</span> (dist[v] == INF) <span class="kw">continue</span>;
+        <span class="cm">/* Relax all outgoing edges of v */</span>
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                        <span class="kw">int</span> nd = dist[v] + g-&gt;weight[e];
+                        <span class="kw">if</span> (nd &lt; dist[u]) dist[u] = nd;
+                    }
+                }
+            }
+        }
+    }
+
+    <span class="cm">/* Print results */</span>
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++)
+        <span class="fn">printf</span>(<span class="str">"%s→%s = %d\n"</span>, g-&gt;vname[src],
+               g-&gt;vname[i],
+               dist[i] == INF ? -<span class="nm">1</span> : dist[i]);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 16: Longest Path ─── -->
+<section class="section" id="s16">
+  <div class="section-header"><h2>Longest Path in DAG</h2></div>
+  <p>The longest path is critical for project scheduling — it gives the minimum time to complete all tasks. Also uses topological sort + relaxation, but maximizes instead of minimizes.</p>
+  <div class="analogy">
+    <div class="analogy-title">🏗️ Real-Life Analogy</div>
+    <p>Building a house: the longest sequence of dependent tasks (foundation → walls → roof) determines the minimum project completion time, even if shorter tasks run in parallel.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Longest Path in DAG</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Longest path from src — same idea as shortest,
+   but initialize to -INF and maximize */</span>
+<span class="kw">void</span> <span class="fn">longest_path_dag</span>(DAG *g, <span class="kw">int</span> src) {
+    <span class="kw">int</span> dist[MAX_V], topo[MAX_V], tlen = <span class="nm">0</span>;
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++) dist[i] = -INF;
+    dist[src] = <span class="nm">0</span>;
+
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="kw">int</span> ti;
+    <span class="kw">for</span> (ti = <span class="nm">0</span>; ti &lt; tlen; ti++) {
+        <span class="kw">int</span> v = topo[ti];
+        <span class="kw">if</span> (dist[v] == -INF) <span class="kw">continue</span>;
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                        <span class="kw">int</span> nd = dist[v] + g-&gt;weight[e];
+                        <span class="kw">if</span> (nd &gt; dist[u])  <span class="cm">/* MAX, not min */</span>
+                            dist[u] = nd;
+                    }
+                }
+            }
+        }
+    }
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; g-&gt;vcount; i++)
+        <span class="fn">printf</span>(<span class="str">"Longest %s→%s = %d\n"</span>,
+               g-&gt;vname[src], g-&gt;vname[i], dist[i]);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 17: All Paths ─── -->
+<section class="section" id="s17">
+  <div class="section-header"><h2>All Paths</h2></div>
+  <p>Enumerate all paths from source s to destination t using backtracking DFS.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Find All Paths</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Print all paths from s to t */</span>
+<span class="kw">void</span> <span class="fn">all_paths</span>(DAG *g, <span class="kw">int</span> s, <span class="kw">int</span> t,
+               <span class="kw">int</span> path[], <span class="kw">int</span> plen,
+               <span class="kw">int</span> vis[]) {
+    vis[s] = <span class="nm">1</span>;
+    path[plen++] = s;
+
+    <span class="kw">if</span> (s == t) {
+        <span class="cm">/* Print current path */</span>
+        <span class="kw">int</span> i;
+        <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; plen; i++) {
+            <span class="fn">printf</span>(<span class="str">"%s"</span>, g-&gt;vname[path[i]]);
+            <span class="kw">if</span> (i &lt; plen-<span class="nm">1</span>) <span class="fn">printf</span>(<span class="str">"→"</span>);
+        }
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    } <span class="kw">else</span> {
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[s][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>
+                        &amp;&amp; !vis[u]) {
+                        <span class="fn">all_paths</span>(g, u, t, path,
+                                  plen, vis);
+                    }
+                }
+            }
+        }
+    }
+    <span class="cm">/* Backtrack */</span>
+    vis[s] = <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 18: Dependency Chain ─── -->
+<section class="section" id="s18">
+  <div class="section-header"><h2>Dependency Chain Analysis</h2></div>
+  <p>Find the complete chain of dependencies for a given vertex — all ancestors that must complete first.</p>
+  <div class="analogy">
+    <div class="analogy-title">📦 Real-Life Analogy</div>
+    <p>To install software package X, you need libraries A, B, C. But A also needs D and E. Dependency chain analysis reveals the full list of things to install first.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Dependency Chain Analysis</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Print all ancestors of vertex v (things v depends on) */</span>
+<span class="kw">void</span> <span class="fn">dep_chain</span>(DAG *g, <span class="kw">int</span> v,
+               <span class="kw">int</span> vis[], <span class="kw">int</span> depth) {
+    <span class="kw">int</span> e, u;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == -<span class="nm">1</span>) { <span class="cm">/* v is dest */</span>
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == +<span class="nm">1</span>
+                    &amp;&amp; !vis[u]) {
+                    vis[u] = <span class="nm">1</span>;
+                    <span class="cm">/* indent to show depth */</span>
+                    <span class="kw">int</span> d;
+                    <span class="kw">for</span> (d=<span class="nm">0</span>; d&lt;depth; d++) <span class="fn">printf</span>(<span class="str">"  "</span>);
+                    <span class="fn">printf</span>(<span class="str">"↳ %s\n"</span>, g-&gt;vname[u]);
+                    <span class="fn">dep_chain</span>(g, u, vis, depth+<span class="nm">1</span>);
+                }
+            }
+        }
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 19: Topo Sort DFS ─── -->
+<section class="section" id="s19">
+  <div class="section-header">
+    <div class="section-num">06 — ORDERING OPERATIONS</div>
+    <h2>Topological Sort (DFS-Based)</h2>
+  </div>
+  <p>DFS-based topological sort: run DFS, pushing each vertex to a stack after all its descendants are processed. Pop the stack for the final order.</p>
+  <div class="analogy">
+    <div class="analogy-title">📚 Real-Life Analogy</div>
+    <p>Organizing a study plan: you can't study Chapter 5 before Chapter 2. DFS-based topological sort automatically figures out the correct reading order for any textbook.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Topological Sort — DFS Animation</div>
+    <div class="viz-body">
+      <div class="controls">
+        <button class="btn btn-primary" onclick="startTopoSort()">▶ Run Topo Sort</button>
+        <button class="btn btn-secondary" onclick="resetTopoSort()">Reset</button>
+      </div>
+      <svg id="topoSvg" class="dag-svg" viewBox="0 0 560 180" height="180"></svg>
+      <div class="step-box" id="topoLog">Click "Run Topo Sort" to see DFS-based topological sort.</div>
+      <div style="margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3);">
+        Result: <span id="topoResult" style="color:var(--accent);">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Topological Sort (DFS)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="kw">static int</span> stk[MAX_V], stop = <span class="nm">0</span>;
+
+<span class="kw">void</span> <span class="fn">topo_dfs_helper</span>(DAG *g, <span class="kw">int</span> v, <span class="kw">int</span> vis[]) {
+    vis[v] = <span class="nm">1</span>;
+    <span class="kw">int</span> e, u;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>
+                    &amp;&amp; !vis[u]) {
+                    <span class="fn">topo_dfs_helper</span>(g, u, vis);
+                }
+            }
+        }
+    }
+    stk[stop++] = v;  <span class="cm">/* push AFTER all descendants */</span>
+}
+
+<span class="cm">/* Main topological sort — result in topo[] */</span>
+<span class="kw">void</span> <span class="fn">topo_sort_dfs</span>(DAG *g, <span class="kw">int</span> topo[], <span class="kw">int</span> *tlen) {
+    <span class="kw">int</span> vis[MAX_V];
+    <span class="fn">memset</span>(vis, <span class="nm">0</span>, <span class="kw">sizeof</span>(vis));
+    stop = <span class="nm">0</span>;
+    <span class="kw">int</span> v;
+    <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++)
+        <span class="kw">if</span> (!vis[v]) <span class="fn">topo_dfs_helper</span>(g, v, vis);
+
+    <span class="cm">/* Stack is in reverse order */</span>
+    *tlen = stop;
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; stop; i++)
+        topo[i] = stk[stop - <span class="nm">1</span> - i];
+}</pre>
+  </div>
+  <table class="complexity-table">
+    <tr><th>Time</th><th>Space</th></tr>
+    <tr><td class="mono">O(V × E)</td><td class="mono">O(V)</td></tr>
+  </table>
+</section>
+
+<!-- ─── SECTION 20: Kahn's Algorithm ─── -->
+<section class="section" id="s20">
+  <div class="section-header"><h2>Topological Sort — Kahn's Algorithm</h2></div>
+  <p>Kahn's algorithm uses in-degree counts. Repeatedly pick a vertex with in-degree 0, output it, and reduce in-degrees of its successors. Also detects cycles!</p>
+  <div class="analogy">
+    <div class="analogy-title">🏭 Real-Life Analogy</div>
+    <p>An assembly line: always pick the task that has no pending prerequisites (in-degree 0). Complete it, cross it off all checklists, then see which new tasks became available.</p>
+  </div>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Kahn's Algorithm — Step by Step</div>
+    <div class="viz-body">
+      <div class="controls">
+        <button class="btn btn-primary" onclick="startKahn()">▶ Run Kahn's</button>
+        <button class="btn btn-secondary" onclick="resetKahn()">Reset</button>
+      </div>
+      <div id="kahnViz" style="margin-top:12px;"></div>
+      <div class="step-box" id="kahnLog">Click "Run Kahn's" to see the algorithm step by step.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Kahn's Algorithm</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">kahns_topo_sort</span>(DAG *g) {
+    <span class="kw">int</span> indeg[MAX_V], queue[MAX_V];
+    <span class="kw">int</span> front = <span class="nm">0</span>, rear = <span class="nm">0</span>, count = <span class="nm">0</span>;
+
+    <span class="fn">compute_indegree</span>(g, indeg);
+
+    <span class="cm">/* Enqueue all zero in-degree vertices */</span>
+    <span class="kw">int</span> v;
+    <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++)
+        <span class="kw">if</span> (indeg[v] == <span class="nm">0</span>) queue[rear++] = v;
+
+    <span class="fn">printf</span>(<span class="str">"Kahn's Topo Order: "</span>);
+    <span class="kw">while</span> (front &lt; rear) {
+        v = queue[front++];
+        <span class="fn">printf</span>(<span class="str">"%s "</span>, g-&gt;vname[v]);
+        count++;
+        <span class="cm">/* Reduce in-degree of all successors */</span>
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                        indeg[u]--;
+                        <span class="kw">if</span> (indeg[u] == <span class="nm">0</span>)
+                            queue[rear++] = u;
+                    }
+                }
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+
+    <span class="cm">/* If count != V, graph has a cycle */</span>
+    <span class="kw">if</span> (count != g-&gt;vcount)
+        <span class="fn">printf</span>(<span class="str">"WARNING: Cycle detected!\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 21: Task Scheduling ─── -->
+<section class="section" id="s21">
+  <div class="section-header"><h2>Task Scheduling Order</h2></div>
+  <p>Given tasks with dependencies, produce a valid execution schedule using topological sort.</p>
+  <div class="analogy">
+    <div class="analogy-title">🍽️ Real-Life Analogy</div>
+    <p>A chef preparing a multi-course meal: you can't plate dessert before baking it. Topological sort gives the kitchen the correct order of operations.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Task Scheduling</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Print execution schedule for all tasks */</span>
+<span class="kw">void</span> <span class="fn">task_schedule</span>(DAG *g) {
+    <span class="kw">int</span> topo[MAX_V], tlen = <span class="nm">0</span>;
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="fn">printf</span>(<span class="str">"=== Execution Schedule ===\n"</span>);
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = <span class="nm">0</span>; i &lt; tlen; i++) {
+        <span class="fn">printf</span>(<span class="str">"Step %d: Execute task '%s'\n"</span>,
+               i+<span class="nm">1</span>, g-&gt;vname[topo[i]]);
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 22: Dependency Resolution ─── -->
+<section class="section" id="s22">
+  <div class="section-header"><h2>Dependency Resolution</h2></div>
+  <p>Resolve dependencies in the correct order — topological sort ensures that when you process a node, all its dependencies have already been processed.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Dependency Resolution</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Resolve dependencies: print install order for pkg */</span>
+<span class="kw">void</span> <span class="fn">resolve_deps</span>(DAG *g, <span class="kw">int</span> pkg) {
+    <span class="kw">int</span> vis[MAX_V], order[MAX_V], olen = <span class="nm">0</span>;
+    <span class="fn">memset</span>(vis, <span class="nm">0</span>, <span class="kw">sizeof</span>(vis));
+
+    <span class="cm">/* Collect all ancestors first via post-order DFS */</span>
+    <span class="kw">void</span> <span class="fn">collect</span>(<span class="kw">int</span> v) {
+        vis[v] = <span class="nm">1</span>;
+        <span class="kw">int</span> e, u;
+        <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e]==-<span class="nm">1</span>)
+                <span class="kw">for</span>(u=<span class="nm">0</span>;u&lt;g-&gt;vcount;u++)
+                    <span class="kw">if</span>(g-&gt;matrix[u][e]==+<span class="nm">1</span>&amp;&amp;!vis[u])
+                        <span class="fn">collect</span>(u);
+        }
+        order[olen++] = v;
+    }
+    <span class="fn">collect</span>(pkg);
+
+    <span class="fn">printf</span>(<span class="str">"Install order for '%s':\n"</span>, g-&gt;vname[pkg]);
+    <span class="kw">int</span> i;
+    <span class="kw">for</span>(i=<span class="nm">0</span>; i&lt;olen; i++)
+        <span class="fn">printf</span>(<span class="str">"  %d. %s\n"</span>, i+<span class="nm">1</span>, g-&gt;vname[order[i]]);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 23: Cycle Detection ─── -->
+<section class="section" id="s23">
+  <div class="section-header">
+    <div class="section-num">07 — CYCLE OPERATIONS</div>
+    <h2>Cycle Detection</h2>
+  </div>
+  <p>A cycle in a directed graph means you can follow edges and return to the starting vertex. This violates the "Acyclic" property of a DAG. We detect cycles using DFS with a "currently in stack" marker.</p>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Cycle Detection — Try Adding Edges</div>
+    <div class="viz-body">
+      <div class="controls">
+        <button class="btn btn-primary" onclick="checkCycleDemo('valid')">✓ Valid DAG (A→B→C→D)</button>
+        <button class="btn btn-warn" onclick="checkCycleDemo('cycle')">✗ Graph with Cycle (A→B→C→A)</button>
+      </div>
+      <svg id="cycleSvg" class="dag-svg" viewBox="0 0 480 180" height="180"></svg>
+      <div class="step-box" id="cycleLog">Choose a graph to test cycle detection.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Cycle Detection (DFS with 3-color marking)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Color: 0=white(unvisited), 1=gray(in stack), 2=black(done) */</span>
+<span class="kw">static int</span> color[MAX_V];
+
+<span class="kw">static int</span> <span class="fn">dfs_color</span>(DAG *g, <span class="kw">int</span> v) {
+    color[v] = <span class="nm">1</span>;  <span class="cm">/* gray: currently visiting */</span>
+    <span class="kw">int</span> e, u;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+            <span class="kw">for</span> (u = <span class="nm">0</span>; u &lt; g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                    <span class="kw">if</span> (color[u] == <span class="nm">1</span>)
+                        <span class="kw">return</span> <span class="nm">1</span>;  <span class="cm">/* back edge = CYCLE */</span>
+                    <span class="kw">if</span> (color[u] == <span class="nm">0</span>)
+                        <span class="kw">if</span> (<span class="fn">dfs_color</span>(g, u))
+                            <span class="kw">return</span> <span class="nm">1</span>;
+                }
+            }
+        }
+    }
+    color[v] = <span class="nm">2</span>;  <span class="cm">/* black: fully processed */</span>
+    <span class="kw">return</span> <span class="nm">0</span>;
+}
+
+<span class="kw">int</span> <span class="fn">detect_cycle</span>(DAG *g) {
+    <span class="fn">memset</span>(color, <span class="nm">0</span>, <span class="kw">sizeof</span>(color));
+    <span class="kw">int</span> v;
+    <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++)
+        <span class="kw">if</span> (color[v] == <span class="nm">0</span>)
+            <span class="kw">if</span> (<span class="fn">dfs_color</span>(g, v)) <span class="kw">return</span> <span class="nm">1</span>;
+    <span class="kw">return</span> <span class="nm">0</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 24: Prevent Cycle ─── -->
+<section class="section" id="s24">
+  <div class="section-header"><h2>Prevent Cycle Creation</h2></div>
+  <p>Before inserting a new edge u→v, check if v can already reach u. If yes, adding u→v would create a cycle — reject the insertion.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Prevent Cycle on Edge Insert</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Can we reach 'target' starting from 'src'? */</span>
+<span class="kw">int</span> <span class="fn">can_reach</span>(DAG *g, <span class="kw">int</span> src, <span class="kw">int</span> target) {
+    <span class="kw">int</span> vis[MAX_V];
+    <span class="fn">memset</span>(vis, <span class="nm">0</span>, <span class="kw">sizeof</span>(vis));
+    <span class="kw">int</span> path[MAX_V], plen = <span class="nm">0</span>;
+    <span class="kw">return</span> <span class="fn">find_path</span>(g, src, target, path, &amp;plen, vis);
+}
+
+<span class="cm">/* Safe insert: rejects edge if it creates a cycle */</span>
+<span class="kw">int</span> <span class="fn">safe_insert_edge</span>(DAG *g, <span class="kw">int</span> from, <span class="kw">int</span> to, <span class="kw">int</span> w) {
+    <span class="cm">/* If 'to' can reach 'from', adding from→to = cycle */</span>
+    <span class="kw">if</span> (<span class="fn">can_reach</span>(g, to, from)) {
+        <span class="fn">printf</span>(<span class="str">"Rejected: would create a cycle!\n"</span>);
+        <span class="kw">return</span> -<span class="nm">1</span>;
+    }
+    <span class="kw">return</span> <span class="fn">insert_edge</span>(g, from, to, w);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 25: DAG Validation ─── -->
+<section class="section" id="s25">
+  <div class="section-header"><h2>DAG Validation</h2></div>
+  <p>A complete DAG validator checks: (1) all edges are directed, (2) no self-loops, (3) no cycles.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Full DAG Validation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Comprehensive DAG validation */</span>
+<span class="kw">void</span> <span class="fn">validate_full</span>(DAG *g) {
+    <span class="kw">int</span> ok = <span class="nm">1</span>;
+    <span class="fn">printf</span>(<span class="str">"=== DAG Validation ===\n"</span>);
+
+    <span class="cm">/* Check 1: each edge column has exactly one +1 and one -1 */</span>
+    <span class="kw">int</span> e, v, pos, neg;
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++) {
+        pos = neg = <span class="nm">0</span>;
+        <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) pos++;
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == -<span class="nm">1</span>) neg++;
+        }
+        <span class="kw">if</span> (pos != <span class="nm">1</span> || neg != <span class="nm">1</span>) {
+            <span class="fn">printf</span>(<span class="str">"FAIL: Edge %d malformed!\n"</span>, e);
+            ok = <span class="nm">0</span>;
+        }
+    }
+
+    <span class="cm">/* Check 2: no self-loops (same vertex +1 and -1 in col) */</span>
+    <span class="kw">for</span> (e = <span class="nm">0</span>; e &lt; g-&gt;ecount; e++)
+        <span class="kw">for</span> (v = <span class="nm">0</span>; v &lt; g-&gt;vcount; v++)
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span> &amp;&amp;
+                g-&gt;matrix[v][e] == -<span class="nm">1</span>) {  <span class="cm">/* impossible but explicit */</span>
+                <span class="fn">printf</span>(<span class="str">"FAIL: Self-loop at vertex %s\n"</span>,
+                       g-&gt;vname[v]);
+                ok = <span class="nm">0</span>;
+            }
+
+    <span class="cm">/* Check 3: no cycles */</span>
+    <span class="kw">if</span> (<span class="fn">detect_cycle</span>(g)) {
+        <span class="fn">printf</span>(<span class="str">"FAIL: Cycle detected!\n"</span>); ok = <span class="nm">0</span>;
+    }
+
+    <span class="kw">if</span> (ok) <span class="fn">printf</span>(<span class="str">"PASS: Valid DAG!\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 26: Reachability ─── -->
+<section class="section" id="s26">
+  <div class="section-header">
+    <div class="section-num">08 — CONNECTIVITY OPERATIONS</div>
+    <h2>Reachability Check</h2>
+  </div>
+  <p>Can vertex u reach vertex v by following directed edges? Build a reachability matrix using transitive closure.</p>
+  <div class="analogy">
+    <div class="analogy-title">📡 Real-Life Analogy</div>
+    <p>Can information flow from department A to department Z in a company's communication chain? Reachability analysis answers this for all pairs at once.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Reachability Matrix (Transitive Closure)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* reach[i][j] = 1 if vertex i can reach vertex j */</span>
+<span class="kw">void</span> <span class="fn">build_reachability</span>(DAG *g, <span class="kw">int</span> reach[][MAX_V]) {
+    <span class="kw">int</span> i, j, e, u;
+
+    <span class="cm">/* Initialize: reach[i][i] = 1 (every node reaches itself) */</span>
+    <span class="kw">for</span> (i=<span class="nm">0</span>; i&lt;g-&gt;vcount; i++)
+        <span class="kw">for</span> (j=<span class="nm">0</span>; j&lt;g-&gt;vcount; j++)
+            reach[i][j] = (i==j) ? <span class="nm">1</span> : <span class="nm">0</span>;
+
+    <span class="cm">/* Fill direct edges */</span>
+    <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+        <span class="kw">int</span> src=-<span class="nm">1</span>, dst=-<span class="nm">1</span>;
+        <span class="kw">for</span> (i=<span class="nm">0</span>; i&lt;g-&gt;vcount; i++) {
+            <span class="kw">if</span> (g-&gt;matrix[i][e]==+<span class="nm">1</span>) src=i;
+            <span class="kw">if</span> (g-&gt;matrix[i][e]==-<span class="nm">1</span>) dst=i;
+        }
+        <span class="kw">if</span> (src!=-<span class="nm">1</span> &amp;&amp; dst!=-<span class="nm">1</span>) reach[src][dst]=<span class="nm">1</span>;
+    }
+
+    <span class="cm">/* Warshall's algorithm for transitive closure */</span>
+    <span class="kw">int</span> k;
+    <span class="kw">for</span> (k=<span class="nm">0</span>; k&lt;g-&gt;vcount; k++)
+        <span class="kw">for</span> (i=<span class="nm">0</span>; i&lt;g-&gt;vcount; i++)
+            <span class="kw">for</span> (j=<span class="nm">0</span>; j&lt;g-&gt;vcount; j++)
+                <span class="kw">if</span> (reach[i][k] &amp;&amp; reach[k][j])
+                    reach[i][j] = <span class="nm">1</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 27: Source/Sink ─── -->
+<section class="section" id="s27">
+  <div class="section-header"><h2>Source &amp; Sink Node Detection</h2></div>
+  <p><strong>Source node</strong>: in-degree = 0 (no incoming edges). <strong>Sink node</strong>: out-degree = 0 (no outgoing edges).</p>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Source &amp; Sink Detection</div>
+    <div class="viz-body">
+      <button class="btn btn-primary" onclick="detectSourceSink()">🔍 Detect Source &amp; Sink Nodes</button>
+      <svg id="ssSvg" class="dag-svg" viewBox="0 0 560 180" height="180" style="margin-top:12px;"></svg>
+      <div class="step-box" id="ssLog">Click the button to identify source and sink nodes.</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Source and Sink Node Detection</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Detect source nodes (in-degree = 0) */</span>
+<span class="kw">void</span> <span class="fn">find_sources</span>(DAG *g) {
+    <span class="kw">int</span> indeg[MAX_V], v, e;
+    <span class="fn">compute_indegree</span>(g, indeg);
+    <span class="fn">printf</span>(<span class="str">"Sources: "</span>);
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++)
+        <span class="kw">if</span> (indeg[v] == <span class="nm">0</span>)
+            <span class="fn">printf</span>(<span class="str">"%s "</span>, g-&gt;vname[v]);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}
+
+<span class="cm">/* Detect sink nodes (out-degree = 0) */</span>
+<span class="kw">void</span> <span class="fn">find_sinks</span>(DAG *g) {
+    <span class="kw">int</span> v, e, has_out;
+    <span class="fn">printf</span>(<span class="str">"Sinks: "</span>);
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++) {
+        has_out = <span class="nm">0</span>;
+        <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++)
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>)
+                has_out = <span class="nm">1</span>;
+        <span class="kw">if</span> (!has_out)
+            <span class="fn">printf</span>(<span class="str">"%s "</span>, g-&gt;vname[v]);
+    }
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 28: Components ─── -->
+<section class="section" id="s28">
+  <div class="section-header"><h2>Components Analysis</h2></div>
+  <p>In a DAG, find weakly connected components (ignoring edge directions) — groups of vertices that are connected at all.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Weakly Connected Components (Union-Find)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="kw">int</span> parent[MAX_V];
+
+<span class="kw">int</span> <span class="fn">find_root</span>(<span class="kw">int</span> x) {
+    <span class="kw">while</span> (parent[x] != x) x = parent[x];
+    <span class="kw">return</span> x;
+}
+<span class="kw">void</span> <span class="fn">union_sets</span>(<span class="kw">int</span> a, <span class="kw">int</span> b) {
+    <span class="kw">int</span> ra=<span class="fn">find_root</span>(a), rb=<span class="fn">find_root</span>(b);
+    <span class="kw">if</span> (ra != rb) parent[ra] = rb;
+}
+
+<span class="kw">void</span> <span class="fn">components</span>(DAG *g) {
+    <span class="kw">int</span> v, e;
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++) parent[v]=v;
+    <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+        <span class="kw">int</span> src=-<span class="nm">1</span>, dst=-<span class="nm">1</span>;
+        <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++){
+            <span class="kw">if</span>(g-&gt;matrix[v][e]==+<span class="nm">1</span>) src=v;
+            <span class="kw">if</span>(g-&gt;matrix[v][e]==-<span class="nm">1</span>) dst=v;
+        }
+        <span class="kw">if</span>(src!=-<span class="nm">1</span>&amp;&amp;dst!=-<span class="nm">1</span>) <span class="fn">union_sets</span>(src,dst);
+    }
+    <span class="cm">/* Count unique roots */</span>
+    <span class="kw">int</span> count=<span class="nm">0</span>;
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++)
+        <span class="kw">if</span>(<span class="fn">find_root</span>(v)==v) count++;
+    <span class="fn">printf</span>(<span class="str">"Weakly connected components: %d\n"</span>, count);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 29: In-Degree / Out-Degree ─── -->
+<section class="section" id="s29">
+  <div class="section-header">
+    <div class="section-num">09 — DEGREE OPERATIONS</div>
+    <h2>In-Degree &amp; Out-Degree Analysis</h2>
+  </div>
+  <p><strong>In-degree</strong> of v = number of edges pointing TO v (count of -1 in row v). <strong>Out-degree</strong> = number of edges FROM v (count of +1 in row v).</p>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Degree Analysis — Interactive</div>
+    <div class="viz-body">
+      <button class="btn btn-primary" onclick="analyzeDegrees()">📊 Analyze All Degrees</button>
+      <div id="degreeTable" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — In-Degree and Out-Degree</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Compute in-degree of vertex v */</span>
+<span class="kw">int</span> <span class="fn">in_degree</span>(DAG *g, <span class="kw">int</span> v) {
+    <span class="kw">int</span> count = <span class="nm">0</span>, e;
+    <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++)
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == -<span class="nm">1</span>) count++;
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Compute out-degree of vertex v */</span>
+<span class="kw">int</span> <span class="fn">out_degree</span>(DAG *g, <span class="kw">int</span> v) {
+    <span class="kw">int</span> count = <span class="nm">0</span>, e;
+    <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++)
+        <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) count++;
+    <span class="kw">return</span> count;
+}
+
+<span class="cm">/* Print degree report for all vertices */</span>
+<span class="kw">void</span> <span class="fn">degree_report</span>(DAG *g) {
+    <span class="kw">int</span> v;
+    <span class="fn">printf</span>(<span class="str">"%-10s %8s %9s\n"</span>,
+           "Vertex", "In-Deg", "Out-Deg");
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++)
+        <span class="fn">printf</span>(<span class="str">"%-10s %8d %9d\n"</span>,
+               g-&gt;vname[v],
+               <span class="fn">in_degree</span>(g, v),
+               <span class="fn">out_degree</span>(g, v));
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 30: Source/Sink Check ─── -->
+<section class="section" id="s30">
+  <div class="section-header"><h2>Source Vertex Check &amp; Sink Vertex Check</h2></div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Source and Sink Vertex Check</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Returns 1 if v is a source (in-degree = 0) */</span>
+<span class="kw">int</span> <span class="fn">is_source</span>(DAG *g, <span class="kw">int</span> v) {
+    <span class="kw">return</span> <span class="fn">in_degree</span>(g, v) == <span class="nm">0</span>;
+}
+
+<span class="cm">/* Returns 1 if v is a sink (out-degree = 0) */</span>
+<span class="kw">int</span> <span class="fn">is_sink</span>(DAG *g, <span class="kw">int</span> v) {
+    <span class="kw">return</span> <span class="fn">out_degree</span>(g, v) == <span class="nm">0</span>;
+}
+
+<span class="kw">void</span> <span class="fn">check_vertex_role</span>(DAG *g, <span class="kw">int</span> v) {
+    <span class="kw">if</span> (<span class="fn">is_source</span>(g, v))
+        <span class="fn">printf</span>(<span class="str">"%s is a SOURCE (no incoming edges)\n"</span>,
+               g-&gt;vname[v]);
+    <span class="kw">else if</span> (<span class="fn">is_sink</span>(g, v))
+        <span class="fn">printf</span>(<span class="str">"%s is a SINK (no outgoing edges)\n"</span>,
+               g-&gt;vname[v]);
+    <span class="kw">else</span>
+        <span class="fn">printf</span>(<span class="str">"%s is an INTERNAL vertex\n"</span>,
+               g-&gt;vname[v]);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 31: Course Prerequisites ─── -->
+<section class="section" id="s31">
+  <div class="section-header">
+    <div class="section-num">10 — SCHEDULING &amp; DEPENDENCY OPERATIONS</div>
+    <h2>Course Prerequisite Resolution</h2>
+  </div>
+  <p>Universities use DAGs to model course prerequisites. An edge A→B means "you must take course A before course B." Topological sort gives valid enrollment order.</p>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Course Prerequisite System</div>
+    <div class="viz-body">
+      <svg class="dag-svg" viewBox="0 0 600 220" height="220">
+        <defs><marker id="arrC" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#7c6af7"/></marker></defs>
+        <!-- course nodes -->
+        <rect x="10" y="80" width="90" height="36" rx="8" fill="#1a2035" stroke="#00d4aa" stroke-width="2"/>
+        <text x="55" y="103" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="11" font-weight="700">Math 101</text>
+        <rect x="10" y="130" width="90" height="36" rx="8" fill="#1a2035" stroke="#00d4aa" stroke-width="2"/>
+        <text x="55" y="153" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="11" font-weight="700">CS 101</text>
+        <rect x="160" y="55" width="90" height="36" rx="8" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="205" y="78" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="11" font-weight="700">Math 201</text>
+        <rect x="160" y="105" width="90" height="36" rx="8" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="205" y="128" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="11" font-weight="700">CS 201</text>
+        <rect x="160" y="155" width="90" height="36" rx="8" fill="#1a2035" stroke="#7c6af7" stroke-width="2"/>
+        <text x="205" y="178" text-anchor="middle" fill="#7c6af7" font-family="JetBrains Mono" font-size="11" font-weight="700">CS 202</text>
+        <rect x="320" y="80" width="90" height="36" rx="8" fill="#1a2035" stroke="#f0c040" stroke-width="2"/>
+        <text x="365" y="103" text-anchor="middle" fill="#f0c040" font-family="JetBrains Mono" font-size="11" font-weight="700">CS 301</text>
+        <rect x="490" y="80" width="90" height="36" rx="8" fill="#1a2035" stroke="#ff6b35" stroke-width="2"/>
+        <text x="535" y="103" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="11" font-weight="700">CS 401</text>
+        <!-- Edges -->
+        <line x1="100" y1="98" x2="157" y2="73" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="100" y1="98" x2="157" y2="123" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="100" y1="148" x2="157" y2="123" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="100" y1="148" x2="157" y2="173" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="250" y1="73" x2="317" y2="93" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="250" y1="123" x2="317" y2="98" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="250" y1="173" x2="317" y2="103" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <line x1="410" y1="98" x2="487" y2="98" stroke="#7c6af7" stroke-width="1.5" marker-end="url(#arrC)" opacity="0.7"/>
+        <!-- Labels -->
+        <text x="55" y="205" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="10">Year 1</text>
+        <text x="205" y="205" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="10">Year 2</text>
+        <text x="365" y="205" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="10">Year 3</text>
+        <text x="535" y="205" text-anchor="middle" fill="#5a6478" font-family="JetBrains Mono" font-size="10">Year 4</text>
+      </svg>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Course Prerequisite Check</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Check if a student can enroll in course 'c'
+   given their completed courses in 'done[]' */</span>
+<span class="kw">int</span> <span class="fn">can_enroll</span>(DAG *g, <span class="kw">int</span> c, <span class="kw">int</span> done[], <span class="kw">int</span> ndone) {
+    <span class="kw">int</span> e, u, i;
+    <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+        <span class="kw">if</span> (g-&gt;matrix[c][e] == -<span class="nm">1</span>) { <span class="cm">/* c has prerequisite */</span>
+            <span class="kw">for</span> (u=<span class="nm">0</span>; u&lt;g-&gt;vcount; u++) {
+                <span class="kw">if</span> (g-&gt;matrix[u][e] == +<span class="nm">1</span>) {
+                    <span class="cm">/* u is a prerequisite — check if done */</span>
+                    <span class="kw">int</span> found = <span class="nm">0</span>;
+                    <span class="kw">for</span> (i=<span class="nm">0</span>; i&lt;ndone; i++)
+                        <span class="kw">if</span> (done[i] == u) found=<span class="nm">1</span>;
+                    <span class="kw">if</span> (!found) {
+                        <span class="fn">printf</span>(<span class="str">"Missing prereq: %s\n"</span>,
+                               g-&gt;vname[u]);
+                        <span class="kw">return</span> <span class="nm">0</span>;
+                    }
+                }
+            }
+        }
+    }
+    <span class="fn">printf</span>(<span class="str">"Can enroll in %s!\n"</span>, g-&gt;vname[c]);
+    <span class="kw">return</span> <span class="nm">1</span>;
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 32: Build System ─── -->
+<section class="section" id="s32">
+  <div class="section-header"><h2>Build System Dependency</h2></div>
+  <p>Build systems like Make or CMake use DAGs: source files depend on header files, object files depend on sources. Topological sort gives the correct compilation order.</p>
+  <div class="analogy">
+    <div class="analogy-title">🔨 Real-Life Analogy</div>
+    <p>You can't link main.o if it hasn't been compiled yet. You can't compile main.c if utils.h doesn't exist. The build system resolves these dependencies automatically.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Build System Simulation</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Simulate a build: process each file in topo order */</span>
+<span class="kw">void</span> <span class="fn">build_system</span>(DAG *g) {
+    <span class="kw">int</span> topo[MAX_V], tlen = <span class="nm">0</span>;
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="fn">printf</span>(<span class="str">"=== Build Order ===\n"</span>);
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i=<span class="nm">0</span>; i&lt;tlen; i++) {
+        <span class="kw">int</span> v = topo[i];
+        <span class="cm">/* In real builds: compile if source, link if object */</span>
+        <span class="fn">printf</span>(<span class="str">"Building: %-20s [%d/%d]\n"</span>,
+               g-&gt;vname[v], i+<span class="nm">1</span>, tlen);
+    }
+    <span class="fn">printf</span>(<span class="str">"Build complete.\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 33: Workflow Scheduling ─── -->
+<section class="section" id="s33">
+  <div class="section-header"><h2>Workflow Scheduling</h2></div>
+  <p>Workflow systems (CI/CD pipelines, data pipelines) use DAGs to define job execution order. Each job runs only when all its upstream dependencies complete.</p>
+  <div class="analogy">
+    <div class="analogy-title">🔄 Real-Life Analogy</div>
+    <p>A CI/CD pipeline: build → unit tests → integration tests → staging deploy → production deploy. Each step depends on the previous one succeeding.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Workflow Scheduler with Parallel Levels</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Group tasks into parallel execution levels
+   Level 0: no dependencies
+   Level 1: depends only on level 0, etc.  */</span>
+<span class="kw">void</span> <span class="fn">parallel_schedule</span>(DAG *g) {
+    <span class="kw">int</span> level[MAX_V], indeg[MAX_V];
+    <span class="fn">compute_indegree</span>(g, indeg);
+    <span class="kw">int</span> v, e, u, max_level = <span class="nm">0</span>;
+
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++) level[v] = <span class="nm">0</span>;
+
+    <span class="cm">/* Process in Kahn's order, assign levels */</span>
+    <span class="kw">int</span> queue[MAX_V], front=<span class="nm">0</span>, rear=<span class="nm">0</span>;
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++)
+        <span class="kw">if</span> (indeg[v]==<span class="nm">0</span>) queue[rear++] = v;
+
+    <span class="kw">while</span> (front &lt; rear) {
+        v = queue[front++];
+        <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u=<span class="nm">0</span>; u&lt;g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e]==-<span class="nm">1</span>) {
+                        <span class="kw">if</span>(level[v]+<span class="nm">1</span> > level[u])
+                            level[u] = level[v]+<span class="nm">1</span>;
+                        indeg[u]--;
+                        <span class="kw">if</span>(indeg[u]==<span class="nm">0</span>) queue[rear++]=u;
+                    }
+                }
+            }
+        }
+        <span class="kw">if</span>(level[v] > max_level) max_level = level[v];
+    }
+
+    <span class="kw">int</span> l;
+    <span class="kw">for</span> (l=<span class="nm">0</span>; l&lt;=max_level; l++) {
+        <span class="fn">printf</span>(<span class="str">"Level %d [parallel]: "</span>, l);
+        <span class="kw">for</span>(v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++)
+            <span class="kw">if</span>(level[v]==l) <span class="fn">printf</span>(<span class="str">"%s "</span>, g-&gt;vname[v]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 34: Critical Path Analysis ─── -->
+<section class="section" id="s34">
+  <div class="section-header"><h2>Critical Path Analysis</h2></div>
+  <p>The <strong>critical path</strong> is the longest path through the DAG. It determines the minimum project duration. Tasks on the critical path have zero slack — any delay cascades to the end.</p>
+  <div class="analogy">
+    <div class="analogy-title">🏗️ Real-Life Analogy</div>
+    <p>In building construction, pouring concrete must cure for 7 days before framing. This is on the critical path. Painting walls (can happen while other things proceed) might not be critical.</p>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Critical Path Analysis (Earliest Start Times)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Compute Earliest Start Time (EST) for each vertex.
+   EST[v] = max(EST[u] + duration[edge u→v])    */</span>
+<span class="kw">void</span> <span class="fn">critical_path</span>(DAG *g) {
+    <span class="kw">int</span> est[MAX_V], topo[MAX_V], tlen=<span class="nm">0</span>;
+    <span class="kw">int</span> v, e, u;
+
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++) est[v] = <span class="nm">0</span>;
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="kw">int</span> ti;
+    <span class="kw">for</span> (ti=<span class="nm">0</span>; ti&lt;tlen; ti++) {
+        v = topo[ti];
+        <span class="kw">for</span> (e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+            <span class="kw">if</span> (g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span> (u=<span class="nm">0</span>; u&lt;g-&gt;vcount; u++) {
+                    <span class="kw">if</span> (g-&gt;matrix[u][e] == -<span class="nm">1</span>) {
+                        <span class="kw">int</span> t = est[v]+g-&gt;weight[e];
+                        <span class="kw">if</span> (t > est[u]) est[u] = t;
+                    }
+                }
+            }
+        }
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Earliest Start Times:\n"</span>);
+    <span class="kw">for</span> (v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++)
+        <span class="fn">printf</span>(<span class="str">"  %s: %d\n"</span>, g-&gt;vname[v], est[v]);
+
+    <span class="cm">/* Critical path = path leading to max EST */</span>
+    <span class="kw">int</span> max_est=<span class="nm">0</span>;
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++)
+        <span class="kw">if</span>(est[v]>max_est) max_est=est[v];
+    <span class="fn">printf</span>(<span class="str">"Project duration: %d\n"</span>, max_est);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 35: DP on DAG ─── -->
+<section class="section" id="s35">
+  <div class="section-header">
+    <div class="section-num">11 — ADVANCED ALGORITHMS</div>
+    <h2>Dynamic Programming on DAG</h2>
+  </div>
+  <p>DAGs are ideal for dynamic programming because topological order provides a natural computation order — sub-problems are solved before the problems that depend on them.</p>
+
+  <div class="card-grid">
+    <div class="card"><div class="card-icon">🔢</div><div class="card-title">Count Paths</div><div class="card-desc">DP[v] = number of paths from source to v = sum of DP[u] for all u→v edges.</div></div>
+    <div class="card"><div class="card-icon">💎</div><div class="card-title">Maximum Value Path</div><div class="card-desc">DP[v] = max value collectible reaching v = max(DP[u] + value[v]) for all u→v.</div></div>
+    <div class="card"><div class="card-icon">⏱️</div><div class="card-title">Longest Path</div><div class="card-desc">DP[v] = length of longest path to v = max(DP[u] + weight[u→v]) for all u→v.</div></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Count Paths (DP on DAG)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Count number of paths from 'src' to each vertex */</span>
+<span class="kw">void</span> <span class="fn">count_paths_dp</span>(DAG *g, <span class="kw">int</span> src) {
+    <span class="kw">int</span> dp[MAX_V], topo[MAX_V], tlen=<span class="nm">0</span>;
+    <span class="kw">int</span> v;
+    <span class="kw">for</span>(v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++) dp[v] = <span class="nm">0</span>;
+    dp[src] = <span class="nm">1</span>;  <span class="cm">/* 1 way to reach the source */</span>
+
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="kw">int</span> ti, e, u;
+    <span class="kw">for</span>(ti=<span class="nm">0</span>; ti&lt;tlen; ti++) {
+        v = topo[ti];
+        <span class="cm">/* Propagate path count to successors */</span>
+        <span class="kw">for</span>(e=<span class="nm">0</span>; e&lt;g-&gt;ecount; e++) {
+            <span class="kw">if</span>(g-&gt;matrix[v][e] == +<span class="nm">1</span>) {
+                <span class="kw">for</span>(u=<span class="nm">0</span>; u&lt;g-&gt;vcount; u++) {
+                    <span class="kw">if</span>(g-&gt;matrix[u][e] == -<span class="nm">1</span>)
+                        dp[u] += dp[v];
+                }
+            }
+        }
+    }
+
+    <span class="fn">printf</span>(<span class="str">"Paths from %s:\n"</span>, g-&gt;vname[src]);
+    <span class="kw">for</span>(v=<span class="nm">0</span>; v&lt;g-&gt;vcount; v++)
+        <span class="fn">printf</span>(<span class="str">"  → %s: %d paths\n"</span>, g-&gt;vname[v], dp[v]);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 36: Critical Path Method ─── -->
+<section class="section" id="s36">
+  <div class="section-header"><h2>Critical Path Method (CPM)</h2></div>
+  <p>CPM computes both <strong>Earliest Start Time (EST)</strong> and <strong>Latest Start Time (LST)</strong>. Slack = LST - EST. Nodes with slack = 0 are on the critical path.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Full CPM (EST + LST + Slack)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">cpm</span>(DAG *g) {
+    <span class="kw">int</span> est[MAX_V], lst[MAX_V];
+    <span class="kw">int</span> topo[MAX_V], tlen=<span class="nm">0</span>;
+    <span class="kw">int</span> v, e, u, ti;
+
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="cm">/* Forward pass: compute EST */</span>
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) est[v]=<span class="nm">0</span>;
+    <span class="kw">for</span>(ti=<span class="nm">0</span>;ti&lt;tlen;ti++) {
+        v=topo[ti];
+        <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++) {
+            <span class="kw">if</span>(g-&gt;matrix[v][e]==+<span class="nm">1</span>) {
+                <span class="kw">for</span>(u=<span class="nm">0</span>;u&lt;g-&gt;vcount;u++) {
+                    <span class="kw">if</span>(g-&gt;matrix[u][e]==-<span class="nm">1</span>) {
+                        <span class="kw">int</span> t=est[v]+g-&gt;weight[e];
+                        <span class="kw">if</span>(t>est[u]) est[u]=t;
+                    }
+                }
+            }
+        }
+    }
+    <span class="kw">int</span> T = <span class="nm">0</span>;
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) <span class="kw">if</span>(est[v]>T) T=est[v];
+
+    <span class="cm">/* Backward pass: compute LST */</span>
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) lst[v]=T;
+    <span class="kw">for</span>(ti=tlen-<span class="nm">1</span>;ti&gt;=<span class="nm">0</span>;ti--) {
+        v=topo[ti];
+        <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++) {
+            <span class="kw">if</span>(g-&gt;matrix[v][e]==+<span class="nm">1</span>) {
+                <span class="kw">for</span>(u=<span class="nm">0</span>;u&lt;g-&gt;vcount;u++) {
+                    <span class="kw">if</span>(g-&gt;matrix[u][e]==-<span class="nm">1</span>) {
+                        <span class="kw">int</span> t=lst[u]-g-&gt;weight[e];
+                        <span class="kw">if</span>(t&lt;lst[v]) lst[v]=t;
+                    }
+                }
+            }
+        }
+    }
+
+    <span class="fn">printf</span>(<span class="str">"%-8s %5s %5s %6s %s\n"</span>,
+           "Vertex","EST","LST","Slack","Critical?");
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) {
+        <span class="kw">int</span> slack = lst[v]-est[v];
+        <span class="fn">printf</span>(<span class="str">"%-8s %5d %5d %6d %s\n"</span>,
+               g-&gt;vname[v], est[v], lst[v], slack,
+               slack==<span class="nm">0</span> ? "*** CRITICAL ***" : "");
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 37: Project Planning ─── -->
+<section class="section" id="s37">
+  <div class="section-header"><h2>Project Planning</h2></div>
+  <p>Combine all DAG techniques for complete project planning: define tasks, set durations, identify dependencies, find critical path, and generate a schedule.</p>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Project Plan — Gantt-Style Timeline</div>
+    <div class="viz-body">
+      <button class="btn btn-primary" onclick="generateGantt()">📅 Generate Project Schedule</button>
+      <div id="ganttChart" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Project Planning with DAG</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Complete project plan:
+   1. Add project tasks as vertices
+   2. Add dependencies as edges (weight = duration)
+   3. Compute critical path with CPM
+   4. Output schedule                            */</span>
+<span class="kw">void</span> <span class="fn">project_plan</span>() {
+    DAG g;
+    <span class="fn">dag_init</span>(&amp;g);
+
+    <span class="cm">/* Define tasks */</span>
+    <span class="fn">insert_vertex</span>(&amp;g, <span class="str">"Design"</span>);     <span class="cm">/* 0 */</span>
+    <span class="fn">insert_vertex</span>(&amp;g, <span class="str">"Backend"</span>);    <span class="cm">/* 1 */</span>
+    <span class="fn">insert_vertex</span>(&amp;g, <span class="str">"Frontend"</span>);   <span class="cm">/* 2 */</span>
+    <span class="fn">insert_vertex</span>(&amp;g, <span class="str">"Testing"</span>);    <span class="cm">/* 3 */</span>
+    <span class="fn">insert_vertex</span>(&amp;g, <span class="str">"Deploy"</span>);     <span class="cm">/* 4 */</span>
+
+    <span class="cm">/* Dependencies: from → to (weight=days) */</span>
+    <span class="fn">insert_edge</span>(&amp;g, <span class="nm">0</span>, <span class="nm">1</span>, <span class="nm">5</span>); <span class="cm">/* Design→Backend: 5d */</span>
+    <span class="fn">insert_edge</span>(&amp;g, <span class="nm">0</span>, <span class="nm">2</span>, <span class="nm">3</span>); <span class="cm">/* Design→Frontend: 3d */</span>
+    <span class="fn">insert_edge</span>(&amp;g, <span class="nm">1</span>, <span class="nm">3</span>, <span class="nm">4</span>); <span class="cm">/* Backend→Testing: 4d */</span>
+    <span class="fn">insert_edge</span>(&amp;g, <span class="nm">2</span>, <span class="nm">3</span>, <span class="nm">2</span>); <span class="cm">/* Frontend→Testing: 2d */</span>
+    <span class="fn">insert_edge</span>(&amp;g, <span class="nm">3</span>, <span class="nm">4</span>, <span class="nm">1</span>); <span class="cm">/* Testing→Deploy: 1d */</span>
+
+    <span class="fn">cpm</span>(&amp;g);  <span class="cm">/* Run Critical Path Method */</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 38: Display DAG ─── -->
+<section class="section" id="s38">
+  <div class="section-header">
+    <div class="section-num">12 — VISUALIZATION &amp; REPORTING</div>
+    <h2>Display DAG</h2>
+  </div>
+  <p>Print the incidence matrix and adjacency list representation of the DAG to the console.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Display DAG (Matrix + Adjacency List)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Display the incidence matrix */</span>
+<span class="kw">void</span> <span class="fn">display_matrix</span>(DAG *g) {
+    <span class="kw">int</span> v, e;
+    <span class="fn">printf</span>(<span class="str">"Incidence Matrix (%d x %d):\n"</span>,
+           g-&gt;vcount, g-&gt;ecount);
+    <span class="fn">printf</span>(<span class="str">"%-8s"</span>, "V\\E");
+    <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++) <span class="fn">printf</span>(<span class="str">" e%d"</span>, e);
+    <span class="fn">printf</span>(<span class="str">"\n"</span>);
+
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) {
+        <span class="fn">printf</span>(<span class="str">"%-8s"</span>, g-&gt;vname[v]);
+        <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++)
+            <span class="fn">printf</span>(<span class="str">" %2d"</span>, g-&gt;matrix[v][e]);
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}
+
+<span class="cm">/* Display adjacency list derived from incidence matrix */</span>
+<span class="kw">void</span> <span class="fn">display_adj_list</span>(DAG *g) {
+    <span class="kw">int</span> v, e, u;
+    <span class="fn">printf</span>(<span class="str">"Adjacency List:\n"</span>);
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) {
+        <span class="fn">printf</span>(<span class="str">"%s →"</span>, g-&gt;vname[v]);
+        <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++) {
+            <span class="kw">if</span>(g-&gt;matrix[v][e]==+<span class="nm">1</span>) {
+                <span class="kw">for</span>(u=<span class="nm">0</span>;u&lt;g-&gt;vcount;u++)
+                    <span class="kw">if</span>(g-&gt;matrix[u][e]==-<span class="nm">1</span>)
+                        <span class="fn">printf</span>(<span class="str">" %s(w=%d)"</span>,
+                               g-&gt;vname[u],
+                               g-&gt;weight[e]);
+            }
+        }
+        <span class="fn">printf</span>(<span class="str">"\n"</span>);
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 39: Display Topo Order ─── -->
+<section class="section" id="s39">
+  <div class="section-header"><h2>Display Topological Order</h2></div>
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Topological Order Visualization</div>
+    <div class="viz-body">
+      <button class="btn btn-primary" onclick="displayTopoViz()">📋 Show Topological Order</button>
+      <div id="topoDisplayViz" style="margin-top:14px;"></div>
+    </div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Display Topological Order</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="kw">void</span> <span class="fn">display_topo_order</span>(DAG *g) {
+    <span class="kw">int</span> topo[MAX_V], tlen=<span class="nm">0</span>, i;
+    <span class="fn">topo_sort_dfs</span>(g, topo, &amp;tlen);
+
+    <span class="fn">printf</span>(<span class="str">"Topological Order:\n"</span>);
+    <span class="fn">printf</span>(<span class="str">"["</span>);
+    <span class="kw">for</span>(i=<span class="nm">0</span>; i&lt;tlen; i++) {
+        <span class="fn">printf</span>(<span class="str">"%s"</span>, g-&gt;vname[topo[i]]);
+        <span class="kw">if</span>(i &lt; tlen-<span class="nm">1</span>) <span class="fn">printf</span>(<span class="str">" → "</span>);
+    }
+    <span class="fn">printf</span>(<span class="str">"]\n"</span>);
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 40: Dependency Tree ─── -->
+<section class="section" id="s40">
+  <div class="section-header"><h2>Dependency Tree</h2></div>
+  <p>Print a tree-style view of dependencies for any vertex, showing the full ancestor hierarchy.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Print Dependency Tree</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Print dependency tree using ASCII art */</span>
+<span class="kw">void</span> <span class="fn">print_dep_tree</span>(DAG *g, <span class="kw">int</span> v,
+                    <span class="kw">char</span> *prefix,
+                    <span class="kw">int</span> is_last,
+                    <span class="kw">int</span> vis[]) {
+    <span class="fn">printf</span>(<span class="str">"%s%s%s\n"</span>, prefix,
+           is_last ? "└─ " : "├─ ", g-&gt;vname[v]);
+    vis[v] = <span class="nm">1</span>;
+
+    <span class="cm">/* Collect predecessors */</span>
+    <span class="kw">int</span> preds[MAX_V], np=<span class="nm">0</span>, e, u;
+    <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++)
+        <span class="kw">if</span>(g-&gt;matrix[v][e]==-<span class="nm">1</span>)
+            <span class="kw">for</span>(u=<span class="nm">0</span>;u&lt;g-&gt;vcount;u++)
+                <span class="kw">if</span>(g-&gt;matrix[u][e]==+<span class="nm">1</span>&amp;&amp;!vis[u])
+                    preds[np++]=u;
+
+    <span class="kw">char</span> new_prefix[200];
+    <span class="kw">int</span> i;
+    <span class="kw">for</span>(i=<span class="nm">0</span>;i&lt;np;i++) {
+        <span class="fn">sprintf</span>(new_prefix, <span class="str">"%s%s"</span>, prefix,
+                is_last ? "   " : "│  ");
+        <span class="fn">print_dep_tree</span>(g, preds[i], new_prefix,
+                       i==np-<span class="nm">1</span>, vis);
+    }
+}</pre>
+  </div>
+</section>
+
+<!-- ─── SECTION 41: Execution Schedule ─── -->
+<section class="section" id="s41">
+  <div class="section-header"><h2>Execution Schedule</h2></div>
+  <p>Generate a complete, formatted execution schedule showing parallel groups and estimated completion times.</p>
+
+  <div class="viz-container">
+    <div class="viz-header"><div class="viz-dot"></div>Full Execution Schedule Generator</div>
+    <div class="viz-body">
+      <button class="btn btn-primary" onclick="generateSchedule()">🗓️ Generate Full Schedule</button>
+      <div id="scheduleOutput" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">C — Execution Schedule Report</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+    <pre><span class="cm">/* Generate full execution schedule with timing */</span>
+<span class="kw">void</span> <span class="fn">execution_schedule</span>(DAG *g) {
+    <span class="kw">int</span> est[MAX_V], level[MAX_V];
+    <span class="kw">int</span> indeg[MAX_V], queue[MAX_V];
+    <span class="kw">int</span> front=<span class="nm">0</span>, rear=<span class="nm">0</span>, v, e, u;
+
+    <span class="fn">compute_indegree</span>(g, indeg);
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) {
+        est[v]=<span class="nm">0</span>; level[v]=<span class="nm">0</span>;
+        <span class="kw">if</span>(indeg[v]==<span class="nm">0</span>) queue[rear++]=v;
+    }
+
+    <span class="kw">while</span>(front&lt;rear) {
+        v=queue[front++];
+        <span class="kw">for</span>(e=<span class="nm">0</span>;e&lt;g-&gt;ecount;e++) {
+            <span class="kw">if</span>(g-&gt;matrix[v][e]==+<span class="nm">1</span>) {
+                <span class="kw">for</span>(u=<span class="nm">0</span>;u&lt;g-&gt;vcount;u++) {
+                    <span class="kw">if</span>(g-&gt;matrix[u][e]==-<span class="nm">1</span>) {
+                        <span class="kw">int</span> t=est[v]+g-&gt;weight[e];
+                        <span class="kw">if</span>(t>est[u]) est[u]=t;
+                        <span class="kw">if</span>(level[v]+<span class="nm">1</span>>level[u])
+                            level[u]=level[v]+<span class="nm">1</span>;
+                        indeg[u]--;
+                        <span class="kw">if</span>(indeg[u]==<span class="nm">0</span>) queue[rear++]=u;
+                    }
+                }
+            }
+        }
+    }
+
+    <span class="fn">printf</span>(<span class="str">"%-4s %-12s %5s %6s\n"</span>,
+           "Lv","Task","EST","Status");
+    <span class="fn">printf</span>(<span class="str">"-------------------------------\n"</span>);
+    <span class="kw">int</span> max_lv=<span class="nm">0</span>;
+    <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++)
+        <span class="kw">if</span>(level[v]>max_lv) max_lv=level[v];
+
+    <span class="kw">int</span> l;
+    <span class="kw">for</span>(l=<span class="nm">0</span>;l&lt;=max_lv;l++) {
+        <span class="kw">for</span>(v=<span class="nm">0</span>;v&lt;g-&gt;vcount;v++) {
+            <span class="kw">if</span>(level[v]==l)
+                <span class="fn">printf</span>(<span class="str">"%4d %-12s %5d [READY]\n"</span>,
+                       l, g-&gt;vname[v], est[v]);
+        }
+    }
+}</pre>
+  </div>
+
+  <!-- Final summary -->
+  <div class="info-box" style="margin-top:32px;">
+    <div class="label">🎓 Congratulations — You've Mastered DAG!</div>
+    <p>You've covered every operation in the DAG with Incidence Matrix: from basic vertex/edge operations, through traversals, path finding, topological sorting, cycle detection, connectivity, degree analysis, all the way to advanced CPM and DP algorithms. The incidence matrix representation gives a clean mathematical foundation for all these operations.</p>
+  </div>
+
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card" style="border-color:rgba(0,212,170,0.3)">
+      <div class="card-icon">⏱️</div>
+      <div class="card-title">Space: O(V × E)</div>
+      <div class="card-desc">The incidence matrix trades memory for a clean representation where each edge is a column.</div>
+    </div>
+    <div class="card" style="border-color:rgba(124,106,247,0.3)">
+      <div class="card-icon">🚀</div>
+      <div class="card-title">Key Algorithms</div>
+      <div class="card-desc">BFS, DFS, Kahn's, CPM, Longest Path — all run in O(V×E) with the incidence matrix.</div>
+    </div>
+    <div class="card" style="border-color:rgba(255,107,53,0.3)">
+      <div class="card-icon">🌍</div>
+      <div class="card-title">Real Applications</div>
+      <div class="card-desc">Course scheduling, build systems, project management, CI/CD pipelines, package managers.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ─── HELPERS ───
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+// Active nav on scroll
+const sections = document.querySelectorAll('section[id]');
+const navItems = document.querySelectorAll('.nav-item[href]');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) cur = s.id; });
+  navItems.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + cur);
+  });
+});
+
+// ─── DEMO DATA ───
+// 5-vertex DAG: A(0)→B(1), A→C(2), B→D(3), C→D, D→E(4)
+const DEMO_ADJ = [[1,2],[3],[3],[4],[]]; // adjacency list
+const DEMO_NAMES = ['A','B','C','D','E'];
+const POS = [{x:60,y:90},{x:180,y:45},{x:180,y:135},{x:300,y:90},{x:420,y:90}];
+const EDGES_DEMO = [[0,1],[0,2],[1,3],[2,3],[3,4]];
+
+function drawDemoGraph(svgId, highlighted=[], edgeHighlight=[]) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  svg.innerHTML = `
+    <defs>
+      <marker id="${svgId}_arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#3a4a6a"/>
+      </marker>
+      <marker id="${svgId}_arrH" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#00d4aa"/>
+      </marker>
+    </defs>`;
+  EDGES_DEMO.forEach(([f,t], i) => {
+    const p1=POS[f], p2=POS[t];
+    const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy);
+    const x1=p1.x+28*dx/len, y1=p1.y+28*dy/len;
+    const x2=p2.x-28*dx/len, y2=p2.y-28*dy/len;
+    const isHL = edgeHighlight.includes(i);
+    svg.innerHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${isHL?'#00d4aa':'#3a4a6a'}" stroke-width="${isHL?2.5:1.5}"
+      marker-end="url(#${svgId}_${isHL?'arrH':'arr'})" opacity="${isHL?1:0.5}"/>`;
+  });
+  DEMO_NAMES.forEach((n,i) => {
+    const {x,y}=POS[i];
+    const isHL=highlighted.includes(i);
+    const color = isHL ? '#00d4aa' : (i===0?'#00d4aa':i===4?'#ff6b35':'#7c6af7');
+    svg.innerHTML += `
+      <circle cx="${x}" cy="${y}" r="24" fill="${isHL?'rgba(0,212,170,0.15)':'#1a2035'}" stroke="${color}" stroke-width="${isHL?2.5:2}"/>
+      <text x="${x}" y="${y+5}" text-anchor="middle" fill="${color}" font-family="JetBrains Mono" font-size="14" font-weight="700">${n}</text>`;
+  });
+}
+
+// Draw all traversal SVGs on load
+drawDemoGraph('bfsSvg');
+drawDemoGraph('dfsSvg');
+drawDemoGraph('topoSvg');
+drawDemoGraph('ssSvg');
+
+// ─── BFS ───
+async function startBFS() {
+  const order = [];
+  const vis = new Array(5).fill(false);
+  const queue = [0];
+  vis[0] = true;
+  const steps = [];
+  while (queue.length) {
+    const v = queue.shift();
+    order.push(v);
+    steps.push({visited:[...order], queue:[...queue]});
+    for (const u of DEMO_ADJ[v]) {
+      if (!vis[u]) { vis[u]=true; queue.push(u); }
+    }
+  }
+  document.getElementById('bfsQueue').textContent='[ ]';
+  document.getElementById('bfsVisited').textContent='[ ]';
+  document.getElementById('bfsLog').textContent='Starting BFS from A...';
+  for (let i=0; i<order.length; i++) {
+    await delay(700);
+    drawDemoGraph('bfsSvg', order.slice(0,i+1));
+    document.getElementById('bfsLog').innerHTML=
+      `<span class="step-highlight">Visiting: ${DEMO_NAMES[order[i]]}</span>`;
+    document.getElementById('bfsVisited').textContent=
+      `[ ${order.slice(0,i+1).map(x=>DEMO_NAMES[x]).join(', ')} ]`;
+  }
+  document.getElementById('bfsLog').innerHTML=
+    `<span class="step-highlight">BFS complete!</span> Order: ${order.map(x=>DEMO_NAMES[x]).join(' → ')}`;
+}
+function resetTraversal() { drawDemoGraph('bfsSvg'); document.getElementById('bfsLog').textContent='Click "Run BFS" to start.'; }
+
+// ─── DFS ───
+async function startDFS() {
+  const order = [];
+  const vis = new Array(5).fill(false);
+  const stk = [];
+  function dfs(v) {
+    vis[v]=true; order.push(v); stk.push(v);
+    for (const u of DEMO_ADJ[v]) if (!vis[u]) dfs(u);
+    stk.pop();
+  }
+  dfs(0);
+  document.getElementById('dfsLog').textContent='Starting DFS from A...';
+  for (let i=0; i<order.length; i++) {
+    await delay(700);
+    drawDemoGraph('dfsSvg', order.slice(0,i+1));
+    document.getElementById('dfsLog').innerHTML=
+      `<span class="step-highlight">Visiting: ${DEMO_NAMES[order[i]]}</span>`;
+    document.getElementById('dfsStack').textContent=
+      `[ ${order.slice(0,i+1).map(x=>DEMO_NAMES[x]).join(', ')} ]`;
+  }
+  document.getElementById('dfsLog').innerHTML=
+    `<span class="step-highlight">DFS complete!</span> Order: ${order.map(x=>DEMO_NAMES[x]).join(' → ')}`;
+}
+function resetDFSViz() { drawDemoGraph('dfsSvg'); document.getElementById('dfsLog').textContent='Click "Run DFS" to start.'; }
+
+// ─── TOPO SORT ───
+async function startTopoSort() {
+  const vis=new Array(5).fill(false), stk=[], order=[];
+  function dfs(v) {
+    vis[v]=true;
+    for (const u of DEMO_ADJ[v]) if (!vis[u]) dfs(u);
+    stk.push(v);
+  }
+  for(let i=0;i<5;i++) if(!vis[i]) dfs(i);
+  while(stk.length) order.push(stk.pop());
+  document.getElementById('topoResult').textContent='Computing...';
+  document.getElementById('topoLog').textContent='Running DFS-based topological sort...';
+  for(let i=0;i<order.length;i++){
+    await delay(600);
+    drawDemoGraph('topoSvg', order.slice(0,i+1));
+    document.getElementById('topoLog').innerHTML=
+      `<span class="step-highlight">Added to order: ${DEMO_NAMES[order[i]]}</span>`;
+    document.getElementById('topoResult').textContent=
+      order.slice(0,i+1).map(x=>DEMO_NAMES[x]).join(' → ');
+  }
+  document.getElementById('topoLog').innerHTML=
+    `<span class="step-highlight">Done!</span> Topological order is valid.`;
+}
+function resetTopoSort() { drawDemoGraph('topoSvg'); document.getElementById('topoLog').textContent='Click to start.'; document.getElementById('topoResult').textContent='—'; }
+
+// ─── KAHN'S ───
+async function startKahn() {
+  const indeg=[0,0,0,0,0];
+  EDGES_DEMO.forEach(([f,t])=>indeg[t]++);
+  const steps=[];
+  const indegCopy=[...indeg];
+  const queue=[];
+  const result=[];
+  for(let v=0;v<5;v++) if(indegCopy[v]===0) queue.push(v);
+  while(queue.length){
+    const v=queue.shift();
+    result.push(v);
+    for(const u of DEMO_ADJ[v]){
+      indegCopy[u]--;
+      if(indegCopy[u]===0) queue.push(u);
+    }
+    steps.push({result:[...result], queue:[...queue], indeg:[...indegCopy]});
+  }
+  // Build visual
+  const container=document.getElementById('kahnViz');
+  container.innerHTML='';
+  for(let s=0;s<steps.length;s++){
+    await delay(700);
+    const st=steps[s];
+    let html=`<div style="font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:8px;">`;
+    html+=`<span style="color:var(--text3)">Step ${s+1}: </span>`;
+    html+=`<span style="color:var(--accent)">Process ${DEMO_NAMES[st.result[st.result.length-1]]}</span>  `;
+    html+=`<span style="color:var(--text3)">Queue: [${st.queue.map(x=>DEMO_NAMES[x]).join(', ')}]  `;
+    html+=`Result: [${st.result.map(x=>DEMO_NAMES[x]).join(' → ')}]</span></div>`;
+    container.innerHTML+=html;
+    document.getElementById('kahnLog').innerHTML=
+      `<span class="step-highlight">Processed: ${DEMO_NAMES[st.result[st.result.length-1]]}</span>  Queue: [${st.queue.map(x=>DEMO_NAMES[x]).join(', ')}]`;
+  }
+  document.getElementById('kahnLog').innerHTML=
+    `<span class="step-highlight">Kahn's complete!</span> Order: ${steps[steps.length-1].result.map(x=>DEMO_NAMES[x]).join(' → ')}`;
+}
+function resetKahn(){document.getElementById('kahnViz').innerHTML='';document.getElementById('kahnLog').textContent='Click to run.';}
+
+// ─── FIND PATH ───
+function findPath() {
+  const s=parseInt(document.getElementById('pfFrom').value);
+  const t=parseInt(document.getElementById('pfTo').value);
+  if(isNaN(s)||isNaN(t)||s<0||s>4||t<0||t>4){
+    document.getElementById('pfResult').textContent='Invalid vertex!'; return;
+  }
+  const vis=new Array(5).fill(false);
+  const path=[];
+  function dfs(v){
+    vis[v]=true; path.push(v);
+    if(v===t) return true;
+    for(const u of DEMO_ADJ[v]) if(!vis[u]&&dfs(u)) return true;
+    path.pop(); return false;
+  }
+  if(dfs(s)){
+    document.getElementById('pfResult').innerHTML=
+      `<span class="step-highlight">Path found:</span> ${path.map(x=>DEMO_NAMES[x]).join(' → ')}`;
+  } else {
+    document.getElementById('pfResult').innerHTML=
+      `<span class="step-warn">No path</span> from ${DEMO_NAMES[s]} to ${DEMO_NAMES[t]}`;
+  }
+}
+
+// ─── CYCLE DETECTION ───
+function checkCycleDemo(type) {
+  const svg=document.getElementById('cycleSvg');
+  if(type==='valid'){
+    svg.innerHTML=`
+      <defs><marker id="arrCV" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#00d4aa"/></marker></defs>
+      <line x1="78" y1="90" x2="148" y2="90" stroke="#00d4aa" stroke-width="2" marker-end="url(#arrCV)"/>
+      <line x1="218" y1="90" x2="288" y2="90" stroke="#00d4aa" stroke-width="2" marker-end="url(#arrCV)"/>
+      <line x1="358" y1="90" x2="428" y2="90" stroke="#00d4aa" stroke-width="2" marker-end="url(#arrCV)"/>
+      ${[60,180,300,420].map((x,i)=>`<circle cx="${x}" cy="90" r="24" fill="#1a2035" stroke="#00d4aa" stroke-width="2"/>
+      <text x="${x}" y="95" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="14" font-weight="700">${'ABCD'[i]}</text>`).join('')}
+      <text x="240" y="165" text-anchor="middle" fill="#00d4aa" font-family="JetBrains Mono" font-size="13">✓ Valid DAG — No Cycle Detected</text>`;
+    document.getElementById('cycleLog').innerHTML=`<span class="step-highlight">✓ VALID DAG</span> — DFS completed without finding any back edge. This is a proper DAG!`;
+  } else {
+    svg.innerHTML=`
+      <defs><marker id="arrCC" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#ff6b35"/></marker></defs>
+      <line x1="78" y1="90" x2="148" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrCC)"/>
+      <line x1="218" y1="90" x2="288" y2="90" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrCC)"/>
+      <line x1="358" y1="75" x2="80" y2="75" stroke="#ff6b35" stroke-width="2" marker-end="url(#arrCC)" stroke-dasharray="5,3"/>
+      ${[60,180,300].map((x,i)=>`<circle cx="${x}" cy="90" r="24" fill="rgba(255,107,53,0.1)" stroke="#ff6b35" stroke-width="2.5"/>
+      <text x="${x}" y="95" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="14" font-weight="700">${'ABC'[i]}</text>`).join('')}
+      <text x="240" y="155" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="12" font-weight="700">⚠ Cycle: A→B→C→A — NOT a DAG!</text>
+      <text x="218" y="60" text-anchor="middle" fill="#ff6b35" font-family="JetBrains Mono" font-size="10">back edge (C→A)</text>`;
+    document.getElementById('cycleLog').innerHTML=`<span class="step-warn">⚠ CYCLE DETECTED</span> — DFS found a back edge C→A. This graph is NOT a valid DAG!`;
+  }
+}
+
+// ─── SOURCE/SINK ───
+function detectSourceSink() {
+  const inDeg=[0,0,0,0,0], outDeg=[0,0,0,0,0];
+  EDGES_DEMO.forEach(([f,t])=>{outDeg[f]++;inDeg[t]++;});
+  const sources=[], sinks=[], internal=[];
+  for(let i=0;i<5;i++){
+    if(inDeg[i]===0) sources.push(i);
+    else if(outDeg[i]===0) sinks.push(i);
+    else internal.push(i);
+  }
+  const hl=[];
+  const hlEdges=[];
+  const colors={};
+  sources.forEach(v=>{colors[v]='#00d4aa';hl.push(v);});
+  sinks.forEach(v=>{colors[v]='#ff6b35';hl.push(v);});
+  const svg=document.getElementById('ssSvg');
+  svg.innerHTML=`
+    <defs>
+      <marker id="ssArr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#3a4a6a"/></marker>
+    </defs>`;
+  EDGES_DEMO.forEach(([f,t])=>{
+    const p1=POS[f],p2=POS[t];
+    const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
+    svg.innerHTML+=`<line x1="${p1.x+26*dx/len}" y1="${p1.y+26*dy/len}"
+      x2="${p2.x-26*dx/len}" y2="${p2.y-26*dy/len}"
+      stroke="#3a4a6a" stroke-width="1.5" marker-end="url(#ssArr)" opacity="0.6"/>`;
+  });
+  DEMO_NAMES.forEach((n,i)=>{
+    const {x,y}=POS[i];
+    const c=sources.includes(i)?'#00d4aa':sinks.includes(i)?'#ff6b35':'#7c6af7';
+    const lbl=sources.includes(i)?'SOURCE':sinks.includes(i)?'SINK':'';
+    svg.innerHTML+=`
+      <circle cx="${x}" cy="${y}" r="24" fill="${hl.includes(i)?'rgba(0,212,170,0.1)':'#1a2035'}" stroke="${c}" stroke-width="2.5"/>
+      <text x="${x}" y="${y+5}" text-anchor="middle" fill="${c}" font-family="JetBrains Mono" font-size="14" font-weight="700">${n}</text>
+      ${lbl?`<text x="${x}" y="${y+42}" text-anchor="middle" fill="${c}" font-family="JetBrains Mono" font-size="9">${lbl}</text>`:''}`;
+  });
+  document.getElementById('ssLog').innerHTML=
+    `<span class="step-highlight">Sources (in-deg=0): ${sources.map(x=>DEMO_NAMES[x]).join(', ')}</span>  |  ` +
+    `<span style="color:#ff6b35">Sinks (out-deg=0): ${sinks.map(x=>DEMO_NAMES[x]).join(', ')}</span>  |  ` +
+    `Internal: ${internal.map(x=>DEMO_NAMES[x]).join(', ')}`;
+}
+
+// ─── DEGREE ANALYSIS ───
+function analyzeDegrees(){
+  const inDeg=[0,0,0,0,0],outDeg=[0,0,0,0,0];
+  EDGES_DEMO.forEach(([f,t])=>{outDeg[f]++;inDeg[t]++;});
+  let html=`<table class="complexity-table" style="width:100%">
+    <tr><th>Vertex</th><th>In-Degree</th><th>Out-Degree</th><th>Role</th></tr>`;
+  DEMO_NAMES.forEach((n,i)=>{
+    const role=inDeg[i]===0?'Source (no incoming)':outDeg[i]===0?'Sink (no outgoing)':'Internal';
+    const rc=inDeg[i]===0?'var(--accent)':outDeg[i]===0?'var(--accent2)':'var(--text2)';
+    html+=`<tr>
+      <td style="color:var(--text);font-weight:700">${n}</td>
+      <td class="mono" style="color:var(--accent3)">${inDeg[i]}</td>
+      <td class="mono" style="color:var(--accent4)">${outDeg[i]}</td>
+      <td style="color:${rc};font-size:14px">${role}</td>
+    </tr>`;
+  });
+  html+='</table>';
+  document.getElementById('degreeTable').innerHTML=html;
+}
+
+// ─── GANTT CHART ───
+function generateGantt(){
+  const tasks=[
+    {name:'Design',   dur:3, deps:[]},
+    {name:'Backend',  dur:5, deps:[0]},
+    {name:'Frontend', dur:4, deps:[0]},
+    {name:'Testing',  dur:3, deps:[1,2]},
+    {name:'Deploy',   dur:1, deps:[3]},
+  ];
+  const est=new Array(tasks.length).fill(0);
+  // Compute EST
+  const adj=[[1,2],[3],[3],[4],[]];
+  const weights=[0,3,3,5,3,1]; // crude
+  // Simple forward pass
+  est[1]=tasks[0].dur; est[2]=tasks[0].dur;
+  est[3]=Math.max(est[1]+tasks[1].dur, est[2]+tasks[2].dur);
+  est[4]=est[3]+tasks[3].dur;
+  const total=est[4]+tasks[4].dur;
+  const colors=['#00d4aa','#7c6af7','#f0c040','#ff6b35','#00d4aa'];
+  let html='<div style="font-family:\'JetBrains Mono\',monospace;font-size:12px;">';
+  html+=`<div style="color:var(--text3);margin-bottom:12px;">Project Duration: <span style="color:var(--accent);font-weight:700">${total} days</span></div>`;
+  tasks.forEach((t,i)=>{
+    const left=(est[i]/total)*100;
+    const width=(t.dur/total)*100;
+    const isCritical=i===0||i===1||i===3||i===4;
+    html+=`<div style="display:flex;align-items:center;margin-bottom:8px;gap:8px;">
+      <div style="width:80px;color:var(--text2);font-size:11px;">${t.name}</div>
+      <div style="flex:1;background:var(--border);border-radius:4px;height:24px;position:relative;">
+        <div style="position:absolute;left:${left}%;width:${width}%;height:100%;background:${isCritical?'rgba(255,107,53,0.7)':colors[i]+'99'};border-radius:4px;border:1px solid ${colors[i]};display:flex;align-items:center;justify-content:center;font-size:10px;color:#000;">
+          ${t.dur}d
+        </div>
+      </div>
+      <div style="width:50px;color:var(--text3);font-size:10px;">EST:${est[i]}</div>
+      ${isCritical?'<span style="color:#ff6b35;font-size:9px;">★ CRIT</span>':''}
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('ganttChart').innerHTML=html;
+}
+
+// ─── TOPO DISPLAY ───
+function displayTopoViz(){
+  const vis=new Array(5).fill(false),stk=[];
+  function dfs(v){vis[v]=true;for(const u of DEMO_ADJ[v])if(!vis[u])dfs(u);stk.push(v);}
+  for(let i=0;i<5;i++)if(!vis[i])dfs(i);
+  stk.reverse();
+  let html='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;">';
+  stk.forEach((v,i)=>{
+    html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-align:center;">
+      <div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:var(--text3);">Step ${i+1}</div>
+      <div style="font-family:\'Syne\',sans-serif;font-size:20px;font-weight:800;color:var(--accent);margin:4px 0;">${DEMO_NAMES[v]}</div>
+      <div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--text3);">in-deg resolved</div>
+    </div>`;
+    if(i<stk.length-1) html+=`<div style="color:var(--accent);font-size:18px;">→</div>`;
+  });
+  html+='</div>';
+  document.getElementById('topoDisplayViz').innerHTML=html;
+}
+
+// ─── SCHEDULE ───
+function generateSchedule(){
+  const tasks=['Design','Backend','Frontend','Testing','Deploy'];
+  const levels=[0,1,1,2,3];
+  const est=[0,0,0,0,0];
+  est[1]=3;est[2]=3;est[3]=Math.max(3+5,3+4);est[4]=est[3]+3;
+  const durations=[3,5,4,3,1];
+  const colors=['#00d4aa','#7c6af7','#7c6af7','#f0c040','#ff6b35'];
+  let html='';
+  let prevLevel=-1;
+  tasks.forEach((t,i)=>{
+    if(levels[i]!==prevLevel){
+      if(prevLevel!==-1) html+=`</div>`;
+      html+=`<div style="margin-bottom:12px;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px;letter-spacing:2px;">LEVEL ${levels[i]} — PARALLEL GROUP</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">`;
+      prevLevel=levels[i];
+    }
+    html+=`<div style="background:var(--surface2);border:1px solid ${colors[i]}44;border-radius:8px;padding:12px 16px;min-width:140px;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;color:${colors[i]};font-size:14px;">${t}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-top:4px;">Start: Day ${est[i]}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);">Duration: ${durations[i]}d</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);">End: Day ${est[i]+durations[i]}</div>
+      <div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:${durations[i]*14}%;background:${colors[i]};"></div></div>
+    </div>`;
+  });
+  html+='</div></div>';
+  html+=`<div style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);">Total project: ${est[4]+1} days ✓</div>`;
+  document.getElementById('scheduleOutput').innerHTML=html;
+}
+
+// ─── INSERT VERTEX DEMO ───
+let demoVerts=['A','B','C','D'];
+function renderVertexTable(){
+  const eNames=['e₁(A→B)','e₂(A→C)','e₃(B→D)','e₄(C→D)'];
+  const mat=[[1,1,0,0],[-1,0,1,0],[0,-1,0,1],[0,0,-1,-1]];
+  // Extend for new verts
+  const n=demoVerts.length;
+  let html='<div class="matrix-wrap"><table class="matrix"><tr><th>V\\E</th>';
+  eNames.forEach(e=>html+=`<th>${e}</th>`);
+  html+='</tr>';
+  demoVerts.forEach((v,i)=>{
+    html+=`<tr><td><b style="color:var(--accent)">${v}</b></td>`;
+    for(let j=0;j<4;j++){
+      const val=(i<mat.length)?mat[i][j]:0;
+      html+=`<td class="${val===1?'one':val===-1?'neg':''}">${val===0?'0':(val===1?'+1':'-1')}</td>`;
+    }
+    html+='</tr>';
+  });
+  html+='</table></div>';
+  document.getElementById('vInsertTable').innerHTML=html;
+}
+renderVertexTable();
+function insertVertex(){
+  const name=document.getElementById('vInsertName').value.trim();
+  if(!name){document.getElementById('vInsertLog').textContent='Enter a vertex name!';return;}
+  if(demoVerts.includes(name)){document.getElementById('vInsertLog').textContent='Vertex already exists!';return;}
+  if(demoVerts.length>=8){document.getElementById('vInsertLog').textContent='Demo limit reached!';return;}
+  demoVerts.push(name);
+  renderVertexTable();
+  document.getElementById('vInsertLog').innerHTML=`<span class="step-highlight">Vertex '${name}' inserted</span> at index ${demoVerts.length-1}. New row added with all zeros (no edges yet).`;
+  document.getElementById('vInsertName').value='';
+}
+function resetVertexDemo(){demoVerts=['A','B','C','D'];renderVertexTable();document.getElementById('vInsertLog').textContent='Demo reset.';}
+
+// ─── INSERT EDGE DEMO ───
+let edgeMat=[[1,1,0,0],[-1,0,1,0],[0,-1,0,1],[0,0,-1,-1]];
+let edgeVerts=['A','B','C','D'];
+let edgeCount=4;
+const edgeNames=['e₁(A→B)','e₂(A→C)','e₃(B→D)','e₄(C→D)'];
+function renderEdgeTable(){
+  let html='<div class="matrix-wrap"><table class="matrix"><tr><th>V\\E</th>';
+  edgeNames.forEach(e=>html+=`<th>${e}</th>`);
+  html+='</tr>';
+  edgeVerts.forEach((v,i)=>{
+    html+=`<tr><td><b style="color:var(--accent)">${v}</b></td>`;
+    edgeMat[i].forEach(val=>{
+      html+=`<td class="${val===1?'one':val===-1?'neg':''}">${val===0?'0':(val===1?'+1':'-1')}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</table></div>';
+  document.getElementById('eInsertTable').innerHTML=html;
+}
+renderEdgeTable();
+function insertEdge(){
+  const f=parseInt(document.getElementById('eFrom').value);
+  const t=parseInt(document.getElementById('eTo').value);
+  const w=parseInt(document.getElementById('eWeight').value)||1;
+  if(isNaN(f)||isNaN(t)||f<0||f>3||t<0||t>3){
+    document.getElementById('eInsertLog').innerHTML='<span class="step-warn">Invalid vertex index (use 0-3)</span>';return;}
+  if(f===t){document.getElementById('eInsertLog').innerHTML='<span class="step-warn">Self-loops not allowed in DAG!</span>';return;}
+  // Simple cycle check: don't allow reverse of existing edges
+  edgeMat.forEach((row,i)=>{
+    row.forEach((val,j)=>{
+      // skip
+    });
+  });
+  // Add column
+  edgeMat.forEach((row,i)=>{
+    if(i===f) row.push(1);
+    else if(i===t) row.push(-1);
+    else row.push(0);
+  });
+  edgeNames.push(`e${edgeCount+1}(${edgeVerts[f]}→${edgeVerts[t]})`);
+  edgeCount++;
+  renderEdgeTable();
+  document.getElementById('eInsertLog').innerHTML=
+    `<span class="step-highlight">Edge ${edgeVerts[f]}→${edgeVerts[t]} (w=${w}) inserted</span> as column e${edgeCount}. Set +1 in row ${edgeVerts[f]}, -1 in row ${edgeVerts[t]}.`;
+}
+function resetEdgeDemo(){
+  edgeMat=[[1,1,0,0],[-1,0,1,0],[0,-1,0,1],[0,0,-1,-1]];
+  edgeCount=4;edgeNames.length=0;
+  edgeNames.push('e₁(A→B)','e₂(A→C)','e₃(B→D)','e₄(C→D)');
+  renderEdgeTable();document.getElementById('eInsertLog').textContent='Demo reset.';
+}
+
+// ─── UTIL ───
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+</script>
+</body>
+</html>
