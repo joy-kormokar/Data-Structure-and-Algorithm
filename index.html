@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA — Data Structure &amp; Algorithm</title>
+  <!-- ================================================
+       FONTS: Orbitron (display), Rajdhani (cards),
+              Fira Code (mono/breadcrumb)
+       ================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       CSS VARIABLES
+       ============================================================ */
+    :root {
+      --bg:          #06091a;
+      --bg2:         #0b1028;
+      --surface:     rgba(255,255,255,0.042);
+      --surface-hov: rgba(255,255,255,0.072);
+      --border:      rgba(255,255,255,0.08);
+      --border-hov:  rgba(255,255,255,0.22);
+      --txt:         #e0e8ff;
+      --txt-dim:     rgba(224,232,255,0.5);
+      --txt-muted:   rgba(224,232,255,0.3);
+      --cyan:        #00e5ff;
+      --violet:      #a855f7;
+      --amber:       #f59e0b;
+      --emerald:     #10b981;
+      --rose:        #f43f5e;
+      --teal:        #06b6d4;
+      --radius:      16px;
+      --radius-sm:   10px;
+      --shadow:      0 8px 40px rgba(0,0,0,0.55);
+      --trans:       0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    button { cursor:pointer; border:none; background:none; font-family:inherit; }
+    a { text-decoration:none; color:inherit; }
+
+    /* ============================================================
+       CANVAS BACKGROUND
+       ============================================================ */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       HOME SCREEN
+       ============================================================ */
+    #home-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 2rem;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    #home-screen.hidden {
+      opacity: 0;
+      transform: scale(0.97);
+      pointer-events: none;
+    }
+
+    /* Radial glow behind hero */
+    #home-screen::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(0,229,255,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .home-inner {
+      position: relative;
+      text-align: center;
+      max-width: 900px;
+    }
+
+    .home-badge {
+      display: inline-block;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.25em;
+      color: var(--cyan);
+      background: rgba(0,229,255,0.08);
+      border: 1px solid rgba(0,229,255,0.25);
+      padding: 0.4em 1.2em;
+      border-radius: 50px;
+      margin-bottom: 2.2rem;
+      animation: fadeSlideIn 0.8s ease both;
+    }
+
+    #hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.2rem, 6vw, 5.5rem);
+      line-height: 1.08;
+      letter-spacing: 0.02em;
+      margin-bottom: 1.8rem;
+      /* gradient text */
+      background: linear-gradient(135deg, #ffffff 30%, #00e5ff 65%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Individual letter animation — filled by JS */
+    .letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(22px);
+      animation: letterIn 0.65s ease forwards;
+      animation-delay: calc(var(--i) * 0.032s + 0.3s);
+    }
+    .letter.sp { display: inline; }
+
+    @keyframes letterIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .home-subtitle {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(1rem, 2.2vw, 1.3rem);
+      font-weight: 500;
+      color: var(--txt-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 3rem;
+      animation: fadeSlideIn 1s ease 0.9s both;
+    }
+
+    #explore-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      color: #fff;
+      padding: 1rem 2.8rem;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #00b4d8 0%, #0066ff 60%, #7c3aed 100%);
+      box-shadow: 0 0 0 0 rgba(0,180,216,0.5);
+      animation: fadeSlideIn 1s ease 1.1s both, pulseBtn 2.5s ease 2s infinite;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    #explore-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 12px 40px rgba(0,102,255,0.45);
+    }
+    #explore-btn svg { width:18px; height:18px; fill:none; stroke:#fff; stroke-width:2.5; }
+
+    @keyframes pulseBtn {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,180,216,0.4), 0 8px 30px rgba(0,102,255,0.3); }
+      50%      { box-shadow: 0 0 0 12px rgba(0,180,216,0), 0 8px 30px rgba(0,102,255,0.3); }
+    }
+
+    /* Floating decorative dots in corners */
+    .home-deco {
+      position: absolute;
+      pointer-events: none;
+    }
+    .home-deco.tl { top:5%; left:5%; }
+    .home-deco.tr { top:5%; right:5%; transform:scaleX(-1); }
+    .home-deco.bl { bottom:5%; left:5%; transform:scaleY(-1); }
+    .home-deco.br { bottom:5%; right:5%; transform:scale(-1); }
+
+    .corner-art {
+      width: 80px; height: 80px;
+      border-left: 1px solid rgba(0,229,255,0.25);
+      border-top:  1px solid rgba(0,229,255,0.25);
+      animation: fadeIn 1.5s ease 1.5s both;
+    }
+
+    /* ============================================================
+       CONTENT SCREEN
+       ============================================================ */
+    #content-screen {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(16px);
+      pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    #content-screen.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: all;
+    }
+
+    /* ---- Top Navigation Bar ---- */
+    #top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.85rem 2rem;
+      background: rgba(6,9,26,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    #back-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--cyan);
+      letter-spacing: 0.08em;
+      padding: 0.45rem 1rem;
+      border: 1px solid rgba(0,229,255,0.3);
+      border-radius: 50px;
+      transition: var(--trans);
+      flex-shrink: 0;
+    }
+    #back-btn:hover {
+      background: rgba(0,229,255,0.1);
+      border-color: rgba(0,229,255,0.6);
+      transform: translateX(-2px);
+    }
+    #back-btn svg { width:14px; height:14px; }
+
+    /* ---- Breadcrumb ---- */
+    #breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .crumb {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      color: var(--txt-muted);
+      cursor: pointer;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .crumb:hover { color: var(--txt); }
+    .crumb.active { color: var(--txt-dim); cursor: default; }
+    .crumb-sep {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.65rem;
+      color: var(--txt-muted);
+      opacity: 0.5;
+    }
+
+    /* ---- Level Badge ---- */
+    #level-badge {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: var(--violet);
+      background: rgba(168,85,247,0.1);
+      border: 1px solid rgba(168,85,247,0.25);
+      padding: 0.3em 0.8em;
+      border-radius: 50px;
+      flex-shrink: 0;
+    }
+
+    /* ---- Page Header (icon + title + desc) ---- */
+    #page-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 2.5rem 2rem 1.5rem;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    #page-icon-box {
+      width: 68px; height: 68px;
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    #page-icon-box::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      opacity:0.15;
+    }
+
+    #page-title-group h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.3rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      margin-bottom: 0.4rem;
+    }
+    #page-title-group p {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--txt-dim);
+      letter-spacing: 0.04em;
+    }
+
+    /* ============================================================
+       CARDS GRID
+       ============================================================ */
+    #cards-area {
+      flex: 1;
+      padding: 0 2rem 3rem;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    #cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.2rem;
+    }
+
+    /* ---- Card Base ---- */
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform var(--trans), border-color var(--trans), box-shadow var(--trans), background var(--trans);
+      display: flex;
+      flex-direction: column;
+      min-height: 170px;
+      outline: none;
+      /* animation set by JS */
+    }
+    .card:hover, .card:focus-visible {
+      background: var(--surface-hov);
+      border-color: var(--border-hov);
+      transform: translateY(-4px) scale(1.012);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    /* Colored top accent line */
+    .card-line {
+      height: 3px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+
+    /* Glow on hover matching accent */
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity var(--trans);
+      pointer-events: none;
+    }
+    .card:hover::after { opacity: 1; }
+
+    .card-body {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.1rem;
+      padding: 1.2rem 1.3rem 0.8rem;
+      flex: 1;
+    }
+
+    .card-icon-wrap {
+      width: 48px; height: 48px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      color: #fff;
+      letter-spacing: 0;
+    }
+
+    .card-text { flex: 1; min-width: 0; }
+
+    .card-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+      letter-spacing: 0.06em;
+      line-height: 1.3;
+      margin-bottom: 0.4rem;
+      color: #fff;
+    }
+
+    .card-desc {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--txt-dim);
+      line-height: 1.5;
+      letter-spacing: 0.02em;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.7rem 1.3rem 1rem;
+    }
+
+    .card-badge {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      padding: 0.25em 0.7em;
+      border-radius: 50px;
+      font-weight: 500;
+    }
+    .card-badge.nav {
+      color: var(--cyan);
+      background: rgba(0,229,255,0.08);
+      border: 1px solid rgba(0,229,255,0.2);
+    }
+    .card-badge.file {
+      color: var(--emerald);
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+    .card-badge.future {
+      color: var(--txt-muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .card-arrow {
+      font-size: 1.1rem;
+      color: var(--txt-muted);
+      transition: transform 0.2s, color 0.2s;
+    }
+    .card:hover .card-arrow { transform: translateX(4px); color: #fff; }
+
+    /* Leaf card (links to file) */
+    .card.leaf-card { cursor: pointer; }
+
+    /* Future card (no link) */
+    .card.future-card {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .card.future-card:hover {
+      transform: none;
+      opacity: 0.75;
+    }
+
+    /* ============================================================
+       FUTURE PLACEHOLDER SECTION (Algorithm etc.)
+       ============================================================ */
+    #future-placeholder {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1.5rem;
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+    #future-placeholder.show { display: flex; }
+
+    .future-icon {
+      font-size: 4rem;
+      opacity: 0.4;
+    }
+    .future-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--txt-dim);
+    }
+    .future-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.05rem;
+      color: var(--txt-muted);
+      max-width: 400px;
+      line-height: 1.7;
+    }
+    .future-tag {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      color: var(--amber);
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.2);
+      padding: 0.4em 1.2em;
+      border-radius: 50px;
+    }
+
+    /* ============================================================
+       TOAST NOTIFICATION
+       ============================================================ */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 9999;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      color: #fff;
+      background: rgba(20,26,50,0.95);
+      border: 1px solid var(--border);
+      padding: 0.8rem 1.5rem;
+      border-radius: 50px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.3s;
+      backdrop-filter: blur(10px);
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ============================================================
+       ANIMATIONS
+       ============================================================ */
+    @keyframes fadeSlideIn {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity:0; }
+      to   { opacity:1; }
+    }
+    @keyframes cardIn {
+      from { opacity:0; transform:translateY(24px) scale(0.97); }
+      to   { opacity:1; transform:translateY(0) scale(1); }
+    }
+
+    .card-enter {
+      animation: cardIn 0.45s ease both;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 1100px) {
+      #cards-grid { gap: 1rem; }
+    }
+    @media (max-width: 860px) {
+      #cards-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .card { min-height: 150px; }
+    }
+    @media (max-width: 560px) {
+      #top-bar { padding: 0.75rem 1rem; }
+      #page-header { padding: 1.5rem 1rem 1rem; gap: 1rem; }
+      #page-icon-box { width: 52px; height: 52px; font-size: 1.4rem; }
+      #cards-area { padding: 0 1rem 2rem; }
+      #cards-grid { grid-template-columns: 1fr !important; gap: 0.85rem; }
+      .card-body { padding: 1rem 1rem 0.6rem; gap: 0.8rem; }
+      .card-footer { padding: 0.5rem 1rem 0.8rem; }
+      #breadcrumb { display: none; }
+      #level-badge { display: none; }
+      #home-screen::before { width: 380px; height: 380px; }
+      .home-deco { display: none; }
+      #explore-btn { padding: 0.85rem 2rem; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ============================================================
+       CANVAS PARTICLE BACKGROUND
+       ============================================================ -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- ============================================================
+       HOME SCREEN
+       ============================================================ -->
+  <section id="home-screen" role="main" aria-label="Home">
+    <!-- Corner decorations -->
+    <div class="home-deco tl"><div class="corner-art"></div></div>
+    <div class="home-deco tr"><div class="corner-art"></div></div>
+    <div class="home-deco bl"><div class="corner-art"></div></div>
+    <div class="home-deco br"><div class="corner-art"></div></div>
+
+    <div class="home-inner">
+      <div class="home-badge">CSE / IT LEARNING PLATFORM &mdash; v1.0</div>
+      <!-- Title letters injected by JS -->
+      <h1 id="hero-title" aria-label="Data Structure and Algorithm"></h1>
+      <p class="home-subtitle">Master the foundations of computer science, one step at a time.</p>
+      <button id="explore-btn" onclick="startExploring()" aria-label="Start exploring">
+        EXPLORE
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CONTENT SCREEN
+       ============================================================ -->
+  <section id="content-screen" aria-label="Content navigation">
+
+    <!-- Top Navigation Bar -->
+    <div id="top-bar">
+      <button id="back-btn" onclick="goBack()" aria-label="Go back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        BACK
+      </button>
+      <nav id="breadcrumb" aria-label="Navigation breadcrumb"></nav>
+      <div id="level-badge">LEVEL <span id="level-num">1</span></div>
+    </div>
+
+    <!-- Page Header (icon + title + description) -->
+    <div id="page-header">
+      <div id="page-icon-box" aria-hidden="true">
+        <span id="page-icon"></span>
+      </div>
+      <div id="page-title-group">
+        <h2 id="page-title"></h2>
+        <p id="page-desc"></p>
+      </div>
+    </div>
+
+    <!-- Cards Area -->
+    <div id="cards-area">
+      <div id="cards-grid" role="list" aria-label="Topic cards"></div>
+
+      <!-- Future / Coming Soon placeholder -->
+      <div id="future-placeholder" role="status" aria-live="polite">
+        <div class="future-icon" aria-hidden="true">⚗</div>
+        <div class="future-title">COMING SOON</div>
+        <div class="future-sub">This section is under construction. Topics will be added in a future update.</div>
+        <div class="future-tag">// FUTURE TOPICS — PLACEHOLDER</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Toast Notification -->
+  <div id="toast" role="alert" aria-live="polite"></div>
+
+
+  <script>
+  /* ================================================================
+     DSA TREE — COMPLETE HIERARCHICAL DATA STRUCTURE
+     ================================================================
+     HOW TO ATTACH FILE LINKS:
+     - For leaf nodes, set the 'link' property to the HTML filename.
+     - Currently set to '#' as placeholder (shows a toast when clicked).
+     - Example: change  link: '#'  to  link: 'array.html'
+     ================================================================ */
+
+  const DSA_TREE = {
+    id: 'root',
+    title: 'DATA STRUCTURE AND ALGORITHM',
+    icon: '◈',
+    description: 'Master the foundations of computer science',
+    accent: 'linear-gradient(135deg,#00e5ff 0%,#0055ff 100%)',
+    children: [
+
+      /* ============================================================
+         1. DATA STRUCTURE
+         ============================================================ */
+      {
+        id: 'data-structure',
+        title: 'DATA STRUCTURE',
+        icon: '⬡',
+        description: 'Organized ways to store, manage, and access data efficiently',
+        accent: 'linear-gradient(135deg,#00e5ff 0%,#0066cc 100%)',
+        children: [
+
+          /* ----------------------------------------------------------
+             1.1  LINEAR DATA STRUCTURE
+             ---------------------------------------------------------- */
+          {
+            id: 'linear-ds',
+            title: 'LINEAR DATA STRUCTURE',
+            icon: '━',
+            description: 'Elements arranged in a sequential, single-level order',
+            accent: 'linear-gradient(135deg,#a855f7 0%,#5b21b6 100%)',
+            children: [
+
+              /* ........................................................
+                 1.1.1  STATIC DATA STRUCTURE
+                 ........................................................ */
+              {
+                id: 'static-ds',
+                title: 'STATIC DATA STRUCTURE',
+                icon: '▣',
+                description: 'Fixed-size structure; memory allocated at compile time',
+                accent: 'linear-gradient(135deg,#3b82f6 0%,#1e3a8a 100%)',
+                children: [
+
+                  /* ---- ARRAY ---- */
+                  {
+                    id: 'array',
+                    title: 'ARRAY',
+                    icon: '[ ]',
+                    description: 'Contiguous block of memory holding elements of the same type',
+                    accent: 'linear-gradient(135deg,#06b6d4 0%,#0e7490 100%)',
+                    children: [
+                      {
+                        id: 'array-roadmap',
+                        title: 'ARRAY ROADMAP',
+                        icon: '◈',
+                        description: 'Complete step-by-step learning path for arrays',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#059669 100%)',
+                        link: 'array_roadmap.html' /* LINK HERE: array-roadmap.html */
+                      },
+                      {
+                        id: '1d-array',
+                        title: '1D ARRAY',
+                        icon: '[■]',
+                        description: 'Single-dimensional array — traversal, insertion, deletion',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#059669 100%)',
+                        link: '1d_array.html' /* LINK HERE: 1d-array.html */
+                      },
+                      {
+                        id: '2d-array',
+                        title: '2D ARRAY',
+                        icon: '[■]²',
+                        description: 'Matrix representation — row/column operations',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#059669 100%)',
+                        link: '2d_array.html' /* LINK HERE: 2d-array.html */
+                      },
+                      {
+                        id: '3d-array',
+                        title: '3D ARRAY',
+                        icon: '[■]³',
+                        description: 'Three-dimensional array — depth + row + column access',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#059669 100%)',
+                        link: '3d_array.html' /* LINK HERE: 3d-array.html */
+                      }
+                    ]
+                  }
+                  /* ---- END ARRAY ---- */
+                ]
+              },
+              /* ........................................................
+                 END STATIC DATA STRUCTURE
+                 ........................................................ */
+
+              /* ........................................................
+                 1.1.2  DYNAMIC DATA STRUCTURE
+                 ........................................................ */
+              {
+                id: 'dynamic-ds',
+                title: 'DYNAMIC DATA STRUCTURE',
+                icon: '◈',
+                description: 'Flexible-size structure; memory allocated at runtime',
+                accent: 'linear-gradient(135deg,#f59e0b 0%,#b45309 100%)',
+                children: [
+
+                  /* ---- LINKED LIST (gridCols:4 → 2 rows of 4) ---- */
+                  {
+                    id: 'linked-list',
+                    title: 'LINKED LIST',
+                    icon: '⊶',
+                    description: 'Nodes connected via pointers, enabling flexible memory usage',
+                    accent: 'linear-gradient(135deg,#6366f1 0%,#3730a3 100%)',
+                    gridCols: 4,
+                    children: [
+                      /* Row 1 */
+                      { id:'singly-ll',          title:'SINGLY LINKED LIST',           icon:'→',   description:'Unidirectional forward traversal',           accent:'linear-gradient(135deg,#818cf8 0%,#4f46e5 100%)', link:'singly_linked_list.html' /* LINK HERE: singly-linked-list.html */ },
+                      { id:'circular-ll',         title:'CIRCULAR LINKED LIST',          icon:'↺',   description:'Tail points back to head — circular singly', accent:'linear-gradient(135deg,#818cf8 0%,#4f46e5 100%)', link:'circular_linked_list.html' /* LINK HERE: circular-linked-list.html */ },
+                      { id:'doubly-ll',           title:'DOUBLY LINKED LIST',            icon:'↔',   description:'Bidirectional traversal with prev + next',   accent:'linear-gradient(135deg,#818cf8 0%,#4f46e5 100%)', link:'doubly_linked_list.html' /* LINK HERE: doubly-linked-list.html */ },
+                      { id:'doubly-circular-ll',  title:'DOUBLY CIRCULAR LIST',          icon:'⟲',   description:'Circular doubly linked list',                accent:'linear-gradient(135deg,#818cf8 0%,#4f46e5 100%)', link:'doubly_circular_linked_list.html' /* LINK HERE: doubly-circular-linked-list.html */ },
+                      /* Row 2 */
+                      { id:'arr-singly-ll',       title:'ARRAY SINGLY LINKED LIST',      icon:'[→]', description:'Singly linked list backed by array',         accent:'linear-gradient(135deg,#6d28d9 0%,#4c1d95 100%)', link:'array_singly_linked_list.html' /* LINK HERE: array-singly-linked-list.html */ },
+                      { id:'arr-circular-ll',     title:'ARRAY CIRCULAR LIST',           icon:'[↺]', description:'Circular linked list backed by array',       accent:'linear-gradient(135deg,#6d28d9 0%,#4c1d95 100%)', link:'array_circular_linked_list.html' /* LINK HERE: array-circular-linked-list.html */ },
+                      { id:'arr-doubly-ll',       title:'ARRAY DOUBLY LINKED LIST',      icon:'[↔]', description:'Doubly linked list backed by array',         accent:'linear-gradient(135deg,#6d28d9 0%,#4c1d95 100%)', link:'array_doubly_linked_list.html' /* LINK HERE: array-doubly-linked-list.html */ },
+                      { id:'arr-doubly-circ-ll',  title:'ARRAY DOUBLY CIRCULAR LIST',    icon:'[⟲]', description:'Array doubly circular linked list',          accent:'linear-gradient(135deg,#6d28d9 0%,#4c1d95 100%)', link:'array_doubly_circular_linked_list.html' /* LINK HERE: array-doubly-circular-linked-list.html */ }
+                    ]
+                  },
+                  /* ---- END LINKED LIST ---- */
+
+                  /* ---- STACK ---- */
+                  {
+                    id: 'stack',
+                    title: 'STACK',
+                    icon: '⊤',
+                    description: 'LIFO — Last In First Out sequential structure',
+                    accent: 'linear-gradient(135deg,#ef4444 0%,#991b1b 100%)',
+                    children: [
+                      { id:'arr-stack',       title:'ARRAY STACK',                icon:'[⊤]',  description:'Stack implemented using array',           accent:'linear-gradient(135deg,#fca5a5 0%,#dc2626 100%)', link:'array_stack.html' /* LINK HERE: array-stack.html */ },
+                      { id:'ll-stack',        title:'LINKED LIST STACK',          icon:'⊶⊤',   description:'Stack implemented using linked list',     accent:'linear-gradient(135deg,#fca5a5 0%,#dc2626 100%)', link:'linked_list_stack.html' /* LINK HERE: linked-list-stack.html */ },
+                      { id:'arr-multi-stack', title:'ARRAY MULTIPLE STACK',       icon:'[⊤⊤]', description:'Multiple stacks within a single array',   accent:'linear-gradient(135deg,#fca5a5 0%,#dc2626 100%)', link:'array_multiple_stack.html' /* LINK HERE: array-multiple-stack.html */ },
+                      { id:'ll-multi-stack',  title:'LINKED LIST MULTIPLE STACK', icon:'⊶⊤⊤',  description:'Multiple stacks using linked list nodes', accent:'linear-gradient(135deg,#fca5a5 0%,#dc2626 100%)', link:'linked_list_multiple_stack.html' /* LINK HERE: linked-list-multiple-stack.html */ }
+                    ]
+                  },
+                  /* ---- END STACK ---- */
+
+                  /* ---- QUEUE ---- */
+                  {
+                    id: 'queue',
+                    title: 'QUEUE',
+                    icon: '⇄',
+                    description: 'FIFO — First In First Out sequential structure',
+                    accent: 'linear-gradient(135deg,#10b981 0%,#064e3b 100%)',
+                    children: [
+
+                      /* ·· Linear Queue ·· */
+                      {
+                        id: 'linear-queue',
+                        title: 'LINEAR QUEUE',
+                        icon: '→',
+                        description: 'Basic linear queue with enqueue and dequeue',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#10b981 100%)',
+                        children: [
+                          { id:'arr-linear-q',  title:'ARRAY LINEAR QUEUE',       icon:'[→]',  description:'Linear queue using array',       accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'array_linear_queue.html' /* LINK HERE: array-linear-queue.html */ },
+                          { id:'ll-linear-q',   title:'LINKED LIST LINEAR QUEUE', icon:'⊶→',   description:'Linear queue using linked list', accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'linked_list_linear_queue.html' /* LINK HERE: linked-list-linear-queue.html */ }
+                        ]
+                      },
+
+                      /* ·· Circular Queue ·· */
+                      {
+                        id: 'circular-queue',
+                        title: 'CIRCULAR QUEUE',
+                        icon: '↺',
+                        description: 'Circular buffer — rear wraps around to front',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#10b981 100%)',
+                        children: [
+                          { id:'arr-circ-q',  title:'ARRAY CIRCULAR QUEUE',       icon:'[↺]',  description:'Circular queue using array',       accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'array_circular_queue.html' /* LINK HERE: array-circular-queue.html */ },
+                          { id:'ll-circ-q',   title:'LINKED LIST CIRCULAR QUEUE', icon:'⊶↺',   description:'Circular queue using linked list', accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'linked_list_circular_queue.html' /* LINK HERE: linked-list-circular-queue.html */ }
+                        ]
+                      },
+
+                      /* ·· Priority Queue ·· */
+                      {
+                        id: 'priority-queue',
+                        title: 'PRIORITY QUEUE',
+                        icon: '★',
+                        description: 'Dequeue based on element priority level',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#10b981 100%)',
+                        children: [
+                          { id:'arr-pq',          title:'ARRAY PRIORITY QUEUE',              icon:'[★]',   description:'Priority queue using array',                      accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'array_priority_queue.html' /* LINK HERE: array-priority-queue.html */ },
+                          { id:'sorted-arr-pq',   title:'SORTED ARRAY PRIORITY QUEUE',       icon:'[↑★]',  description:'Sorted array for priority ordering',              accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'sorted_array_priority_queue.html' /* LINK HERE: sorted-array-priority-queue.html */ },
+                          { id:'ll-pq',           title:'LINKED LIST PRIORITY QUEUE',        icon:'⊶★',    description:'Priority queue using linked list',                accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'linked_list_priority_queue.html' /* LINK HERE: linked-list-priority-queue.html */ },
+                          { id:'sorted-ll-pq',    title:'SORTED LL PRIORITY QUEUE',          icon:'⊶↑★',   description:'Sorted linked list priority queue',               accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'sorted_linked_list_priority_queue.html' /* LINK HERE: sorted-linked-list-priority-queue.html */ },
+                          { id:'min-heap-pq',     title:'BINARY MIN HEAP PQ',                icon:'▽',     description:'Min heap — smallest priority dequeued first',    accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'binary_min_heap_priority_queue.html' /* LINK HERE: binary-min-heap-priority-queue.html */ },
+                          { id:'max-heap-pq',     title:'BINARY MAX HEAP PQ',                icon:'△',     description:'Max heap — largest priority dequeued first',     accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'binary_max_heap_priority_queue.html' /* LINK HERE: binary-max-heap-priority-queue.html */ }
+                        ]
+                      },
+
+                      /* ·· Deque ·· */
+                      {
+                        id: 'deque',
+                        title: 'DEQUE',
+                        icon: '⇄',
+                        description: 'Double-ended queue — insert & delete from both ends',
+                        accent: 'linear-gradient(135deg,#34d399 0%,#10b981 100%)',
+                        children: [
+                          { id:'arr-deque',  title:'ARRAY DEQUE',                icon:'[⇄]', description:'Deque using circular array',     accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'array_deque.html' /* LINK HERE: array-deque.html */ },
+                          { id:'ll-deque',   title:'DOUBLY LINKED LIST DEQUE',   icon:'↔⊶',  description:'Deque using doubly linked list', accent:'linear-gradient(135deg,#6ee7b7 0%,#059669 100%)', link:'doubly_linked_list_deque.html' /* LINK HERE: doubly-linked-list-deque.html */ }
+                        ]
+                      }
+                      /* ·· End Deque ·· */
+
+                    ]
+                  }
+                  /* ---- END QUEUE ---- */
+
+                ]
+              }
+              /* ........................................................
+                 END DYNAMIC DATA STRUCTURE
+                 ........................................................ */
+
+            ]
+          },
+          /* ----------------------------------------------------------
+             END LINEAR DATA STRUCTURE
+             ---------------------------------------------------------- */
+
+          /* ----------------------------------------------------------
+             1.2  NON-LINEAR DATA STRUCTURE
+             ---------------------------------------------------------- */
+          {
+            id: 'non-linear-ds',
+            title: 'NON-LINEAR DATA STRUCTURE',
+            icon: '⋔',
+            description: 'Multi-level hierarchical or network arrangement of elements',
+            accent: 'linear-gradient(135deg,#10b981 0%,#065f46 100%)',
+            children: [
+
+              /* ---- TREE ---- */
+              {
+                id: 'tree',
+                title: 'TREE',
+                icon: '⑂',
+                description: 'Hierarchical structure with root, parent and child nodes',
+                accent: 'linear-gradient(135deg,#84cc16 0%,#365314 100%)',
+                children: [
+                  {
+                    id: 'basic-trees',
+                    title: 'BASIC TREES',
+                    icon: '⑂',
+                    description: 'Core tree structures used in algorithms and systems',
+                    accent: 'linear-gradient(135deg,#a3e635 0%,#4d7c0f 100%)',
+                    children: [
+                      { id:'binary-tree', title:'BINARY TREE',    icon:'⑂',   description:'Each node has at most 2 children',        accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'binary_tree.html' /* LINK HERE: binary-tree.html */ },
+                      { id:'bst',         title:'BST',            icon:'<⑂>', description:'Binary Search Tree — ordered traversal', accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'bst.html' /* LINK HERE: bst.html */ },
+                      { id:'avl',         title:'AVL',            icon:'⑂≈',  description:'Adelson-Velsky Landis self-balancing BST',accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'avl.html' /* LINK HERE: avl.html */ },
+                      { id:'red-black',   title:'RED-BLACK TREE', icon:'⑂●',  description:'Color-coded self-balancing BST',          accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'red_black_tree.html' /* LINK HERE: red-black-tree.html */ },
+                      { id:'heap-tree',   title:'HEAP',           icon:'△',   description:'Complete binary tree for priority ops',   accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'heap.html' /* LINK HERE: heap.html */ }
+                    ]
+                  },
+                  {
+                    id: 'specialized-trees',
+                    title: 'SPECIALIZED TREES',
+                    icon: '⑂★',
+                    description: 'Advanced trees optimized for specific computational tasks',
+                    accent: 'linear-gradient(135deg,#a3e635 0%,#4d7c0f 100%)',
+                    children: [
+                      { id:'segment-tree', title:'SEGMENT TREE', icon:'⑄',  description:'Range query & point update in O(log n)', accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'segment_tree.html' /* LINK HERE: segment-tree.html */ },
+                      { id:'trie-tree',    title:'TRIE TREE',    icon:'T',   description:'Prefix-based string storage & retrieval',accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'trie_tree.html' /* LINK HERE: trie-tree.html */ },
+                      { id:'fenwick-tree', title:'FENWICK TREE', icon:'Σ',   description:'Binary indexed tree for prefix sums',    accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'fenwick_tree.html' /* LINK HERE: fenwick-tree.html */ },
+                      { id:'suffix-tree',  title:'SUFFIX TREE',  icon:'$',   description:'Stores all suffixes of a string',        accent:'linear-gradient(135deg,#d9f99d 0%,#65a30d 100%)', link:'suffix_tree.html' /* LINK HERE: suffix-tree.html */ }
+                    ]
+                  }
+                ]
+              },
+              /* ---- END TREE ---- */
+
+              /* ---- GRAPH ---- */
+              {
+                id: 'graph',
+                title: 'GRAPH',
+                icon: '⊞',
+                description: 'Vertices (nodes) connected by edges — models complex relationships',
+                accent: 'linear-gradient(135deg,#f97316 0%,#7c2d12 100%)',
+                children: [
+
+                  /* ·· Adjacency Matrix (3×4) ·· */
+                  {
+                    id: 'adjacency-matrix',
+                    title: 'ADJACENCY MATRIX',
+                    icon: '[G]',
+                    description: '2D matrix: entry [i][j]=1 if edge exists between i and j',
+                    accent: 'linear-gradient(135deg,#fb923c 0%,#c2410c 100%)',
+                    gridCols: 3,
+                    children: [
+                      { id:'am-undirected',   title:'UNDIRECTED GRAPH',   icon:'—',  description:'Symmetric edges, no direction',        accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'undirected_graph_1.html' /* LINK HERE: adjacency-matrix-undirected-graph.html */ },
+                      { id:'am-directed',     title:'DIRECTED GRAPH',     icon:'→',  description:'Directed edges (digraph)',             accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'directed_graph_1.html' /* LINK HERE: adjacency-matrix-directed-graph.html */ },
+                      { id:'am-weighted',     title:'WEIGHTED GRAPH',     icon:'W',  description:'Edges carry numerical weights',        accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'weighted_graph_1.html' /* LINK HERE: adjacency-matrix-weighted-graph.html */ },
+                      { id:'am-unweighted',   title:'UNWEIGHTED GRAPH',   icon:'U',  description:'All edges have equal weight (1)',      accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'unweighted_graph_1.html' /* LINK HERE: adjacency-matrix-unweighted-graph.html */ },
+                      { id:'am-cyclic',       title:'CYCLIC GRAPH',       icon:'↺',  description:'Contains at least one cycle',         accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'cyclic_graph_1.html' /* LINK HERE: adjacency-matrix-cyclic-graph.html */ },
+                      { id:'am-acyclic',      title:'ACYCLIC GRAPH',      icon:'↛',  description:'No cycles — tree-like structure',     accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'acyclic_graph_1.html' /* LINK HERE: adjacency-matrix-acyclic-graph.html */ },
+                      { id:'am-dag',          title:'DAG',                icon:'↗',  description:'Directed Acyclic Graph',              accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'dag_graph_1.html' /* LINK HERE: adjacency-matrix-dag.html */ },
+                      { id:'am-connected',    title:'CONNECTED GRAPH',    icon:'◉',  description:'Every vertex is reachable',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'connected_graph_1.html' /* LINK HERE: adjacency-matrix-connected-graph.html */ },
+                      { id:'am-disconnected', title:'DISCONNECTED GRAPH', icon:'◎',  description:'Contains isolated components',        accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'disconnected_graph_1.html' /* LINK HERE: adjacency-matrix-disconnected-graph.html */ },
+                      { id:'am-complete',     title:'COMPLETE GRAPH',     icon:'K',  description:'Every pair of vertices connected',    accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'complete_graph_1.html' /* LINK HERE: adjacency-matrix-complete-graph.html */ },
+                      { id:'am-sparse',       title:'SPARSE GRAPH',       icon:'·',  description:'Very few edges relative to vertices', accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'sparse_graph_1.html' /* LINK HERE: adjacency-matrix-sparse-graph.html */ },
+                      { id:'am-dense',        title:'DENSE GRAPH',        icon:'●',  description:'Many edges, close to complete',       accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'dense_graph_1.html' /* LINK HERE: adjacency-matrix-dense-graph.html */ }
+                    ]
+                  },
+
+                  /* ·· Adjacency List (3×4) ·· */
+                  {
+                    id: 'adjacency-list',
+                    title: 'ADJACENCY LIST',
+                    icon: '[L]',
+                    description: 'Each vertex stores a list of its adjacent vertices',
+                    accent: 'linear-gradient(135deg,#fb923c 0%,#c2410c 100%)',
+                    gridCols: 3,
+                    children: [
+                      { id:'al-undirected',   title:'UNDIRECTED GRAPH',   icon:'—',  description:'Undirected adjacency list',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'undirected_graph_2.html' /* LINK HERE: adjacency-list-undirected-graph.html */ },
+                      { id:'al-directed',     title:'DIRECTED GRAPH',     icon:'→',  description:'Directed adjacency list',             accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'directed_graph_2.html' /* LINK HERE: adjacency-list-directed-graph.html */ },
+                      { id:'al-weighted',     title:'WEIGHTED GRAPH',     icon:'W',  description:'Weighted adjacency list',             accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'weighted_graph_2.html' /* LINK HERE: adjacency-list-weighted-graph.html */ },
+                      { id:'al-unweighted',   title:'UNWEIGHTED GRAPH',   icon:'U',  description:'Unweighted adjacency list',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'unweighted_graph_2.html' /* LINK HERE: adjacency-list-unweighted-graph.html */ },
+                      { id:'al-cyclic',       title:'CYCLIC GRAPH',       icon:'↺',  description:'Cyclic — list-based',                 accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'cyclic_graph_2.html' /* LINK HERE: adjacency-list-cyclic-graph.html */ },
+                      { id:'al-acyclic',      title:'ACYCLIC GRAPH',      icon:'↛',  description:'Acyclic — list-based',                accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'acyclic_graph_2.html' /* LINK HERE: adjacency-list-acyclic-graph.html */ },
+                      { id:'al-dag',          title:'DAG',                icon:'↗',  description:'DAG adjacency list',                 accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'dag_graph_2.html' /* LINK HERE: adjacency-list-dag.html */ },
+                      { id:'al-connected',    title:'CONNECTED GRAPH',    icon:'◉',  description:'Connected — list-based',              accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'connected_graph_2.html' /* LINK HERE: adjacency-list-connected-graph.html */ },
+                      { id:'al-disconnected', title:'DISCONNECTED GRAPH', icon:'◎',  description:'Disconnected — list-based',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'disconnected_graph_2.html' /* LINK HERE: adjacency-list-disconnected-graph.html */ },
+                      { id:'al-complete',     title:'COMPLETE GRAPH',     icon:'K',  description:'Complete — list-based',               accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'complete_graph_2.html' /* LINK HERE: adjacency-list-complete-graph.html */ },
+                      { id:'al-sparse',       title:'SPARSE GRAPH',       icon:'·',  description:'Sparse — list-based',                 accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'sparse_graph_2.html' /* LINK HERE: adjacency-list-sparse-graph.html */ },
+                      { id:'al-dense',        title:'DENSE GRAPH',        icon:'●',  description:'Dense — list-based',                  accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'dense_graph_2.html' /* LINK HERE: adjacency-list-dense-graph.html */ }
+                    ]
+                  },
+
+                  /* ·· Incidence Matrix (3×4) ·· */
+                  {
+                    id: 'incidence-matrix',
+                    title: 'INCIDENCE MATRIX',
+                    icon: '[I]',
+                    description: 'Vertex × edge matrix: entry=1 if vertex is incident to edge',
+                    accent: 'linear-gradient(135deg,#fb923c 0%,#c2410c 100%)',
+                    gridCols: 3,
+                    children: [
+                      { id:'im-undirected',   title:'UNDIRECTED GRAPH',   icon:'—',  description:'Undirected incidence matrix',         accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'undirected_graph_3.html' /* LINK HERE: incidence-matrix-undirected-graph.html */ },
+                      { id:'im-directed',     title:'DIRECTED GRAPH',     icon:'→',  description:'Directed incidence matrix',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'directed_graph_3.html' /* LINK HERE: incidence-matrix-directed-graph.html */ },
+                      { id:'im-weighted',     title:'WEIGHTED GRAPH',     icon:'W',  description:'Weighted incidence matrix',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'weighted_graph_3.html' /* LINK HERE: incidence-matrix-weighted-graph.html */ },
+                      { id:'im-unweighted',   title:'UNWEIGHTED GRAPH',   icon:'U',  description:'Unweighted incidence matrix',         accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'unweighted_graph_3.html' /* LINK HERE: incidence-matrix-unweighted-graph.html */ },
+                      { id:'im-cyclic',       title:'CYCLIC GRAPH',       icon:'↺',  description:'Cyclic — incidence matrix',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'cyclic_graph_3.html' /* LINK HERE: incidence-matrix-cyclic-graph.html */ },
+                      { id:'im-acyclic',      title:'ACYCLIC GRAPH',      icon:'↛',  description:'Acyclic — incidence matrix',          accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'acyclic_graph_3.html' /* LINK HERE: incidence-matrix-acyclic-graph.html */ },
+                      { id:'im-dag',          title:'DAG',                icon:'↗',  description:'DAG incidence matrix',               accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'dag_graph_3.html' /* LINK HERE: incidence-matrix-dag.html */ },
+                      { id:'im-connected',    title:'CONNECTED GRAPH',    icon:'◉',  description:'Connected — incidence matrix',        accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'connected_graph_3.html' /* LINK HERE: incidence-matrix-connected-graph.html */ },
+                      { id:'im-disconnected', title:'DISCONNECTED GRAPH', icon:'◎',  description:'Disconnected — incidence matrix',     accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'disconnected_graph_3.html' /* LINK HERE: incidence-matrix-disconnected-graph.html */ },
+                      { id:'im-complete',     title:'COMPLETE GRAPH',     icon:'K',  description:'Complete — incidence matrix',         accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'complete_graph_3.html' /* LINK HERE: incidence-matrix-complete-graph.html */ },
+                      { id:'im-sparse',       title:'SPARSE GRAPH',       icon:'·',  description:'Sparse — incidence matrix',           accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'sparse_graph_3.html' /* LINK HERE: incidence-matrix-sparse-graph.html */ },
+                      { id:'im-dense',        title:'DENSE GRAPH',        icon:'●',  description:'Dense — incidence matrix',            accent:'linear-gradient(135deg,#fdba74 0%,#ea580c 100%)', link:'dense_graph_3.html' /* LINK HERE: incidence-matrix-dense-graph.html */ }
+                    ]
+                  }
+
+                ]
+              },
+              /* ---- END GRAPH ---- */
+
+              /* ---- HASH TABLE ---- */
+              {
+                id: 'hash-table',
+                title: 'HASH TABLE',
+                icon: '#',
+                description: 'Key-value store using a hash function for O(1) average access',
+                accent: 'linear-gradient(135deg,#ec4899 0%,#831843 100%)',
+                children: [
+                  { id:'separate-chaining', title:'SEPARATE CHAINING HASH TABLE', icon:'⊶#', description:'Collisions handled by chaining into linked lists',    accent:'linear-gradient(135deg,#f9a8d4 0%,#be185d 100%)', link:'separate_chaining_linked_list_hash_table.html' /* LINK HERE: separate-chaining-hash-table.html */ },
+                  { id:'open-addressing',   title:'OPEN ADDRESSING HASH TABLE',   icon:'→#', description:'Collisions resolved by probing within the table', accent:'linear-gradient(135deg,#f9a8d4 0%,#be185d 100%)', link:'open_addressing_hash_table.html' /* LINK HERE: open-addressing-hash-table.html */ }
+                ]
+              },
+              /* ---- END HASH TABLE ---- */
+
+              /* ---- SKIP LIST ---- */
+              {
+                id: 'skip-list',
+                title: 'SKIP LIST',
+                icon: '≡',
+                description: 'Probabilistic multi-layer linked structure for fast search',
+                accent: 'linear-gradient(135deg,#06b6d4 0%,#164e63 100%)',
+                children: [
+                  { id:'standard-skip-list',     title:'STANDARD SKIP LIST',     icon:'≡',   description:'Classic probabilistic skip list',               accent:'linear-gradient(135deg,#67e8f9 0%,#0e7490 100%)', link:'standard_skip_list.html' /* LINK HERE: standard-skip-list.html */ },
+                  { id:'deterministic-skip-list', title:'DETERMINISTIC SKIP LIST',icon:'≡D',  description:'Deterministic level-promotion rules',           accent:'linear-gradient(135deg,#67e8f9 0%,#0e7490 100%)', link:'deterministic_skip_list.html' /* LINK HERE: deterministic-skip-list.html */ },
+                  { id:'indexable-skip-list',     title:'INDEXABLE SKIP LIST',    icon:'≡I',  description:'Supports random access by index in O(log n)',   accent:'linear-gradient(135deg,#67e8f9 0%,#0e7490 100%)', link:'indexable_skip_list.html' /* LINK HERE: indexable-skip-list.html */ },
+                  { id:'persistent-skip-list',    title:'PERSISTENT SKIP LIST',   icon:'≡P',  description:'Maintains version history — immutable updates', accent:'linear-gradient(135deg,#67e8f9 0%,#0e7490 100%)', link:'persistent_skip_list.html' /* LINK HERE: persistent-skip-list.html */ },
+                  { id:'concurrent-skip-list',    title:'CONCURRENT SKIP LIST',   icon:'≡C',  description:'Thread-safe concurrent read/write operations', accent:'linear-gradient(135deg,#67e8f9 0%,#0e7490 100%)', link:'concurrent_skip_list.html' /* LINK HERE: concurrent-skip-list.html */ }
+                ]
+              }
+              /* ---- END SKIP LIST ---- */
+
+            ]
+          }
+          /* ----------------------------------------------------------
+             END NON-LINEAR DATA STRUCTURE
+             ---------------------------------------------------------- */
+
+        ]
+      },
+      /* ============================================================
+         END DATA STRUCTURE
+         ============================================================ */
+
+      /* ============================================================
+         2. ALGORITHM
+         ============================================================
+         isFuture:true means no children → shows "coming soon" panel.
+         Set isFuture:false and add children[] when ready.
+         ============================================================ */
+      {
+        id: 'algorithm',
+        title: 'ALGORITHM',
+        icon: '⚡',
+        description: 'Step-by-step computational procedures for solving problems',
+        accent: 'linear-gradient(135deg,#f59e0b 0%,#78350f 100%)',
+        isFuture: false,
+        children: [
+           { id:'algorithm', title:'ALGORITHM', icon:'⚡', description:'Step-by-step computational procedures for solving problems', accent:'linear-gradient(135deg,#67e8f9 0%,#0e7490 100%)', link:'Algorithm_Guide.html' /* LINK HERE: algorithm.html */ },
+        ]
+        /* -------------------------------------------------------
+           FUTURE ALGORITHM SECTIONS — Add children here when ready:
+           Example:
+           children: [
+             { id:'sorting', title:'SORTING ALGORITHMS', icon:'↑↓', ... },
+             { id:'searching', title:'SEARCHING ALGORITHMS', icon:'⌕', ... },
+             { id:'graph-algo', title:'GRAPH ALGORITHMS', icon:'⊞', ... },
+             { id:'dp', title:'DYNAMIC PROGRAMMING', icon:'Σ', ... },
+             { id:'divide-conquer', title:'DIVIDE & CONQUER', icon:'⋈', ... },
+             { id:'greedy', title:'GREEDY ALGORITHMS', icon:'★', ... },
+             { id:'backtracking', title:'BACKTRACKING', icon:'↩', ... },
+             { id:'recursion', title:'RECURSION', icon:'∞', ... }
+           ]
+           ------------------------------------------------------- */
+      }
+      /* ============================================================
+         END ALGORITHM
+         ============================================================ */
+
+    ]
+  };
+  /* ================================================================
+     END DSA_TREE
+     ================================================================ */
+
+
+  /* ================================================================
+     NODE MAP — fast O(1) lookup by id
+     ================================================================ */
+  const NODE_MAP = {};
+  (function buildMap(n) {
+    NODE_MAP[n.id] = n;
+    if (n.children && n.children.length) n.children.forEach(buildMap);
+  })(DSA_TREE);
+
+
+  /* ================================================================
+     NAVIGATION STATE
+     navStack: array of node objects representing current path
+               navStack[0] = root, navStack[last] = current node
+     ================================================================ */
+  let navStack = [];
+  let isTransitioning = false;
+
+
+  /* ================================================================
+     CANVAS PARTICLE ANIMATION
+     ================================================================ */
+  (function initCanvas() {
+    const canvas  = document.getElementById('bg-canvas');
+    const ctx     = canvas.getContext('2d');
+    let particles = [];
+    let w = 0, h = 0;
+
+    function resize() {
+      w = canvas.width  = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Particle {
+      constructor() { this.reset(true); }
+      reset(init) {
+        this.x  = Math.random() * w;
+        this.y  = init ? Math.random() * h : (Math.random() < 0.5 ? -5 : h + 5);
+        this.vx = (Math.random() - 0.5) * 0.28;
+        this.vy = (Math.random() - 0.5) * 0.28;
+        this.r  = Math.random() * 1.8 + 0.6;
+        this.a  = Math.random() * 0.4 + 0.1;
+      }
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < -10 || this.x > w+10 || this.y < -10 || this.y > h+10) this.reset(false);
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0,212,255,${this.a})`;
+        ctx.fill();
+      }
+    }
+
+    function init() {
+      const count = Math.min(90, Math.floor(w * h / 12000));
+      particles = Array.from({length: count}, () => new Particle());
+    }
+    init();
+    window.addEventListener('resize', init);
+
+    function frame() {
+      ctx.clearRect(0, 0, w, h);
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const d  = Math.sqrt(dx*dx + dy*dy);
+          if (d < 110) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(0,180,255,${(1 - d/110) * 0.12})`;
+            ctx.lineWidth   = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+
+
+  /* ================================================================
+     HERO TITLE — letter-by-letter animation
+     ================================================================ */
+  (function animateHeroTitle() {
+    const raw  = 'DATA STRUCTURE\n& ALGORITHM';
+    const hero = document.getElementById('hero-title');
+    let idx = 0;
+    const html = raw.split('').map(ch => {
+      if (ch === '\n') return '<br>';
+      if (ch === ' ')  { idx++; return `<span class="letter sp" style="--i:${idx++}">&nbsp;</span>`; }
+      return `<span class="letter" style="--i:${idx++}">${ch}</span>`;
+    }).join('');
+    hero.innerHTML = html;
+  })();
+
+
+  /* ================================================================
+     NAVIGATION FUNCTIONS
+     ================================================================ */
+
+  /** Show home, hide content */
+  function showHome() {
+    document.getElementById('home-screen').classList.remove('hidden');
+    document.getElementById('content-screen').classList.remove('visible');
+    navStack = [];
+  }
+
+  /** Called when user clicks EXPLORE */
+  function startExploring() {
+    navStack = [DSA_TREE];
+    switchToContent('forward');
+  }
+
+  /** Navigate into a child node */
+  function navigateTo(nodeId) {
+    if (isTransitioning) return;
+    const node = NODE_MAP[nodeId];
+    if (!node) return;
+
+    if (node.link) {
+      /* Leaf node — open the topic file */
+      if (node.link === '#') {
+        showToast('📎  Attach a file path to this card — see source comment');
+      } else {
+        window.location.href = node.link;
+      }
+      return;
+    }
+
+    if (node.isFuture || !node.children || node.children.length === 0) {
+      /* Future node — navigate but show placeholder */
+      navStack.push(node);
+      switchToContent('forward');
+      return;
+    }
+
+    navStack.push(node);
+    switchToContent('forward');
+  }
+
+  /** Go back one level */
+  function goBack() {
+    if (isTransitioning) return;
+    if (navStack.length <= 1) {
+      showHome();
+      return;
+    }
+    navStack.pop();
+    switchToContent('back');
+  }
+
+  /** Jump to a breadcrumb ancestor */
+  function jumpTo(stackIdx) {
+    if (isTransitioning || stackIdx >= navStack.length - 1) return;
+    navStack = navStack.slice(0, stackIdx + 1);
+    switchToContent('back');
+  }
+
+  /** Animate transition between home ↔ content */
+  function switchToContent(direction) {
+    isTransitioning = true;
+    const home    = document.getElementById('home-screen');
+    const content = document.getElementById('content-screen');
+
+    home.classList.add('hidden');
+    content.style.opacity    = '0';
+    content.style.transform  = direction === 'forward' ? 'translateY(20px)' : 'translateY(-12px)';
+    content.classList.add('visible');
+
+    setTimeout(() => {
+      renderLevel();
+      requestAnimationFrame(() => {
+        content.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        content.style.opacity    = '1';
+        content.style.transform  = 'translateY(0)';
+        isTransitioning = false;
+      });
+    }, 40);
+  }
+
+  /* ================================================================
+     RENDER CURRENT LEVEL
+     ================================================================ */
+  function renderLevel() {
+    const node  = navStack[navStack.length - 1];
+    const depth = navStack.length - 1;  // 0 = root
+
+    /* ---- breadcrumb ---- */
+    const crumbEl = document.getElementById('breadcrumb');
+    crumbEl.innerHTML = navStack.map((n, i) => {
+      const isCurrent = i === navStack.length - 1;
+      const sep = i < navStack.length - 1 ? '<span class="crumb-sep">/</span>' : '';
+      const label = n.id === 'root' ? 'HOME' : n.title;
+      if (isCurrent) {
+        return `<span class="crumb active">${label}</span>${sep}`;
+      }
+      return `<span class="crumb" onclick="jumpTo(${i})" tabindex="0" role="button">${label}</span>${sep}`;
+    }).join('');
+
+    /* ---- level badge ---- */
+    document.getElementById('level-num').textContent = depth;
+
+    /* ---- page header ---- */
+    const iconBox = document.getElementById('page-icon-box');
+    iconBox.style.background = `linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))`;
+    iconBox.style.borderColor = 'rgba(255,255,255,0.12)';
+    document.getElementById('page-icon').textContent   = node.icon || '◈';
+    document.getElementById('page-title').textContent  = node.title;
+    document.getElementById('page-desc').textContent   = node.description || '';
+
+    /* ---- cards or future placeholder ---- */
+    const grid   = document.getElementById('cards-grid');
+    const future = document.getElementById('future-placeholder');
+    grid.innerHTML = '';
+
+    const hasFuture = node.isFuture || !node.children || node.children.length === 0;
+
+    if (hasFuture) {
+      grid.style.display   = 'none';
+      future.classList.add('show');
+      return;
+    }
+
+    future.classList.remove('show');
+    grid.style.display = 'grid';
+
+    /* set grid columns */
+    const cols = getGridCols(node);
+    grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+    /* build cards */
+    node.children.forEach((child, idx) => {
+      const card = buildCard(child, depth);
+      card.style.animationDelay = `${idx * 0.06}s`;
+      card.classList.add('card-enter');
+      grid.appendChild(card);
+    });
+  }
+
+  /** Calculate grid columns for a node's children */
+  function getGridCols(node) {
+    if (node.gridCols) return node.gridCols;
+    const n = node.children ? node.children.length : 0;
+    if (n === 1) return 1;
+    if (n === 2) return 2;
+    if (n <= 4)  return 2;
+    if (n <= 6)  return 3;
+    if (n <= 9)  return 3;
+    return 3;
+  }
+
+  /** Build a single card element */
+  function buildCard(node, parentDepth) {
+    const isLeaf   = !!node.link;
+    const isFuture = node.isFuture || (!node.children?.length && !node.link);
+    const accent   = node.accent || getDepthGradient(parentDepth + 1);
+
+    const card = document.createElement('div');
+    card.className = 'card' + (isLeaf ? ' leaf-card' : '') + (isFuture ? ' future-card' : '');
+    card.setAttribute('role', 'listitem');
+    card.setAttribute('tabindex', isFuture ? '-1' : '0');
+    card.setAttribute('aria-label', node.title);
+
+    /* Click handler */
+    if (!isFuture) {
+      card.addEventListener('click', () => navigateTo(node.id));
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigateTo(node.id); } });
+    }
+
+    /* Badge text */
+    let badgeClass, badgeText;
+    if (isFuture)     { badgeClass = 'future'; badgeText = 'SOON'; }
+    else if (isLeaf)  { badgeClass = 'file';   badgeText = 'OPEN'; }
+    else              { badgeClass = 'nav';    badgeText = 'EXPLORE'; }
+
+    /* Arrow */
+    const arrowChar = isLeaf ? '↗' : (isFuture ? '○' : '→');
+
+    /* Hover glow matching accent — inject via CSS var */
+    const glowColor = accentToGlow(accent);
+
+    card.innerHTML = `
+      <div class="card-line" style="background:${accent}"></div>
+      <div class="card-body">
+        <div class="card-icon-wrap" style="background:${accent.replace('linear-gradient','linear-gradient').replace('0%,','0%,rgba(0,0,0,0.4),')}; border-color:rgba(255,255,255,0.12)">
+          ${node.icon || '◈'}
+        </div>
+        <div class="card-text">
+          <div class="card-title">${node.title}</div>
+          <div class="card-desc">${node.description || ''}</div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="card-badge ${badgeClass}">${badgeText}</span>
+        <span class="card-arrow">${arrowChar}</span>
+      </div>
+    `;
+
+    /* Dynamic hover glow */
+    card.addEventListener('mouseenter', () => {
+      card.style.boxShadow = `0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08), ${glowColor}`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.boxShadow = '';
+    });
+
+    return card;
+  }
+
+  /* ================================================================
+     UTILITIES
+     ================================================================ */
+
+  /** Derive a glow shadow from gradient accent */
+  function accentToGlow(accent) {
+    // Extract first color from gradient and create glow
+    const match = accent.match(/#([0-9a-f]{6})/i);
+    if (!match) return '0 0 30px rgba(0,229,255,0.12)';
+    const hex = match[1];
+    const r = parseInt(hex.substr(0,2),16);
+    const g = parseInt(hex.substr(2,2),16);
+    const b = parseInt(hex.substr(4,2),16);
+    return `0 0 35px rgba(${r},${g},${b},0.18)`;
+  }
+
+  /** Fallback gradient by depth */
+  function getDepthGradient(depth) {
+    const gradients = [
+      'linear-gradient(135deg,#00e5ff 0%,#0066cc 100%)',
+      'linear-gradient(135deg,#a855f7 0%,#5b21b6 100%)',
+      'linear-gradient(135deg,#f59e0b 0%,#b45309 100%)',
+      'linear-gradient(135deg,#10b981 0%,#064e3b 100%)',
+      'linear-gradient(135deg,#f43f5e 0%,#9f1239 100%)',
+      'linear-gradient(135deg,#06b6d4 0%,#164e63 100%)',
+    ];
+    return gradients[depth % gradients.length];
+  }
+
+  /** Toast notification */
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  /* ================================================================
+     KEYBOARD: Escape goes back
+     ================================================================ */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (navStack.length > 0) goBack();
+    }
+  });
+
+  /* ================================================================
+     END OF SCRIPT
+     ================================================================ */
+  </script>
+</body>
+</html>
