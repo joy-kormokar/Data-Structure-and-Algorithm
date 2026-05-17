@@ -1,0 +1,3232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singly Linked List — Array-Based C Programming Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Source+Sans+3:wght@300;400;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+<style>
+  :root {
+    --bg-base: #0d1117;
+    --bg-surface: #161b22;
+    --bg-card: #1c2230;
+    --bg-code: #0d1117;
+    --border: #30363d;
+    --border-accent: #58a6ff40;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+    --accent-blue: #58a6ff;
+    --accent-cyan: #39d353;
+    --accent-amber: #f0883e;
+    --accent-purple: #bc8cff;
+    --accent-red: #f85149;
+    --accent-teal: #56d364;
+    --sidebar-w: 280px;
+    --header-h: 60px;
+    --radius: 10px;
+    --transition: 0.25s cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 24px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  #topbar .logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800; font-size: 1.15rem;
+    color: var(--accent-blue);
+    letter-spacing: -0.5px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #topbar .logo span { color: var(--accent-amber); }
+  .badge-lang {
+    background: #58a6ff22; color: var(--accent-blue);
+    border: 1px solid #58a6ff44;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .badge-level {
+    background: #f0883e22; color: var(--accent-amber);
+    border: 1px solid #f0883e44;
+    font-size: 0.72rem; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  #topbar .spacer { flex: 1; }
+  #toggle-sidebar {
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-secondary); cursor: pointer;
+    padding: 7px 12px; border-radius: 7px; font-size: 1rem;
+    transition: var(--transition);
+  }
+  #toggle-sidebar:hover { color: var(--accent-blue); border-color: var(--accent-blue); }
+
+  /* ── LAYOUT ── */
+  #layout {
+    display: flex;
+    margin-top: var(--header-h);
+    min-height: calc(100vh - var(--header-h));
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    top: var(--header-h); left: 0;
+    width: var(--sidebar-w);
+    height: calc(100vh - var(--header-h));
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    transition: transform var(--transition);
+    z-index: 90;
+    padding-bottom: 40px;
+  }
+  #sidebar.hidden { transform: translateX(calc(-1 * var(--sidebar-w))); }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .sidebar-section {
+    padding: 16px 16px 4px;
+    font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 1.2px; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-size: 0.87rem;
+  }
+  .nav-item:hover { background: var(--bg-card); color: var(--text-primary); border-left-color: var(--border); }
+  .nav-item.active { background: #58a6ff14; color: var(--accent-blue); border-left-color: var(--accent-blue); font-weight: 600; }
+  .nav-item .num {
+    min-width: 22px; height: 22px;
+    background: var(--bg-base); border: 1px solid var(--border);
+    border-radius: 5px; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+  }
+  .nav-item.active .num { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+  /* ── MAIN ── */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 40px 48px 80px;
+    transition: margin-left var(--transition);
+    max-width: 1100px;
+  }
+  #main.full { margin-left: 0; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #161b22 0%, #1c2a3a 50%, #161b22 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 48px 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -80px; right: -80px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, #58a6ff18 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem; font-weight: 800;
+    line-height: 1.2; margin-bottom: 12px;
+    background: linear-gradient(135deg, #e6edf3, #58a6ff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .hero p { color: var(--text-secondary); font-size: 1.05rem; max-width: 600px; }
+  .hero-meta { display: flex; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+  .meta-chip {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 14px;
+    font-size: 0.82rem; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .meta-chip span { color: var(--accent-cyan); font-weight: 600; }
+
+  /* ── CONCEPT CARD ── */
+  .concept-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 28px;
+    overflow: hidden;
+    transition: border-color var(--transition);
+  }
+  .concept-card:hover { border-color: var(--border-accent); }
+
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 22px;
+    cursor: pointer;
+    user-select: none;
+    border-bottom: 1px solid transparent;
+    transition: var(--transition);
+  }
+  .card-header:hover { background: #ffffff06; }
+  .card-header.open { border-bottom-color: var(--border); }
+
+  .op-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem; font-weight: 700;
+    padding: 3px 9px; border-radius: 5px;
+    white-space: nowrap;
+  }
+  .badge-insert { background: #39d35322; color: var(--accent-teal); border: 1px solid #39d35344; }
+  .badge-delete { background: #f8514922; color: var(--accent-red); border: 1px solid #f8514944; }
+  .badge-traverse { background: #58a6ff22; color: var(--accent-blue); border: 1px solid #58a6ff44; }
+  .badge-search { background: #bc8cff22; color: var(--accent-purple); border: 1px solid #bc8cff44; }
+  .badge-util { background: #f0883e22; color: var(--accent-amber); border: 1px solid #f0883e44; }
+  .badge-advanced { background: #f0883e22; color: #e3b341; border: 1px solid #e3b34144; }
+
+  .card-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem; font-weight: 700;
+    color: var(--text-primary);
+    flex: 1;
+  }
+  .card-subtitle { font-size: 0.8rem; color: var(--text-muted); }
+  .card-toggle { color: var(--text-muted); font-size: 0.9rem; transition: transform var(--transition); }
+  .card-toggle.open { transform: rotate(180deg); }
+
+  .card-body { display: none; padding: 24px 22px; }
+  .card-body.open { display: block; }
+
+  /* ── TABS ── */
+  .tab-bar {
+    display: flex; gap: 2px;
+    background: var(--bg-base);
+    border-radius: 8px; padding: 4px;
+    margin-bottom: 22px;
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+  .tab-btn {
+    padding: 7px 18px; border-radius: 6px;
+    border: none; background: transparent;
+    color: var(--text-muted); cursor: pointer;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.85rem; font-weight: 600;
+    transition: var(--transition);
+  }
+  .tab-btn.active { background: var(--bg-card); color: var(--text-primary); }
+  .tab-btn:hover:not(.active) { color: var(--text-secondary); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── THEORY ── */
+  .theory-section h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    color: var(--accent-blue);
+    margin: 20px 0 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .theory-section h3:first-child { margin-top: 0; }
+  .theory-section p { color: var(--text-secondary); margin-bottom: 10px; font-size: 0.93rem; }
+  .theory-section ul { padding-left: 20px; color: var(--text-secondary); font-size: 0.93rem; }
+  .theory-section li { margin-bottom: 6px; }
+  .theory-section li strong { color: var(--text-primary); }
+
+  .complexity-table {
+    width: 100%; border-collapse: collapse;
+    margin: 12px 0; font-size: 0.85rem;
+    border-radius: 8px; overflow: hidden;
+  }
+  .complexity-table th {
+    background: var(--bg-base); color: var(--text-secondary);
+    padding: 10px 14px; text-align: left;
+    font-weight: 600; font-size: 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .complexity-table td {
+    padding: 9px 14px; border-bottom: 1px solid #30363d55;
+    color: var(--text-secondary);
+  }
+  .complexity-table tr:last-child td { border-bottom: none; }
+  .complexity-table tr:hover td { background: #ffffff04; }
+  .tc-good { color: var(--accent-teal); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .tc-mid { color: var(--accent-amber); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .tc-bad { color: var(--accent-red); font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+
+  .info-box {
+    background: #58a6ff0d; border: 1px solid #58a6ff30;
+    border-left: 3px solid var(--accent-blue);
+    border-radius: 6px; padding: 12px 16px;
+    margin: 12px 0; font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+  .warn-box {
+    background: #f0883e0d; border: 1px solid #f0883e30;
+    border-left: 3px solid var(--accent-amber);
+    border-radius: 6px; padding: 12px 16px;
+    margin: 12px 0; font-size: 0.88rem;
+    color: var(--text-secondary);
+  }
+  .info-box strong, .warn-box strong { color: var(--text-primary); }
+
+  /* ── VISUAL DIAGRAM ── */
+  .diagram-wrap {
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 24px 20px;
+    overflow-x: auto;
+  }
+  .diagram-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--text-muted);
+    margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* Node box diagram */
+  .node-row {
+    display: flex; align-items: center; gap: 0;
+    flex-wrap: nowrap; overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .node-box {
+    display: flex; border: 2px solid var(--border);
+    border-radius: 6px; overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem; min-width: 90px;
+    background: var(--bg-card);
+  }
+  .node-box .nd { padding: 10px 12px; border-right: 1px solid var(--border); color: var(--accent-blue); font-weight: 600; text-align: center; min-width: 44px; }
+  .node-box .nx { padding: 10px 10px; color: var(--text-muted); text-align: center; min-width: 44px; }
+  .node-box.highlight { border-color: var(--accent-cyan); }
+  .node-box.highlight .nd { color: var(--accent-cyan); }
+  .node-box.new-node { border-color: var(--accent-amber); }
+  .node-box.new-node .nd { color: var(--accent-amber); }
+  .node-box.del-node { border-color: var(--accent-red); opacity: 0.6; }
+
+  .arrow { color: var(--accent-blue); font-size: 1.1rem; padding: 0 4px; align-self: center; }
+  .null-box { font-family: 'JetBrains Mono', monospace; color: var(--accent-red); font-size: 0.78rem; align-self: center; padding: 0 8px; font-weight: 600; }
+
+  .label-row { display: flex; gap: 0; margin-top: 6px; }
+  .label-cell { font-size: 0.68rem; color: var(--text-muted); text-align: center; font-family: 'JetBrains Mono', monospace; }
+
+  .array-visual {
+    display: flex; gap: 0; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem;
+  }
+  .arr-cell {
+    border: 1px solid var(--border); padding: 8px 14px;
+    text-align: center; min-width: 50px; background: var(--bg-card);
+  }
+  .arr-cell.head { border-color: var(--accent-blue); background: #58a6ff14; color: var(--accent-blue); }
+  .arr-cell.free { border-color: var(--border); background: var(--bg-base); color: var(--text-muted); }
+  .arr-cell.used { border-color: #39d35355; background: #39d35312; color: var(--accent-teal); }
+  .arr-cell:first-child { border-radius: 6px 0 0 6px; }
+  .arr-cell:last-child { border-radius: 0 6px 6px 0; }
+
+  .head-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #58a6ff14; border: 1px solid #58a6ff44;
+    border-radius: 5px; padding: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--accent-blue);
+    margin-bottom: 10px;
+  }
+
+  /* ── CODE ── */
+  .code-wrap { position: relative; }
+  .code-label {
+    display: flex; align-items: center; gap: 8px;
+    background: #1c2230; border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 16px;
+  }
+  .code-label .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #f85149; }
+  .dot-y { background: #e3b341; }
+  .dot-g { background: #39d353; }
+  .code-label .filename {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--text-muted); margin-left: 6px;
+  }
+  pre[class*="language-"] {
+    margin: 0 !important;
+    border-radius: 0 0 8px 8px !important;
+    border: 1px solid var(--border) !important;
+    background: #0d1117 !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.82rem !important;
+    line-height: 1.6 !important;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  code[class*="language-"] { font-family: 'JetBrains Mono', monospace !important; }
+
+  .copy-btn {
+    position: absolute; top: 42px; right: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer;
+    padding: 4px 10px; border-radius: 5px; font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    transition: var(--transition); z-index: 2;
+  }
+  .copy-btn:hover { color: var(--accent-blue); border-color: var(--accent-blue); }
+
+  /* ── STEP EXPLAIN ── */
+  .steps-wrap { margin-top: 20px; }
+  .steps-wrap h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem; color: var(--text-secondary);
+    margin-bottom: 14px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.8px;
+  }
+  .step-item {
+    display: flex; gap: 14px; margin-bottom: 12px;
+    padding: 12px 16px; background: var(--bg-base);
+    border-radius: 7px; border: 1px solid var(--border);
+  }
+  .step-num {
+    min-width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent-blue), #1f6feb);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; font-weight: 700; color: #fff;
+  }
+  .step-text { font-size: 0.88rem; color: var(--text-secondary); padding-top: 4px; }
+  .step-text code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-card); border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 4px;
+    font-size: 0.8em; color: var(--accent-cyan);
+  }
+
+  /* ── FOUNDATION SECTION ── */
+  .foundation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  @media (max-width: 720px) { .foundation-grid { grid-template-columns: 1fr; } }
+  .fg-card {
+    background: var(--bg-base); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+  }
+  .fg-card h4 {
+    font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700;
+    color: var(--accent-amber); margin-bottom: 8px;
+  }
+  .fg-card p { font-size: 0.85rem; color: var(--text-muted); }
+
+  /* scroll smooth */
+  html { scroll-behavior: smooth; }
+  .scroll-target { scroll-margin-top: 80px; }
+
+  /* progress bar */
+  #progress-bar {
+    position: fixed; top: var(--header-h); left: 0; right: 0;
+    height: 3px; background: var(--border); z-index: 99;
+  }
+  #progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+    transition: width 0.1s;
+  }
+
+  /* responsive */
+  @media (max-width: 900px) {
+    #sidebar { transform: translateX(calc(-1 * var(--sidebar-w))); }
+    #sidebar.mobile-open { transform: translateX(0); }
+    #main { margin-left: 0 !important; padding: 24px 20px 60px; }
+  }
+
+  .section-divider {
+    height: 1px; background: var(--border);
+    margin: 40px 0; position: relative;
+  }
+  .section-divider::after {
+    content: attr(data-label);
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-base);
+    font-size: 0.7rem; color: var(--text-muted);
+    padding: 0 12px; font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* tag */
+  .tag {
+    display: inline-block; font-size: 0.72rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px; margin: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .tag-blue { background: #58a6ff22; color: var(--accent-blue); }
+  .tag-green { background: #39d35322; color: var(--accent-teal); }
+  .tag-amber { background: #f0883e22; color: var(--accent-amber); }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- TOP BAR -->
+<header id="topbar">
+  <div class="logo">🔗 <span>Linked</span>List<span>.c</span></div>
+  <span class="badge-lang">Array-Based</span>
+  <span class="badge-level">Beginner · C Programming</span>
+  <div class="spacer"></div>
+  <button id="toggle-sidebar" onclick="toggleSidebar()">☰ Topics</button>
+</header>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-section">Foundation</div>
+  <a class="nav-item active" href="#foundation" onclick="setActive(this)">
+    <span class="num">★</span> Array-Based Setup
+  </a>
+
+  <div class="sidebar-section">Insertion</div>
+  <a class="nav-item" href="#insert-begin" onclick="setActive(this)"><span class="num">01</span> At Beginning</a>
+  <a class="nav-item" href="#insert-end" onclick="setActive(this)"><span class="num">02</span> At End</a>
+  <a class="nav-item" href="#insert-pos" onclick="setActive(this)"><span class="num">03</span> At Position</a>
+
+  <div class="sidebar-section">Deletion</div>
+  <a class="nav-item" href="#del-begin" onclick="setActive(this)"><span class="num">04</span> From Beginning</a>
+  <a class="nav-item" href="#del-end" onclick="setActive(this)"><span class="num">05</span> From End</a>
+  <a class="nav-item" href="#del-pos" onclick="setActive(this)"><span class="num">06</span> From Position</a>
+  <a class="nav-item" href="#del-val" onclick="setActive(this)"><span class="num">07</span> By Value</a>
+
+  <div class="sidebar-section">Access &amp; Modify</div>
+  <a class="nav-item" href="#traverse" onclick="setActive(this)"><span class="num">08</span> Traversal</a>
+  <a class="nav-item" href="#search" onclick="setActive(this)"><span class="num">09</span> Searching</a>
+  <a class="nav-item" href="#update" onclick="setActive(this)"><span class="num">10</span> Updating</a>
+  <a class="nav-item" href="#count" onclick="setActive(this)"><span class="num">11</span> Count Nodes</a>
+
+  <div class="sidebar-section">Reorder</div>
+  <a class="nav-item" href="#sort" onclick="setActive(this)"><span class="num">12</span> Sorting</a>
+  <a class="nav-item" href="#reverse" onclick="setActive(this)"><span class="num">13</span> Reversing</a>
+  <a class="nav-item" href="#rotate" onclick="setActive(this)"><span class="num">14</span> Rotation</a>
+  <a class="nav-item" href="#rev-groups" onclick="setActive(this)"><span class="num">15</span> Reverse in Groups</a>
+
+  <div class="sidebar-section">Multi-List</div>
+  <a class="nav-item" href="#merge" onclick="setActive(this)"><span class="num">16</span> Merging</a>
+  <a class="nav-item" href="#concat" onclick="setActive(this)"><span class="num">17</span> Concatenation</a>
+  <a class="nav-item" href="#split" onclick="setActive(this)"><span class="num">18</span> Splitting</a>
+  <a class="nav-item" href="#intersect" onclick="setActive(this)"><span class="num">19</span> Intersection</a>
+
+  <div class="sidebar-section">Advanced</div>
+  <a class="nav-item" href="#copy" onclick="setActive(this)"><span class="num">20</span> Copying</a>
+  <a class="nav-item" href="#middle" onclick="setActive(this)"><span class="num">21</span> Middle Element</a>
+  <a class="nav-item" href="#dedup" onclick="setActive(this)"><span class="num">22</span> Remove Duplicates</a>
+  <a class="nav-item" href="#loop" onclick="setActive(this)"><span class="num">23</span> Loop Detection</a>
+  <a class="nav-item" href="#flatten" onclick="setActive(this)"><span class="num">24</span> Flattening</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Array-Based Singly<br>Linked List in C</h1>
+  <p>A complete interactive course covering all 19 operations — from insertion to loop detection — using an array-of-structs approach. No pointers needed.</p>
+  <div class="hero-meta">
+    <div class="meta-chip">📚 <span>24</span> Topics</div>
+    <div class="meta-chip">🔢 Language: <span>C</span></div>
+    <div class="meta-chip">🧩 Method: <span>Array of Structs</span></div>
+    <div class="meta-chip">⚡ Level: <span>Beginner Friendly</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- FOUNDATION -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="foundation" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header open" onclick="toggleCard(this)">
+    <span class="op-badge badge-traverse">FOUNDATION</span>
+    <div>
+      <div class="card-title">Array-Based Singly Linked List — How It Works</div>
+      <div class="card-subtitle">Core structure, initialization, node allocation</div>
+    </div>
+    <span class="card-toggle open">▼</span>
+  </div>
+  <div class="card-body open">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+
+    <!-- THEORY -->
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is an Array-Based Linked List?</h3>
+        <p>Instead of using <code style="font-family:monospace;color:var(--accent-cyan)">malloc()</code> and real memory pointers, we use a <strong>fixed-size array of structs</strong>. Each struct stores <strong>data</strong> and a <strong>next index</strong> (an integer pointing to the next element in the array). This simulates linked list behavior without dynamic memory.</p>
+
+        <div class="foundation-grid">
+          <div class="fg-card">
+            <h4>📦 The Node Struct</h4>
+            <p>Each node has two fields:<br><strong>data</strong> — the stored value<br><strong>next</strong> — index of next node (−1 = NULL)</p>
+          </div>
+          <div class="fg-card">
+            <h4>🗂️ The Array</h4>
+            <p>We declare <strong>list[MAX]</strong> — an array that holds all nodes. Unused slots are tracked via a "free list" starting at <strong>freeHead</strong>.</p>
+          </div>
+          <div class="fg-card">
+            <h4>🔑 head Index</h4>
+            <p><strong>head = -1</strong> means the list is empty. Otherwise it stores the array index of the first node.</p>
+          </div>
+          <div class="fg-card">
+            <h4>♻️ Free List</h4>
+            <p>Available slots are chained together. When we delete a node, its slot returns to the free list for reuse.</p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <strong>Why use array-based?</strong> It avoids memory fragmentation, is cache-friendly, and works well in embedded systems where <code style="font-family:monospace">malloc</code> is unavailable. Indices replace pointers — same logic, simpler syntax.
+        </div>
+
+        <h3>⏱️ Time Complexity</h3>
+        <table class="complexity-table">
+          <tr><th>Operation</th><th>Best</th><th>Average</th><th>Worst</th></tr>
+          <tr><td>Insert at Beginning</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td></tr>
+          <tr><td>Insert at End / Position</td><td class="tc-mid">O(n)</td><td class="tc-mid">O(n)</td><td class="tc-mid">O(n)</td></tr>
+          <tr><td>Delete from Beginning</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td></tr>
+          <tr><td>Delete / Search by Value</td><td class="tc-good">O(1)</td><td class="tc-mid">O(n)</td><td class="tc-bad">O(n)</td></tr>
+          <tr><td>Traversal / Count</td><td class="tc-mid">O(n)</td><td class="tc-mid">O(n)</td><td class="tc-mid">O(n)</td></tr>
+        </table>
+
+        <h3>🌍 Real-World Uses</h3>
+        <ul>
+          <li><strong>Embedded Systems</strong> — no heap allocation needed</li>
+          <li><strong>OS Free Block Lists</strong> — tracking free memory blocks</li>
+          <li><strong>Database Buffer Pools</strong> — managing fixed-size page frames</li>
+          <li><strong>Game Entity Management</strong> — fixed pool of game objects</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- VISUAL -->
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Array Memory Layout (MAX = 6)</div>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px">Each cell = one struct Node { data, next }. Index -1 = NULL pointer equivalent.</p>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:0.75rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px">Index →</div>
+          <div class="array-visual">
+            <div class="arr-cell head">idx 0<br><small>data:10</small><br><small>next:2</small></div>
+            <div class="arr-cell free">idx 1<br><small>FREE</small><br><small>next:3</small></div>
+            <div class="arr-cell used">idx 2<br><small>data:20</small><br><small>next:4</small></div>
+            <div class="arr-cell free">idx 3<br><small>FREE</small><br><small>next:5</small></div>
+            <div class="arr-cell used">idx 4<br><small>data:30</small><br><small>next:-1</small></div>
+            <div class="arr-cell free">idx 5<br><small>FREE</small><br><small>next:-1</small></div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+            <span style="font-size:0.75rem;padding:3px 10px;background:#58a6ff14;border:1px solid #58a6ff44;border-radius:5px;color:var(--accent-blue);font-family:'JetBrains Mono',monospace">head = 0</span>
+            <span style="font-size:0.75rem;padding:3px 10px;background:#f0883e14;border:1px solid #f0883e44;border-radius:5px;color:var(--accent-amber);font-family:'JetBrains Mono',monospace">freeHead = 1</span>
+          </div>
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="diagram-title">// Logical linked list view (following next indices)</div>
+          <div class="node-row">
+            <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">HEAD→</div>
+            <div class="node-box highlight"><div class="nd">10<br><small style="font-size:0.6rem;color:var(--text-muted)">[0]</small></div><div class="nx">→2</div></div>
+            <span class="arrow">→</span>
+            <div class="node-box"><div class="nd">20<br><small style="font-size:0.6rem;color:var(--text-muted)">[2]</small></div><div class="nx">→4</div></div>
+            <span class="arrow">→</span>
+            <div class="node-box"><div class="nd">30<br><small style="font-size:0.6rem;color:var(--text-muted)">[4]</small></div><div class="nx">-1</div></div>
+            <span class="null-box">NULL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CODE -->
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">linked_list_setup.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+
+#define MAX 100   /* Maximum number of nodes */
+
+/* === Node Structure === */
+struct Node {
+    int data;   /* value stored in node   */
+    int next;   /* index of next node     */
+                /* next = -1 means NULL   */
+};
+
+/* === Global Array and Pointers === */
+struct Node list[MAX];  /* array holding all nodes */
+int head;               /* index of first node     */
+int freeHead;           /* index of first free slot*/
+
+/* =============================================
+   INITIALIZE the linked list
+   - Links all slots into a "free list"
+   - head = -1 (empty list)
+   ============================================= */
+void init() {
+    int i;
+    /* Link all slots together as free slots */
+    for (i = 0; i &lt; MAX - 1; i++) {
+        list[i].next = i + 1;  /* each slot points to next */
+    }
+    list[MAX - 1].next = -1;   /* last slot has no next    */
+
+    freeHead = 0;  /* first free slot is index 0 */
+    head = -1;     /* list is empty              */
+}
+
+/* =============================================
+   ALLOCATE a new node with given data
+   Returns: index of the new node, or -1 if full
+   ============================================= */
+int allocNode(int data) {
+    int idx;
+
+    if (freeHead == -1) {
+        printf("List is full!\n");
+        return -1;   /* no free slots available */
+    }
+
+    idx = freeHead;             /* take the first free slot    */
+    freeHead = list[freeHead].next; /* advance freeHead        */
+
+    list[idx].data = data;      /* store the data              */
+    list[idx].next = -1;        /* this node points to nothing */
+
+    return idx;  /* return the index of new node */
+}
+
+/* =============================================
+   FREE a node back to the free list
+   ============================================= */
+void freeNode(int idx) {
+    list[idx].next = freeHead;  /* point to current free list */
+    freeHead = idx;             /* this slot is now first free*/
+}
+
+/* === MAIN to test === */
+int main() {
+    init();
+    printf("Linked list initialized!\n");
+    printf("head = %d (empty)\n", head);
+    printf("freeHead = %d\n", freeHead);
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step Explanation</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">We declare <code>struct Node list[MAX]</code> — an array of 100 node structs. Each has <code>data</code> and <code>next</code> (an integer index).</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text"><code>init()</code> chains all slots together: slot 0→1→2→…→99→-1. This creates the "free list" so we know which slots are available.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text"><code>allocNode(data)</code> takes the first free slot, updates <code>freeHead</code> to the next free, stores data, and returns the slot index.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text"><code>freeNode(idx)</code> returns a used slot back by prepending it to the free list — perfect for deletion.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- INSERT AT BEGINNING -->
+<!-- ═══════════════════════════════════════════════ -->
+<section id="insert-begin" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-insert">INSERT</span>
+    <div>
+      <div class="card-title">01 — Insertion at Beginning</div>
+      <div class="card-subtitle">O(1) — Fastest insertion</div>
+    </div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>We create a new node and place it <strong>before the current head</strong>. The new node's <code style="font-family:monospace;color:var(--accent-cyan)">next</code> is set to the old head index. Then <code>head</code> is updated to point to the new node.</p>
+        <h3>⏱️ Time Complexity</h3>
+        <table class="complexity-table">
+          <tr><th>Case</th><th>Time</th><th>Space</th></tr>
+          <tr><td>All cases</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td></tr>
+        </table>
+        <h3>🌍 Use Cases</h3>
+        <ul>
+          <li><strong>Undo stacks</strong> — newest action at front</li>
+          <li><strong>Browser history</strong> — most recent page first</li>
+          <li><strong>Recently used items</strong> — MRU cache</li>
+        </ul>
+        <div class="warn-box"><strong>Remember:</strong> When the list is empty (<code>head == -1</code>), the new node becomes the head and its <code>next</code> stays -1.</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Inserting 5 at beginning: [10 → 20 → 30] becomes [5 → 10 → 20 → 30]</div>
+        <div style="margin-bottom:16px">
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px">Before:</p>
+          <div class="node-row">
+            <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+            <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">20</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">30</div><div class="nx">-1</div></div>
+            <span class="null-box">NULL</span>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <p style="font-size:0.78rem;color:var(--accent-amber);margin-bottom:8px">Step 1: Allocate new node for value 5</p>
+          <div class="node-row">
+            <div class="node-box new-node"><div class="nd">5</div><div class="nx">-1</div></div>
+            <span style="font-size:0.78rem;color:var(--text-muted);padding:0 10px">← new node (idx=1)</span>
+          </div>
+        </div>
+        <div style="margin-bottom:16px">
+          <p style="font-size:0.78rem;color:var(--accent-amber);margin-bottom:8px">Step 2: new node's next = old head index</p>
+          <div class="node-row">
+            <div class="node-box new-node"><div class="nd">5</div><div class="nx">→idx0</div></div>
+            <span class="arrow">→</span>
+            <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">20</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">30</div><div class="nx">-1</div></div>
+            <span class="null-box">NULL</span>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:0.78rem;color:var(--accent-cyan);margin-bottom:8px">After: head = new node index</p>
+          <div class="node-row">
+            <div style="font-size:0.72rem;color:var(--accent-cyan);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+            <div class="node-box highlight"><div class="nd">5</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">20</div><div class="nx">→</div></div>
+            <div class="node-box"><div class="nd">30</div><div class="nx">-1</div></div>
+            <span class="null-box">NULL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">insert_beginning.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Insert a new node at the BEGINNING of the list */
+void insertAtBeginning(int data) {
+    int newIdx;
+
+    /* Step 1: Get a free slot for the new node */
+    newIdx = allocNode(data);
+    if (newIdx == -1) return;  /* list is full */
+
+    /* Step 2: New node's next = current head */
+    list[newIdx].next = head;
+
+    /* Step 3: Update head to point to new node */
+    head = newIdx;
+
+    printf("Inserted %d at beginning.\n", data);
+}
+
+/* === Example usage === */
+int main() {
+    init();
+    insertAtBeginning(30);   /* list: 30 */
+    insertAtBeginning(20);   /* list: 20 → 30 */
+    insertAtBeginning(10);   /* list: 10 → 20 → 30 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Call <code>allocNode(data)</code> to get a free array slot. It returns the index of the new slot.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Set <code>list[newIdx].next = head</code> — the new node now points to whatever was the first node.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Update <code>head = newIdx</code> — now the list starts at the new node. Done in O(1)!</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- INSERT AT END -->
+<section id="insert-end" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-insert">INSERT</span>
+    <div>
+      <div class="card-title">02 — Insertion at End</div>
+      <div class="card-subtitle">O(n) — Must traverse to last node</div>
+    </div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>We traverse the entire list to find the <strong>last node</strong> (whose <code>next == -1</code>), then link the new node after it.</p>
+        <h3>⏱️ Time Complexity</h3>
+        <table class="complexity-table">
+          <tr><th>Case</th><th>Time</th><th>Space</th></tr>
+          <tr><td>Empty list</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td></tr>
+          <tr><td>Non-empty list</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td></tr>
+        </table>
+        <h3>🌍 Use Cases</h3>
+        <ul><li><strong>Queue implementation</strong> — enqueue at rear</li><li><strong>Append to log</strong> — add entries to end of list</li></ul>
+        <div class="info-box"><strong>Tip:</strong> If you maintain a <code>tail</code> index separately, insertion at end becomes O(1).</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Inserting 40 at end: [10 → 20 → 30] → [10 → 20 → 30 → 40]</div>
+        <div class="node-row" style="margin-bottom:16px">
+          <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">30</div><div class="nx">-1</div></div>
+          <span style="font-size:0.72rem;color:var(--accent-amber);padding:0 8px;align-self:center">← last node</span>
+          <div class="node-box new-node" style="margin-left:10px"><div class="nd">40</div><div class="nx">-1</div></div>
+          <span style="font-size:0.72rem;color:var(--accent-amber);padding:0 8px;align-self:center">← new node</span>
+        </div>
+        <div style="margin-top:12px;font-size:0.78rem;color:var(--text-muted)">After linking last.next = new node index:</div>
+        <div class="node-row" style="margin-top:8px">
+          <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">30</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">40</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">insert_end.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Insert a new node at the END of the list */
+void insertAtEnd(int data) {
+    int newIdx, curr;
+
+    /* Step 1: Allocate a new node */
+    newIdx = allocNode(data);
+    if (newIdx == -1) return;
+
+    /* Step 2: If list is empty, new node becomes head */
+    if (head == -1) {
+        head = newIdx;
+        printf("Inserted %d (first node).\n", data);
+        return;
+    }
+
+    /* Step 3: Traverse to the last node */
+    curr = head;
+    while (list[curr].next != -1) {
+        curr = list[curr].next;  /* move to next node */
+    }
+
+    /* Step 4: Link last node to new node */
+    list[curr].next = newIdx;
+
+    printf("Inserted %d at end.\n", data);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10);   /* list: 10 */
+    insertAtEnd(20);   /* list: 10 → 20 */
+    insertAtEnd(30);   /* list: 10 → 20 → 30 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Allocate new node with <code>allocNode(data)</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">If <code>head == -1</code>, the list is empty — set <code>head = newIdx</code> and return.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Traverse using <code>curr = list[curr].next</code> until <code>list[curr].next == -1</code> — that's the last node.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Set <code>list[curr].next = newIdx</code> to attach the new node at the end.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- INSERT AT POSITION -->
+<section id="insert-pos" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-insert">INSERT</span>
+    <div>
+      <div class="card-title">03 — Insertion at Specific Position</div>
+      <div class="card-subtitle">O(n) — Traverse to position then insert</div>
+    </div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Insert a node at position <strong>k</strong> (1-based). We traverse to node at position <strong>k−1</strong>, then splice the new node between it and the next.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span></h3>
+        <div class="warn-box"><strong>Edge cases to handle:</strong><br>• Position 1 → same as insert at beginning<br>• Position > length → invalid, insert at end or reject<br>• Empty list at position 1 → just add as head</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Insert 99 at position 3 in list [10 → 20 → 30 → 40]</div>
+        <div class="node-row" style="margin-bottom:8px">
+          <div style="font-size:0.72rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;margin-right:8px">pos:  1</div>
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <span style="font-size:0.72rem;padding:0 4px;color:var(--text-muted)">2</span>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">→</div></div>
+          <span style="font-size:0.72rem;padding:0 4px;color:var(--text-muted)">3</span>
+          <div class="node-box"><div class="nd">30</div><div class="nx">→</div></div>
+          <span style="font-size:0.72rem;padding:0 4px;color:var(--text-muted)">4</span>
+          <div class="node-box"><div class="nd">40</div><div class="nx">-1</div></div>
+        </div>
+        <div style="margin:10px 0;font-size:0.78rem;color:var(--accent-amber)">↑ Stop at position 2 (= pos-1)</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px">After: new node links to old pos-3, and pos-2 links to new node</div>
+        <div class="node-row">
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box new-node"><div class="nd">99</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">30</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">40</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">insert_position.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Insert at a given position (1-based) */
+void insertAtPosition(int data, int pos) {
+    int newIdx, curr, i;
+
+    if (pos &lt; 1) {
+        printf("Invalid position!\n");
+        return;
+    }
+
+    /* Position 1: same as insert at beginning */
+    if (pos == 1) {
+        insertAtBeginning(data);
+        return;
+    }
+
+    /* Allocate new node */
+    newIdx = allocNode(data);
+    if (newIdx == -1) return;
+
+    /* Traverse to node just BEFORE the target position */
+    curr = head;
+    for (i = 1; i &lt; pos - 1; i++) {
+        if (curr == -1) {
+            printf("Position out of range!\n");
+            freeNode(newIdx);
+            return;
+        }
+        curr = list[curr].next;
+    }
+
+    if (curr == -1) {
+        printf("Position out of range!\n");
+        freeNode(newIdx);
+        return;
+    }
+
+    /* Splice: new node → next, then prev → new node */
+    list[newIdx].next = list[curr].next;
+    list[curr].next   = newIdx;
+
+    printf("Inserted %d at position %d.\n", data, pos);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10);
+    insertAtEnd(20);
+    insertAtEnd(30);
+    insertAtEnd(40);
+    insertAtPosition(99, 3); /* [10,20,99,30,40] */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Handle <code>pos == 1</code> as a special case — use <code>insertAtBeginning()</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse the list stopping at node <code>pos-1</code> using a <code>for</code> loop counter.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Set <code>list[newIdx].next = list[curr].next</code> — new node points to the old next.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Set <code>list[curr].next = newIdx</code> — previous node now points to new node. Insertion complete!</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<div class="section-divider" data-label="deletion operations"></div>
+
+<!-- DELETE FROM BEGINNING -->
+<section id="del-begin" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-delete">DELETE</span>
+    <div><div class="card-title">04 — Deletion from Beginning</div><div class="card-subtitle">O(1) — Update head, free old node</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Remove the <strong>first node</strong>. Save the head index, move head to the next node, then free the old head slot back to the free list.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-good">O(1)</span></h3>
+        <div class="warn-box"><strong>Always check:</strong> If <code>head == -1</code>, the list is empty — nothing to delete!</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Delete from beginning: [10 → 20 → 30] → [20 → 30]</div>
+        <div class="node-row" style="margin-bottom:14px">
+          <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+          <div class="node-box del-node"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">30</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--accent-amber);margin-bottom:10px">head = list[head].next → head moves to node 20</div>
+        <div class="node-row">
+          <div style="font-size:0.72rem;color:var(--accent-cyan);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box"><div class="nd">30</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+          <span style="font-size:0.72rem;color:var(--text-muted);padding:0 10px">node 10 → returned to freeHead</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">delete_beginning.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Delete node from the BEGINNING */
+void deleteFromBeginning() {
+    int temp;
+
+    /* Check if list is empty */
+    if (head == -1) {
+        printf("List is empty! Nothing to delete.\n");
+        return;
+    }
+
+    /* Save old head index */
+    temp = head;
+
+    /* Move head to next node */
+    head = list[head].next;
+
+    /* Return old head slot to free list */
+    freeNode(temp);
+
+    printf("Deleted node from beginning.\n");
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10);
+    insertAtEnd(20);
+    insertAtEnd(30);
+    deleteFromBeginning(); /* removes 10, list: 20 → 30 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">If <code>head == -1</code>, the list is empty — print message and return.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Save <code>temp = head</code> so we know which slot to free later.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Update <code>head = list[head].next</code> to skip over the deleted node.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Call <code>freeNode(temp)</code> to return the slot to the free list for reuse.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- DELETE FROM END -->
+<section id="del-end" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-delete">DELETE</span>
+    <div><div class="card-title">05 — Deletion from End</div><div class="card-subtitle">O(n) — Must traverse to second-to-last node</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Traverse to find the <strong>second-to-last node</strong>, disconnect the last node, and free it.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span></h3>
+        <div class="warn-box"><strong>Two special cases:</strong> empty list → reject. One node only → free it, set head = -1.</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Delete from end: [10 → 20 → 30] → [10 → 20]</div>
+        <div class="node-row">
+          <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box del-node"><div class="nd">30</div><div class="nx">-1</div></div>
+          <span style="font-size:0.72rem;color:var(--accent-amber);padding:0 8px;align-self:center">← delete this</span>
+        </div>
+        <div style="margin:10px 0;font-size:0.78rem;color:var(--text-muted)">prev (node 20) .next = -1, then free node 30</div>
+        <div class="node-row">
+          <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">head→</div>
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">delete_end.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Delete node from the END */
+void deleteFromEnd() {
+    int curr, prev;
+
+    if (head == -1) {
+        printf("List is empty!\n");
+        return;
+    }
+
+    /* Only one node: free it and reset head */
+    if (list[head].next == -1) {
+        freeNode(head);
+        head = -1;
+        printf("Deleted last node.\n");
+        return;
+    }
+
+    /* Traverse to second-to-last node */
+    prev = -1;
+    curr = head;
+    while (list[curr].next != -1) {
+        prev = curr;
+        curr = list[curr].next;
+    }
+
+    /* Disconnect last node */
+    list[prev].next = -1;
+    freeNode(curr);
+
+    printf("Deleted node from end.\n");
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10);
+    insertAtEnd(20);
+    insertAtEnd(30);
+    deleteFromEnd(); /* removes 30, list: 10 → 20 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">If <code>list[head].next == -1</code>, there's only one node — free it and set <code>head = -1</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse: keep both <code>prev</code> and <code>curr</code>. Stop when <code>list[curr].next == -1</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Set <code>list[prev].next = -1</code> — second-to-last node now points to nothing.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Call <code>freeNode(curr)</code> to return the deleted slot to the free list.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- DELETE FROM POSITION -->
+<section id="del-pos" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-delete">DELETE</span>
+    <div><div class="card-title">06 — Deletion from Specific Position</div><div class="card-subtitle">O(n) — Traverse to position k-1</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Remove the node at position <strong>k</strong> (1-based). Traverse to <strong>position k−1</strong>, bypass node k, free its slot.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">delete_position.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Delete node at a given position (1-based) */
+void deleteAtPosition(int pos) {
+    int curr, prev, i;
+
+    if (head == -1) {
+        printf("List is empty!\n");
+        return;
+    }
+    if (pos &lt; 1) {
+        printf("Invalid position!\n");
+        return;
+    }
+
+    /* Position 1: same as delete from beginning */
+    if (pos == 1) {
+        deleteFromBeginning();
+        return;
+    }
+
+    /* Traverse to node at position pos */
+    prev = -1;
+    curr = head;
+    for (i = 1; i &lt; pos; i++) {
+        if (curr == -1) {
+            printf("Position %d not found!\n", pos);
+            return;
+        }
+        prev = curr;
+        curr = list[curr].next;
+    }
+
+    if (curr == -1) {
+        printf("Position %d not found!\n", pos);
+        return;
+    }
+
+    /* Bypass node at position */
+    list[prev].next = list[curr].next;
+    freeNode(curr);
+
+    printf("Deleted node at position %d.\n", pos);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10); insertAtEnd(20);
+    insertAtEnd(30); insertAtEnd(40);
+    deleteAtPosition(2); /* removes 20, list: 10,30,40 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Handle <code>pos == 1</code> using <code>deleteFromBeginning()</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Use two pointers <code>prev</code> and <code>curr</code>. Loop until we reach position <code>pos</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Set <code>list[prev].next = list[curr].next</code> — skip over the deleted node.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Free the deleted slot with <code>freeNode(curr)</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- DELETE BY VALUE -->
+<section id="del-val" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-delete">DELETE</span>
+    <div><div class="card-title">07 — Deletion by Value</div><div class="card-subtitle">O(n) — Search then delete</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Search for the <strong>first node</strong> whose data matches a given value, then remove it by relinking its neighbors.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span></h3>
+        <div class="info-box"><strong>Variation:</strong> You can extend this to delete <em>all</em> occurrences of a value by not stopping at the first match.</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">delete_by_value.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Delete first node with given value */
+void deleteByValue(int val) {
+    int curr, prev;
+
+    if (head == -1) {
+        printf("List is empty!\n");
+        return;
+    }
+
+    /* Check if head node has the value */
+    if (list[head].data == val) {
+        deleteFromBeginning();
+        return;
+    }
+
+    /* Traverse searching for value */
+    prev = head;
+    curr = list[head].next;
+
+    while (curr != -1) {
+        if (list[curr].data == val) {
+            /* Found it! Bypass and free */
+            list[prev].next = list[curr].next;
+            freeNode(curr);
+            printf("Deleted node with value %d.\n", val);
+            return;
+        }
+        prev = curr;
+        curr = list[curr].next;
+    }
+
+    printf("Value %d not found in list.\n", val);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10); insertAtEnd(20);
+    insertAtEnd(30); insertAtEnd(20);
+    deleteByValue(20); /* removes first 20 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">If head node's data matches, call <code>deleteFromBeginning()</code> and return.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Walk through list with <code>prev</code> and <code>curr</code> checking <code>list[curr].data == val</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">When found: <code>list[prev].next = list[curr].next</code> — bypass the found node, then free it.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">If the loop ends without finding the value, print "not found".</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<div class="section-divider" data-label="access and modify"></div>
+
+<!-- TRAVERSAL -->
+<section id="traverse" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-traverse">TRAVERSE</span>
+    <div><div class="card-title">08 — Traversal (Print Full List)</div><div class="card-subtitle">O(n) — Visit every node once</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Start at <code>head</code>, visit each node by following <code>next</code> indices, print or process each node's <code>data</code> until we reach <code>-1</code>.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+        <h3>🌍 Use Cases</h3>
+        <ul><li>Printing all elements</li><li>Computing sum/average</li><li>Finding max/min value</li><li>Applying an operation to every node</li></ul>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Traversal: follow next indices from head to -1</div>
+        <div class="node-row">
+          <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-right:8px">START</div>
+          <div class="node-box highlight"><div class="nd">10</div><div class="nx">→2</div></div>
+          <span class="arrow">→ visit 10</span>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">→4</div></div>
+          <span class="arrow">→ visit 20</span>
+          <div class="node-box highlight"><div class="nd">30</div><div class="nx">-1</div></div>
+          <span style="font-size:0.72rem;color:var(--accent-red);padding:0 8px;align-self:center">STOP (next=-1)</span>
+        </div>
+        <div style="margin-top:12px;padding:10px 16px;background:var(--bg-base);border-radius:6px;border:1px solid var(--border)">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--accent-cyan)">Output: 10 → 20 → 30 → NULL</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">traversal.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Print all nodes in the linked list */
+void traverse() {
+    int curr;
+
+    if (head == -1) {
+        printf("List is empty!\n");
+        return;
+    }
+
+    printf("List: ");
+    curr = head;
+
+    /* Keep going until we reach end (-1) */
+    while (curr != -1) {
+        printf("%d", list[curr].data);
+
+        /* Print arrow if not last node */
+        if (list[curr].next != -1)
+            printf(" -> ");
+
+        curr = list[curr].next;  /* move to next */
+    }
+
+    printf(" -> NULL\n");
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10);
+    insertAtEnd(20);
+    insertAtEnd(30);
+    traverse();  /* Output: List: 10 -> 20 -> 30 -> NULL */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Start with <code>curr = head</code>. If <code>head == -1</code>, list is empty.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">In the <code>while</code> loop, print <code>list[curr].data</code> at each iteration.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Update <code>curr = list[curr].next</code> to move forward.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Loop ends when <code>curr == -1</code> — we've reached the end of the list.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SEARCHING -->
+<section id="search" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-search">SEARCH</span>
+    <div><div class="card-title">09 — Searching (Find Node by Value)</div><div class="card-subtitle">O(n) — Linear search through list</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Traverse the list checking each node's <code>data</code> until the target is found or the list ends. Returns the <strong>position</strong> (1-based) or <strong>-1</strong> if not found.</p>
+        <table class="complexity-table">
+          <tr><th>Case</th><th>Time</th></tr>
+          <tr><td>Best (found at head)</td><td class="tc-good">O(1)</td></tr>
+          <tr><td>Average</td><td class="tc-mid">O(n/2)</td></tr>
+          <tr><td>Worst (not found)</td><td class="tc-bad">O(n)</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">searching.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Search for a value; returns position (1-based) or -1 */
+int search(int val) {
+    int curr, pos;
+
+    curr = head;
+    pos  = 1;
+
+    while (curr != -1) {
+        if (list[curr].data == val) {
+            printf("Value %d found at position %d.\n", val, pos);
+            return pos;
+        }
+        curr = list[curr].next;
+        pos++;
+    }
+
+    printf("Value %d not found.\n", val);
+    return -1;
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10); insertAtEnd(20); insertAtEnd(30);
+    search(20);  /* Output: Value 20 found at position 2. */
+    search(99);  /* Output: Value 99 not found. */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Start <code>curr = head</code> and <code>pos = 1</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">At each node, compare <code>list[curr].data == val</code>. If match, return <code>pos</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">If no match, advance <code>curr = list[curr].next</code> and increment <code>pos</code>.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">If loop ends without finding value, return -1.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- UPDATING -->
+<section id="update" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-search">UPDATE</span>
+    <div><div class="card-title">10 — Updating (Modify Node Data)</div><div class="card-subtitle">O(n) — Search then update in-place</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Find a node by its <strong>position</strong> or by its <strong>old value</strong>, then change its <code>data</code> field to the new value. No relinking needed — only the data changes.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">updating.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Update node data at given position (1-based) */
+void updateAtPosition(int pos, int newData) {
+    int curr, i;
+
+    if (head == -1) { printf("List is empty!\n"); return; }
+    if (pos &lt; 1)    { printf("Invalid position!\n"); return; }
+
+    curr = head;
+    for (i = 1; i &lt; pos; i++) {
+        if (curr == -1) {
+            printf("Position %d not found!\n", pos);
+            return;
+        }
+        curr = list[curr].next;
+    }
+
+    if (curr == -1) { printf("Position not found!\n"); return; }
+
+    printf("Updated position %d: %d → %d\n",
+           pos, list[curr].data, newData);
+    list[curr].data = newData;  /* simply overwrite the data */
+}
+
+/* Update by old value */
+void updateByValue(int oldVal, int newVal) {
+    int curr = head;
+    while (curr != -1) {
+        if (list[curr].data == oldVal) {
+            list[curr].data = newVal;
+            printf("Updated %d → %d\n", oldVal, newVal);
+            return;
+        }
+        curr = list[curr].next;
+    }
+    printf("Value %d not found.\n", oldVal);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10); insertAtEnd(20); insertAtEnd(30);
+    updateAtPosition(2, 99); /* changes 20 to 99 */
+    updateByValue(30, 55);   /* changes 30 to 55 */
+    traverse();
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Traverse to the target position or search for the old value.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Simply set <code>list[curr].data = newData</code> — no relinking required since we don't change structure.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- COUNT -->
+<section id="count" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-util">UTILITY</span>
+    <div><div class="card-title">11 — Counting Nodes</div><div class="card-subtitle">O(n) — Traverse and increment counter</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Walk through the entire list, incrementing a <code>count</code> variable at each node. Return the total.</p>
+        <h3>⏱️ Time Complexity: <span class="tc-mid">O(n)</span></h3>
+        <div class="info-box"><strong>Optimization:</strong> Maintain a <code>size</code> variable that you increment on insert and decrement on delete to get count in O(1).</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">count_nodes.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Count and return total number of nodes */
+int countNodes() {
+    int curr, count;
+
+    curr  = head;
+    count = 0;
+
+    while (curr != -1) {
+        count++;                 /* increment for each node */
+        curr = list[curr].next;  /* move to next            */
+    }
+
+    printf("Total nodes: %d\n", count);
+    return count;
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10);
+    insertAtEnd(20);
+    insertAtEnd(30);
+    countNodes();  /* Output: Total nodes: 3 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Initialize <code>count = 0</code> and <code>curr = head</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">In each iteration, do <code>count++</code> then <code>curr = list[curr].next</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">When <code>curr == -1</code>, loop ends. Return <code>count</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<div class="section-divider" data-label="reorder operations"></div>
+
+<!-- SORTING -->
+<section id="sort" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-util">SORT</span>
+    <div><div class="card-title">12 — Sorting (Bubble Sort on List)</div><div class="card-subtitle">O(n²) — Swap data values between nodes</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>We apply <strong>Bubble Sort</strong> on the linked list. In each pass, we compare adjacent nodes. If they're out of order, we <strong>swap their data values</strong> (not the nodes themselves — no relinking needed!).</p>
+        <div class="info-box"><strong>Array-based advantage:</strong> Since we just swap <code>data</code> fields (integers), no index relinking is needed — it's simpler than pointer-based swaps.</div>
+        <table class="complexity-table">
+          <tr><th>Case</th><th>Time</th></tr>
+          <tr><td>Best (already sorted)</td><td class="tc-good">O(n)</td></tr>
+          <tr><td>Average</td><td class="tc-bad">O(n²)</td></tr>
+          <tr><td>Worst (reverse sorted)</td><td class="tc-bad">O(n²)</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Sorting [30 → 10 → 20] → [10 → 20 → 30]</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">Pass 1: Compare pairs and swap data if out of order</div>
+        <div class="node-row" style="margin-bottom:8px">
+          <div class="node-box del-node"><div class="nd">30</div><div class="nx">→</div></div>
+          <div class="node-box new-node"><div class="nd">10</div><div class="nx">→</div></div>
+          <span style="font-size:0.72rem;color:var(--accent-amber);padding:0 6px;align-self:center">← swap 30↔10</span>
+          <div class="node-box"><div class="nd">20</div><div class="nx">-1</div></div>
+        </div>
+        <div class="node-row" style="margin-bottom:8px">
+          <div class="node-box"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box del-node"><div class="nd">30</div><div class="nx">→</div></div>
+          <div class="node-box new-node"><div class="nd">20</div><div class="nx">-1</div></div>
+          <span style="font-size:0.72rem;color:var(--accent-amber);padding:0 6px;align-self:center">← swap 30↔20</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin:8px 0">Pass 2: [10 → 20 → 30] — no swaps needed → sorted!</div>
+        <div class="node-row">
+          <div class="node-box highlight"><div class="nd">10</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">20</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">30</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">sorting.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Sort list in ascending order using Bubble Sort */
+void sortList() {
+    int i, j, temp, swapped;
+
+    if (head == -1 || list[head].next == -1) return;
+
+    /* Outer loop: repeated passes */
+    i = head;
+    while (i != -1) {
+
+        swapped = 0;  /* flag to detect if any swap happened */
+
+        /* Inner loop: compare adjacent pairs */
+        j = head;
+        while (list[j].next != -1) {
+            int nextIdx = list[j].next;
+
+            /* If current data > next data, swap the data */
+            if (list[j].data > list[nextIdx].data) {
+                temp             = list[j].data;
+                list[j].data     = list[nextIdx].data;
+                list[nextIdx].data = temp;
+                swapped = 1;
+            }
+            j = list[j].next;
+        }
+
+        /* If no swaps happened, list is sorted */
+        if (swapped == 0) break;
+
+        i = list[i].next;
+    }
+
+    printf("List sorted in ascending order.\n");
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(30); insertAtEnd(10);
+    insertAtEnd(40); insertAtEnd(20);
+    sortList();
+    traverse();  /* Output: 10 -> 20 -> 30 -> 40 -> NULL */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Outer loop runs multiple passes over the list.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Inner loop compares each pair of adjacent nodes using <code>j</code> and <code>list[j].next</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">If out of order, swap only the <code>data</code> values using a <code>temp</code> variable — indices don't change!</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">The <code>swapped</code> flag enables early exit if no swaps occurred (list already sorted).</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- REVERSING -->
+<section id="reverse" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-util">REVERSE</span>
+    <div><div class="card-title">13 — Reversing the List</div><div class="card-subtitle">O(n) — Reverse all next links in one pass</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Traverse the list <strong>once</strong>, flipping each node's <code>next</code> to point to its predecessor. Use three variables: <code>prev</code>, <code>curr</code>, <code>nextNode</code>.</p>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Reversing: [1 → 2 → 3] → [3 → 2 → 1]</div>
+        <div style="display:grid;gap:12px">
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px">Initial: prev=-1, curr=1</div>
+            <div class="node-row">
+              <div class="node-box highlight"><div class="nd">1</div><div class="nx">→2</div></div>
+              <div class="node-box"><div class="nd">2</div><div class="nx">→3</div></div>
+              <div class="node-box"><div class="nd">3</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--accent-amber);margin-bottom:6px">Step 1: node 1 next = -1 (prev). Move prev=1, curr=2</div>
+            <div class="node-row">
+              <div class="node-box"><div class="nd">1</div><div class="nx">-1</div></div>
+              <div class="node-box highlight"><div class="nd">2</div><div class="nx">→3</div></div>
+              <div class="node-box"><div class="nd">3</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--accent-amber);margin-bottom:6px">Step 2: node 2 next = 1. Move prev=2, curr=3</div>
+            <div class="node-row">
+              <div class="node-box"><div class="nd">1</div><div class="nx">-1</div></div>
+              <div class="node-box"><div class="nd">2</div><div class="nx">→1</div></div>
+              <div class="node-box highlight"><div class="nd">3</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--accent-cyan);margin-bottom:6px">Final: node 3 next = 2. head = 3</div>
+            <div class="node-row">
+              <div style="font-size:0.72rem;color:var(--accent-cyan);font-family:'JetBrains Mono',monospace;margin-right:6px">head→</div>
+              <div class="node-box highlight"><div class="nd">3</div><div class="nx">→2</div></div>
+              <div class="node-box highlight"><div class="nd">2</div><div class="nx">→1</div></div>
+              <div class="node-box highlight"><div class="nd">1</div><div class="nx">-1</div></div>
+              <span class="null-box">NULL</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">reversing.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Reverse the linked list in-place */
+void reverseList() {
+    int prev, curr, nextNode;
+
+    if (head == -1 || list[head].next == -1) return;
+
+    prev = -1;        /* previous node index (starts as NULL) */
+    curr = head;      /* start at head                        */
+
+    while (curr != -1) {
+        nextNode = list[curr].next;  /* save next before overwriting */
+        list[curr].next = prev;      /* flip: point to previous      */
+        prev = curr;                 /* move prev forward            */
+        curr = nextNode;             /* move curr forward            */
+    }
+
+    head = prev;  /* prev is now the new head (old last node) */
+    printf("List reversed.\n");
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(10); insertAtEnd(20); insertAtEnd(30);
+    traverse();      /* 10 -> 20 -> 30 -> NULL */
+    reverseList();
+    traverse();      /* 30 -> 20 -> 10 -> NULL */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Before changing <code>curr.next</code>, save it: <code>nextNode = list[curr].next</code> (or we lose the rest of the list).</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Flip: <code>list[curr].next = prev</code> — this node now points backwards.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Advance both: <code>prev = curr</code>, <code>curr = nextNode</code>.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">After the loop, <code>prev</code> is at the old last node — set <code>head = prev</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ROTATION -->
+<section id="rotate" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-util">ROTATE</span>
+    <div><div class="card-title">14 — Rotation by K Positions</div><div class="card-subtitle">O(n) — Make circular then break at right point</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Rotate the list <strong>left by k positions</strong>. The first k nodes move to the end. Strategy: find the k-th node, make the list circular temporarily, then break at the right point.</p>
+        <div class="info-box"><strong>Example:</strong> [1→2→3→4→5] rotated left by 2 → [3→4→5→1→2]</div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">rotation.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Rotate list LEFT by k positions */
+void rotateLeft(int k) {
+    int curr, i, n, kthNode, lastNode;
+
+    if (head == -1 || k &lt;= 0) return;
+
+    /* Step 1: Count length */
+    n = countNodes();
+    k = k % n;  /* normalize k (avoid full rotations) */
+    if (k == 0) return;
+
+    /* Step 2: Find the k-th node (new last node after rotation) */
+    curr = head;
+    for (i = 1; i &lt; k; i++) {
+        curr = list[curr].next;
+    }
+    kthNode = curr;  /* this becomes the new tail */
+
+    /* Step 3: Find the last node */
+    lastNode = kthNode;
+    while (list[lastNode].next != -1) {
+        lastNode = list[lastNode].next;
+    }
+
+    /* Step 4: Make list circular temporarily */
+    list[lastNode].next = head;
+
+    /* Step 5: New head is node after kthNode */
+    head = list[kthNode].next;
+
+    /* Step 6: Break the circle */
+    list[kthNode].next = -1;
+
+    printf("List rotated left by %d.\n", k);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(1); insertAtEnd(2); insertAtEnd(3);
+    insertAtEnd(4); insertAtEnd(5);
+    traverse();        /* 1 -> 2 -> 3 -> 4 -> 5 */
+    rotateLeft(2);
+    traverse();        /* 3 -> 4 -> 5 -> 1 -> 2 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Normalize: <code>k = k % n</code> to handle k larger than list size.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse to the k-th node — this becomes the new tail after rotation.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Find the last node, then set <code>list[last].next = head</code> to make it circular.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Update <code>head = list[kthNode].next</code> then break: <code>list[kthNode].next = -1</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- REVERSE IN GROUPS -->
+<section id="rev-groups" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">ADVANCED</span>
+    <div><div class="card-title">15 — Reverse in Groups of K</div><div class="card-subtitle">O(n) — Reverse k nodes at a time</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Divide the list into groups of <strong>k nodes</strong>. Reverse each group individually, then connect the reversed groups together.</p>
+        <div class="info-box"><strong>Example:</strong> [1→2→3→4→5→6] with k=2 → [2→1→4→3→6→5]</div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">reverse_groups.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Reverse nodes in groups of size k */
+int reverseGroup(int startIdx, int k) {
+    int prev, curr, nextNode, count;
+
+    prev = -1;
+    curr = startIdx;
+    count = 0;
+
+    /* Reverse k nodes */
+    while (curr != -1 && count &lt; k) {
+        nextNode = list[curr].next;
+        list[curr].next = prev;
+        prev = curr;
+        curr = nextNode;
+        count++;
+    }
+    /* prev = new head of this reversed group
+       curr = start of remaining list          */
+    return prev;  /* return new head of this group */
+}
+
+void reverseInGroups(int k) {
+    int curr, prevGroupTail, groupHead, newHead;
+    int isFirstGroup;
+
+    if (head == -1 || k &lt;= 1) return;
+
+    curr          = head;
+    prevGroupTail = -1;
+    isFirstGroup  = 1;
+
+    while (curr != -1) {
+        int groupStart = curr;
+        int i, temp = curr;
+
+        /* Find the start of next group */
+        for (i = 0; i &lt; k && temp != -1; i++) {
+            curr = list[temp].next;
+            temp = curr;
+        }
+        /* curr now points to start of next group */
+
+        /* Get the new head after reversing this group */
+        groupHead = reverseInGroupsHelper(groupStart, k);
+
+        if (isFirstGroup) {
+            head = groupHead;
+            isFirstGroup = 0;
+        } else {
+            list[prevGroupTail].next = groupHead;
+        }
+
+        prevGroupTail = groupStart; /* old start = new tail */
+        list[prevGroupTail].next = curr; /* connect to rest */
+    }
+    printf("List reversed in groups of %d.\n", k);
+}
+
+/* Helper: reverse k nodes starting from startIdx */
+int reverseInGroupsHelper(int startIdx, int k) {
+    int prev = -1, curr = startIdx, nextNode, count = 0;
+    while (curr != -1 && count &lt; k) {
+        nextNode = list[curr].next;
+        list[curr].next = prev;
+        prev = curr;
+        curr = nextNode;
+        count++;
+    }
+    return prev;
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(1); insertAtEnd(2); insertAtEnd(3);
+    insertAtEnd(4); insertAtEnd(5); insertAtEnd(6);
+    traverse();             /* 1 -> 2 -> 3 -> 4 -> 5 -> 6 */
+    reverseInGroups(2);
+    traverse();             /* 2 -> 1 -> 4 -> 3 -> 6 -> 5 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">For each group of k nodes, apply the same reverse logic (prev/curr/nextNode technique).</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">After reversing a group, the <em>old start</em> becomes the <em>new tail</em> of that group.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Connect the previous group's tail to the new group's head.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Repeat until all groups are processed. First group's new head becomes the overall head.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<div class="section-divider" data-label="multi-list operations"></div>
+
+<!-- MERGING -->
+<section id="merge" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">MERGE</span>
+    <div><div class="card-title">16 — Merging Two Sorted Lists</div><div class="card-subtitle">O(m+n) — Combine two sorted lists into one sorted list</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Given two <strong>already sorted</strong> linked lists, produce one merged sorted list by comparing the front elements of each list and picking the smaller one at each step.</p>
+        <h3>⏱️ Time: <span class="tc-mid">O(m+n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+        <h3>🌍 Use Cases</h3>
+        <ul><li>Merge sort algorithm's merge step</li><li>Merging sorted database results</li></ul>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Merge [1→3→5] and [2→4→6] → [1→2→3→4→5→6]</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <div style="font-size:0.72rem;color:var(--accent-blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">List A (head1):</div>
+            <div class="node-row">
+              <div class="node-box"><div class="nd">1</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">3</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">5</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--accent-amber);font-family:'JetBrains Mono',monospace;margin-bottom:6px">List B (head2):</div>
+            <div class="node-row">
+              <div class="node-box new-node"><div class="nd">2</div><div class="nx">→</div></div>
+              <div class="node-box new-node"><div class="nd">4</div><div class="nx">→</div></div>
+              <div class="node-box new-node"><div class="nd">6</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--accent-cyan);font-family:'JetBrains Mono',monospace;margin-bottom:6px">Result:</div>
+        <div class="node-row">
+          <div class="node-box highlight"><div class="nd">1</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">2</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">3</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">4</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">5</div><div class="nx">→</div></div>
+          <div class="node-box highlight"><div class="nd">6</div><div class="nx">-1</div></div>
+          <span class="null-box">NULL</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">merging.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Merge two sorted lists (head1 and head2) into one sorted list.
+   Returns: index of new merged list head */
+int mergeSorted(int head1, int head2) {
+    int mergedHead, tail, curr1, curr2;
+
+    /* If either list is empty, return the other */
+    if (head1 == -1) return head2;
+    if (head2 == -1) return head1;
+
+    /* Initialize merged list with the smaller first element */
+    if (list[head1].data &lt;= list[head2].data) {
+        mergedHead = head1;
+        curr1 = list[head1].next;
+        curr2 = head2;
+    } else {
+        mergedHead = head2;
+        curr1 = head1;
+        curr2 = list[head2].next;
+    }
+
+    tail = mergedHead;
+
+    /* Compare and link nodes from both lists */
+    while (curr1 != -1 && curr2 != -1) {
+        if (list[curr1].data &lt;= list[curr2].data) {
+            list[tail].next = curr1;
+            curr1 = list[curr1].next;
+        } else {
+            list[tail].next = curr2;
+            curr2 = list[curr2].next;
+        }
+        tail = list[tail].next;
+    }
+
+    /* Attach remaining nodes of whichever list is left */
+    if (curr1 != -1) list[tail].next = curr1;
+    else             list[tail].next = curr2;
+
+    return mergedHead;
+}
+
+/* === Example using two separate lists === */
+int main() {
+    int head1 = -1, head2 = -1, mergedHead;
+
+    init();
+
+    /* Build list1: 1 -> 3 -> 5 */
+    /* Build list2: 2 -> 4 -> 6 */
+    /* (simplified — use insertAtEnd with separate head vars) */
+
+    mergedHead = mergeSorted(head1, head2);
+    head = mergedHead;
+    traverse();
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Determine which list's first node is smaller — that becomes <code>mergedHead</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Use a <code>tail</code> index to track where to append next. Compare <code>curr1</code> and <code>curr2</code> each step.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Pick the smaller node, attach it to tail, advance that list's pointer.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">When one list is exhausted, attach the rest of the other list directly to tail.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- CONCATENATION -->
+<section id="concat" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-util">CONCAT</span>
+    <div><div class="card-title">17 — Concatenation of Two Lists</div><div class="card-subtitle">O(n) — Attach second list to end of first</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Join two lists end-to-end. Traverse list1 to its last node, then set <code>last.next = head2</code>. No sorting required — just attach.</p>
+        <div class="info-box"><strong>Difference from Merge:</strong> Concatenation doesn't sort — it just joins. Merge produces a sorted result from two sorted inputs.</div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">concatenation.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Concatenate list2 (head2) to end of list1 (head1).
+   Modifies head1's list in place.
+   Returns: new head (same as head1, or head2 if list1 empty) */
+int concatenate(int head1, int head2) {
+    int curr;
+
+    /* If list1 is empty, result is list2 */
+    if (head1 == -1) return head2;
+
+    /* If list2 is empty, result is list1 */
+    if (head2 == -1) return head1;
+
+    /* Traverse to last node of list1 */
+    curr = head1;
+    while (list[curr].next != -1) {
+        curr = list[curr].next;
+    }
+
+    /* Connect last node of list1 to head of list2 */
+    list[curr].next = head2;
+
+    printf("Lists concatenated.\n");
+    return head1;
+}
+
+/* === Example === */
+int main() {
+    int h1 = -1, h2 = -1;
+    init();
+    /* list1: 1 -> 2 -> 3 */
+    /* list2: 4 -> 5 -> 6 */
+    /* After concat: 1 -> 2 -> 3 -> 4 -> 5 -> 6 */
+    head = concatenate(h1, h2);
+    traverse();
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Handle edge cases: if either list is empty, return the other.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse list1 to its last node (where <code>list[curr].next == -1</code>).</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Set <code>list[curr].next = head2</code> — last node of list1 now points to first node of list2.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- SPLITTING -->
+<section id="split" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">SPLIT</span>
+    <div><div class="card-title">18 — Splitting a List</div><div class="card-subtitle">O(n) — Divide list into two halves</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Split a list into <strong>two halves</strong>. Use the slow-and-fast pointer technique to find the middle, then disconnect at that point.</p>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+        <div class="info-box"><strong>Used in:</strong> Merge Sort — recursively split then merge back sorted.</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">splitting.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Split list into two halves.
+   head1Out and head2Out are output parameters (indices). */
+void splitList(int srcHead, int *head1Out, int *head2Out) {
+    int slow, fast;
+
+    if (srcHead == -1) {
+        *head1Out = -1;
+        *head2Out = -1;
+        return;
+    }
+
+    /* Only one node: first half has it, second is empty */
+    if (list[srcHead].next == -1) {
+        *head1Out = srcHead;
+        *head2Out = -1;
+        return;
+    }
+
+    slow = srcHead;
+    fast = list[srcHead].next;
+
+    /* Fast moves 2 steps, slow moves 1 step */
+    while (fast != -1) {
+        fast = list[fast].next;
+        if (fast != -1) {
+            fast = list[fast].next;
+            slow = list[slow].next;
+        }
+    }
+
+    /* Slow is now at the midpoint */
+    *head1Out = srcHead;          /* first half starts here  */
+    *head2Out = list[slow].next;  /* second half starts here */
+    list[slow].next = -1;         /* break the link          */
+
+    printf("List split into two halves.\n");
+}
+
+/* === Example === */
+int main() {
+    int h1, h2;
+    init();
+    insertAtEnd(1); insertAtEnd(2);
+    insertAtEnd(3); insertAtEnd(4); insertAtEnd(5);
+    splitList(head, &amp;h1, &amp;h2);
+    /* h1: 1->2->3, h2: 4->5 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Use slow and fast pointers: <code>fast = list[srcHead].next</code> (one step ahead of slow).</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Move fast 2 steps, slow 1 step each iteration. When fast reaches end, slow is at midpoint.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Second half starts at <code>list[slow].next</code>. Break by setting <code>list[slow].next = -1</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- INTERSECTION -->
+<section id="intersect" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">ADVANCED</span>
+    <div><div class="card-title">19 — Intersection of Two Lists</div><div class="card-subtitle">O(m+n) — Find common data values</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Find all values that appear in <strong>both</strong> linked lists. In array-based form, for each node in list1, scan list2 for the same value.</p>
+        <h3>⏱️ Time: <span class="tc-bad">O(m×n)</span> naive | <span class="tc-mid">O(m+n)</span> with sorting</h3>
+        <div class="info-box"><strong>For sorted lists:</strong> Use two pointers advancing through both lists simultaneously for O(m+n) performance.</div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">intersection.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Print common values in two lists (naive approach) */
+void printIntersection(int head1, int head2) {
+    int curr1, curr2, found;
+
+    printf("Intersection: ");
+    found = 0;
+
+    curr1 = head1;
+    while (curr1 != -1) {
+        curr2 = head2;
+        /* Search for curr1's data in list2 */
+        while (curr2 != -1) {
+            if (list[curr1].data == list[curr2].data) {
+                printf("%d ", list[curr1].data);
+                found = 1;
+                break;
+            }
+            curr2 = list[curr2].next;
+        }
+        curr1 = list[curr1].next;
+    }
+
+    if (!found) printf("None");
+    printf("\n");
+}
+
+/* Efficient version for SORTED lists using two pointers */
+void intersectionSorted(int head1, int head2) {
+    int a = head1, b = head2;
+
+    printf("Intersection (sorted): ");
+    while (a != -1 && b != -1) {
+        if (list[a].data == list[b].data) {
+            printf("%d ", list[a].data);
+            a = list[a].next;
+            b = list[b].next;
+        } else if (list[a].data &lt; list[b].data) {
+            a = list[a].next;
+        } else {
+            b = list[b].next;
+        }
+    }
+    printf("\n");
+}
+
+/* === Example === */
+int main() {
+    int h1 = -1, h2 = -1;
+    init();
+    /* list1: 1->2->3->4, list2: 2->4->6 */
+    /* Intersection: 2 4 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text"><strong>Naive:</strong> For each node in list1, scan all of list2 checking for matching data values.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text"><strong>Sorted version:</strong> Two pointers <code>a</code> and <code>b</code>. If equal → print and advance both. If a < b → advance a. Else advance b.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<div class="section-divider" data-label="advanced operations"></div>
+
+<!-- COPYING -->
+<section id="copy" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">COPY</span>
+    <div><div class="card-title">20 — Copying a List (Deep Copy)</div><div class="card-subtitle">O(n) — Create an independent duplicate</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Create a completely <strong>independent duplicate</strong> of a list. New nodes are allocated for every node. Changes to the copy don't affect the original.</p>
+        <div class="info-box"><strong>Deep Copy vs Shallow Copy:</strong> Deep copy allocates new nodes. Shallow copy would just copy the head index — both lists would share the same nodes (dangerous!). Always use deep copy.</div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-mid">O(n)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">copying.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Deep copy of a linked list.
+   Returns: head index of the new copy */
+int deepCopy(int srcHead) {
+    int curr, newHead, newIdx, tail;
+
+    if (srcHead == -1) return -1;
+
+    /* Copy first node to initialize new list */
+    newHead = allocNode(list[srcHead].data);
+    if (newHead == -1) return -1;
+
+    tail = newHead;
+    curr = list[srcHead].next;
+
+    /* Copy remaining nodes */
+    while (curr != -1) {
+        newIdx = allocNode(list[curr].data);
+        if (newIdx == -1) break;
+
+        list[tail].next = newIdx;  /* link to new list */
+        tail = newIdx;             /* advance tail      */
+        curr = list[curr].next;    /* advance source    */
+    }
+
+    printf("List copied successfully.\n");
+    return newHead;
+}
+
+/* === Example === */
+int main() {
+    int copyHead;
+    init();
+    insertAtEnd(10);
+    insertAtEnd(20);
+    insertAtEnd(30);
+
+    copyHead = deepCopy(head);
+
+    /* Original list unchanged */
+    head = head;
+    traverse();       /* 10 -> 20 -> 30 */
+
+    /* Copy is independent */
+    head = copyHead;
+    traverse();       /* 10 -> 20 -> 30 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Copy the first (source) node using <code>allocNode()</code>. This becomes <code>newHead</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse source. For each node, allocate a fresh slot and copy <code>data</code>.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Link new node to the copy list via <code>tail</code>. Advance <code>tail</code>.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Return <code>newHead</code> — a completely independent duplicate.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- MIDDLE ELEMENT -->
+<section id="middle" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-search">FIND</span>
+    <div><div class="card-title">21 — Finding the Middle Element</div><div class="card-subtitle">O(n) — Slow & Fast Pointer Technique</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Find the middle node without counting nodes first. Use <strong>two pointers</strong>: <code>slow</code> moves 1 step at a time, <code>fast</code> moves 2 steps. When fast reaches the end, slow is at the middle.</p>
+        <div class="info-box"><strong>Why does it work?</strong> Fast travels twice as fast as slow. So when fast has gone n steps, slow has gone n/2 steps — exactly the middle!</div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Finding middle of [1 → 2 → 3 → 4 → 5]</div>
+        <div style="display:grid;gap:10px">
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">Start: slow=1, fast=1</div>
+            <div class="node-row">
+              <div class="node-box highlight" style="border-color:var(--accent-blue)"><div class="nd">1<br><small style="font-size:0.6rem">S,F</small></div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">2</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">3</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">4</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">5</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">Step 1: slow→2, fast→3</div>
+            <div class="node-row">
+              <div class="node-box"><div class="nd">1</div><div class="nx">→</div></div>
+              <div class="node-box highlight" style="border-color:var(--accent-cyan)"><div class="nd">2<br><small style="font-size:0.6rem">S</small></div><div class="nx">→</div></div>
+              <div class="node-box highlight" style="border-color:var(--accent-amber)"><div class="nd">3<br><small style="font-size:0.6rem">F</small></div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">4</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">5</div><div class="nx">-1</div></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--accent-cyan);margin-bottom:4px">Step 2: slow→3, fast→5 (end!). Middle = slow = 3 ✓</div>
+            <div class="node-row">
+              <div class="node-box"><div class="nd">1</div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">2</div><div class="nx">→</div></div>
+              <div class="node-box highlight"><div class="nd">3<br><small style="font-size:0.6rem">S=MID</small></div><div class="nx">→</div></div>
+              <div class="node-box"><div class="nd">4</div><div class="nx">→</div></div>
+              <div class="node-box highlight" style="border-color:var(--accent-amber)"><div class="nd">5<br><small style="font-size:0.6rem">F=END</small></div><div class="nx">-1</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">find_middle.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Find and return the middle node index */
+int findMiddle() {
+    int slow, fast;
+
+    if (head == -1) {
+        printf("List is empty!\n");
+        return -1;
+    }
+
+    slow = head;
+    fast = head;
+
+    /* slow: 1 step, fast: 2 steps */
+    while (fast != -1 && list[fast].next != -1) {
+        slow = list[slow].next;          /* 1 step */
+        fast = list[fast].next;
+        fast = list[fast].next;          /* 2 steps total */
+    }
+
+    /* slow is at middle */
+    printf("Middle element: %d\n", list[slow].data);
+    return slow;
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(1); insertAtEnd(2);
+    insertAtEnd(3); insertAtEnd(4); insertAtEnd(5);
+    findMiddle();   /* Output: Middle element: 3 */
+
+    /* Even length: 1 2 3 4 */
+    init();
+    insertAtEnd(1); insertAtEnd(2);
+    insertAtEnd(3); insertAtEnd(4);
+    findMiddle();   /* Output: Middle element: 2 (first middle) */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Both <code>slow</code> and <code>fast</code> start at <code>head</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Each iteration: slow moves 1 step, fast moves 2 steps.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Loop condition: <code>fast != -1 && list[fast].next != -1</code> ensures fast doesn't go out of bounds.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">When fast reaches end, <code>slow</code> is at the middle. Return <code>list[slow].data</code>.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- REMOVE DUPLICATES -->
+<section id="dedup" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-util">DEDUP</span>
+    <div><div class="card-title">22 — Removing Duplicates</div><div class="card-subtitle">O(n²) unsorted | O(n) sorted — Eliminate repeated values</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Remove all nodes that have the same value as a previous node. Two approaches:</p>
+        <ul>
+          <li><strong>Sorted list:</strong> Compare adjacent nodes — O(n)</li>
+          <li><strong>Unsorted list:</strong> For each node, scan rest of list for duplicates — O(n²)</li>
+        </ul>
+        <h3>⏱️ Sorted: <span class="tc-mid">O(n)</span> &nbsp; Unsorted: <span class="tc-bad">O(n²)</span></h3>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">remove_duplicates.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Remove duplicates from a SORTED list - O(n) */
+void removeDuplicatesSorted() {
+    int curr, nextIdx;
+
+    if (head == -1) return;
+
+    curr = head;
+
+    while (list[curr].next != -1) {
+        nextIdx = list[curr].next;
+
+        if (list[curr].data == list[nextIdx].data) {
+            /* Same value: skip and free next node */
+            list[curr].next = list[nextIdx].next;
+            freeNode(nextIdx);
+        } else {
+            /* Different value: move forward */
+            curr = list[curr].next;
+        }
+    }
+    printf("Duplicates removed.\n");
+}
+
+/* Remove duplicates from an UNSORTED list - O(n^2) */
+void removeDuplicatesUnsorted() {
+    int curr, runner, prev;
+
+    curr = head;
+
+    while (curr != -1) {
+        runner = curr;
+
+        /* For each curr, scan rest of list for same value */
+        while (list[runner].next != -1) {
+            int runNext = list[runner].next;
+            if (list[runNext].data == list[curr].data) {
+                /* Found duplicate: remove runNext */
+                list[runner].next = list[runNext].next;
+                freeNode(runNext);
+            } else {
+                runner = list[runner].next;
+            }
+        }
+        curr = list[curr].next;
+    }
+    printf("Duplicates removed (unsorted).\n");
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(1); insertAtEnd(1); insertAtEnd(2);
+    insertAtEnd(3); insertAtEnd(3); insertAtEnd(3);
+    traverse();              /* 1 -> 1 -> 2 -> 3 -> 3 -> 3 */
+    removeDuplicatesSorted();
+    traverse();              /* 1 -> 2 -> 3 */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step (Sorted)</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Start at <code>curr = head</code>. Check if <code>curr</code> and <code>curr.next</code> have same data.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">If same: bypass next node (<code>curr.next = next.next</code>) and free the duplicate.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">If different: just advance <code>curr = curr.next</code>. Repeat until end.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- LOOP DETECTION -->
+<section id="loop" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">DETECT</span>
+    <div><div class="card-title">23 — Loop Detection (Floyd's Algorithm)</div><div class="card-subtitle">O(n) — Detect if a cycle exists in the list</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>Detect if a linked list has a <strong>cycle</strong> (a node's <code>next</code> points back to a previous node). Uses <strong>Floyd's Cycle Detection Algorithm</strong> (also called the "tortoise and hare" algorithm).</p>
+        <div class="info-box">
+          <strong>The Idea:</strong> If two runners run on a circular track — one at normal speed, one at double speed — they must eventually meet. If there's no loop, the fast runner reaches the end first (index -1).
+        </div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> &nbsp; Space: <span class="tc-good">O(1)</span></h3>
+        <h3>🌍 Use Cases</h3>
+        <ul><li>Detecting infinite loops in data structures</li><li>Finding start of cycle in O(n)</li><li>OS kernel circular buffer detection</li></ul>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Loop: node 4 points back to node 2</div>
+        <div style="padding:16px;background:var(--bg-card);border-radius:8px;border:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-secondary)">
+          <div style="margin-bottom:8px">HEAD → [1] → [2] → [3] → [4]</div>
+          <div style="margin-bottom:8px;padding-left:60px;color:var(--accent-red)">↑_______________↓  ← cycle! node 4.next = index of node 2</div>
+          <div style="margin-top:16px;color:var(--text-muted)">slow: 1→2→3→4→2→3→4→2... (repeats)</div>
+          <div style="color:var(--text-muted)">fast: 1→3→2→4→3→2→4→3... (repeats)</div>
+          <div style="margin-top:8px;color:var(--accent-cyan)">They MEET → loop detected!</div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">loop_detection.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Detect loop using Floyd's Cycle Detection Algorithm */
+int detectLoop() {
+    int slow, fast;
+
+    if (head == -1) return 0;  /* empty list, no loop */
+
+    slow = head;
+    fast = head;
+
+    /* Slow: 1 step, Fast: 2 steps */
+    while (fast != -1 && list[fast].next != -1) {
+        slow = list[slow].next;         /* 1 step */
+        fast = list[fast].next;
+        fast = list[fast].next;         /* 2nd step */
+
+        if (slow == fast) {
+            /* They met! Loop exists */
+            printf("Loop DETECTED in the list!\n");
+            return 1;
+        }
+    }
+
+    /* Fast reached end without meeting slow: no loop */
+    printf("No loop found.\n");
+    return 0;
+}
+
+/* Create a loop for testing (node at pos points to nodeAt) */
+void createLoop(int fromPos, int toPos) {
+    int from, to, i;
+
+    from = head; to = head;
+    for (i = 1; i &lt; fromPos; i++) from = list[from].next;
+    for (i = 1; i &lt; toPos; i++)   to   = list[to].next;
+
+    list[from].next = to;  /* create the cycle */
+    printf("Loop created: node%d -> node%d\n", fromPos, toPos);
+}
+
+/* === Example === */
+int main() {
+    init();
+    insertAtEnd(1); insertAtEnd(2);
+    insertAtEnd(3); insertAtEnd(4);
+    detectLoop();       /* No loop found */
+    createLoop(4, 2);   /* node 4 points back to node 2 */
+    detectLoop();       /* Loop DETECTED */
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Start both <code>slow</code> and <code>fast</code> at <code>head</code>.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Each iteration: slow moves 1 step, fast moves 2 steps.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">If <code>slow == fast</code> at any point → <strong>loop detected!</strong> Return 1.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">If fast reaches <code>-1</code> (or <code>fast.next == -1</code>) → <strong>no loop</strong>. Return 0.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- FLATTENING -->
+<section id="flatten" class="scroll-target">
+<div class="concept-card">
+  <div class="card-header" onclick="toggleCard(this)">
+    <span class="op-badge badge-advanced">FLATTEN</span>
+    <div><div class="card-title">24 — Flattening a Multilevel List</div><div class="card-subtitle">O(n) — Convert nested structure to single-level</div></div>
+    <span class="card-toggle">▼</span>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'theory')">📖 Theory</button>
+      <button class="tab-btn" onclick="switchTab(this,'visual')">🎨 Visual</button>
+      <button class="tab-btn" onclick="switchTab(this,'code')">💻 Code</button>
+    </div>
+    <div class="tab-panel active" data-panel="theory">
+      <div class="theory-section">
+        <h3>💡 What is it?</h3>
+        <p>A multilevel list has nodes where some nodes also have a <strong>child pointer</strong> pointing to another sub-list. Flattening merges all levels into a single linear list.</p>
+        <div class="info-box"><strong>Approach:</strong> When we encounter a node with a child list, splice the child list between the current node and its next. Continue traversal through the flattened portion.</div>
+        <h3>⏱️ Time: <span class="tc-mid">O(n)</span> where n = total nodes across all levels</h3>
+        <h3>🌍 Use Cases</h3>
+        <ul>
+          <li>Flattening nested menus or UI trees</li>
+          <li>Processing hierarchical XML/JSON into flat arrays</li>
+          <li>LeetCode problem: Flatten a Multilevel Doubly Linked List</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="visual">
+      <div class="diagram-wrap">
+        <div class="diagram-title">// Multilevel → Flat</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-secondary);line-height:2">
+          <div style="color:var(--accent-blue)">Level 1:</div>
+          <div>[1] → [2] → [3] → [4]</div>
+          <div style="padding-left:60px;color:var(--accent-amber)">↓ child</div>
+          <div style="padding-left:60px;color:var(--accent-amber)">[10] → [11] → [12]</div>
+          <div style="margin-top:16px;color:var(--accent-cyan)">After flattening:</div>
+          <div>[1] → [2] → [10] → [11] → [12] → [3] → [4]</div>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" data-panel="code">
+      <div class="code-wrap">
+        <div class="code-label"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div><span class="filename">flattening.c</span></div>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+<pre><code class="language-c">/* Extended Node structure for multilevel list */
+struct NodeML {
+    int  data;
+    int  next;   /* index of next sibling */
+    int  child;  /* index of child list head (-1 if none) */
+};
+
+struct NodeML mlist[MAX];  /* multilevel array */
+int mhead = -1;
+int mfree = 0;
+
+void initML() {
+    int i;
+    for (i = 0; i &lt; MAX - 1; i++) {
+        mlist[i].next  = i + 1;
+        mlist[i].child = -1;
+    }
+    mlist[MAX-1].next  = -1;
+    mlist[MAX-1].child = -1;
+    mfree = 0;
+    mhead = -1;
+}
+
+/* Flatten the multilevel list starting from startHead */
+int flatten(int startHead) {
+    int curr, childHead, lastOfChild;
+
+    curr = startHead;
+
+    while (curr != -1) {
+        /* If this node has a child list */
+        if (mlist[curr].child != -1) {
+            childHead = mlist[curr].child;
+
+            /* Find the tail of the child list */
+            lastOfChild = childHead;
+            while (mlist[lastOfChild].next != -1) {
+                lastOfChild = mlist[lastOfChild].next;
+            }
+
+            /* Splice: curr.next → child list → curr's old next */
+            mlist[lastOfChild].next = mlist[curr].next;
+            mlist[curr].next        = childHead;
+            mlist[curr].child       = -1;  /* remove child link */
+        }
+
+        curr = mlist[curr].next;  /* move forward */
+    }
+
+    printf("List flattened.\n");
+    return startHead;
+}
+
+/* === Example (conceptual setup) === */
+int main() {
+    initML();
+    /* Set up multilevel structure manually */
+    /* Level1: node0(1) → node1(2) → node2(3) */
+    /* node1 has child: node3(10) → node4(11)  */
+    /* After flatten: 1 → 2 → 10 → 11 → 3     */
+    mhead = flatten(mhead);
+    return 0;
+}</code></pre>
+      </div>
+      <div class="steps-wrap">
+        <h4>Step-by-Step</h4>
+        <div class="step-item"><div class="step-num">1</div><div class="step-text">Our extended struct has <code>next</code> (sibling) and <code>child</code> (sub-list head). Both are indices, -1 means none.</div></div>
+        <div class="step-item"><div class="step-num">2</div><div class="step-text">Traverse main list. When a node has <code>child != -1</code>, we need to flatten that child.</div></div>
+        <div class="step-item"><div class="step-num">3</div><div class="step-text">Find the tail of the child list, then: <code>childTail.next = curr.next</code> and <code>curr.next = childHead</code>.</div></div>
+        <div class="step-item"><div class="step-num">4</div><div class="step-text">Clear <code>curr.child = -1</code> and continue. The child list is now part of the main level and will be traversed automatically.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- QUICK REFERENCE -->
+<div class="section-divider" data-label="quick reference"></div>
+<div class="concept-card" style="border-color:var(--accent-blue)40">
+  <div class="card-header open" onclick="toggleCard(this)" style="background:#58a6ff08">
+    <span class="op-badge badge-traverse">REFERENCE</span>
+    <div><div class="card-title">📊 Complete Complexity Reference Card</div></div>
+    <span class="card-toggle open">▼</span>
+  </div>
+  <div class="card-body open">
+    <table class="complexity-table" style="width:100%">
+      <tr><th>#</th><th>Operation</th><th>Time</th><th>Space</th><th>Tags</th></tr>
+      <tr><td>01</td><td>Insert at Beginning</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td><td><span class="tag tag-green">FAST</span></td></tr>
+      <tr><td>02</td><td>Insert at End</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>03</td><td>Insert at Position</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>04</td><td>Delete from Beginning</td><td class="tc-good">O(1)</td><td class="tc-good">O(1)</td><td><span class="tag tag-green">FAST</span></td></tr>
+      <tr><td>05</td><td>Delete from End</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>06</td><td>Delete at Position</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>07</td><td>Delete by Value</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>08</td><td>Traversal</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>09</td><td>Searching</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>10</td><td>Updating</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>11</td><td>Count Nodes</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>12</td><td>Sorting (Bubble Sort)</td><td class="tc-bad">O(n²)</td><td class="tc-good">O(1)</td><td><span class="tag tag-amber">SLOW</span></td></tr>
+      <tr><td>13</td><td>Reversing</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td><span class="tag tag-green">IN-PLACE</span></td></tr>
+      <tr><td>14</td><td>Rotation</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>15</td><td>Reverse in Groups</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>16</td><td>Merging (Sorted)</td><td class="tc-mid">O(m+n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>17</td><td>Concatenation</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>18</td><td>Splitting</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>19</td><td>Intersection</td><td class="tc-bad">O(m×n)</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>20</td><td>Copying (Deep)</td><td class="tc-mid">O(n)</td><td class="tc-mid">O(n)</td><td></td></tr>
+      <tr><td>21</td><td>Find Middle</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td><span class="tag tag-green">2-POINTER</span></td></tr>
+      <tr><td>22</td><td>Remove Duplicates</td><td class="tc-mid">O(n) sorted</td><td class="tc-good">O(1)</td><td></td></tr>
+      <tr><td>23</td><td>Loop Detection</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td><span class="tag tag-green">FLOYD'S</span></td></tr>
+      <tr><td>24</td><td>Flattening</td><td class="tc-mid">O(n)</td><td class="tc-good">O(1)</td><td></td></tr>
+    </table>
+  </div>
+</div>
+
+</main><!-- end #main -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+<script>
+// ── SIDEBAR TOGGLE ──
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const main = document.getElementById('main');
+  sb.classList.toggle('hidden');
+  main.classList.toggle('full');
+  // mobile
+  sb.classList.toggle('mobile-open');
+}
+
+// ── NAV ACTIVE STATE ──
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── CARD TOGGLE ──
+function toggleCard(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.card-toggle');
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+// ── TAB SWITCHER ──
+function switchTab(btn, panel) {
+  const card = btn.closest('.card-body');
+  card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  card.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  card.querySelector(`[data-panel="${panel}"]`).classList.add('active');
+}
+
+// ── COPY CODE ──
+function copyCode(btn) {
+  const pre = btn.parentElement.querySelector('pre code');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 2000);
+  });
+}
+
+// ── PROGRESS BAR ──
+window.addEventListener('scroll', () => {
+  const docH = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+  const pct  = (window.scrollY / docH) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+});
+
+// ── SCROLL SPY ──
+const sections = document.querySelectorAll('.scroll-target');
+const navItems = document.querySelectorAll('.nav-item');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      navItems.forEach(n => {
+        n.classList.remove('active');
+        if (n.getAttribute('href') === '#' + id) n.classList.add('active');
+      });
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// ── RESPONSIVE ──
+function checkWidth() {
+  const sb = document.getElementById('sidebar');
+  const main = document.getElementById('main');
+  if (window.innerWidth <= 900) {
+    sb.classList.add('hidden');
+    main.classList.add('full');
+  } else {
+    sb.classList.remove('hidden');
+    sb.classList.remove('mobile-open');
+    main.classList.remove('full');
+  }
+}
+window.addEventListener('resize', checkWidth);
+checkWidth();
+</script>
+</body>
+</html>
